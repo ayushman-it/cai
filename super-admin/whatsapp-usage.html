@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Traffic & Health — Super Admin — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="app-page-title">WhatsApp Cloud API Gateway</h1>
+                <span class="badge-signal-green text-xs font-semibold">99.82% Delivery Rate</span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Multi-tenant Meta Graph API dispatch pipeline, template approval status, and message broker queues.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="alert('Testing Meta Graph API ping...')">
+                <i data-lucide="radio" class="w-3.5 h-3.5 mr-1.5"></i>
+                Ping Meta Graph
+              </button>
+            </div>
+          </div>
+
+          <!-- Top Metrics -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Total Dispatches (30d)</div>
+              <div class="text-2xl font-semibold text-stone-900 mt-1">84,120</div>
+              <div class="text-[11px] text-stone-500 mt-1">Automated triage continuation</div>
+            </div>
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Delivery Success</div>
+              <div class="text-2xl font-semibold text-stone-900 mt-1">99.82%</div>
+              <div class="text-[11px] text-emerald-700 font-medium mt-1">83,968 delivered successfully</div>
+            </div>
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Avg Gateway Latency</div>
+              <div class="text-2xl font-semibold text-stone-900 mt-1">1.14 s</div>
+              <div class="text-[11px] text-stone-500 mt-1">Webhook to device reception</div>
+            </div>
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Failed Dispatches</div>
+              <div class="text-2xl font-semibold text-amber-700 mt-1">152</div>
+              <div class="text-[11px] text-stone-500 mt-1">Invalid number or Opted-out</div>
+            </div>
+          </div>
+
+          <!-- Status Bar & Gateway Config -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="app-panel space-y-2 text-xs">
+              <div class="text-xs font-semibold uppercase tracking-wider text-stone-900 mb-2">Meta Business Tier</div>
+              <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                <span>Account Tier:</span>
+                <span class="font-medium text-stone-900">WABA Tier 2 (100k/day)</span>
+              </div>
+              <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                <span>Phone Numbers Paired:</span>
+                <span class="font-medium text-stone-900">128 active lines</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Webhook Health:</span>
+                <span class="badge-signal-green text-[10px]">0 queued (Realtime)</span>
+              </div>
+            </div>
+
+            <div class="app-panel space-y-2 text-xs">
+              <div class="text-xs font-semibold uppercase tracking-wider text-stone-900 mb-2">Template Governance</div>
+              <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                <span>Pre-Approved Templates:</span>
+                <span class="font-medium text-stone-900">42 standard templates</span>
+              </div>
+              <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                <span>Pending Review:</span>
+                <span class="font-medium text-stone-900">2 under review</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Quality Rating:</span>
+                <span class="badge-signal-green text-[10px]">High (Green)</span>
+              </div>
+            </div>
+
+            <div class="app-panel space-y-2 text-xs">
+              <div class="text-xs font-semibold uppercase tracking-wider text-stone-900 mb-2">Meta Conversation Costs</div>
+              <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                <span>Marketing Category:</span>
+                <span class="font-mono text-stone-900">$0.0105 / conv</span>
+              </div>
+              <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                <span>Utility & Service:</span>
+                <span class="font-mono text-stone-900">$0.0042 / conv</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Blended 30d Cost:</span>
+                <span class="font-mono text-stone-900 font-semibold">$598.10</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table -->
+          <div class="app-panel p-0 overflow-hidden">
+            <div class="p-3 border-b border-[#e7e5de] bg-[#fcfbfa] flex items-center justify-between">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Tenant WhatsApp Delivery Ledger</h3>
+              <input type="text" placeholder="Filter by organization or phone..." class="app-input text-xs w-64 bg-white">
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="app-table text-xs">
+                <thead>
+                  <tr>
+                    <th>Organization</th>
+                    <th>Sender Phone</th>
+                    <th>30d Messages</th>
+                    <th>Read Rate</th>
+                    <th>Failed</th>
+                    <th>Meta Fees</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=acme" class="font-medium text-stone-900 hover:underline">Acme Academy</a>
+                      <div class="text-[11px] text-stone-400">acmeacademy.in</div>
+                    </td>
+                    <td class="font-mono text-stone-700">+91 98200 12345</td>
+                    <td class="font-medium text-stone-900">312</td>
+                    <td class="text-emerald-700 font-medium">96.4%</td>
+                    <td class="text-stone-400">1</td>
+                    <td class="font-mono text-stone-700">$2.62</td>
+                    <td><span class="badge-signal-green text-[10px]">Optimal</span></td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=zenith" class="font-medium text-stone-900 hover:underline">Zenith Fitness Tech</a>
+                      <div class="text-[11px] text-stone-400">zenithfit.co.uk</div>
+                    </td>
+                    <td class="font-mono text-stone-700">+44 7911 123456</td>
+                    <td class="font-medium text-stone-900">1,240</td>
+                    <td class="text-emerald-700 font-medium">94.8%</td>
+                    <td class="text-amber-700 font-medium">18</td>
+                    <td class="font-mono text-stone-700">$10.41</td>
+                    <td><span class="badge-signal-amber text-[10px]">Near Quota</span></td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=novacare" class="font-medium text-stone-900 hover:underline">NovaCare Health Systems</a>
+                      <div class="text-[11px] text-stone-400">novacare.ae</div>
+                    </td>
+                    <td class="font-mono text-stone-700">+971 50 123 4567</td>
+                    <td class="font-medium text-stone-900">2,890</td>
+                    <td class="text-emerald-700 font-medium">98.1%</td>
+                    <td class="text-stone-400">4</td>
+                    <td class="font-mono text-stone-700">$24.27</td>
+                    <td><span class="badge-signal-green text-[10px]">Optimal</span></td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=solaris" class="font-medium text-stone-900 hover:underline">Solaris Home Energy</a>
+                      <div class="text-[11px] text-stone-400">solarishome.io</div>
+                    </td>
+                    <td class="font-mono text-stone-700">+1 512 555 0199</td>
+                    <td class="font-medium text-stone-900">180</td>
+                    <td class="text-emerald-700 font-medium">92.0%</td>
+                    <td class="text-stone-400">2</td>
+                    <td class="font-mono text-stone-700">$1.51</td>
+                    <td><span class="badge-signal-green text-[10px]">Optimal</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initSuperAdmin('whatsapp-usage', 'WhatsApp Traffic & Health', ['Platform Telemetry']);
+    });
+  </script>
+</body>
+</html>

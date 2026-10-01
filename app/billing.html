@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Billing & Plan — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <h1 class="app-page-title">Billing &amp; Subscription</h1>
+              <p class="text-xs text-stone-500 mt-1">Manage active workspace subscriptions, team seat allocations, WhatsApp Cloud API quotas, and tax invoices.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-[#e7e5de] rounded-[4px] text-xs font-medium text-stone-800 shadow-2xs">
+                <span class="w-1.5 h-1.5 rounded-full bg-stone-900 animate-pulse"></span>
+                <span id="billing-header-tier">Pro Workspace Active</span>
+              </span>
+            </div>
+          </div>
+
+          <!-- Current Plan & Quota Card (Intercom Minimalist Panel) -->
+          <div class="app-panel space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span class="text-[11px] font-semibold uppercase tracking-wider text-stone-400">Current Subscription</span>
+                  <span id="billing-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 bg-stone-100 text-stone-700 border border-stone-200/80 rounded-[4px] text-[11px] font-mono font-medium">Active · Paid</span>
+                </div>
+                <div id="billing-plan-name" class="text-lg font-bold text-stone-900">CuboidPilot Pro Enterprise</div>
+                <div id="billing-plan-desc" class="text-xs text-stone-500 max-w-2xl leading-relaxed">Full multi-channel autonomous engagement, WhatsApp continuation, sales team assignment, and Closing Radar unlocked.</div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <a href="#plans-comparison" class="btn-secondary btn-sm text-xs py-1.5 px-3 rounded-[4px] inline-flex items-center gap-1.5 font-medium border-[#d5d2c8] no-underline">
+                  <i data-lucide="layers" class="w-3.5 h-3.5 text-stone-500"></i>
+                  <span>Change Plan</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- 4 Usage Meters (Intercom Monochrome 1px Dividers) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 text-xs">
+              
+              <div class="p-3 bg-stone-50/70 border border-[#e7e5de] rounded-[6px] space-y-2">
+                <div class="flex justify-between items-center text-stone-600">
+                  <span class="font-medium text-stone-700">AI Conversations</span>
+                  <span class="font-semibold text-stone-900 font-mono text-[11px]" id="billing-meter-conv">9 / Unlimited</span>
+                </div>
+                <div class="w-full h-1 bg-stone-200 rounded-[2px] overflow-hidden">
+                  <div class="w-[10%] h-full bg-stone-900"></div>
+                </div>
+                <div class="text-[10.5px] text-stone-400">Unlimited quota • Resets monthly</div>
+              </div>
+
+              <div class="p-3 bg-stone-50/70 border border-[#e7e5de] rounded-[6px] space-y-2">
+                <div class="flex justify-between items-center text-stone-600">
+                  <span class="font-medium text-stone-700">Team Seats</span>
+                  <span class="font-semibold text-stone-900 font-mono text-[11px]" id="billing-meter-seats">2 / 10</span>
+                </div>
+                <div class="w-full h-1 bg-stone-200 rounded-[2px] overflow-hidden">
+                  <div class="w-[20%] h-full bg-stone-900"></div>
+                </div>
+                <div class="text-[10.5px] text-stone-400">8 additional seats available</div>
+              </div>
+
+              <div class="p-3 bg-stone-50/70 border border-[#e7e5de] rounded-[6px] space-y-2">
+                <div class="flex justify-between items-center text-stone-600">
+                  <span class="font-medium text-stone-700">Connected Websites</span>
+                  <span class="font-semibold text-stone-900 font-mono text-[11px]" id="billing-meter-sites">1 / 5</span>
+                </div>
+                <div class="w-full h-1 bg-stone-200 rounded-[2px] overflow-hidden">
+                  <div class="w-[20%] h-full bg-stone-900"></div>
+                </div>
+                <div class="text-[10.5px] text-stone-400">Multi-domain script enabled</div>
+              </div>
+
+              <div class="p-3 bg-stone-50/70 border border-[#e7e5de] rounded-[6px] space-y-2">
+                <div class="flex justify-between items-center text-stone-600">
+                  <span class="font-medium text-stone-700">WhatsApp Cloud API</span>
+                  <span class="font-semibold text-stone-900 font-mono text-[11px]" id="billing-meter-wa">1 / 10,000</span>
+                </div>
+                <div class="w-full h-1 bg-stone-200 rounded-[2px] overflow-hidden">
+                  <div class="w-[1%] h-full bg-stone-900"></div>
+                </div>
+                <div class="text-[10.5px] text-stone-400">Dedicated high-volume gateway</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Intercom Pricing Architecture (Exact Reference: media_1790787063192.png) -->
+          <div id="plans-comparison" class="space-y-6">
+            
+            <!-- Headline & Trust Badges -->
+            <div class="text-center max-w-3xl mx-auto pt-2 pb-2 space-y-2">
+              <h2 class="text-2xl sm:text-3xl lg:text-[34px] font-normal text-stone-900 tracking-tight leading-tight">
+                CuboidPilot sales &amp; support plans with AI Pilot built in
+              </h2>
+              <p class="text-xs sm:text-sm text-stone-500 font-normal">
+                A complete human and AI support &amp; revenue acceleration system with simple, transparent pricing.
+              </p>
+              <div class="flex flex-wrap items-center justify-center gap-6 pt-2 text-xs text-stone-700 font-medium">
+                <span class="flex items-center gap-1.5">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900 stroke-[2.5]"></i>
+                  <span>14-day cardless free trial</span>
+                </span>
+                <span class="flex items-center gap-1.5">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900 stroke-[2.5]"></i>
+                  <span>Autonomous pilot guarantee</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- Main Dual-Container Pricing Grid (Exact Layout from Image) -->
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 items-stretch text-xs">
+              
+              <!-- LEFT CONTAINER: Unified 3-Column Plan Box (75% Width) -->
+              <div class="xl:col-span-3 border border-[#e7e5de] rounded-[8px] bg-white shadow-2xs overflow-hidden flex flex-col justify-between">
+                
+                <!-- Top Header Bar -->
+                <div class="px-5 py-3.5 bg-white border-b border-[#e7e5de] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 text-stone-800 rounded-[4px] text-xs font-medium">
+                      <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-stone-600"></i>
+                      <span>CuboidPilot helpdesk</span>
+                    </span>
+                    <span class="text-stone-400 font-light">+</span>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 text-stone-800 rounded-[4px] text-xs font-medium">
+                      <i data-lucide="bot" class="w-3.5 h-3.5 text-stone-600"></i>
+                      <span>AI Pilot Agent</span>
+                    </span>
+                  </div>
+
+                  <!-- Intercom Annual Toggle (Save up to 35%) -->
+                  <div class="flex items-center gap-2.5">
+                    <span class="text-stone-600 font-medium">Pay annually</span>
+                    <label class="cp-switch relative inline-block cursor-pointer">
+                      <input type="checkbox" id="annual-billing-toggle" onchange="handleAnnualToggle(this.checked)">
+                      <span class="cp-switch-track"></span>
+                    </label>
+                    <span class="text-[11px] font-mono font-medium px-2 py-0.5 bg-stone-100 text-stone-700 border border-stone-200 rounded-[3px]">Save up to 35%</span>
+                  </div>
+                </div>
+
+                <!-- 3 Columns Divided by 1px Hairlines -->
+                <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#e7e5de] flex-1">
+                  
+                  <!-- Column 1: Essential -->
+                  <div class="p-5 flex flex-col justify-between space-y-5">
+                    <div class="space-y-4">
+                      <div>
+                        <div class="text-base font-semibold text-stone-900">Essential</div>
+                        <div class="text-stone-500 mt-1 leading-snug">Customer support for individuals, startups, and small businesses.</div>
+                      </div>
+
+                      <div class="space-y-2 pt-2 border-t border-[#f0ede6]">
+                        <div>
+                          <div class="text-[11px] text-stone-400">CuboidPilot helpdesk</div>
+                          <div class="mt-0.5 font-bold text-stone-900 text-xl">
+                            <span id="price-essential">₹1,999</span> <span class="billing-freq text-xs font-normal text-stone-400">per seat/mo</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div class="text-[11px] text-stone-400">AI Pilot Agent</div>
+                          <div class="mt-0.5 font-bold text-stone-900 text-lg flex items-center gap-1">
+                            <span>₹15</span> <span class="text-xs font-normal text-stone-400">per outcome</span>
+                            <i data-lucide="info" class="w-3 h-3 text-stone-400 cursor-pointer" title="Per qualified lead or automated resolution"></i>
+                          </div>
+                        </div>
+                      </div>
+
+                      <button onclick="initiatePlanSelection('starter', 'Essential')" class="w-full py-2 bg-[#111111] hover:bg-black text-white rounded-[4px] font-medium text-xs shadow-2xs transition-colors">
+                        Start free trial
+                      </button>
+
+                      <div class="space-y-2 pt-3 border-t border-[#f0ede6]">
+                        <div class="text-[11.5px] font-semibold text-stone-900">Key features include:</div>
+                        <ul class="space-y-1.5 text-stone-600 text-[11.5px]">
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Messenger live chat</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Shared inbox and ticketing system</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Pre-built reports</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Public help center</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Basic automation</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Column 2: Advanced -->
+                  <div class="p-5 flex flex-col justify-between space-y-5">
+                    <div class="space-y-4">
+                      <div>
+                        <div class="text-base font-semibold text-stone-900">Advanced</div>
+                        <div class="text-stone-500 mt-1 leading-snug">Powerful automation and assignment tools for growing support teams.</div>
+                      </div>
+
+                      <div class="space-y-2 pt-2 border-t border-[#f0ede6]">
+                        <div>
+                          <div class="text-[11px] text-stone-400">CuboidPilot helpdesk</div>
+                          <div class="mt-0.5 font-bold text-stone-900 text-xl">
+                            <span id="price-advanced">₹6,999</span> <span class="billing-freq text-xs font-normal text-stone-400">per seat/mo</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div class="text-[11px] text-stone-400">AI Pilot Agent</div>
+                          <div class="mt-0.5 font-bold text-stone-900 text-lg flex items-center gap-1">
+                            <span>₹15</span> <span class="text-xs font-normal text-stone-400">per outcome</span>
+                            <i data-lucide="info" class="w-3 h-3 text-stone-400 cursor-pointer" title="Per qualified lead or automated resolution"></i>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Dual Buttons (Image Reference) -->
+                      <div class="grid grid-cols-2 gap-2">
+                        <button onclick="initiatePlanSelection('growth', 'Advanced')" class="py-2 bg-[#111111] hover:bg-black text-white rounded-[4px] font-medium text-xs shadow-2xs transition-colors text-center">
+                          Start free trial
+                        </button>
+                        <button onclick="CuboidShell.toast('Advanced plan demo booked', 'info')" class="py-2 bg-white hover:bg-stone-50 text-stone-800 border border-[#d5d2c8] rounded-[4px] font-medium text-xs shadow-2xs transition-colors text-center">
+                          Get a demo
+                        </button>
+                      </div>
+
+                      <div class="space-y-2 pt-3 border-t border-[#f0ede6]">
+                        <div class="text-[11.5px] font-semibold text-stone-900">Every Essential feature, plus:</div>
+                        <ul class="space-y-1.5 text-stone-600 text-[11.5px]">
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Workflow automation builder</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Multiple team Inboxes</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Round robin assignment</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Private and multilingual Help Center</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Includes 20 free Lite seats</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Column 3: Expert (Pro Enterprise — Active Tier for CuboidSoft!) -->
+                  <div class="p-5 flex flex-col justify-between space-y-5 bg-stone-50/40">
+                    <div class="space-y-4">
+                      <div class="flex items-start justify-between">
+                        <div>
+                          <div class="text-base font-semibold text-stone-900">Expert</div>
+                          <div class="text-stone-500 mt-1 leading-snug">Collaboration and security features for large support teams.</div>
+                        </div>
+                        <span class="px-1.5 py-0.5 bg-stone-900 text-white rounded-[3px] text-[9px] font-mono uppercase tracking-wider font-semibold shrink-0">CURRENT</span>
+                      </div>
+
+                      <div class="space-y-2 pt-2 border-t border-[#f0ede6]">
+                        <div>
+                          <div class="text-[11px] text-stone-400">CuboidPilot helpdesk</div>
+                          <div class="mt-0.5 font-bold text-stone-900 text-xl">
+                            <span id="price-expert">₹19,999</span> <span class="billing-freq text-xs font-normal text-stone-400">per seat/mo</span>
+                          </div>
+                        </div>
+
+                        <div>
+                          <div class="text-[11px] text-stone-400">AI Pilot Agent</div>
+                          <div class="mt-0.5 font-bold text-stone-900 text-lg flex items-center gap-1">
+                            <span>₹15</span> <span class="text-xs font-normal text-stone-400">per outcome</span>
+                            <i data-lucide="info" class="w-3 h-3 text-stone-400 cursor-pointer" title="Per qualified lead or automated resolution"></i>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Dual Buttons (Active Plan Solid Black Button, NO GREEN) -->
+                      <div class="grid grid-cols-2 gap-2">
+                        <button class="py-2 bg-stone-900 text-white rounded-[4px] font-medium text-xs shadow-2xs flex items-center justify-center gap-1 cursor-default text-center">
+                          <i data-lucide="check" class="w-3.5 h-3.5 stroke-[2.5]"></i>
+                          <span>Current Plan</span>
+                        </button>
+                        <button onclick="CuboidShell.toast('Concierge account architect scheduled', 'info')" class="py-2 bg-white hover:bg-stone-50 text-stone-800 border border-[#d5d2c8] rounded-[4px] font-medium text-xs shadow-2xs transition-colors text-center">
+                          Get a demo
+                        </button>
+                      </div>
+
+                      <div class="space-y-2 pt-3 border-t border-[#f0ede6]">
+                        <div class="text-[11.5px] font-semibold text-stone-900">Every Advanced feature, plus:</div>
+                        <ul class="space-y-1.5 text-stone-600 text-[11.5px]">
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-900"></span> SSO &amp; identity management</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-900"></span> Dedicated data residency &amp; compliance</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-900"></span> Service level agreements (SLAs)</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-900"></span> Multibrand Messenger / WhatsApp Gateway</li>
+                          <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-900"></span> Includes 50 free Lite seats</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Bottom Banner inside Left Container (Image Reference) -->
+                <div class="px-5 py-3 bg-[#fcfbfa] border-t border-[#e7e5de] text-center text-xs text-stone-600">
+                  <span class="font-semibold text-stone-900">Startups get 93% off.</span> Under $10M raised and 15 employees or fewer? <a href="javascript:void(0)" onclick="CuboidShell.toast('Early-stage startup discount application submitted', 'success')" class="text-stone-900 font-medium underline">Apply now</a>
+                </div>
+              </div>
+
+              <!-- RIGHT CONTAINER: Standalone AI Pilot Card (25% Width) -->
+              <div class="xl:col-span-1 border border-[#e7e5de] rounded-[8px] bg-white shadow-2xs p-5 flex flex-col justify-between space-y-5">
+                
+                <div class="space-y-4">
+                  <!-- Header Strip with Integrated CRM icons -->
+                  <div class="flex items-center gap-1.5 pb-2 border-b border-[#f0ede6]">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-stone-100 text-stone-800 rounded-[3px] text-[11px] font-medium">
+                      <i data-lucide="bot" class="w-3 h-3 text-stone-600"></i>
+                      <span>AI Pilot Agent</span>
+                    </span>
+                    <span class="text-stone-300 font-light">+</span>
+                    <span class="w-4 h-4 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-[9px] font-bold" title="Salesforce">☁</span>
+                    <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[9px] font-bold" title="WhatsApp">W</span>
+                    <span class="w-4 h-4 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center text-[9px] font-bold" title="HubSpot">H</span>
+                  </div>
+
+                  <div>
+                    <div class="text-base font-semibold text-stone-900">AI Pilot Agent</div>
+                    <div class="text-stone-500 mt-1 leading-snug">Use AI Pilot with an existing helpdesk such as Salesforce, Hubspot, or Freshdesk.</div>
+                  </div>
+
+                  <div class="space-y-2 pt-2 border-t border-[#f0ede6]">
+                    <div>
+                      <div class="text-[11px] text-stone-400">CuboidPilot helpdesk</div>
+                      <div class="mt-0.5 text-xs text-stone-500 font-medium">Not included</div>
+                    </div>
+
+                    <div>
+                      <div class="text-[11px] text-stone-400">AI Pilot Agent</div>
+                      <div class="mt-0.5 font-bold text-stone-900 text-lg flex items-center gap-1">
+                        <span>₹15</span> <span class="text-xs font-normal text-stone-400">per outcome</span>
+                        <i data-lucide="info" class="w-3 h-3 text-stone-400 cursor-pointer" title="Per qualified lead or automated resolution"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Dual Buttons (Image Reference) -->
+                  <div class="grid grid-cols-2 gap-2">
+                    <button onclick="CuboidShell.toast('AI Agent Enterprise inquiry submitted', 'success')" class="py-2 bg-[#111111] hover:bg-black text-white rounded-[4px] font-medium text-xs shadow-2xs transition-colors text-center">
+                      Contact sales
+                    </button>
+                    <button onclick="CuboidShell.toast('AI Agent Interactive simulation launched', 'info')" class="py-2 bg-white hover:bg-stone-50 text-stone-800 border border-[#d5d2c8] rounded-[4px] font-medium text-xs shadow-2xs transition-colors text-center">
+                      View demo
+                    </button>
+                  </div>
+
+                  <div class="space-y-2 pt-3 border-t border-[#f0ede6]">
+                    <div class="text-[11.5px] font-semibold text-stone-900">Key features include:</div>
+                    <ul class="space-y-1.5 text-stone-600 text-[11.5px]">
+                      <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Works with most helpdesks</li>
+                      <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Set up in under an hour</li>
+                      <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Learns your support content</li>
+                      <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Answers across all channels</li>
+                      <li class="flex items-center gap-1.5"><span class="w-1 h-1 rounded-full bg-stone-400"></span> Transfers to agents in inbox</li>
+                    </ul>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+
+            <!-- Centered Compare All Plan Features Link -->
+            <div class="text-center pt-2">
+              <button onclick="toggleFeatureComparison()" class="text-xs font-semibold text-stone-800 hover:text-stone-900 underline inline-flex items-center gap-1.5 transition-colors">
+                <span id="comparison-toggle-text">Compare all plan features</span>
+                <i data-lucide="chevron-down" id="comparison-chevron" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <!-- Expandable Comparison Matrix (Collapsible) -->
+            <div id="feature-comparison-table" class="hidden app-panel p-0 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-[11.5px] border-collapse">
+                  <thead>
+                    <tr class="border-b border-[#e7e5de] bg-[#faf9f6] text-stone-400 uppercase text-[10px] font-semibold text-left">
+                      <th class="py-3 px-4">Feature Matrix</th>
+                      <th class="py-3 px-4">Essential</th>
+                      <th class="py-3 px-4">Advanced</th>
+                      <th class="py-3 px-4 bg-stone-50 font-bold text-stone-900">Expert (Pro)</th>
+                      <th class="py-3 px-4">AI Pilot Standalone</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-[#f0ede6] text-stone-700">
+                    <tr>
+                      <td class="py-2.5 px-4 font-medium text-stone-900">Website Messenger &amp; Widget</td>
+                      <td class="py-2.5 px-4">1 domain</td>
+                      <td class="py-2.5 px-4">3 domains</td>
+                      <td class="py-2.5 px-4 bg-stone-50 font-medium text-stone-900">5 domains</td>
+                      <td class="py-2.5 px-4">Embed API</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 px-4 font-medium text-stone-900">Autonomous AI Pilot 24/7</td>
+                      <td class="py-2.5 px-4"><i data-lucide="check" class="w-3.5 h-3.5 text-stone-700"></i></td>
+                      <td class="py-2.5 px-4"><i data-lucide="check" class="w-3.5 h-3.5 text-stone-700"></i></td>
+                      <td class="py-2.5 px-4 bg-stone-50 font-medium text-stone-900"><i data-lucide="check" class="w-3.5 h-3.5 text-stone-900 stroke-[2.5]"></i></td>
+                      <td class="py-2.5 px-4"><i data-lucide="check" class="w-3.5 h-3.5 text-stone-700"></i></td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 px-4 font-medium text-stone-900">WhatsApp Cloud API Gateway</td>
+                      <td class="py-2.5 px-4 text-stone-400">—</td>
+                      <td class="py-2.5 px-4">1,000 / mo</td>
+                      <td class="py-2.5 px-4 bg-stone-50 font-medium text-stone-900">10,000 / mo</td>
+                      <td class="py-2.5 px-4">CRM-based</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 px-4 font-medium text-stone-900">Closing Radar &amp; Intent Scoring</td>
+                      <td class="py-2.5 px-4 text-stone-400">—</td>
+                      <td class="py-2.5 px-4"><i data-lucide="check" class="w-3.5 h-3.5 text-stone-700"></i></td>
+                      <td class="py-2.5 px-4 bg-stone-50 font-medium text-stone-900"><i data-lucide="check" class="w-3.5 h-3.5 text-stone-900 stroke-[2.5]"></i></td>
+                      <td class="py-2.5 px-4 text-stone-400">—</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 px-4 font-medium text-stone-900">Team Seats &amp; Custom Permissions</td>
+                      <td class="py-2.5 px-4">2 seats</td>
+                      <td class="py-2.5 px-4">5 seats</td>
+                      <td class="py-2.5 px-4 bg-stone-50 font-medium text-stone-900">10 seats (custom roles)</td>
+                      <td class="py-2.5 px-4">Unlimited API</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 px-4 font-medium text-stone-900">Included Lite Seats</td>
+                      <td class="py-2.5 px-4 text-stone-400">—</td>
+                      <td class="py-2.5 px-4">20 Lite seats</td>
+                      <td class="py-2.5 px-4 bg-stone-50 font-medium text-stone-900">50 Lite seats</td>
+                      <td class="py-2.5 px-4">All helpdesks</td>
+                    </tr>
+                    <tr>
+                      <td class="py-2.5 px-4 font-medium text-stone-900">Dedicated SLA &amp; Support</td>
+                      <td class="py-2.5 px-4">Standard</td>
+                      <td class="py-2.5 px-4">Priority</td>
+                      <td class="py-2.5 px-4 bg-stone-50 font-medium text-stone-900">24/7 Dedicated Concierge</td>
+                      <td class="py-2.5 px-4">Standard</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Payment Method & Billing Details -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="app-panel space-y-3">
+              <h3 class="app-panel-title pb-2 border-b border-[#e7e5de]">Payment Method</h3>
+              <div class="flex items-center justify-between p-3.5 border border-[#e7e5de] bg-stone-50/60 rounded-[6px] text-xs">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-[4px] bg-white border border-[#e7e5de] flex items-center justify-center shrink-0">
+                    <i data-lucide="credit-card" class="w-4 h-4 text-stone-700"></i>
+                  </div>
+                  <div>
+                    <div class="font-semibold text-stone-900" id="billing-payment-card">HDFC Corporate Credit Card (••9124)</div>
+                    <div class="text-[11px] text-stone-400 mt-0.5">Auto-Debit Active • Next renewal Oct 29, 2026</div>
+                  </div>
+                </div>
+                <button class="btn-secondary btn-sm text-xs py-1.5 px-3 rounded-[4px] border-[#d5d2c8]" onclick="CuboidShell.toast('Payment gateway portal opened', 'info')">Update</button>
+              </div>
+            </div>
+
+            <div class="app-panel space-y-3">
+              <h3 class="app-panel-title pb-2 border-b border-[#e7e5de]">Billing Contact &amp; GST</h3>
+              <div class="p-3.5 border border-[#e7e5de] bg-stone-50/60 rounded-[6px] text-xs space-y-1.5" id="billing-contact-details">
+                <div class="flex items-center justify-between">
+                  <span class="text-stone-500">Legal Entity</span>
+                  <span class="font-medium text-stone-900" id="billing-company-legal-name">CuboidSoft Technologies Pvt Ltd</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-stone-500">GSTIN</span>
+                  <span class="font-mono text-stone-800">27AABCS9912F1Z8</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-stone-500">Billing Email</span>
+                  <span class="font-mono text-stone-800" id="billing-email-val">founder@cuboidsoft.in</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Invoices Table -->
+          <div class="app-panel space-y-3">
+            <h3 class="app-panel-title pb-2 border-b border-[#e7e5de]">Historical Tax Invoices</h3>
+            <div class="app-table-wrapper">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Invoice ID</th>
+                    <th>Billing Date</th>
+                    <th>Plan Period</th>
+                    <th>Amount Paid</th>
+                    <th>Status</th>
+                    <th class="text-right">Download</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-mono text-xs font-medium text-stone-900">#INV-2026-09-PRO</td>
+                    <td>Sep 29, 2026</td>
+                    <td>Sep 29 — Oct 29, 2026</td>
+                    <td class="font-medium text-stone-900">₹24,999 INR</td>
+                    <td>
+                      <span class="inline-flex items-center gap-1 text-[10px] font-mono font-medium px-2 py-0.5 bg-stone-100 text-stone-700 border border-stone-200 rounded-[3px]">Paid</span>
+                    </td>
+                    <td class="text-right">
+                      <button onclick="CuboidShell.toast('Downloading GST Tax Invoice PDF...', 'success')" class="text-xs text-stone-600 hover:text-stone-900 font-medium inline-flex items-center gap-1.5 py-1 px-2.5 bg-stone-50 hover:bg-stone-100 border border-[#e7e5de] rounded-[4px] transition-colors">
+                        <i data-lucide="download" class="w-3.5 h-3.5 text-stone-400"></i>
+                        <span>PDF</span>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    let currentBillingCycle = 'monthly';
+
+    function handleAnnualToggle(isAnnual) {
+      currentBillingCycle = isAnnual ? 'annual' : 'monthly';
+      const essentialEl = document.getElementById('price-essential');
+      const advancedEl = document.getElementById('price-advanced');
+      const expertEl = document.getElementById('price-expert');
+      const freqLabels = document.querySelectorAll('.billing-freq');
+
+      if (isAnnual) {
+        if (essentialEl) essentialEl.textContent = '₹1,299';
+        if (advancedEl) advancedEl.textContent = '₹4,999';
+        if (expertEl) expertEl.textContent = '₹14,999';
+        freqLabels.forEach(el => el.textContent = 'per seat/mo (billed annually)');
+      } else {
+        if (essentialEl) essentialEl.textContent = '₹1,999';
+        if (advancedEl) advancedEl.textContent = '₹6,999';
+        if (expertEl) expertEl.textContent = '₹19,999';
+        freqLabels.forEach(el => el.textContent = 'per seat/mo');
+      }
+    }
+
+    async function initiatePlanSelection(planCode, planName) {
+      try {
+        CuboidShell.toast(`Preparing ${planName} checkout session...`, 'info');
+        
+        // Step 1: Initialize Order (Ready for Razorpay / Stripe gateway)
+        const res = await fetch('../api/billing.php?action=create_order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            plan_code: planCode, 
+            billing_cycle: currentBillingCycle 
+          })
+        });
+        const orderData = await res.json();
+        if (!orderData || !orderData.success) {
+          CuboidShell.toast(orderData.error || 'Failed to initialize subscription order', 'error');
+          return;
+        }
+
+        // Step 2: Confirm Order & Activate Plan in DB
+        const upgradeRes = await fetch('../api/billing.php?action=upgrade', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            plan_code: planCode, 
+            billing_cycle: currentBillingCycle,
+            payment_id: 'pay_' + Math.random().toString(36).substring(2, 12),
+            order_id: orderData.order_id
+          })
+        });
+        const upgradeData = await upgradeRes.json();
+        if (upgradeData && upgradeData.success) {
+          CuboidShell.toast(`Plan changed to ${planName} successfully!`, 'success');
+          setTimeout(() => window.location.reload(), 1200);
+        } else {
+          CuboidShell.toast(upgradeData.error || 'Upgrade failed', 'error');
+        }
+      } catch (err) {
+        console.error('Plan selection error:', err);
+        CuboidShell.toast('Network error during checkout initialization', 'error');
+      }
+    }
+
+    function toggleFeatureComparison() {
+      const table = document.getElementById('feature-comparison-table');
+      const text = document.getElementById('comparison-toggle-text');
+      const chevron = document.getElementById('comparison-chevron');
+      if (!table) return;
+
+      const isHidden = table.classList.contains('hidden');
+      if (isHidden) {
+        table.classList.remove('hidden');
+        if (text) text.textContent = 'Hide all plan features';
+        if (chevron) chevron.classList.add('rotate-180');
+      } else {
+        table.classList.add('hidden');
+        if (text) text.textContent = 'Compare all plan features';
+        if (chevron) chevron.classList.remove('rotate-180');
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('billing', 'Billing', ['Manage']);
+      CuboidDashboard.loadBilling();
+    });
+  </script>
+</body>
+</html>

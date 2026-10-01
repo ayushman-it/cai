@@ -1,0 +1,30 @@
+﻿# Environments & Secrets
+.env
+.env.local
+.env.*.local
+*.log
+
+# Temp / Cache / OS
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+*.swp
+*~
+*.lock
+
+# IDE / Editor
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Dependencies / Vendor
+node_modules/
+vendor/
+
+# Scratch & Temporary Testing Directory
+scratch/
+tests/scratch/
+
+last_user_prompt.txt

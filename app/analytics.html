@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conversation Analytics — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <h1 class="app-page-title">Conversation Analytics</h1>
+              <p class="text-xs text-stone-500 mt-1">Operational business metrics focused on lead generation, AI accuracy, and revenue attribution.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <select class="app-select text-xs">
+                <option>Last 30 Days</option>
+                <option>Last 7 Days</option>
+                <option>Quarter to Date</option>
+              </select>
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3">
+                <i data-lucide="download" class="w-3.5 h-3.5 mr-1 text-stone-500"></i> Export Report
+              </button>
+            </div>
+          </div>
+
+          <!-- Top 7 Metrics Grid (Clean Columns, NO rainbow cards) -->
+          <div class="metric-grid">
+            <div class="metric-item">
+              <span class="text-xs text-stone-500 block mb-1">Total Conversations</span>
+              <div id="analytics-metric-convs" class="text-2xl font-medium text-stone-900">1,284</div>
+              <span class="text-[11px] text-stone-400 mt-1 block">Inbound volume</span>
+            </div>
+
+            <div class="metric-item">
+              <span class="text-xs text-stone-500 block mb-1">Leads Captured</span>
+              <div id="analytics-metric-leads" class="text-2xl font-medium text-stone-900">326</div>
+              <span class="text-[11px] text-emerald-700 font-medium mt-1 block">+18.4%</span>
+            </div>
+
+            <div class="metric-item">
+              <span class="text-xs text-stone-500 block mb-1">Qualification Rate</span>
+              <div id="analytics-metric-qual-rate" class="text-2xl font-medium text-stone-900">28.8%</div>
+              <span class="text-[11px] text-stone-400 mt-1 block">94 qualified leads</span>
+            </div>
+
+            <div class="metric-item">
+              <span class="text-xs text-stone-500 block mb-1">AI Resolution</span>
+              <div id="analytics-metric-ai-res" class="text-2xl font-medium text-stone-900">92.4%</div>
+              <span class="text-[11px] text-stone-400 mt-1 block">Autonomous</span>
+            </div>
+
+            <div class="metric-item">
+              <span class="text-xs text-stone-500 block mb-1">Human Handoff</span>
+              <div id="analytics-metric-human-handoff" class="text-2xl font-medium text-stone-900">7.6%</div>
+              <span class="text-[11px] text-stone-400 mt-1 block">Triage only</span>
+            </div>
+
+            <div class="metric-item">
+              <span class="text-xs text-stone-500 block mb-1">Conversion Rate</span>
+              <div id="analytics-metric-conversion" class="text-2xl font-medium text-emerald-800 font-semibold">29.7%</div>
+              <span class="text-[11px] text-emerald-700 font-medium mt-1 block">28 enrollments</span>
+            </div>
+
+            <div class="metric-item">
+              <span class="text-xs text-stone-500 block mb-1">Pipeline Attributed</span>
+              <div id="analytics-metric-pipeline" class="text-2xl font-medium text-stone-900">₹1,96,000</div>
+              <span class="text-[11px] text-stone-400 mt-1 block">Direct revenue</span>
+            </div>
+          </div>
+
+          <!-- Charts Row 1: Funnel & AI vs Human Ratio -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Funnel (7 Cols) -->
+            <div class="lg:col-span-7 app-panel">
+              <div class="app-panel-header">
+                <h3 class="app-panel-title">Conversation to Revenue Pipeline</h3>
+                <span class="text-xs font-mono text-stone-400">30 Day Attribution</span>
+              </div>
+
+              <!-- Clean Bar Graph Representation -->
+              <div class="space-y-4 text-xs pt-2">
+                <div>
+                  <div class="flex justify-between text-stone-600 mb-1">
+                    <span>1. Website Inbound Chats</span>
+                    <span class="font-medium text-stone-900">1,284 sessions (100%)</span>
+                  </div>
+                  <div class="w-full h-3 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-full h-full bg-stone-900"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-stone-600 mb-1">
+                    <span>2. Leads Identified & Profiled</span>
+                    <span class="font-medium text-stone-900">326 leads (25.3%)</span>
+                  </div>
+                  <div class="w-full h-3 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[65%] h-full bg-stone-800"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-stone-600 mb-1">
+                    <span>3. High-Intent Qualified</span>
+                    <span class="font-medium text-stone-900">94 qualified (28.8% of leads)</span>
+                  </div>
+                  <div class="w-full h-3 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[38%] h-full bg-amber-600"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-stone-600 mb-1">
+                    <span>4. WhatsApp Continued Discussions</span>
+                    <span class="font-medium text-stone-900">58 handshakes (61.7%)</span>
+                  </div>
+                  <div class="w-full h-3 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[24%] h-full bg-sky-700"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-stone-600 mb-1">
+                    <span>5. Paid Course Enrollments</span>
+                    <span class="font-semibold text-emerald-800">28 closed (29.7% win rate)</span>
+                  </div>
+                  <div class="w-full h-3 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[14%] h-full bg-emerald-600"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- AI vs Human Triage (5 Cols) -->
+            <div class="lg:col-span-5 app-panel">
+              <div class="app-panel-header">
+                <h3 class="app-panel-title">Autonomous Resolution Ratio</h3>
+                <span class="text-xs text-stone-400">92.4% vs 7.6%</span>
+              </div>
+
+              <div class="p-4 bg-stone-50 border border-stone-200 rounded-[4px] space-y-3 text-xs mb-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-stone-600">AI Handled Completely</span>
+                  <span class="font-semibold text-stone-900">1,186 chats</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-stone-600">Counselor Assigned</span>
+                  <span class="font-semibold text-stone-900">98 chats</span>
+                </div>
+                <div class="flex items-center justify-between border-t border-stone-200 pt-2">
+                  <span class="text-stone-600">Average AI Latency</span>
+                  <span class="font-mono text-emerald-800 font-semibold">0.4 seconds</span>
+                </div>
+              </div>
+
+              <p class="text-[11.5px] text-stone-500 leading-relaxed">
+                By answering routine eligibility and syllabus inquiries autonomously, your team saved an estimated <strong>142 hours</strong> of manual desk time this month.
+              </p>
+            </div>
+
+          </div>
+
+          <!-- Charts Row 2: Top Customer Questions & Lead Acquisition Sources -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- Top Questions (6 Cols) -->
+            <div class="lg:col-span-6 app-panel">
+              <div class="app-panel-header">
+                <h3 class="app-panel-title">Top Inbound Customer Questions</h3>
+                <span class="text-xs text-stone-400">Volume</span>
+              </div>
+
+              <div class="space-y-2 text-xs">
+                <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-[4px]">
+                  <span class="font-medium text-stone-900">“Do you offer zero-interest EMI plans?”</span>
+                  <span class="font-mono text-stone-500">312 times</span>
+                </div>
+                <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-[4px]">
+                  <span class="font-medium text-stone-900">“What is the placement record & average salary?”</span>
+                  <span class="font-mono text-stone-500">248 times</span>
+                </div>
+                <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-[4px]">
+                  <span class="font-medium text-stone-900">“Are classes available on weekends for professionals?”</span>
+                  <span class="font-mono text-stone-500">190 times</span>
+                </div>
+                <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-[4px]">
+                  <span class="font-medium text-stone-900">“When does the next Full Stack batch commence?”</span>
+                  <span class="font-mono text-stone-500">142 times</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lead Sources (6 Cols) -->
+            <div class="lg:col-span-6 app-panel">
+              <div class="app-panel-header">
+                <h3 class="app-panel-title">Lead Acquisition Sources</h3>
+                <span class="text-xs text-stone-400">Distribution</span>
+              </div>
+
+              <div class="space-y-3 text-xs pt-1">
+                <div>
+                  <div class="flex justify-between mb-1 text-stone-600">
+                    <span>Website / Pricing Page</span>
+                    <span class="font-medium text-stone-900">184 leads (56%)</span>
+                  </div>
+                  <div class="w-full h-2 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[56%] h-full bg-stone-900"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between mb-1 text-stone-600">
+                    <span>Course Curriculum Landing Pages</span>
+                    <span class="font-medium text-stone-900">92 leads (28%)</span>
+                  </div>
+                  <div class="w-full h-2 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[28%] h-full bg-stone-700"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between mb-1 text-stone-600">
+                    <span>Direct WhatsApp Inbound</span>
+                    <span class="font-medium text-stone-900">34 leads (10%)</span>
+                  </div>
+                  <div class="w-full h-2 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[10%] h-full bg-emerald-700"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between mb-1 text-stone-600">
+                    <span>Blog & Article Referrals</span>
+                    <span class="font-medium text-stone-900">16 leads (6%)</span>
+                  </div>
+                  <div class="w-full h-2 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[6%] h-full bg-stone-400"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('analytics', 'Analytics', ['Insights']);
+    });
+  </script>
+</body>
+</html>

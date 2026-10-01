@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lead Dossier — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Dossier Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div class="flex items-center gap-3">
+              <div id="lead-dossier-avatar" class="w-11 h-11 rounded-[4px] bg-stone-900 text-white flex items-center justify-center font-bold text-sm">RS</div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h1 id="lead-dossier-name" class="text-xl font-medium tracking-tight text-[#111111]">Rahul Sharma</h1>
+                  <span id="lead-priority-badge" class="badge-signal-amber text-xs font-semibold">HIGH INTENT</span>
+                  <span id="lead-stage-badge" class="badge-signal-green text-xs font-semibold">QUALIFIED</span>
+                </div>
+                <div id="lead-dossier-subtitle" class="text-xs text-stone-500 mt-0.5">Software Engineer at Infosys • Potential: ₹45,000</div>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <a href="conversations.html" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+                <i data-lucide="message-square" class="w-3.5 h-3.5 mr-1 text-stone-500"></i> Open Chat
+              </a>
+              <a id="lead-whatsapp-btn" href="https://wa.me" target="_blank" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+                <i data-lucide="phone" class="w-3.5 h-3.5 mr-1 text-emerald-600"></i> WhatsApp
+              </a>
+              <button class="app-action-feedback btn-primary btn-sm text-xs py-1.5 px-3">Mark Won</button>
+              <button id="lead-delete-btn" onclick="CuboidDashboard.deleteCurrentLead()" class="btn-secondary btn-sm text-xs py-1.5 px-3 text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 inline-flex items-center gap-1.5" title="Permanently delete this contact">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- Left 7 Cols: Context, Summary, Objections -->
+            <div class="lg:col-span-7 space-y-5">
+              
+              <!-- AI Synthesis Panel -->
+              <div class="app-panel">
+                <div class="app-panel-header">
+                  <h3 class="app-panel-title flex items-center gap-1.5">
+                    <i data-lucide="sparkles" class="w-4 h-4 text-amber-600"></i>
+                    AI Intent Summary & Synthesis
+                  </h3>
+                  <span class="text-xs text-stone-400 font-mono">Grounded Analysis</span>
+                </div>
+
+                <p id="lead-ai-summary" class="text-xs text-stone-700 leading-relaxed mb-4">
+                  Rahul is an experienced backend developer looking to upskill into Full Stack & Cloud architecture. He engaged the website widget for 14 minutes and asked targeted questions regarding tuition fees, 3-month zero-interest installments, and placement records.
+                </p>
+
+                <div class="p-3.5 bg-amber-50/70 border border-amber-200 rounded-[4px] text-xs">
+                  <span class="font-semibold text-amber-950 block mb-0.5">Recommended Next Action</span>
+                  <div id="lead-recommended-action" class="text-stone-800">
+                    Call today before 12:00 PM. Confirm the 3-month zero-cost EMI breakdown and send seat reservation payment link over WhatsApp.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Contact & Organization Attributes -->
+              <div class="app-panel">
+                <div class="app-panel-header">
+                  <h3 class="app-panel-title">Contact & CRM Details</h3>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <span class="text-stone-400 block mb-0.5">Phone (WhatsApp)</span>
+                    <span id="lead-phone" class="font-mono text-stone-900 font-medium">+91 98400 12890</span>
+                  </div>
+                  <div>
+                    <span class="text-stone-400 block mb-0.5">Email</span>
+                    <span id="lead-email" class="text-stone-900">rahul.sharma@example.com</span>
+                  </div>
+                  <div>
+                    <span class="text-stone-400 block mb-0.5">Assigned Counselor</span>
+                    <span id="lead-assigned" class="text-stone-900">Arjun Mehta</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Right 5 Cols: Complete Journey Timeline -->
+            <div class="lg:col-span-5 app-panel">
+              <div class="app-panel-header">
+                <h3 class="app-panel-title">Customer Journey Timeline</h3>
+                <span class="text-xs text-stone-400 font-mono">Real-time</span>
+              </div>
+
+              <div id="lead-journey-timeline" class="space-y-4 border-l border-stone-200 pl-4 ml-2 text-xs">
+                
+                <div class="relative">
+                  <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-stone-300"></div>
+                  <div class="font-mono text-[10.5px] text-stone-400">10:42 AM</div>
+                  <div class="font-medium text-stone-900">Visited Website</div>
+                  <div class="text-[11px] text-stone-500">Landed directly on /programs/fullstack-engineering via Google.</div>
+                </div>
+
+                <div class="relative">
+                  <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-stone-400"></div>
+                  <div class="font-mono text-[10.5px] text-stone-400">10:44 AM</div>
+                  <div class="font-medium text-stone-900">Started AI Conversation</div>
+                  <div class="text-[11px] text-stone-500">Asked: “Does the track cover Next.js 15 & AWS cloud?”</div>
+                </div>
+
+                <div class="relative">
+                  <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-amber-500"></div>
+                  <div class="font-mono text-[10.5px] text-stone-400">10:46 AM</div>
+                  <div class="font-medium text-stone-900">High Intent Detected</div>
+                  <div class="text-[11px] text-stone-500">Asked about 3-month EMI options and seat availability.</div>
+                </div>
+
+                <div class="relative">
+                  <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-stone-500"></div>
+                  <div class="font-mono text-[10.5px] text-stone-400">10:47 AM</div>
+                  <div class="font-medium text-stone-900">Lead Captured & CRM Entity Created</div>
+                  <div class="text-[11px] text-stone-500">Name and phone synced into built-in CRM.</div>
+                </div>
+
+                <div class="relative">
+                  <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                  <div class="font-mono text-[10.5px] text-stone-400">10:50 AM</div>
+                  <div class="font-medium text-stone-900">Continued on WhatsApp</div>
+                  <div class="text-[11px] text-stone-500">Thread mirrored to phone without context loss.</div>
+                </div>
+
+                <div class="relative">
+                  <div class="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-stone-900"></div>
+                  <div class="font-mono text-[10.5px] text-stone-400">11:02 AM</div>
+                  <div class="font-medium text-stone-900">Human Assigned</div>
+                  <div class="text-[11px] text-stone-500">Allocated to Arjun Mehta with synthesized briefing card.</div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('leads', 'Lead Dossier', ['Customers', 'Leads']);
+      CuboidDashboard.loadLeadDetail();
+    });
+  </script>
+</body>
+</html>

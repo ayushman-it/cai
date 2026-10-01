@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect WhatsApp — Onboarding — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="bg-[#fcfbfa] text-[#111111] antialiased flex flex-col justify-between min-h-screen">
+
+  <header class="py-5 px-8 border-b border-[#e7e5de] bg-white flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-7 h-7 rounded-[4px] bg-[#111111] text-white flex items-center justify-center font-bold text-xs tracking-wider">CP</div>
+      <span class="text-sm font-semibold tracking-tight">CuboidPilot Setup</span>
+    </div>
+    
+    <div class="hidden sm:flex items-center gap-2 text-xs font-medium">
+      <a href="business.html" class="text-stone-500 hover:underline">1. Business</a>
+      <span class="text-stone-300">&rarr;</span>
+      <a href="goals.html" class="text-stone-500 hover:underline">2. Goals</a>
+      <span class="text-stone-300">&rarr;</span>
+      <a href="ai.html" class="text-stone-500 hover:underline">3. AI Engine</a>
+      <span class="text-stone-300">&rarr;</span>
+      <a href="website.html" class="text-stone-500 hover:underline">4. Website</a>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-[#111111] font-semibold">5. WhatsApp</span>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-stone-400">6. Ready</span>
+    </div>
+
+    <div class="text-xs text-stone-400">Step 5 of 6</div>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center p-6">
+    <div class="w-full max-w-[540px] bg-white border border-[#e7e5de] rounded-[6px] p-8">
+      
+      <div class="mb-6">
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 block mb-1">Mobile Continuity</span>
+        <h1 class="text-2xl font-medium tracking-tight text-[#111111]">Connect WhatsApp Business</h1>
+        <p class="text-xs text-stone-500 mt-1">Continue customer conversations effortlessly and alert your team the moment human attention is necessary.</p>
+      </div>
+
+      <!-- Connected State Container -->
+      <div class="p-4 bg-stone-50 border border-stone-200 rounded-[4px] mb-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-[4px] bg-emerald-600 text-white flex items-center justify-center">
+            <i data-lucide="message-circle" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-stone-900">+91 98400 12890</div>
+            <div class="text-[11px] text-stone-500">Official Business Account • Cloud API</div>
+          </div>
+        </div>
+        <span class="badge-signal-green text-[10px]">Connected</span>
+      </div>
+
+      <div class="mb-6">
+        <div class="text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">
+          Notification Preferences (Triage Alerts)
+        </div>
+        <p class="text-[11px] text-stone-400 mb-3">Notice: We do NOT spam your phone with every generic FAQ. Only high-value priority alerts are delivered.</p>
+
+        <div class="space-y-2.5 text-xs">
+          <label class="flex items-center justify-between p-3 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer">
+            <div>
+              <div class="font-medium text-stone-900">High-intent qualified leads</div>
+              <div class="text-[11px] text-stone-400">Budget confirmed & purchasing signals detected.</div>
+            </div>
+            <input type="checkbox" checked class="rounded-[3px] text-stone-900 focus:ring-0">
+          </label>
+
+          <label class="flex items-center justify-between p-3 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer">
+            <div>
+              <div class="font-medium text-stone-900">Human assistance requested</div>
+              <div class="text-[11px] text-stone-400">Visitor clicked "Talk to person" or expressed frustration.</div>
+            </div>
+            <input type="checkbox" checked class="rounded-[3px] text-stone-900 focus:ring-0">
+          </label>
+
+          <label class="flex items-center justify-between p-3 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer">
+            <div>
+              <div class="font-medium text-stone-900">Payment & checkout drop-off</div>
+              <div class="text-[11px] text-stone-400">Cart abandoned or transaction stalled.</div>
+            </div>
+            <input type="checkbox" checked class="rounded-[3px] text-stone-900 focus:ring-0">
+          </label>
+
+          <label class="flex items-center justify-between p-3 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer">
+            <div>
+              <div class="font-medium text-stone-900">Follow-up overdue (&gt; 4 hours)</div>
+              <div class="text-[11px] text-stone-400">Assigned sales lead left unattended.</div>
+            </div>
+            <input type="checkbox" checked class="rounded-[3px] text-stone-900 focus:ring-0">
+          </label>
+        </div>
+      </div>
+
+      <div class="pt-2 flex items-center justify-between border-t border-[#e7e5de]">
+        <a href="website.html" class="text-xs text-stone-500 hover:text-stone-900">&larr; Back to Website</a>
+        <a href="ready.html" class="btn-primary py-2 px-5 text-xs font-medium">
+          Complete Setup &rarr;
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="py-4 text-center text-xs text-stone-400 border-t border-[#e7e5de] bg-white">
+    Step 5 of 6 • WhatsApp Cloud API integration with end-to-end encryption.
+  </footer>
+
+  <script>
+    if (window.lucide) window.lucide.createIcons();
+  </script>
+</body>
+</html>

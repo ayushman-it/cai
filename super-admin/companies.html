@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Companies Directory — Super Admin — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="app-page-title">Tenant Companies</h1>
+                <span class="text-xs font-semibold bg-stone-100 text-stone-700 px-2 py-0.5 rounded-[3px]">142 Total Accounts</span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Full directory of active, trial, and enterprise organizations hosted on the CuboidPilot cluster.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="alert('Exporting CSV directory')">
+                <i data-lucide="download" class="w-3.5 h-3.5 mr-1.5"></i>
+                Export CSV
+              </button>
+              <button class="btn-primary btn-sm text-xs py-1.5 px-3.5" onclick="openModal('provision-modal')">
+                <i data-lucide="plus" class="w-3.5 h-3.5 mr-1.5"></i>
+                Provision Company
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter & Search Toolbar -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 border border-[#e7e5de] rounded-[4px]">
+            <div class="flex items-center gap-2 flex-1">
+              <div class="relative w-full max-w-sm">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></i>
+                <input type="text" id="company-search-input" placeholder="Search company, domain, or owner..." class="app-input pl-8 text-xs w-full">
+              </div>
+
+              <select class="app-input text-xs w-36 bg-white hidden md:block">
+                <option value="all">All Plans</option>
+                <option value="growth">Growth ($149)</option>
+                <option value="scale">Scale Pro ($399)</option>
+                <option value="starter">Starter ($49)</option>
+                <option value="enterprise">Enterprise</option>
+              </select>
+
+              <select class="app-input text-xs w-36 bg-white hidden md:block">
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="trial">Trial (14d)</option>
+                <option value="past_due">Past Due</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </div>
+
+            <div class="text-[11px] text-stone-400 flex items-center gap-2">
+              <span>Sort by:</span>
+              <button class="text-stone-700 font-medium hover:underline">Recent Signups &darr;</button>
+            </div>
+          </div>
+
+          <!-- Company Directory Table -->
+          <div class="app-panel p-0 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Company Name</th>
+                    <th>Plan & Billing</th>
+                    <th>Owner</th>
+                    <th>AI Quota Used</th>
+                    <th>WhatsApp Sync</th>
+                    <th>Created</th>
+                    <th>Status</th>
+                    <th class="text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="company-rows">
+                  
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=acme" class="flex items-center gap-2.5 text-[#111111] hover:underline">
+                        <div class="w-7 h-7 rounded-[4px] bg-stone-900 text-white flex items-center justify-center font-bold text-xs">
+                          AA
+                        </div>
+                        <div>
+                          <div class="font-medium text-stone-900 text-xs">Acme Academy</div>
+                          <div class="text-[11px] text-stone-400 font-mono">acmeacademy.in</div>
+                        </div>
+                      </a>
+                    </td>
+                    <td>
+                      <div class="text-xs font-semibold text-stone-900">Growth Plan</div>
+                      <div class="text-[11px] text-stone-500">$149 / mo • Auto-renew</div>
+                    </td>
+                    <td>
+                      <div class="text-xs text-stone-800">Arjun Mehta</div>
+                      <div class="text-[11px] text-stone-400">arjun@acmeacademy.in</div>
+                    </td>
+                    <td>
+                      <div class="text-xs font-mono text-stone-800">742 / 1,500 <span class="text-stone-400">(49%)</span></div>
+                      <div class="w-24 h-1 bg-stone-200 rounded-[1px] mt-1 overflow-hidden">
+                        <div class="w-[49%] h-full bg-stone-900"></div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge-signal-green text-[10px]">Connected (+91 98200)</span>
+                    </td>
+                    <td class="text-xs text-stone-500">Sep 28, 2026</td>
+                    <td><span class="badge-signal-green text-[10px]">Active</span></td>
+                    <td class="text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <a href="company-detail.html?id=acme" class="btn-secondary btn-sm text-xs py-1 px-2.5">Inspect</a>
+                        <a href="../app/overview.html" class="text-xs text-stone-400 hover:text-stone-900 px-1.5 py-1" title="Impersonate / Login as Tenant">
+                          <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                        </a>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=zenith" class="flex items-center gap-2.5 text-[#111111] hover:underline">
+                        <div class="w-7 h-7 rounded-[4px] bg-stone-700 text-white flex items-center justify-center font-bold text-xs">
+                          ZF
+                        </div>
+                        <div>
+                          <div class="font-medium text-stone-900 text-xs">Zenith Fitness Tech</div>
+                          <div class="text-[11px] text-stone-400 font-mono">zenithfit.co.uk</div>
+                        </div>
+                      </a>
+                    </td>
+                    <td>
+                      <div class="text-xs font-semibold text-stone-900">Growth Plan</div>
+                      <div class="text-[11px] text-stone-500">$149 / mo • Auto-renew</div>
+                    </td>
+                    <td>
+                      <div class="text-xs text-stone-800">David Miller</div>
+                      <div class="text-[11px] text-stone-400">david@zenithfit.co.uk</div>
+                    </td>
+                    <td>
+                      <div class="text-xs font-mono text-amber-700 font-semibold">1,410 / 1,500 <span class="text-amber-600">(94%)</span></div>
+                      <div class="w-24 h-1 bg-stone-200 rounded-[1px] mt-1 overflow-hidden">
+                        <div class="w-[94%] h-full bg-amber-600"></div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge-signal-green text-[10px]">Connected (+44 7911)</span>
+                    </td>
+                    <td class="text-xs text-stone-500">Aug 14, 2026</td>
+                    <td><span class="badge-signal-amber text-[10px]">High Quota</span></td>
+                    <td class="text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <a href="company-detail.html?id=zenith" class="btn-secondary btn-sm text-xs py-1 px-2.5">Inspect</a>
+                        <button class="text-xs text-stone-400 hover:text-stone-900 px-1.5 py-1" title="Impersonate / Login as Tenant">
+                          <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=novacare" class="flex items-center gap-2.5 text-[#111111] hover:underline">
+                        <div class="w-7 h-7 rounded-[4px] bg-purple-900 text-white flex items-center justify-center font-bold text-xs">
+                          NC
+                        </div>
+                        <div>
+                          <div class="font-medium text-stone-900 text-xs">NovaCare Health Systems</div>
+                          <div class="text-[11px] text-stone-400 font-mono">novacare.ae</div>
+                        </div>
+                      </a>
+                    </td>
+                    <td>
+                      <div class="text-xs font-semibold text-stone-900">Scale Pro</div>
+                      <div class="text-[11px] text-stone-500">$399 / mo • Wire Transfer</div>
+                    </td>
+                    <td>
+                      <div class="text-xs text-stone-800">Dr. Sarah Al-Hassan</div>
+                      <div class="text-[11px] text-stone-400">admin@novacare.ae</div>
+                    </td>
+                    <td>
+                      <div class="text-xs font-mono text-stone-800">1,820 / 5,000 <span class="text-stone-400">(36%)</span></div>
+                      <div class="w-24 h-1 bg-stone-200 rounded-[1px] mt-1 overflow-hidden">
+                        <div class="w-[36%] h-full bg-stone-900"></div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge-signal-green text-[10px]">Connected (+971 50)</span>
+                    </td>
+                    <td class="text-xs text-stone-500">Jul 02, 2026</td>
+                    <td><span class="badge-signal-green text-[10px]">Active</span></td>
+                    <td class="text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <a href="company-detail.html?id=novacare" class="btn-secondary btn-sm text-xs py-1 px-2.5">Inspect</a>
+                        <button class="text-xs text-stone-400 hover:text-stone-900 px-1.5 py-1" title="Impersonate / Login as Tenant">
+                          <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=solaris" class="flex items-center gap-2.5 text-[#111111] hover:underline">
+                        <div class="w-7 h-7 rounded-[4px] bg-amber-700 text-white flex items-center justify-center font-bold text-xs">
+                          SH
+                        </div>
+                        <div>
+                          <div class="font-medium text-stone-900 text-xs">Solaris Home Energy</div>
+                          <div class="text-[11px] text-stone-400 font-mono">solarishome.io</div>
+                        </div>
+                      </a>
+                    </td>
+                    <td>
+                      <div class="text-xs font-semibold text-stone-900">Starter Plan</div>
+                      <div class="text-[11px] text-stone-500">$49 / mo • Credit Card</div>
+                    </td>
+                    <td>
+                      <div class="text-xs text-stone-800">Carlos Gomez</div>
+                      <div class="text-[11px] text-stone-400">carlos@solarishome.io</div>
+                    </td>
+                    <td>
+                      <div class="text-xs font-mono text-stone-800">210 / 500 <span class="text-stone-400">(42%)</span></div>
+                      <div class="w-24 h-1 bg-stone-200 rounded-[1px] mt-1 overflow-hidden">
+                        <div class="w-[42%] h-full bg-stone-900"></div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge-signal-green text-[10px]">Connected (+1 512)</span>
+                    </td>
+                    <td class="text-xs text-stone-500">Sep 10, 2026</td>
+                    <td><span class="badge-signal-red text-[10px]">Payment Failed</span></td>
+                    <td class="text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <a href="company-detail.html?id=solaris" class="btn-secondary btn-sm text-xs py-1 px-2.5">Inspect</a>
+                        <button class="text-xs text-stone-400 hover:text-stone-900 px-1.5 py-1" title="Impersonate / Login as Tenant">
+                          <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=urbanedge" class="flex items-center gap-2.5 text-[#111111] hover:underline">
+                        <div class="w-7 h-7 rounded-[4px] bg-stone-800 text-white flex items-center justify-center font-bold text-xs">
+                          UE
+                        </div>
+                        <div>
+                          <div class="font-medium text-stone-900 text-xs">Urban Edge Realty</div>
+                          <div class="text-[11px] text-stone-400 font-mono">urbanedgerealty.in</div>
+                        </div>
+                      </a>
+                    </td>
+                    <td>
+                      <div class="text-xs font-semibold text-stone-900">Trial Period</div>
+                      <div class="text-[11px] text-stone-500">11 days remaining</div>
+                    </td>
+                    <td>
+                      <div class="text-xs text-stone-800">Vikram Singhania</div>
+                      <div class="text-[11px] text-stone-400">vikram@urbanedgerealty.in</div>
+                    </td>
+                    <td>
+                      <div class="text-xs font-mono text-stone-800">84 / 200 <span class="text-stone-400">(42%)</span></div>
+                      <div class="w-24 h-1 bg-stone-200 rounded-[1px] mt-1 overflow-hidden">
+                        <div class="w-[42%] h-full bg-stone-900"></div>
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge-signal-amber text-[10px]">Pending Pairing</span>
+                    </td>
+                    <td class="text-xs text-stone-500">Sep 26, 2026</td>
+                    <td><span class="badge-signal-blue text-[10px]">In Trial</span></td>
+                    <td class="text-right">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <a href="company-detail.html?id=urbanedge" class="btn-secondary btn-sm text-xs py-1 px-2.5">Inspect</a>
+                        <button class="text-xs text-stone-400 hover:text-stone-900 px-1.5 py-1" title="Impersonate / Login as Tenant">
+                          <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination Bar -->
+            <div class="p-3 border-t border-[#e7e5de] bg-[#fcfbfa] flex items-center justify-between text-xs text-stone-500">
+              <div>Showing <span class="font-medium text-stone-800">1 – 5</span> of <span class="font-medium text-stone-800">142</span> companies</div>
+              <div class="flex items-center gap-1.5">
+                <button class="btn-secondary btn-sm text-xs py-1 px-2.5" disabled>Previous</button>
+                <button class="btn-secondary btn-sm text-xs py-1 px-2.5 bg-stone-100 font-semibold">1</button>
+                <button class="btn-secondary btn-sm text-xs py-1 px-2.5">2</button>
+                <button class="btn-secondary btn-sm text-xs py-1 px-2.5">3</button>
+                <span class="px-1 text-stone-400">...</span>
+                <button class="btn-secondary btn-sm text-xs py-1 px-2.5">29</button>
+                <button class="btn-secondary btn-sm text-xs py-1 px-2.5">Next</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Provision Modal -->
+  <div id="provision-modal" class="app-modal-overlay">
+    <div class="app-modal max-w-lg">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de]">
+        <h3 class="text-sm font-semibold text-stone-900">Provision New Organization Tenant</h3>
+        <button onclick="closeModal('provision-modal')" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form onsubmit="CuboidDashboard.submitProvisionTenant(event)" class="py-4 space-y-4 text-xs">
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Company Legal Name</label>
+          <input type="text" id="provision-name" required placeholder="e.g. Apex Global Tech" class="app-input text-xs w-full">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Admin Email</label>
+            <input type="email" id="provision-email" required placeholder="admin@domain.com" class="app-input text-xs w-full">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Assigned Plan</label>
+            <select id="provision-plan" class="app-input text-xs w-full bg-white">
+              <option value="growth">Growth ($149/mo)</option>
+              <option value="scale">Scale Pro ($399/mo)</option>
+              <option value="starter">Starter ($49/mo)</option>
+              <option value="trial">14-Day Free Trial</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Tenant Subdomain</label>
+          <div class="flex items-center">
+            <input type="text" id="provision-subdomain" placeholder="apex" class="app-input text-xs rounded-r-none w-full">
+            <span class="px-2.5 py-1.5 bg-stone-100 border border-l-0 border-[#e7e5de] text-stone-500 rounded-r-[4px]">.cuboidpilot.com</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] text-[11px] text-stone-600">
+          A provisioning activation link will be dispatched to the admin email with initial root workspace credentials.
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#e7e5de]">
+          <button type="button" onclick="closeModal('provision-modal')" class="btn-secondary btn-sm text-xs py-1.5 px-3">Cancel</button>
+          <button type="submit" id="provision-submit-btn" class="btn-primary btn-sm text-xs py-1.5 px-4 flex items-center gap-1.5">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Create Organization</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initSuperAdmin('companies', 'Tenant Directory', ['Business']);
+      if (window.CuboidDashboard && typeof window.CuboidDashboard.loadSuperAdminCompanies === 'function') {
+        window.CuboidDashboard.loadSuperAdminCompanies();
+      }
+    });
+  </script>
+</body>
+</html>

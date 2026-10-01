@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cai Live Widget Embed</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    #hero-cai-root, #cuboidpilot-widget-host {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="hero-cai-root"></div>
+  <script 
+    src="widget.js" 
+    data-company="cp_live_cuboidsoft" 
+    data-embedded="true" 
+    data-target="#hero-cai-root"
+  ></script>
+</body>
+</html>

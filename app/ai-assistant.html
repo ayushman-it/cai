@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Assistant Configuration — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll bg-white">
+        <div class="w-full space-y-6">
+          
+          <!-- Intercom-Style Page Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h1 class="text-xl md:text-2xl font-bold text-stone-900 tracking-tight">AI Assistant</h1>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-[4px] text-[11px] font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                  <span>Active &amp; Grounded</span>
+                </span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Configure persona, customize greeting prompts, and manage autonomous resolution guardrails.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="window.CuboidShell && window.CuboidShell.openBottomWidget()" class="bg-[#111111] hover:bg-black text-white text-xs font-medium py-1.5 px-3.5 rounded-md inline-flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer" title="Test Live Widget">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-300"></i>
+                <span>Test Live Assistant</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Intercom Segmented Flat Tabs -->
+          <div class="flex items-center gap-1 border-b border-[#e7e5de] pb-px text-xs">
+            <button class="assistant-tab px-3.5 py-2 font-medium border-b-2 border-stone-900 text-stone-900 transition-colors" data-tab="tab-settings">Assistant Settings</button>
+            <button class="assistant-tab px-3.5 py-2 font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-900 transition-colors" data-tab="tab-overview">Overview &amp; Metrics</button>
+            <button class="assistant-tab px-3.5 py-2 font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-900 transition-colors" data-tab="tab-knowledge">Knowledge Sources</button>
+            <button class="assistant-tab px-3.5 py-2 font-medium border-b-2 border-transparent text-stone-500 hover:text-stone-900 transition-colors" data-tab="tab-capture">Lead Capture</button>
+          </div>
+
+          <!-- TAB 1: SETTINGS (Identity, Greeting & Live Widget Connection) -->
+          <div id="tab-settings" class="assistant-tab-content space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              <!-- Persona & Identity Form (Left 7 Cols) -->
+              <div class="lg:col-span-7 space-y-5">
+                
+                <form id="assistant-settings-form" onsubmit="CuboidDashboard.saveAssistantSettings(event)" class="app-panel space-y-4">
+                  <div class="pb-2 border-b border-[#e7e5de] flex items-center justify-between">
+                    <div>
+                      <h3 class="app-panel-title">Assistant Identity &amp; Greeting</h3>
+                      <p class="text-[11px] text-stone-500 mt-0.5">Control the public brand name, initial welcome message, and response tone.</p>
+                    </div>
+                    <span class="text-[10px] font-mono text-stone-400 bg-stone-50 border border-[#e7e5de] px-2 py-0.5 rounded">Database Synced</span>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-stone-700 mb-1">Assistant Brand Name</label>
+                    <input type="text" id="assistant-brand-name" required placeholder="e.g. CuboidSoft AI" class="app-input w-full text-xs rounded-md" oninput="CuboidDashboard.updateAssistantPreview()">
+                    <p class="text-[11px] text-stone-400 mt-1">Displayed in website chat header, message bubbles, and prospect notifications.</p>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-stone-700 mb-1">Greeting Heading (Welcome Prompt)</label>
+                    <textarea id="assistant-greeting-heading" rows="2" required placeholder="e.g. Ask anything about our admissions, fee structure & EMI." class="app-textarea w-full text-xs rounded-md" oninput="CuboidDashboard.updateAssistantPreview()"></textarea>
+                    <p class="text-[11px] text-stone-400 mt-1">The primary headline message shown to first-time website visitors.</p>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-stone-700 mb-1">Greeting Subheading / Supporting Context</label>
+                    <input type="text" id="assistant-greeting-subheading" placeholder="e.g. Instant AI answers powered by verified academy documents." class="app-input w-full text-xs rounded-md" oninput="CuboidDashboard.updateAssistantPreview()">
+                    <p class="text-[11px] text-stone-400 mt-1">Secondary guidance rendered below the primary headline.</p>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-stone-700 mb-1">Conversational Tone</label>
+                    <div class="grid grid-cols-3 gap-2">
+                      <label class="p-2.5 border border-stone-900 bg-stone-50 rounded-md text-xs font-medium text-stone-900 cursor-pointer text-center tone-option transition-colors">
+                        <input type="radio" name="tone_setting" value="professional" checked class="hidden" onchange="CuboidDashboard.selectTone(this)">
+                        Professional
+                      </label>
+                      <label class="p-2.5 border border-stone-200 hover:border-stone-400 rounded-md text-xs font-medium text-stone-600 cursor-pointer text-center tone-option transition-colors">
+                        <input type="radio" name="tone_setting" value="friendly" class="hidden" onchange="CuboidDashboard.selectTone(this)">
+                        Friendly &amp; Warm
+                      </label>
+                      <label class="p-2.5 border border-stone-200 hover:border-stone-400 rounded-md text-xs font-medium text-stone-600 cursor-pointer text-center tone-option transition-colors">
+                        <input type="radio" name="tone_setting" value="concise" class="hidden" onchange="CuboidDashboard.selectTone(this)">
+                        Concise &amp; Direct
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- Fallback Action -->
+                  <div class="pt-3 border-t border-[#e7e5de]">
+                    <label class="block text-xs font-medium text-stone-700 mb-2">When inquiry is beyond grounded knowledge:</label>
+                    <div class="space-y-2 text-xs">
+                      <label class="flex items-center gap-2.5 p-2.5 border border-stone-900 bg-stone-50 rounded-md cursor-pointer">
+                        <input type="radio" name="fallback_action" value="counselor_task" checked class="text-stone-900">
+                        <div>
+                          <div class="font-medium text-stone-900">Collect Contact &amp; Create Counselor Follow-Up Task</div>
+                          <div class="text-stone-500 text-[11px]">Politely asks visitor for WhatsApp number so our human team can answer accurately.</div>
+                        </div>
+                      </label>
+                      <label class="flex items-center gap-2.5 p-2.5 border border-stone-200 rounded-md cursor-pointer hover:border-stone-400 transition-colors">
+                        <input type="radio" name="fallback_action" value="agent_queue" class="text-stone-900">
+                        <div>
+                          <div class="font-medium text-stone-900">Escalate Instantly to Live Agent Radar</div>
+                          <div class="text-stone-500 text-[11px]">Marks conversation as &quot;Needs Human Takeover&quot; immediately.</div>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="pt-2">
+                    <button type="submit" id="save-assistant-btn" class="bg-[#111111] hover:bg-black text-white text-xs font-medium py-2 px-4 rounded-md w-full flex items-center justify-center gap-1.5 transition-colors shadow-2xs">
+                      <i data-lucide="check" class="w-3.5 h-3.5"></i> Save Assistant Configuration
+                    </button>
+                  </div>
+                </form>
+
+              </div>
+
+              <!-- Right 5 Cols: Live Real Widget Testing Panel & Capture Fields -->
+              <div class="lg:col-span-5 space-y-5">
+                
+
+                <!-- Lead Capture Attributes -->
+                <div class="app-panel space-y-3">
+                  <div class="pb-2 border-b border-[#e7e5de] flex items-center justify-between">
+                    <div>
+                      <h3 class="app-panel-title">Lead Capture Attributes</h3>
+                      <p class="text-[11px] text-stone-500 mt-0.5">Attributes captured during dialogue without rigid input walls</p>
+                    </div>
+                    <span class="text-[10px] font-mono text-stone-400 bg-stone-50 border border-[#e7e5de] px-2 py-0.5 rounded">Autonomous</span>
+                  </div>
+
+                  <div class="space-y-2 text-xs">
+                    <div class="flex items-center justify-between p-2.5 border border-[#e7e5de] rounded-md bg-stone-50/60">
+                      <span class="font-medium text-stone-900">Prospect Full Name</span>
+                      <span class="text-[10px] font-medium text-stone-500 bg-white border border-[#e7e5de] px-1.5 py-0.5 rounded">Required</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2.5 border border-[#e7e5de] rounded-md bg-stone-50/60">
+                      <span class="font-medium text-stone-900">Phone Number (WhatsApp)</span>
+                      <span class="text-[10px] font-medium text-stone-500 bg-white border border-[#e7e5de] px-1.5 py-0.5 rounded">Required</span>
+                    </div>
+                    <label class="flex items-center justify-between p-2.5 border border-[#e7e5de] rounded-md hover:bg-stone-50/40 cursor-pointer transition-colors">
+                      <span class="font-medium text-stone-900">Email Address</span>
+                      <input type="checkbox" checked class="cp-custom-checkbox">
+                    </label>
+                    <label class="flex items-center justify-between p-2.5 border border-[#e7e5de] rounded-md hover:bg-stone-50/40 cursor-pointer transition-colors">
+                      <span class="font-medium text-stone-900">Preferred Batch / Program</span>
+                      <input type="checkbox" checked class="cp-custom-checkbox">
+                    </label>
+                    <label class="flex items-center justify-between p-2.5 border border-[#e7e5de] rounded-md hover:bg-stone-50/40 cursor-pointer transition-colors">
+                      <span class="font-medium text-stone-900">Budget / EMI Inquiry</span>
+                      <input type="checkbox" checked class="cp-custom-checkbox">
+                    </label>
+                  </div>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+
+          <!-- TAB 2: OVERVIEW & METRICS -->
+          <div id="tab-overview" class="assistant-tab-content space-y-6 hidden">
+            <!-- Essential Metrics -->
+            <div class="metric-grid">
+              <div class="metric-item">
+                <span class="text-xs text-stone-500 block mb-1">Conversations Handled</span>
+                <div class="text-3xl font-medium text-stone-900 tracking-tight">1,284</div>
+                <span class="text-[11px] text-stone-400 mt-1">100% autonomous resolution</span>
+              </div>
+              <div class="metric-item">
+                <span class="text-xs text-stone-500 block mb-1">Leads Captured</span>
+                <div class="text-3xl font-medium text-stone-900 tracking-tight">326</div>
+                <span class="text-[11px] text-emerald-700 font-medium mt-1">25.3% capture rate</span>
+              </div>
+              <div class="metric-item">
+                <span class="text-xs text-stone-500 block mb-1">Human Escalations</span>
+                <div class="text-3xl font-medium text-stone-900 tracking-tight">18</div>
+                <span class="text-[11px] text-stone-400 mt-1">1.4% handoff frequency</span>
+              </div>
+              <div class="metric-item">
+                <span class="text-xs text-stone-500 block mb-1">Answer Quality</span>
+                <div class="text-3xl font-medium text-emerald-800 tracking-tight">98.2%</div>
+                <span class="text-[11px] text-stone-400 mt-1">Positive visitor rating</span>
+              </div>
+            </div>
+
+            <!-- Health & Grounding Summary Card -->
+            <div class="app-panel p-5">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+                <div>
+                  <h3 class="text-sm font-semibold text-stone-900">Knowledge Coverage &amp; Hallucination Defense</h3>
+                  <p class="text-xs text-stone-500 mt-0.5">Strict guardrails ensure the assistant only answers using verified business context.</p>
+                </div>
+                <a href="knowledge.html" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+                  Manage Knowledge &rarr;
+                </a>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 text-xs">
+                <div class="p-3 bg-stone-50/70 border border-[#e7e5de] rounded-md">
+                  <div class="font-medium text-stone-900 mb-1">Zero Hallucination Guard</div>
+                  <p class="text-stone-500 text-[11px]">Strict strict-grounding is active. If unknown, AI creates a counselor follow-up task instead of guessing.</p>
+                </div>
+                <div class="p-3 bg-stone-50/70 border border-[#e7e5de] rounded-md">
+                  <div class="font-medium text-stone-900 mb-1">Average Response Latency</div>
+                  <p class="text-stone-500 text-[11px] font-mono">1.12s first token • 2.4s full reply streamed to website widget.</p>
+                </div>
+                <div class="p-3 bg-stone-50/70 border border-[#e7e5de] rounded-md">
+                  <div class="font-medium text-stone-900 mb-1">Omnichannel Sync</div>
+                  <p class="text-stone-500 text-[11px]">Widget, WhatsApp handoff, and CRM lead extraction use identical intelligence.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: KNOWLEDGE SOURCES -->
+          <div id="tab-knowledge" class="assistant-tab-content space-y-6 hidden">
+            <div class="app-panel">
+              <div class="app-panel-header">
+                <div>
+                  <h3 class="app-panel-title">Active Knowledge Sources</h3>
+                  <div class="text-xs text-stone-400 mt-0.5">Grounded facts used by the AI to answer visitor questions</div>
+                </div>
+                <a href="knowledge.html" class="btn-primary btn-sm text-xs py-1.5 px-3">+ Add Knowledge Source</a>
+              </div>
+
+              <div class="divide-y divide-[#f0eee8] text-xs">
+                <div class="p-4 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <i data-lucide="globe" class="w-4 h-4 text-stone-600"></i>
+                    <div>
+                      <div class="font-semibold text-stone-900">Company Website Crawl</div>
+                      <div class="text-stone-400 text-[11px]">Live crawled pages • Auto-synced every 24h</div>
+                    </div>
+                  </div>
+                  <span class="badge-signal-green text-[10px]">Synced</span>
+                </div>
+
+                <div class="p-4 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <i data-lucide="file-text" class="w-4 h-4 text-stone-600"></i>
+                    <div>
+                      <div class="font-semibold text-stone-900">Course_and_Services_Catalog.pdf</div>
+                      <div class="text-stone-400 text-[11px]">Programs, pricing tiers, eligibility &amp; curriculum</div>
+                    </div>
+                  </div>
+                  <span class="badge-signal-green text-[10px]">Synced</span>
+                </div>
+
+                <div class="p-4 flex items-center justify-between">
+                  <div class="flex items-center gap-3">
+                    <i data-lucide="help-circle" class="w-4 h-4 text-stone-600"></i>
+                    <div>
+                      <div class="font-semibold text-stone-900">Frequently Asked Questions (FAQ)</div>
+                      <div class="text-stone-400 text-[11px]">Refund policies, scheduling terms, onboarding guide</div>
+                    </div>
+                  </div>
+                  <span class="badge-signal-green text-[10px]">Synced</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: LEAD CAPTURE -->
+          <div id="tab-capture" class="assistant-tab-content space-y-6 hidden">
+            <div class="app-panel space-y-4">
+              <div class="pb-3 border-b border-[#e7e5de] flex items-center justify-between">
+                <div>
+                  <h3 class="app-panel-title">Autonomous Lead Capture Policy</h3>
+                  <p class="text-xs text-stone-500 mt-0.5">Control how your assistant extracts and qualifies prospects before human handoff.</p>
+                </div>
+                <button type="button" onclick="CuboidShell.toast('Lead capture configuration saved', 'success')" class="btn-primary btn-sm text-xs py-1.5 px-3">
+                  Save Policy
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                <div class="p-4 bg-stone-50 border border-[#e7e5de] rounded-lg space-y-2">
+                  <div class="font-semibold text-stone-900">Minimum Identity Gate</div>
+                  <p class="text-stone-500 text-[11px] leading-relaxed">
+                    AI will never ask for full contact details prematurely. When visitor shows high buying intent or requests price quotes, it politely collects:
+                  </p>
+                  <ul class="list-disc list-inside text-stone-600 space-y-1 text-[11.5px] pt-1">
+                    <li>Full Name</li>
+                    <li>WhatsApp Phone Number</li>
+                  </ul>
+                </div>
+
+                <div class="p-4 bg-stone-50 border border-[#e7e5de] rounded-lg space-y-2">
+                  <div class="font-semibold text-stone-900">CRM Auto-Ingestion</div>
+                  <p class="text-stone-500 text-[11px] leading-relaxed">
+                    Once a lead shares their contact info, CuboidPilot automatically:
+                  </p>
+                  <ul class="list-disc list-inside text-stone-600 space-y-1 text-[11.5px] pt-1">
+                    <li>Creates prospect record in <strong>All Contacts</strong></li>
+                    <li>Places deal card in <strong>Sales Pipeline Kanban</strong></li>
+                    <li>Dispatches alert to assigned sales rep phone</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('ai-assistant', 'AI Assistant', ['AI']);
+      CuboidDashboard.loadAssistantSettings();
+
+      // Tab switcher logic
+      const tabs = document.querySelectorAll('.assistant-tab');
+      const contents = document.querySelectorAll('.assistant-tab-content');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => {
+            t.classList.remove('border-stone-900', 'text-stone-900');
+            t.classList.add('border-transparent', 'text-stone-500');
+          });
+          contents.forEach(c => c.classList.add('hidden'));
+
+          tab.classList.add('border-stone-900', 'text-stone-900');
+          tab.classList.remove('border-transparent', 'text-stone-500');
+
+          const targetId = tab.getAttribute('data-tab');
+          const targetEl = document.getElementById(targetId);
+          if (targetEl) targetEl.classList.remove('hidden');
+        });
+      });
+
+      // Auto-open live widget if ?test=1 or ?open=widget query parameter is present
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('test') === '1' || params.get('open') === 'widget') {
+        setTimeout(() => {
+          if (window.CuboidShell && typeof window.CuboidShell.openBottomWidget === 'function') {
+            window.CuboidShell.openBottomWidget();
+          }
+        }, 400);
+      }
+    });
+  </script>
+</body>
+</html>

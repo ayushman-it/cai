@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plans & Tiers — Super Admin — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="app-page-title">Commercial Plans & Quotas</h1>
+                <span class="badge-signal-green text-xs font-semibold">3 Active Public Tiers</span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Configure subscription pricing, feature gating, AI message caps, and Stripe product synchronization.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button class="btn-primary btn-sm text-xs py-1.5 px-3.5" onclick="openModal('create-plan-modal')">
+                <i data-lucide="plus" class="w-3.5 h-3.5 mr-1.5"></i>
+                Create Plan Tier
+              </button>
+            </div>
+          </div>
+
+          <!-- Plans Grid (Clean, flat cards, no shadow bloat) -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- Starter Plan -->
+            <div class="app-panel space-y-4">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h2 class="text-base font-semibold text-stone-900">Starter</h2>
+                  <div class="text-xs text-stone-500">For small clinics, solo consultants</div>
+                </div>
+                <span class="badge-signal-blue text-[10px]">24 Tenants</span>
+              </div>
+
+              <div class="pt-2 border-t border-stone-100">
+                <div class="flex items-baseline gap-1">
+                  <span class="text-3xl font-semibold text-stone-900">$49</span>
+                  <span class="text-xs text-stone-500">/ month</span>
+                </div>
+                <div class="text-[11px] text-stone-400 mt-0.5">or $490 billed annually</div>
+              </div>
+
+              <div class="space-y-2 text-xs text-stone-600 pt-2 border-t border-stone-100">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span><strong>500</strong> AI Conversations / mo</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span><strong>2</strong> Team Agent Seats</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span>5 Knowledge Base Documents</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span>Standard WhatsApp Webhook</span>
+                </div>
+                <div class="flex items-center gap-2 text-stone-400">
+                  <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+                  <span>Closing Radar & AI Scoring</span>
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-stone-100 flex items-center justify-between text-xs">
+                <span class="font-mono text-stone-400 text-[10px]">price_1StkStarter</span>
+                <button class="btn-secondary btn-sm text-xs py-1 px-3">Edit Limits</button>
+              </div>
+            </div>
+
+            <!-- Growth Plan (Primary) -->
+            <div class="app-panel border-stone-900 space-y-4 relative bg-[#fcfbfa]">
+              <div class="absolute -top-2.5 right-4 bg-stone-900 text-white text-[10px] font-semibold px-2 py-0.5 rounded-[3px] uppercase tracking-wider">
+                Flagship Tier (53% Fleet)
+              </div>
+
+              <div class="flex items-start justify-between">
+                <div>
+                  <h2 class="text-base font-semibold text-stone-900">Growth</h2>
+                  <div class="text-xs text-stone-500">For scaling institutes & mid-size businesses</div>
+                </div>
+                <span class="badge-signal-green text-[10px]">76 Tenants</span>
+              </div>
+
+              <div class="pt-2 border-t border-stone-100">
+                <div class="flex items-baseline gap-1">
+                  <span class="text-3xl font-semibold text-stone-900">$149</span>
+                  <span class="text-xs text-stone-500">/ month</span>
+                </div>
+                <div class="text-[11px] text-stone-400 mt-0.5">or $1,490 billed annually</div>
+              </div>
+
+              <div class="space-y-2 text-xs text-stone-700 pt-2 border-t border-stone-100">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
+                  <span><strong>1,500</strong> AI Conversations / mo</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
+                  <span><strong>5</strong> Team Agent Seats</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
+                  <span>25 Knowledge Base Docs + 1 Site Crawl</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
+                  <span>Full WhatsApp Cloud API Automation</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
+                  <span>Real-time Closing Radar & Deal Scoring</span>
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-stone-100 flex items-center justify-between text-xs">
+                <span class="font-mono text-stone-400 text-[10px]">price_1StkGrowth</span>
+                <button class="btn-primary btn-sm text-xs py-1 px-3">Edit Limits</button>
+              </div>
+            </div>
+
+            <!-- Scale Pro Plan -->
+            <div class="app-panel space-y-4">
+              <div class="flex items-start justify-between">
+                <div>
+                  <h2 class="text-base font-semibold text-stone-900">Scale Pro</h2>
+                  <div class="text-xs text-stone-500">For multi-location & high volume organizations</div>
+                </div>
+                <span class="badge-signal-purple text-[10px]">38 Tenants</span>
+              </div>
+
+              <div class="pt-2 border-t border-stone-100">
+                <div class="flex items-baseline gap-1">
+                  <span class="text-3xl font-semibold text-stone-900">$349</span>
+                  <span class="text-xs text-stone-500">/ month</span>
+                </div>
+                <div class="text-[11px] text-stone-400 mt-0.5">or $3,490 billed annually</div>
+              </div>
+
+              <div class="space-y-2 text-xs text-stone-600 pt-2 border-t border-stone-100">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span><strong>5,000</strong> AI Conversations / mo</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span><strong>15</strong> Team Agent Seats</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span>Unlimited Docs + Auto Re-indexing</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span>High-Throughput WhatsApp Queue</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span>Dedicated Webhook Endpoints & SLA</span>
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-stone-100 flex items-center justify-between text-xs">
+                <span class="font-mono text-stone-400 text-[10px]">price_1StkScale</span>
+                <button class="btn-secondary btn-sm text-xs py-1 px-3">Edit Limits</button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Feature Matrix Table -->
+          <div class="app-panel p-0 overflow-hidden space-y-0">
+            <div class="p-4 border-b border-[#e7e5de] bg-[#fcfbfa]">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Feature Gating & Overage Economics</h3>
+            </div>
+            <table class="app-table text-xs">
+              <thead>
+                <tr>
+                  <th>Capability</th>
+                  <th>Starter ($49)</th>
+                  <th>Growth ($149)</th>
+                  <th>Scale Pro ($349)</th>
+                  <th>Overage Fee</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="font-medium text-stone-900">Additional 100 AI Chats</td>
+                  <td>$12.00</td>
+                  <td>$9.00</td>
+                  <td>$6.00</td>
+                  <td>Metered end-of-month</td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-stone-900">Extra Team Seat</td>
+                  <td>$15 / seat / mo</td>
+                  <td>$12 / seat / mo</td>
+                  <td>$10 / seat / mo</td>
+                  <td>Prorated addition</td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-stone-900">Claude 3.5 Sonnet Grounding</td>
+                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
+                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
+                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
+                  <td>N/A</td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-stone-900">Automated Pipeline Triggers</td>
+                  <td>3 Active Rules</td>
+                  <td>15 Active Rules</td>
+                  <td>Unlimited</td>
+                  <td>Tier upgrade required</td>
+                </tr>
+                <tr>
+                  <td class="font-medium text-stone-900">Custom Branding Removal</td>
+                  <td>Add $19/mo</td>
+                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
+                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
+                  <td>Toggle in tenant settings</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Plan Modal -->
+  <div id="create-plan-modal" class="app-modal-overlay">
+    <div class="app-modal max-w-md">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de]">
+        <h3 class="text-sm font-semibold text-stone-900">Create New Pricing Tier</h3>
+        <button onclick="closeModal('create-plan-modal')" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="py-4 space-y-3.5 text-xs">
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Tier Name</label>
+          <input type="text" placeholder="e.g. Enterprise Lite" class="app-input text-xs w-full">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Monthly Price ($ USD)</label>
+            <input type="number" placeholder="249" class="app-input text-xs w-full">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">AI Chats Quota</label>
+            <input type="number" placeholder="3000" class="app-input text-xs w-full">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Seats Included</label>
+            <input type="number" placeholder="8" class="app-input text-xs w-full">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Knowledge Docs Cap</label>
+            <input type="number" placeholder="50" class="app-input text-xs w-full">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Stripe Price ID</label>
+          <input type="text" placeholder="price_1..." class="app-input text-xs font-mono w-full">
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#e7e5de]">
+        <button onclick="closeModal('create-plan-modal')" class="btn-secondary btn-sm text-xs py-1.5 px-3">Cancel</button>
+        <button onclick="CuboidShell.toast('New plan tier published successfully!', 'success'); closeModal('create-plan-modal');" class="btn-primary btn-sm text-xs py-1.5 px-4">Publish Tier</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initSuperAdmin('plans', 'Plans & Tiers', ['Revenue']);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup Complete — Onboarding — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="bg-[#fcfbfa] text-[#111111] antialiased flex flex-col justify-between min-h-screen">
+
+  <header class="py-5 px-8 border-b border-[#e7e5de] bg-white flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-7 h-7 rounded-[4px] bg-[#111111] text-white flex items-center justify-center font-bold text-xs tracking-wider">CP</div>
+      <span class="text-sm font-semibold tracking-tight">CuboidPilot Setup</span>
+    </div>
+    
+    <div class="hidden sm:flex items-center gap-2 text-xs font-medium">
+      <a href="business.html" class="text-stone-500 hover:underline">1. Business</a>
+      <span class="text-stone-300">&rarr;</span>
+      <a href="goals.html" class="text-stone-500 hover:underline">2. Goals</a>
+      <span class="text-stone-300">&rarr;</span>
+      <a href="ai.html" class="text-stone-500 hover:underline">3. AI Engine</a>
+      <span class="text-stone-300">&rarr;</span>
+      <a href="website.html" class="text-stone-500 hover:underline">4. Website</a>
+      <span class="text-stone-300">&rarr;</span>
+      <a href="whatsapp.html" class="text-stone-500 hover:underline">5. WhatsApp</a>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-[#111111] font-semibold">6. Ready</span>
+    </div>
+
+    <div class="text-xs text-stone-400">Step 6 of 6</div>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center p-6">
+    <div class="w-full max-w-[500px] bg-white border border-[#e7e5de] rounded-[6px] p-8 text-center">
+      
+      <div class="w-12 h-12 rounded-[6px] bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center mx-auto mb-5">
+        <i data-lucide="check" class="w-6 h-6"></i>
+      </div>
+
+      <h1 class="text-2xl font-medium tracking-tight text-[#111111] mb-2">You're ready to go.</h1>
+      <p class="text-xs text-stone-500 mb-6">Your AI Business Desk is initialized and ready to turn website conversations into qualified revenue.</p>
+
+      <!-- Checklist Summary Container -->
+      <div class="text-left space-y-2.5 p-4 bg-stone-50 border border-stone-200 rounded-[4px] mb-8 text-xs">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-stone-800">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+            <span>Business Profile: <strong>Acme Academy</strong></span>
+          </div>
+          <span class="text-[10px] text-stone-400 font-mono">OK</span>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-stone-800">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+            <span>AI Knowledge Base: <strong>3 PDFs & 18 URLs</strong></span>
+          </div>
+          <span class="text-[10px] text-stone-400 font-mono">TRAINED</span>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-stone-800">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+            <span>Website Widget: <strong>Active on acmeacademy.com</strong></span>
+          </div>
+          <span class="text-[10px] text-stone-400 font-mono">LIVE</span>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2 text-stone-800">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+            <span>WhatsApp Handshake: <strong>+91 98400 12890</strong></span>
+          </div>
+          <span class="text-[10px] text-stone-400 font-mono">SYNCED</span>
+        </div>
+      </div>
+
+      <a href="../app/overview.html" class="btn-primary w-full py-2.5 text-xs font-medium block text-center">
+        Open Workspace Dashboard &rarr;
+      </a>
+
+    </div>
+  </main>
+
+  <footer class="py-4 text-center text-xs text-stone-400 border-t border-[#e7e5de] bg-white">
+    Setup completed • Welcome to CuboidPilot
+  </footer>
+
+  <script>
+    if (window.lucide) window.lucide.createIcons();
+  </script>
+</body>
+</html>

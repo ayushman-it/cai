@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platform Overview — Super Admin — CuboidPilot</title>
+  <link rel="icon" type="image/png" href="../assets/logo-black.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Top Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="app-page-title">Platform Master Overview</h1>
+                <span class="badge-signal-green text-xs">All Systems Nominal</span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Global operations, multi-tenant fleet health, and real-time revenue telemetry across CuboidPilot.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <a href="companies.html" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+                <i data-lucide="building" class="w-3.5 h-3.5 mr-1.5"></i>
+                Directory (142)
+              </a>
+              <button class="btn-primary btn-sm text-xs py-1.5 px-3.5" onclick="CuboidDashboard.openProvisionModal()">
+                <i data-lucide="plus" class="w-3.5 h-3.5 mr-1.5"></i>
+                Provision Tenant
+              </button>
+            </div>
+          </div>
+
+          <!-- Primary Platform Metrics -->
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+            <div class="app-panel py-3.5 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Active Tenants</div>
+              <div id="sa-metric-active-tenants" class="text-2xl font-semibold text-stone-900 mt-1">142</div>
+              <div class="text-[11px] text-emerald-700 font-medium mt-1 flex items-center gap-1">
+                <span>&uarr; 14</span>
+                <span class="text-stone-400 font-normal">this month</span>
+              </div>
+            </div>
+
+            <div class="app-panel py-3.5 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Platform MRR</div>
+              <div id="sa-metric-mrr" class="text-2xl font-semibold text-stone-900 mt-1">$28,450</div>
+              <div class="text-[11px] text-emerald-700 font-medium mt-1 flex items-center gap-1">
+                <span>&uarr; 18.2%</span>
+                <span class="text-stone-400 font-normal">vs last month</span>
+              </div>
+            </div>
+
+            <div class="app-panel py-3.5 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">AI Chats (30d)</div>
+              <div id="sa-metric-chats" class="text-2xl font-semibold text-stone-900 mt-1">184.2K</div>
+              <div class="text-[11px] text-stone-500 mt-1">
+                <span class="font-medium text-stone-700">99.4%</span> auto-resolved
+              </div>
+            </div>
+
+            <div class="app-panel py-3.5 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">WhatsApp Synced</div>
+              <div id="sa-metric-whatsapp" class="text-2xl font-semibold text-stone-900 mt-1">84,120</div>
+              <div class="text-[11px] text-emerald-700 font-medium mt-1">
+                99.8% delivery rate
+              </div>
+            </div>
+
+            <div class="app-panel py-3.5 px-4 col-span-2 md:col-span-1">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Uptime (30d)</div>
+              <div id="sa-metric-uptime" class="text-2xl font-semibold text-stone-900 mt-1">99.98%</div>
+              <div class="text-[11px] text-stone-500 mt-1 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>Avg latency 420ms</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Urgent Fleet Alerts Banner -->
+          <div class="app-panel border-amber-200 bg-amber-50/30 p-4">
+            <div class="flex items-start justify-between">
+              <div class="flex items-start gap-3">
+                <div class="w-7 h-7 rounded-[4px] bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+                  <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <div class="text-xs font-semibold text-stone-900">Tenant Operational Warnings (3 Requires Review)</div>
+                  <div class="text-xs text-stone-600 mt-1 space-y-0.5">
+                    <div>• <strong>Zenith Fitness</strong>: Approached 94% of WhatsApp Cloud API monthly token quota.</div>
+                    <div>• <strong>Apex Real Estate</strong>: Webhook endpoint returning 504 Gateway Timeout (14 events queued).</div>
+                    <div>• <strong>Solaris Solar</strong>: Stripe recurring payment failed for $149 invoice (Retry 1/3 scheduled).</div>
+                  </div>
+                </div>
+              </div>
+              <a href="companies.html" class="btn-secondary btn-sm text-xs py-1 px-2.5">
+                Inspect Alerts &rarr;
+              </a>
+            </div>
+          </div>
+
+          <!-- 2-Column Section: Real-time Telemetry & Plan Distribution -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left 2 Cols: Recent Provisioned Tenants -->
+            <div class="lg:col-span-2 app-panel p-0 overflow-hidden">
+              <div class="p-4 border-b border-[#e7e5de] flex items-center justify-between">
+                <div>
+                  <h2 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Recently Activated Tenants</h2>
+                  <p class="text-[11px] text-stone-500 mt-0.5">Real-time tenant onboarding stream across global servers.</p>
+                </div>
+                <a href="companies.html" class="text-xs text-stone-600 hover:text-stone-900 underline">View all 142 &rarr;</a>
+              </div>
+
+              <div class="overflow-x-auto">
+                <table class="app-table">
+                  <thead>
+                    <tr>
+                      <th>Company</th>
+                      <th>Plan</th>
+                      <th>Owner & Location</th>
+                      <th>AI Load</th>
+                      <th>Status</th>
+                      <th class="text-right">Manage</th>
+                    </tr>
+                  </thead>
+                  <tbody id="sa-recent-tenants-tbody">
+                    <tr>
+                      <td>
+                        <div class="font-medium text-stone-900">Acme Academy</div>
+                        <div class="text-[11px] text-stone-400">acme.cuboidpilot.com</div>
+                      </td>
+                      <td><span class="badge-signal-blue text-[10px]">Growth ($149)</span></td>
+                      <td>
+                        <div class="text-xs text-stone-800">Arjun Mehta</div>
+                        <div class="text-[11px] text-stone-400">Bengaluru, IN</div>
+                      </td>
+                      <td>
+                        <div class="text-xs font-mono text-stone-700">742 / 1,500</div>
+                        <div class="w-20 h-1 bg-stone-200 rounded-[1px] mt-1 overflow-hidden">
+                          <div class="w-[49%] h-full bg-stone-900"></div>
+                        </div>
+                      </td>
+                      <td><span class="badge-signal-green text-[10px]">Healthy</span></td>
+                      <td class="text-right">
+                        <a href="company-detail.html?id=acme" class="btn-secondary btn-sm text-xs py-1 px-2">Inspect</a>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        <div class="font-medium text-stone-900">Zenith Fitness Tech</div>
+                        <div class="text-[11px] text-stone-400">zenithfit.cuboidpilot.com</div>
+                      </td>
+                      <td><span class="badge-signal-blue text-[10px]">Growth ($149)</span></td>
+                      <td>
+                        <div class="text-xs text-stone-800">David Miller</div>
+                        <div class="text-[11px] text-stone-400">London, UK</div>
+                      </td>
+                      <td>
+                        <div class="text-xs font-mono text-amber-700 font-semibold">1,410 / 1,500</div>
+                        <div class="w-20 h-1 bg-stone-200 rounded-[1px] mt-1 overflow-hidden">
+                          <div class="w-[94%] h-full bg-amber-600"></div>
+                        </div>
+                      </td>
+                      <td><span class="badge-signal-amber text-[10px]">High Quota</span></td>
+                      <td class="text-right">
+                        <a href="company-detail.html?id=zenith" class="btn-secondary btn-sm text-xs py-1 px-2">Inspect</a>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        <div class="font-medium text-stone-900">NovaCare Health</div>
+                        <div class="text-[11px] text-stone-400">novacare.cuboidpilot.com</div>
+                      </td>
+                      <td><span class="badge-signal-purple text-[10px]">Scale Pro ($399)</span></td>
+                      <td>
+                        <div class="text-xs text-stone-800">Dr. Sarah Al-Hassan</div>
+                        <div class="text-[11px] text-stone-400">Dubai, UAE</div>
+                      </td>
+                      <td>
+                        <div class="text-xs font-mono text-stone-700">1,820 / 5,000</div>
+                        <div class="w-20 h-1 bg-stone-200 rounded-[1px] mt-1 overflow-hidden">
+                          <div class="w-[36%] h-full bg-stone-900"></div>
+                        </div>
+                      </td>
+                      <td><span class="badge-signal-green text-[10px]">Healthy</span></td>
+                      <td class="text-right">
+                        <a href="company-detail.html?id=novacare" class="btn-secondary btn-sm text-xs py-1 px-2">Inspect</a>
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td>
+                        <div class="font-medium text-stone-900">Solaris Home Energy</div>
+                        <div class="text-[11px] text-stone-400">solaris.cuboidpilot.com</div>
+                      </td>
+                      <td><span class="badge-signal-blue text-[10px]">Starter ($49)</span></td>
+                      <td>
+                        <div class="text-xs text-stone-800">Carlos Gomez</div>
+                        <div class="text-[11px] text-stone-400">Austin, US</div>
+                      </td>
+                      <td>
+                        <div class="text-xs font-mono text-stone-700">210 / 500</div>
+                        <div class="w-20 h-1 bg-stone-200 rounded-[1px] mt-1 overflow-hidden">
+                          <div class="w-[42%] h-full bg-stone-900"></div>
+                        </div>
+                      </td>
+                      <td><span class="badge-signal-red text-[10px]">Billing Retry</span></td>
+                      <td class="text-right">
+                        <a href="company-detail.html?id=solaris" class="btn-secondary btn-sm text-xs py-1 px-2">Inspect</a>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right Col: Fleet Breakdown & Global Engine Status -->
+            <div class="space-y-6">
+              
+              <!-- Plan Tier Distribution -->
+              <div class="app-panel space-y-3">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Subscription Tier Spread</h3>
+                <div class="space-y-2.5 text-xs">
+                  <div>
+                    <div class="flex justify-between text-stone-700 mb-1">
+                      <span>Growth ($149/mo)</span>
+                      <span class="font-medium text-stone-900">76 tenants (53%)</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-stone-100 rounded-[2px] overflow-hidden">
+                      <div class="w-[53%] h-full bg-stone-900"></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="flex justify-between text-stone-700 mb-1">
+                      <span>Scale Pro ($399/mo)</span>
+                      <span class="font-medium text-stone-900">38 tenants (27%)</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-stone-100 rounded-[2px] overflow-hidden">
+                      <div class="w-[27%] h-full bg-stone-700"></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="flex justify-between text-stone-700 mb-1">
+                      <span>Starter ($49/mo)</span>
+                      <span class="font-medium text-stone-900">24 tenants (17%)</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-stone-100 rounded-[2px] overflow-hidden">
+                      <div class="w-[17%] h-full bg-stone-500"></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="flex justify-between text-stone-700 mb-1">
+                      <span>Enterprise (Custom)</span>
+                      <span class="font-medium text-stone-900">4 tenants (3%)</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-stone-100 rounded-[2px] overflow-hidden">
+                      <div class="w-[3%] h-full bg-amber-500"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Engine Nodes Status -->
+              <div class="app-panel space-y-3">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Core Engine Nodes</h3>
+                  <a href="system-health.html" class="text-xs text-stone-500 hover:underline">Details &rarr;</a>
+                </div>
+                <div class="space-y-2 text-xs">
+                  <div class="flex items-center justify-between p-2 bg-stone-50 rounded-[4px] border border-stone-100">
+                    <span class="text-stone-700">Vector Embeddings (Pinecone)</span>
+                    <span class="badge-signal-green text-[10px]">35ms</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2 bg-stone-50 rounded-[4px] border border-stone-100">
+                    <span class="text-stone-700">Claude 3.5 Sonnet Inference</span>
+                    <span class="badge-signal-green text-[10px]">420ms</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2 bg-stone-50 rounded-[4px] border border-stone-100">
+                    <span class="text-stone-700">Meta WhatsApp Cloud Gateway</span>
+                    <span class="badge-signal-green text-[10px]">1.1s</span>
+                  </div>
+                  <div class="flex items-center justify-between p-2 bg-stone-50 rounded-[4px] border border-stone-100">
+                    <span class="text-stone-700">Multi-tenant PostgreSQL Master</span>
+                    <span class="badge-signal-green text-[10px]">2ms</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initSuperAdmin('overview', 'Platform Master Overview', []);
+      if (CuboidDashboard.loadSuperAdminOverview) {
+        CuboidDashboard.loadSuperAdminOverview();
+      }
+    });
+  </script>
+</body>
+</html>

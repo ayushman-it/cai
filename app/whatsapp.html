@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Omnichannel Sync — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header with Monochrome Status -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h1 class="app-page-title">WhatsApp Omnichannel Sync</h1>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-stone-900 text-white rounded-[3px] text-[11px] font-medium tracking-wide">
+                  <span class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span> Gateway Connected
+                </span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Seamlessly mirror conversations to WhatsApp when visitors exit your website without losing context.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CuboidDashboard.testWhatsAppNotification('general')">
+                <i data-lucide="send" class="w-3.5 h-3.5 mr-1 text-stone-600"></i> Dispatch Test Ping
+              </button>
+              <a href="team.html" class="btn-primary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 no-underline">
+                <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Manage Team & Phones
+              </a>
+            </div>
+          </div>
+
+          <!-- Connected Operational Gateway Panel (Crisp Monochrome, NO Green) -->
+          <div class="p-5 bg-white border border-[#e7e5de] rounded-[6px] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3.5">
+              <div class="w-10 h-10 rounded-[4px] bg-stone-900 text-white flex items-center justify-center font-semibold">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <div class="text-sm font-semibold text-stone-900 tracking-tight">+91 98400 12890</div>
+                  <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 bg-stone-100 text-stone-700 border border-stone-300 rounded-[2px]">Verified Cloud API</span>
+                </div>
+                <div class="text-xs text-stone-500 mt-0.5">Meta Business Tier 2 • 10,000 conversations/day allocation • Webhook Online</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <div class="text-right hidden sm:block">
+                <div class="text-xs font-semibold text-stone-900">99.8% Delivery</div>
+                <div class="text-[10px] text-stone-400">Zero dropped packets</div>
+              </div>
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CuboidDashboard.testWhatsAppNotification('gateway')">
+                Health Check
+              </button>
+            </div>
+          </div>
+
+          <!-- Continuation Workflows Panel (Monochrome Black & White) -->
+          <div class="app-panel space-y-4">
+            <div class="pb-2 border-b border-[#e7e5de] flex items-center justify-between">
+              <div>
+                <h3 class="app-panel-title">Automated Continuation Triggers</h3>
+                <p class="text-xs text-stone-500 mt-0.5">Rules that bridge website prospects to mobile WhatsApp dialogues.</p>
+              </div>
+              <span class="text-xs text-stone-400 font-mono">3 / 3 Active</span>
+            </div>
+            
+            <div class="space-y-3 text-xs">
+              <div class="p-3.5 border border-[#e7e5de] rounded-[4px] flex items-center justify-between bg-stone-50/50 hover:bg-stone-50 transition-colors">
+                <div class="space-y-0.5">
+                  <div class="font-medium text-stone-900">Website &rarr; WhatsApp Handoff Continuity</div>
+                  <div class="text-[11px] text-stone-500">When visitors leave or request phone continuation, mirror history to WhatsApp instantly.</div>
+                </div>
+                <label class="cp-switch">
+                  <input type="checkbox" checked onchange="window.CuboidShell.toast('Continuity trigger updated', 'info')">
+                  <span class="cp-switch-track"></span>
+                </label>
+              </div>
+
+              <div class="p-3.5 border border-[#e7e5de] rounded-[4px] flex items-center justify-between bg-stone-50/50 hover:bg-stone-50 transition-colors">
+                <div class="space-y-0.5">
+                  <div class="font-medium text-stone-900">Qualified Lead Automated Touchpoint</div>
+                  <div class="text-[11px] text-stone-500">Dispatch curriculum brochure and verified fee schedule link 2 hours post-qualification.</div>
+                </div>
+                <label class="cp-switch">
+                  <input type="checkbox" checked onchange="window.CuboidShell.toast('Touchpoint trigger updated', 'info')">
+                  <span class="cp-switch-track"></span>
+                </label>
+              </div>
+
+              <div class="p-3.5 border border-[#e7e5de] rounded-[4px] flex items-center justify-between bg-stone-50/50 hover:bg-stone-50 transition-colors">
+                <div class="space-y-0.5">
+                  <div class="font-medium text-stone-900">Payment & EMI Link Follow-up</div>
+                  <div class="text-[11px] text-stone-500">Automatically remind abandoned checkouts before seat reservation expires.</div>
+                </div>
+                <label class="cp-switch">
+                  <input type="checkbox" checked onchange="window.CuboidShell.toast('Payment reminder trigger updated', 'info')">
+                  <span class="cp-switch-track"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alert Recipients Table (Monochrome Intercom Style) -->
+          <div class="app-panel space-y-4">
+            <div class="app-panel-header">
+              <div>
+                <h3 class="app-panel-title">Internal Team WhatsApp Recipients</h3>
+                <p class="text-xs text-stone-500 mt-0.5">Which team members receive prioritized WhatsApp alerts & lead reminders on their personal or business numbers.</p>
+              </div>
+              <a href="team.html" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 no-underline">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Edit Member Phone Numbers
+              </a>
+            </div>
+
+            <div class="app-table-wrapper">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Team Member</th>
+                    <th>WhatsApp Phone</th>
+                    <th>Role</th>
+                    <th>Hot Leads Alert</th>
+                    <th>Human Needed</th>
+                    <th>Payment Issues</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="wa-recipients-tbody">
+                  <tr>
+                    <td colspan="7" class="p-6 text-center text-xs text-stone-400">Loading team notification recipients...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('whatsapp', 'WhatsApp', ['Automate']);
+      CuboidDashboard.loadWhatsAppSync();
+    });
+  </script>
+</body>
+</html>

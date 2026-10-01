@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All Contacts — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <!-- Sidebar Mount (Dual-Sidebar: Slim Rail + Secondary Contacts Pane) -->
+    <div id="sidebar-container"></div>
+
+    <!-- Main Content Area -->
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll bg-white">
+        <div class="w-full space-y-5">
+          
+          <!-- Top Header: All Contacts + Export / Import / + Add new contact (Exact Image 2) -->
+          <!-- Top Header: All Contacts + View Switcher + Export / Import / + Add new contact -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <h1 id="leads-page-title" class="text-xl md:text-2xl font-bold text-stone-900 tracking-tight">All Contacts</h1>
+              
+              <!-- Segmented View Switcher: Table vs Kanban -->
+              <div class="inline-flex items-center p-0.5 bg-stone-100 border border-[#e7e5de] rounded-[6px]">
+                <a href="leads.html" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white text-stone-900 font-semibold text-xs rounded-[4px] shadow-2xs no-underline" title="Current Table View">
+                  <i data-lucide="list" class="w-3.5 h-3.5"></i>
+                  <span>Table</span>
+                </a>
+                <a href="pipeline.html" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-stone-600 hover:text-stone-900 font-medium text-xs rounded-[4px] transition-colors no-underline" title="Switch to Pipeline Kanban">
+                  <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
+                  <span>Kanban</span>
+                </a>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button onclick="CuboidDashboard.exportLeadsCsv()" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 text-stone-700 hover:text-stone-900 border-[#d5d2c8]" title="Export contacts to CSV">
+                <i data-lucide="download" class="w-3.5 h-3.5 text-stone-500"></i>
+                <span>Export</span>
+              </button>
+              <button onclick="CuboidDashboard.openImportModal()" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 text-stone-700 hover:text-stone-900 border-[#d5d2c8]" title="Import contacts from CSV or text">
+                <i data-lucide="upload" class="w-3.5 h-3.5 text-stone-500"></i>
+                <span>Import</span>
+              </button>
+              <button onclick="CuboidDashboard.openAddContactModal()" class="bg-[#111111] hover:bg-black text-white text-xs font-medium py-1.5 px-3.5 rounded-md inline-flex items-center gap-1.5 transition-colors shadow-2xs">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add new contact</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Toolbar: Search + Filter + View -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-1">
+            <div class="flex items-center gap-2 flex-wrap flex-1">
+              <div class="relative w-72">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></i>
+                <input id="leads-search-input" type="text" placeholder="Search by name, phone, email, city..." class="app-input pl-8 text-xs w-full h-8 rounded-md bg-white border-[#e7e5de] placeholder:text-stone-400">
+              </div>
+
+              <!-- Filter Button & Popover -->
+              <div class="relative">
+                <button onclick="CuboidDashboard.toggleFilterMenu(event)" id="leads-filter-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#e7e5de] hover:border-stone-400 rounded-md text-xs text-stone-700 font-medium transition-colors">
+                  <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-stone-500"></i>
+                  <span>Filter</span>
+                  <span id="leads-filter-badge" class="hidden w-2 h-2 rounded-full bg-stone-900"></span>
+                </button>
+                <div id="leads-filter-popover" class="hidden absolute left-0 top-full mt-1.5 w-64 bg-white border border-[#e7e5de] rounded-[8px] shadow-lg p-3 z-50 space-y-3">
+                  <div class="flex items-center justify-between pb-2 border-b border-[#f0ede6]">
+                    <span class="font-semibold text-xs text-stone-900">Filter Contacts</span>
+                    <button onclick="CuboidDashboard.resetFilters()" class="text-[11px] text-stone-400 hover:text-stone-700">Reset</button>
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-medium text-stone-600 block mb-1">Stage</label>
+                    <select id="filter-select-stage" onchange="CuboidDashboard.applyFilterChange()" class="w-full text-xs p-1.5 border border-[#e7e5de] rounded bg-white">
+                      <option value="">All Stages</option>
+                      <option value="NEW">New</option>
+                      <option value="Contacted">Contacted</option>
+                      <option value="Qualified">Qualified</option>
+                      <option value="Proposal / Demo">Proposal / Demo</option>
+                      <option value="Won / Enrolled">Won / Enrolled</option>
+                      <option value="Lost">Lost</option>
+                      <option value="HIGH_INTENT">High Intent</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-medium text-stone-600 block mb-1">Priority</label>
+                    <select id="filter-select-priority" onchange="CuboidDashboard.applyFilterChange()" class="w-full text-xs p-1.5 border border-[#e7e5de] rounded bg-white">
+                      <option value="">All Priorities</option>
+                      <option value="HIGH">High &amp; Urgent</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="LOW">Low</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <!-- View Button & Popover -->
+              <div class="relative">
+                <button onclick="CuboidDashboard.toggleViewMenu(event)" id="leads-view-btn" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#e7e5de] hover:border-stone-400 rounded-md text-xs text-stone-700 font-medium transition-colors">
+                  <i data-lucide="columns" class="w-3.5 h-3.5 text-stone-500"></i>
+                  <span>View</span>
+                </button>
+                <div id="leads-view-popover" class="hidden absolute left-0 top-full mt-1.5 w-48 bg-white border border-[#e7e5de] rounded-[8px] shadow-lg p-2.5 z-50 space-y-1.5">
+                  <div class="text-[11px] font-semibold text-stone-500 uppercase tracking-wider px-1 pb-1 border-b border-[#f0ede6]">Toggle Columns</div>
+                  <label class="flex items-center gap-2 text-xs text-stone-700 p-1 hover:bg-stone-50 rounded cursor-pointer">
+                    <input type="checkbox" checked onchange="CuboidDashboard.toggleColumn('email', this.checked)" class="cp-custom-checkbox"> E-Mail
+                  </label>
+                  <label class="flex items-center gap-2 text-xs text-stone-700 p-1 hover:bg-stone-50 rounded cursor-pointer">
+                    <input type="checkbox" checked onchange="CuboidDashboard.toggleColumn('phone', this.checked)" class="cp-custom-checkbox"> Phone
+                  </label>
+                  <label class="flex items-center gap-2 text-xs text-stone-700 p-1 hover:bg-stone-50 rounded cursor-pointer">
+                    <input type="checkbox" checked onchange="CuboidDashboard.toggleColumn('convos', this.checked)" class="cp-custom-checkbox"> Conversations
+                  </label>
+                  <label class="flex items-center gap-2 text-xs text-stone-700 p-1 hover:bg-stone-50 rounded cursor-pointer">
+                    <input type="checkbox" checked onchange="CuboidDashboard.toggleColumn('status', this.checked)" class="cp-custom-checkbox"> Status
+                  </label>
+                  <label class="flex items-center gap-2 text-xs text-stone-700 p-1 hover:bg-stone-50 rounded cursor-pointer">
+                    <input type="checkbox" checked onchange="CuboidDashboard.toggleColumn('city', this.checked)" class="cp-custom-checkbox"> City
+                  </label>
+                  <label class="flex items-center gap-2 text-xs text-stone-700 p-1 hover:bg-stone-50 rounded cursor-pointer">
+                    <input type="checkbox" checked onchange="CuboidDashboard.toggleColumn('date', this.checked)" class="cp-custom-checkbox"> Date
+                  </label>
+                </div>
+              </div>
+
+              <!-- Batch Action Bar -->
+              <div id="leads-batch-bar" class="hidden items-center gap-2 px-3 py-1 bg-stone-100 border border-[#e7e5de] rounded-md text-xs">
+                <span id="leads-selected-count" class="font-semibold text-stone-900">0 selected</span>
+                <span class="text-stone-300">|</span>
+                <button onclick="CuboidDashboard.batchDeleteContacts()" class="text-rose-600 hover:text-rose-800 font-medium inline-flex items-center gap-1">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Clean CRM Data Table (Exact Columns & Styles from Image 2) -->
+          <div class="border border-[#e7e5de] rounded-lg overflow-x-auto bg-white">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="bg-stone-50/60 border-b border-[#e7e5de] text-[11.5px] text-stone-500 font-medium select-none">
+                  <th class="w-10 px-3.5 py-3 text-center">
+                    <input type="checkbox" id="leads-select-all" onchange="CuboidDashboard.toggleSelectAll(this.checked)" class="cp-custom-checkbox" title="Select all contacts">
+                  </th>
+                  <th onclick="CuboidDashboard.setLeadsSort('name')" class="col-name px-3.5 py-3 whitespace-nowrap cursor-pointer hover:text-stone-900 transition-colors">
+                    <span class="inline-flex items-center gap-1">Name <i id="sort-icon-name" data-lucide="arrow-up-down" class="w-3 h-3 text-stone-400"></i></span>
+                  </th>
+                  <th onclick="CuboidDashboard.setLeadsSort('email')" class="col-email px-3.5 py-3 whitespace-nowrap cursor-pointer hover:text-stone-900 transition-colors">
+                    <span class="inline-flex items-center gap-1">E-Mail <i id="sort-icon-email" data-lucide="arrow-up-down" class="w-3 h-3 text-stone-400"></i></span>
+                  </th>
+                  <th onclick="CuboidDashboard.setLeadsSort('phone')" class="col-phone px-3.5 py-3 whitespace-nowrap cursor-pointer hover:text-stone-900 transition-colors">
+                    <span class="inline-flex items-center gap-1">Phone <i id="sort-icon-phone" data-lucide="arrow-up-down" class="w-3 h-3 text-stone-400"></i></span>
+                  </th>
+                  <th class="col-convos px-3.5 py-3 whitespace-nowrap">Conversations</th>
+                  <th onclick="CuboidDashboard.setLeadsSort('status')" class="col-status px-3.5 py-3 whitespace-nowrap cursor-pointer hover:text-stone-900 transition-colors">
+                    <span class="inline-flex items-center gap-1">Status <i id="sort-icon-status" data-lucide="arrow-up-down" class="w-3 h-3 text-stone-400"></i></span>
+                  </th>
+                  <th onclick="CuboidDashboard.setLeadsSort('city')" class="col-city px-3.5 py-3 whitespace-nowrap cursor-pointer hover:text-stone-900 transition-colors">
+                    <span class="inline-flex items-center gap-1">City <i id="sort-icon-city" data-lucide="arrow-up-down" class="w-3 h-3 text-stone-400"></i></span>
+                  </th>
+                  <th onclick="CuboidDashboard.setLeadsSort('date')" class="col-date px-3.5 py-3 whitespace-nowrap cursor-pointer hover:text-stone-900 transition-colors">
+                    <span class="inline-flex items-center gap-1">Date <i id="sort-icon-date" data-lucide="arrow-up-down" class="w-3 h-3 text-stone-400"></i></span>
+                  </th>
+                  <th class="w-16 px-3 py-3 text-center whitespace-nowrap">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="leads-table-tbody" class="divide-y divide-[#f0eee8] text-stone-800">
+                <tr>
+                  <td colspan="9" class="px-6 py-12 text-center text-stone-400">
+                    <div class="inline-flex items-center gap-2">
+                      <div class="w-4 h-4 border-2 border-stone-300 border-t-stone-800 rounded-full animate-spin"></div>
+                      <span>Loading contacts...</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Bottom Pagination Controls -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-stone-500 pt-2">
+            <div class="flex items-center gap-2">
+              <span>Show</span>
+              <select id="leads-page-size" onchange="CuboidDashboard.setPageSize(this.value)" class="px-2.5 py-1 bg-white border border-[#e7e5de] rounded-md font-medium text-stone-800 cursor-pointer focus:outline-none focus:border-stone-400">
+                <option value="10">10</option>
+                <option value="15" selected>15</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+              </select>
+            </div>
+
+            <!-- Dynamic Page Buttons -->
+            <div id="leads-pagination-pages" class="flex items-center gap-1">
+              <!-- Dynamically populated -->
+            </div>
+
+            <div id="leads-count-label" class="text-stone-500 text-xs">
+              Loading count...
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('leads', 'All Contacts', ['Contacts']);
+      CuboidDashboard.loadLeads();
+    });
+  </script>
+</body>
+</html>

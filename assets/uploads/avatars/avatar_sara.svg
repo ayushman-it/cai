@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <linearGradient id="bgSara" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ec4899" />
+      <stop offset="100%" stop-color="#be185d" />
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" rx="60" fill="url(#bgSara)"/>
+  <!-- Hair back -->
+  <path d="M35 55 C35 30 85 30 85 55 C85 75 80 85 80 85 C80 85 75 70 70 70 C65 70 55 70 50 70 C45 70 40 85 40 85 C40 85 35 75 35 55 Z" fill="#262626"/>
+  <!-- Face -->
+  <circle cx="60" cy="52" r="20" fill="#ffd1b3"/>
+  <!-- Hair front bangs -->
+  <path d="M42 45 C45 35 75 35 78 45 C75 42 68 40 60 40 C52 40 45 42 42 45 Z" fill="#171717"/>
+  <!-- Eyes -->
+  <circle cx="53" cy="52" r="2.2" fill="#1e293b"/>
+  <circle cx="67" cy="52" r="2.2" fill="#1e293b"/>
+  <!-- Smile -->
+  <path d="M55 60 Q60 64 65 60" stroke="#be123c" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Blushes -->
+  <circle cx="49" cy="56" r="3" fill="#f43f5e" opacity="0.3"/>
+  <circle cx="71" cy="56" r="3" fill="#f43f5e" opacity="0.3"/>
+  <!-- Shoulders / Blouse -->
+  <path d="M34 105 C34 85 46 76 60 76 C74 76 86 85 86 105 Z" fill="#fdf2f8"/>
+  <path d="M46 78 C52 86 68 86 74 78 C70 90 50 90 46 78 Z" fill="#f472b6"/>
+</svg>

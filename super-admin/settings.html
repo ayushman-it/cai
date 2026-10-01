@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platform Settings — Super Admin — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="app-page-title">Platform Configuration</h1>
+                <span class="badge-signal-green text-xs font-semibold">Production Fleet</span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Global orchestrator flags, default tenant trial quotas, provider API pools, and root security policy.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="savePlatformSettings()">
+                Save Platform Config
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 1: Tenant Trial Defaults -->
+          <div class="app-panel space-y-4">
+            <h2 class="text-sm font-semibold text-stone-900">Default Onboarding & Trial Policy</h2>
+            <p class="text-xs text-stone-500">Parameters applied automatically when a visitor clicks "Start Free Trial" on the homepage.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div>
+                <label class="block font-medium text-stone-700 mb-1">Trial Duration (Days)</label>
+                <input type="number" value="14" class="app-input text-xs">
+              </div>
+
+              <div>
+                <label class="block font-medium text-stone-700 mb-1">Trial AI Conversation Cap</label>
+                <input type="number" value="200" class="app-input text-xs">
+              </div>
+
+              <div>
+                <label class="block font-medium text-stone-700 mb-1">Allowed Team Agent Seats</label>
+                <input type="number" value="2" class="app-input text-xs">
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-stone-100 space-y-3">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-stone-900">Require Credit Card at Signup</div>
+                  <div class="text-[11px] text-stone-500">Currently disabled: 0-friction signup leads to 3.2x higher pipeline conversion.</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer">
+                  <div class="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
+                </label>
+              </div>
+
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-stone-900">Automatic Demo Data Seeding</div>
+                  <div class="text-[11px] text-stone-500">Pre-populates new tenant workspaces with 3 realistic leads and 1 grounding FAQ document.</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked class="sr-only peer">
+                  <div class="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Global LLM & Vector API Keys -->
+          <div class="app-panel space-y-4">
+            <h2 class="text-sm font-semibold text-stone-900">Master AI Infrastructure Credentials</h2>
+            <p class="text-xs text-stone-500">Master provider keys utilized by the backend clustering pool.</p>
+
+            <div class="space-y-3.5 text-xs">
+              <div>
+                <label class="block font-medium text-stone-700 mb-1">Anthropic Claude API Key</label>
+                <div class="flex items-center gap-2">
+                  <input type="password" value="sk-ant-api03-0941982736152840921" readonly class="app-input font-mono text-xs bg-stone-50">
+                  <button class="btn-secondary btn-sm text-xs py-1 px-3">Rotate</button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-medium text-stone-700 mb-1">OpenAI API Key (Embeddings & Intent Classifier)</label>
+                <div class="flex items-center gap-2">
+                  <input type="password" value="sk-proj-41902837461829047192" readonly class="app-input font-mono text-xs bg-stone-50">
+                  <button class="btn-secondary btn-sm text-xs py-1 px-3">Rotate</button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-medium text-stone-700 mb-1">Pinecone Vector Database API Key</label>
+                <div class="flex items-center gap-2">
+                  <input type="password" value="pcsk_881920_30918274619028" readonly class="app-input font-mono text-xs bg-stone-50">
+                  <button class="btn-secondary btn-sm text-xs py-1 px-3">Rotate</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Master Meta WhatsApp Partner API -->
+          <div class="app-panel space-y-4">
+            <h2 class="text-sm font-semibold text-stone-900">Meta WhatsApp Business Platform Partner Hub</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div>
+                <label class="block font-medium text-stone-700 mb-1">Meta Business Manager ID</label>
+                <input type="text" value="384910293847192" readonly class="app-input font-mono text-xs bg-stone-50">
+              </div>
+
+              <div>
+                <label class="block font-medium text-stone-700 mb-1">Partner App ID</label>
+                <input type="text" value="109283746190284" readonly class="app-input font-mono text-xs bg-stone-50">
+              </div>
+            </div>
+
+            <div class="text-xs">
+              <label class="block font-medium text-stone-700 mb-1">Permanent System User Access Token</label>
+              <div class="flex items-center gap-2">
+                <input type="password" value="EAAGm0PX4ZCpsBAK1982736192847192..." readonly class="app-input font-mono text-xs bg-stone-50">
+                <button class="btn-secondary btn-sm text-xs py-1 px-3">Verify Token</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: Platform Security & Root Access -->
+          <div class="app-panel space-y-4">
+            <h2 class="text-sm font-semibold text-stone-900">Super Admin Root Access Controls</h2>
+            
+            <div class="space-y-3">
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-stone-900">Enforce Hardware FIDO2 / YubiKey for Super Admins</div>
+                  <div class="text-[11px] text-stone-500">Mandatory hardware security key requirement for all platform administrative sessions.</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" checked class="sr-only peer">
+                  <div class="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
+                </label>
+              </div>
+
+              <div class="flex items-start justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-stone-900">Platform Maintenance Mode</div>
+                  <div class="text-[11px] text-stone-500">Temporarily display a scheduled maintenance banner and pause new tenant signups.</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" class="sr-only peer">
+                  <div class="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initSuperAdmin('settings', 'Platform Settings', ['Operations']);
+    });
+
+    function savePlatformSettings() {
+      alert('Global platform configuration updated successfully across cluster.');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pipeline Kanban — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="flex flex-col h-full space-y-4">
+          
+          <!-- Header: Title + View Switcher + Total Value + Add Prospect -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#e7e5de] flex-shrink-0 gap-3">
+            <div>
+              <div class="flex items-center gap-3">
+                <h1 class="text-xl md:text-2xl font-bold text-stone-900 tracking-tight">Sales Pipeline</h1>
+                
+                <!-- Segmented View Switcher: Table vs Kanban -->
+                <div class="inline-flex items-center p-0.5 bg-stone-100 border border-[#e7e5de] rounded-[6px]">
+                  <a href="leads.html" class="inline-flex items-center gap-1.5 px-2.5 py-1 text-stone-600 hover:text-stone-900 font-medium text-xs rounded-[4px] transition-colors no-underline" title="Switch to Table View">
+                    <i data-lucide="list" class="w-3.5 h-3.5"></i>
+                    <span>Table</span>
+                  </a>
+                  <a href="pipeline.html" class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white text-stone-900 font-semibold text-xs rounded-[4px] shadow-2xs no-underline" title="Current Kanban Board">
+                    <i data-lucide="kanban" class="w-3.5 h-3.5"></i>
+                    <span>Kanban</span>
+                  </a>
+                </div>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Conversational pipeline tracking prospects from first inquiry to enrolled & paid.</p>
+            </div>
+            
+            <div class="flex items-center gap-2.5">
+              <div class="text-xs text-stone-600 bg-stone-50 border border-[#e7e5de] px-3 py-1.5 rounded-md font-medium flex items-center gap-2">
+                <span class="text-stone-400">Total Value:</span>
+                <span id="pipeline-total-val" class="font-bold text-stone-900 font-mono">₹0</span>
+              </div>
+              <button onclick="CuboidDashboard.openAddContactModal()" class="bg-[#111111] hover:bg-black text-white text-xs font-medium py-1.5 px-3.5 rounded-md inline-flex items-center gap-1.5 transition-colors shadow-2xs">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Add Prospect</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Clean Horizontal Kanban (Dynamically Loaded from CRM) -->
+          <div id="kanban-board-container" class="kanban-board flex-1 min-h-[480px]">
+            <div class="flex items-center justify-center w-full py-16 text-stone-400 text-xs">
+              <i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i> Loading sales pipeline...
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('pipeline', 'Pipeline Kanban', ['Customers']);
+      CuboidDashboard.loadPipeline();
+    });
+  </script>
+</body>
+</html>

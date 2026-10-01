@@ -1,0 +1,1165 @@
+/* ==========================================================================
+   CUBOIDPILOT — APPLICATION DASHBOARD & SUPER ADMIN DESIGN SYSTEM
+   Extends the Intercom-inspired editorial aesthetic into operational SaaS.
+   Flat, 1px neutral hairline borders, compact typography, ZERO heavy shadows.
+   ========================================================================== */
+
+/* Layout Shell Tokens */
+:root {
+  --rail-width: 58px;
+  --subsidebar-width: 220px;
+  --sidebar-width: 278px;
+  --topbar-height: 52px;
+  --app-bg: #ffffff;
+  --surface-bg: #ffffff;
+  --surface-secondary: #fbfbf9;
+  --surface-subtle: #faf9f6;
+  --border-app: #e7e5de;
+  --border-strong: #d5d2c8;
+}
+
+/* Base App Reset */
+body.app-body {
+  background-color: var(--app-bg);
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+}
+
+/* App Viewport Container */
+.app-viewport {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Dual Sidebar System (Slim Icon Rail + Secondary Contextual Pane) */
+.app-dual-sidebar {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  flex-shrink: 0;
+  z-index: 40;
+}
+
+/* Slim Icon Rail (58px) */
+.app-icon-rail {
+  width: var(--rail-width);
+  background-color: #ffffff;
+  border-right: 1px solid var(--border-app);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0 16px 0;
+  height: 100vh;
+  flex-shrink: 0;
+}
+
+.rail-logo-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background-color: transparent !important;
+  background: transparent !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  transition: opacity 120ms ease;
+  overflow: hidden;
+}
+
+.rail-logo-badge:hover {
+  opacity: 0.9;
+}
+
+.rail-nav-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.rail-item {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #575653;
+  text-decoration: none;
+  position: relative;
+  transition: all 120ms ease;
+}
+
+.rail-item:hover {
+  background-color: #f4f3ef;
+  color: #111111;
+}
+
+.rail-item.active {
+  background-color: #f1efe8;
+  color: #111111;
+  font-weight: 600;
+}
+
+.rail-badge-dot {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #ef4444;
+  border: 1.5px solid #ffffff;
+}
+
+/* Secondary Contextual Pane (220px) */
+.app-sub-sidebar {
+  width: var(--subsidebar-width);
+  background-color: #ffffff;
+  border-right: 1px solid var(--border-app);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100vh;
+  flex-shrink: 0;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.sub-sidebar-header {
+  padding: 16px 16px 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 14.5px;
+  color: #111111;
+}
+
+.sub-sidebar-nav {
+  padding: 0 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sub-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 6px;
+  color: #44423d;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 450;
+  transition: all 120ms ease;
+}
+
+.sub-nav-item:hover {
+  background-color: #f6f5f0;
+  color: #111111;
+}
+
+.sub-nav-item.active {
+  background-color: #f1efe8;
+  color: #111111;
+  font-weight: 600;
+}
+
+.sub-nav-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #888680;
+  padding: 14px 10px 4px 10px;
+}
+
+.sidebar-nav-group-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #888680;
+  padding: 16px 16px 6px 16px;
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  margin: 1px 8px;
+  border-radius: 4px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #575653;
+  text-decoration: none;
+  transition: all 140ms ease;
+}
+
+.sidebar-nav-item:hover {
+  background-color: #f6f5f0;
+  color: #111111;
+}
+
+.sidebar-nav-item.active {
+  background-color: #f1efe8;
+  color: #111111;
+  font-weight: 600;
+}
+
+.sidebar-nav-item i {
+  color: #888680;
+  transition: color 140ms ease;
+}
+
+.sidebar-nav-item:hover i,
+.sidebar-nav-item.active i {
+  color: #111111;
+}
+
+/* Topbar Styles */
+.app-topbar {
+  height: var(--topbar-height);
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--border-app);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  flex-shrink: 0;
+  z-index: 30;
+}
+
+/* Main Content Area */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  min-width: 0;
+  overflow: hidden;
+  background-color: var(--app-bg);
+}
+
+.app-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 24px 32px 48px 32px;
+}
+
+/* Typography Hierarchy */
+.app-page-title {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: #111111;
+  line-height: 1.2;
+}
+
+.app-section-title {
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+  color: #111111;
+  line-height: 1.3;
+}
+
+.app-panel-title {
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: #111111;
+}
+
+/* Flat Panel Containers (NO heavy shadows) */
+.app-panel {
+  background-color: #ffffff;
+  border: 1px solid var(--border-app);
+  border-radius: 6px;
+  padding: 20px;
+}
+
+.app-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 14px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--border-app);
+}
+
+/* Clean Data Tables */
+.app-table-wrapper {
+  background-color: #ffffff;
+  border: 1px solid var(--border-app);
+  border-radius: 6px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 13.5px;
+}
+
+.app-table th {
+  background-color: #faf9f6;
+  color: #767470;
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-app);
+  white-space: nowrap;
+}
+
+.app-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0eee8;
+  color: #1a1918;
+  vertical-align: middle;
+}
+
+.app-table tr:last-child td {
+  border-bottom: none;
+}
+
+.app-table tbody tr:hover {
+  background-color: #fbfaf7;
+}
+
+/* Application Form Elements (Crisp 4px corners) */
+.app-input {
+  height: 36px;
+  border: 1px solid var(--border-app);
+  border-radius: 4px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  background-color: #ffffff;
+  color: #111111;
+  outline: none;
+  transition: border-color 140ms ease;
+}
+
+.app-input:focus {
+  border-color: #111111;
+}
+
+.app-select {
+  height: 36px;
+  border: 1px solid var(--border-app);
+  border-radius: 4px;
+  padding: 0 10px;
+  font-size: 13.5px;
+  background-color: #ffffff;
+  color: #111111;
+  outline: none;
+  transition: border-color 140ms ease;
+  cursor: pointer;
+}
+
+.app-select:focus {
+  border-color: #111111;
+}
+
+.app-textarea {
+  border: 1px solid var(--border-app);
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  background-color: #ffffff;
+  color: #111111;
+  outline: none;
+  transition: border-color 140ms ease;
+  resize: vertical;
+}
+
+.app-textarea:focus {
+  border-color: #111111;
+}
+
+/* Metric Column Dividers */
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  background-color: #ffffff;
+  border: 1px solid var(--border-app);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.metric-item {
+  padding: 18px 24px;
+  border-right: 1px solid var(--border-app);
+}
+
+.metric-item:last-child {
+  border-right: none;
+}
+
+/* 3-Column Conversation Layout */
+.inbox-layout {
+  display: flex;
+  height: calc(100vh - var(--topbar-height));
+  width: 100%;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.inbox-list {
+  width: 320px;
+  border-right: 1px solid var(--border-app);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.inbox-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-right: 1px solid var(--border-app);
+  background-color: #ffffff;
+}
+
+.inbox-detail {
+  width: 320px;
+  height: 100%;
+  flex-shrink: 0;
+  background-color: #faf9f6;
+  overflow-y: auto;
+}
+
+/* Slide-Over Drawer (Test AI Panel) */
+.app-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.25);
+  z-index: 90;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 200ms ease, visibility 200ms ease;
+}
+
+.app-drawer-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.app-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 420px;
+  max-width: 90vw;
+  background-color: #ffffff;
+  border-left: 1px solid var(--border-app);
+  z-index: 100;
+  transform: translateX(100%);
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.app-drawer.open {
+  transform: translateX(0);
+}
+
+/* Horizontal Kanban Board */
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 24px;
+  height: calc(100vh - 180px);
+}
+
+.kanban-col {
+  width: 290px;
+  min-width: 290px;
+  background-color: #f7f6f2;
+  border: 1px solid var(--border-app);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+}
+
+.kanban-col-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-app);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kanban-cards-container {
+  padding: 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.kanban-card {
+  background-color: #ffffff;
+  border: 1px solid var(--border-app);
+  border-radius: 4px;
+  padding: 12px;
+  cursor: grab;
+  transition: border-color 140ms ease, transform 140ms ease;
+}
+
+.kanban-card:hover {
+  border-color: #111111;
+  transform: translateY(-1px);
+}
+
+/* Modals */
+.app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 180ms ease;
+}
+
+.app-modal-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.app-modal {
+  background-color: #ffffff;
+  border: 1px solid var(--border-app);
+  border-radius: 8px;
+  width: 520px;
+  max-width: min(520px, calc(100vw - 24px));
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.2);
+}
+
+.app-modal > .overflow-y-auto,
+.app-modal-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ==========================================================================
+   INTERCOM-EXACT REPORTS / OVERVIEW STYLES (media_1790744358742.png)
+   ========================================================================== */
+.intercom-metric-card {
+  background-color: #ffffff;
+  border: 1px solid var(--border-app);
+  border-radius: 8px;
+  padding: 16px 18px 14px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 128px;
+  transition: border-color 140ms ease;
+}
+
+.intercom-metric-card:hover {
+  border-color: #c7c4b9;
+}
+
+.metric-delta-pill-green {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #12803c;
+  background-color: #eafaf0;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.metric-delta-pill-red {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #c5221f;
+  background-color: #fde8e8;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+/* ==========================================================================
+   INTERCOM-EXACT CONTACTS / LEADS CRM STYLES (media_1790744395774.png)
+   ========================================================================== */
+.crm-status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.crm-status-in-progress {
+  color: #0284c7;
+  background-color: #f0f9ff;
+  border: 1px solid #bae6fd;
+}
+
+.crm-status-canceled {
+  color: #e11d48;
+  background-color: #fff1f2;
+  border: 1px solid #fecdd3;
+}
+
+.crm-status-completed {
+  color: #059669;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.crm-status-active {
+  color: #059669;
+  background-color: #ecfdf5;
+  border: 1px solid #a7f3d0;
+}
+
+.crm-status-scheduled {
+  color: #7c3aed;
+  background-color: #f5f3ff;
+  border: 1px solid #ddd6fe;
+}
+
+.crm-status-pending {
+  color: #d97706;
+  background-color: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
+.crm-channel-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+/* ==========================================================================
+   INTERCOM-EXACT 4-PANE INBOX STYLES (media_1790744478801.png)
+   ========================================================================== */
+.inbox-4pane-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.inbox-pane-folders {
+  width: 200px;
+  border-right: 1px solid var(--border-app);
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.inbox-pane-threads {
+  width: 280px;
+  border-right: 1px solid var(--border-app);
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.inbox-pane-chat {
+  flex: 1;
+  border-right: 1px solid var(--border-app);
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-width: 0;
+}
+
+.inbox-pane-dossier {
+  width: 280px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  height: 100%;
+  overflow-y: auto;
+}
+
+/* Custom Intercom-grade Black Working Checkbox */
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox),
+.cp-custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  border: 1.5px solid #d0ceca;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  background-color: #ffffff;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):hover,
+.cp-custom-checkbox:hover {
+  border-color: #111111;
+  background-color: #faf9f6;
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):focus-visible,
+.cp-custom-checkbox:focus-visible {
+  box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.2);
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):checked,
+.cp-custom-checkbox:checked {
+  background-color: #111111 !important;
+  border-color: #111111 !important;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.2 4.8L6.5 10.5L3.8 7.8' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):indeterminate,
+.cp-custom-checkbox:indeterminate {
+  background-color: #111111 !important;
+  border-color: #111111 !important;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 8h8' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):active,
+.cp-custom-checkbox:active {
+  transform: scale(0.92);
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):disabled,
+.cp-custom-checkbox:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f5f4ef;
+  border-color: #e2e0d8;
+  transform: none;
+}
+
+/* Intercom-grade Micro Toggle Switch */
+.cp-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+.cp-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.cp-switch-track {
+  width: 34px;
+  height: 18px;
+  background-color: #e7e5de;
+  border-radius: 9999px;
+  transition: background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  display: block;
+}
+.cp-switch-track::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background-color: #ffffff;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.cp-switch input:checked + .cp-switch-track {
+  background-color: #111111;
+}
+.cp-switch input:checked + .cp-switch-track::after {
+  transform: translateX(16px);
+}
+
+/* Intercom-grade Custom Select Component */
+.custom-select-container {
+  position: relative;
+  width: 100%;
+}
+.custom-select-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background-color: #ffffff;
+  border: 1px solid #e7e5de;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #1c1917;
+  cursor: pointer;
+  transition: all 120ms ease;
+  user-select: none;
+  text-align: left;
+}
+.custom-select-btn:hover {
+  border-color: #a8a29e;
+  background-color: #fafaf9;
+}
+.custom-select-btn:focus,
+.custom-select-container.open .custom-select-btn {
+  outline: none;
+  border-color: #1c1917;
+  box-shadow: 0 0 0 1px #1c1917;
+  background-color: #ffffff;
+}
+.custom-select-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 260px;
+  background-color: #ffffff;
+  border: 1px solid #e7e5de;
+  border-radius: 6px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+}
+.custom-select-container.open .custom-select-menu {
+  display: block;
+  animation: selectMenuFadeIn 120ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes selectMenuFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.custom-select-group-header {
+  padding: 6px 10px 4px 10px;
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  color: #78716c;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: #fafaf9;
+  border-top: 1px solid #f5f5f4;
+}
+.custom-select-group-header:first-child {
+  border-top: none;
+}
+.custom-select-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #292524;
+  cursor: pointer;
+  transition: background-color 100ms ease;
+}
+.custom-select-item:hover {
+  background-color: #f5f5f4;
+  color: #0c0a09;
+}
+.custom-select-item.selected {
+  background-color: #f5f5f4;
+  font-weight: 600;
+}
+.custom-select-item .item-check {
+  display: none;
+  width: 14px;
+  height: 14px;
+  color: #1c1917;
+}
+.custom-select-item.selected .item-check {
+  display: inline-block;
+}
+
+/* ==========================================================================
+   SCROLLBAR UTILITIES & RESTRAINED SCROLLBAR STYLING
+   ========================================================================== */
+.no-scrollbar {
+  -ms-overflow-style: none !important; /* IE and Edge */
+  scrollbar-width: none !important; /* Firefox */
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Global Modern Sleek Scrollbars (Intercom aesthetic - hairline, non-intrusive) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d5d2c8 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d5d2c8;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a29e;
+}
+
+/* ==========================================================================
+   MOBILE & TABLET RESPONSIVE SYSTEM (100% Mobile Optimized)
+   ========================================================================== */
+
+/* Universal Backdrop Blur for Drawers & Mobile Sidebar */
+.app-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(17, 17, 17, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
+.app-sidebar-backdrop.active,
+body.sidebar-mobile-open .app-sidebar-backdrop {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Tablet & Mobile Breakpoint (< 1024px) */
+@media (max-width: 1023px) {
+  /* Prevent sidebar mount container from clipping or capturing clicks */
+  #sidebar-container {
+    width: 0 !important;
+    min-width: 0 !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+    position: relative !important;
+    z-index: 1000 !important;
+  }
+
+  /* Dual Sidebar turns into high-performance off-canvas slide-out drawer */
+  .app-dual-sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: var(--sidebar-width) !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 1001 !important;
+    transform: translateX(-105%) !important;
+    transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 260ms ease !important;
+    box-shadow: none !important;
+    pointer-events: none !important;
+    max-width: calc(100vw - 36px) !important;
+    background: #ffffff !important;
+  }
+
+  .app-dual-sidebar.mobile-open,
+  body.sidebar-mobile-open .app-dual-sidebar {
+    transform: translateX(0) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+    pointer-events: auto !important;
+  }
+
+  /* Topbar compact padding */
+  .app-topbar {
+    padding: 0 12px;
+  }
+
+  /* Scroll container padding */
+  .app-content-scroll {
+    padding: 20px 18px 48px 18px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide conversation dossier pane by default on tablet */
+  #convo-pane-dossier {
+    display: none !important;
+  }
+
+  body.show-dossier #convo-pane-dossier {
+    display: flex !important;
+    position: fixed !important;
+    top: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 310px !important;
+    max-width: calc(100vw - 40px) !important;
+    z-index: 52 !important;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15) !important;
+  }
+}
+
+/* Mobile Handheld Breakpoint (< 768px) */
+@media (max-width: 767px) {
+  .app-topbar {
+    padding: 0 12px;
+  }
+
+  .app-content-scroll {
+    padding: 16px 12px 48px 12px;
+    overflow-x: hidden;
+  }
+
+  /* Conversations 3-Pane Adaptive Split for Mobile Phones */
+  #convo-pane-threads {
+    width: 100% !important;
+    flex: 1 1 auto !important;
+    border-right: none !important;
+  }
+
+  #convo-pane-chat {
+    display: none !important;
+    width: 100% !important;
+    border-right: none !important;
+  }
+
+  /* When a conversation is active on mobile, hide thread list and show full chat */
+  body.convo-chat-active #convo-pane-threads {
+    display: none !important;
+  }
+
+  body.convo-chat-active #convo-pane-chat {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  /* Responsive Kanban Board */
+  .kanban-board {
+    height: calc(100vh - 190px);
+    height: calc(100dvh - 190px);
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x mandatory;
+    gap: 12px;
+  }
+
+  .kanban-col {
+    scroll-snap-align: start;
+    width: 82vw;
+    min-width: 82vw;
+    max-width: 320px;
+  }
+}
+
+/* Extra Small Phones Breakpoint (< 640px) */
+@media (max-width: 639px) {
+  .app-topbar {
+    padding: 0 10px;
+  }
+
+  /* Truncate/hide company prefix in breadcrumbs on narrow mobile */
+  #shell-breadcrumb-company,
+  #shell-breadcrumb-company + span {
+    display: none !important;
+  }
+
+  .app-page-title {
+    font-size: 20px;
+  }
+
+  .app-modal {
+    width: calc(100vw - 16px) !important;
+    max-height: calc(100dvh - 20px) !important;
+    margin: 8px !important;
+  }
+
+  .intercom-metric-card {
+    padding: 14px 14px 12px 14px;
+    min-height: auto;
+  }
+}
+
+/* Ultra Narrow Screen Safety (< 360px) */
+@media (max-width: 360px) {
+  :root {
+    --rail-width: 50px;
+  }
+  .app-icon-rail {
+    width: 50px !important;
+  }
+  .app-sub-sidebar {
+    width: 200px !important;
+  }
+}
+

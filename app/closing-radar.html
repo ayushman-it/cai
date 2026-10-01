@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Closing Radar — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h1 class="app-page-title">Closing Radar</h1>
+                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <span id="radar-header-count" class="text-xs font-semibold text-stone-900">0 Opportunities Requiring Action</span>
+              </div>
+              <p id="radar-desc" class="text-xs text-stone-500 mt-1">Focus on conversations where timely human intervention creates immediate revenue.</p>
+            </div>
+            
+            <div class="flex items-center gap-2 text-xs font-mono text-stone-400">
+              Live Radar SLA: &lt; 15 mins
+            </div>
+          </div>
+
+          <!-- REVENUE AT RISK (Embedded Dashboard View) -->
+          <div class="app-panel bg-[#faf9f5]">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4 border-b border-[#e7e5de] mb-4">
+              <div>
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-stone-500 block mb-1">Pipeline Revenue at Risk</span>
+                <div id="radar-revenue-at-risk" class="text-3xl font-medium text-stone-900 tracking-tight">₹0</div>
+              </div>
+              <p class="text-xs text-stone-500 max-w-[480px]">
+                Potential deal value across active high-intent prospects requiring counselor attention.
+              </p>
+            </div>
+
+            <!-- 4 Metric Split -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div class="p-3 bg-white border border-[#e7e5de] rounded-[4px]">
+                <span class="text-stone-400 block mb-0.5">Payment Abandoned</span>
+                <span id="metric-payment-abandoned" class="text-xl font-medium text-stone-900">0</span>
+                <span class="text-[10px] text-amber-700 block mt-1">Stalled at checkout</span>
+              </div>
+              <div class="p-3 bg-white border border-[#e7e5de] rounded-[4px]">
+                <span class="text-stone-400 block mb-0.5">Follow-up Overdue</span>
+                <span id="metric-followup-overdue" class="text-xl font-medium text-stone-900">0</span>
+                <span class="text-[10px] text-stone-500 block mt-1">&gt; 4 hrs unattended</span>
+              </div>
+              <div class="p-3 bg-white border border-[#e7e5de] rounded-[4px]">
+                <span class="text-stone-400 block mb-0.5">Human Requested</span>
+                <span id="metric-human-requested" class="text-xl font-medium text-stone-900">0</span>
+                <span class="text-[10px] text-sky-700 block mt-1">In triage queue</span>
+              </div>
+              <div class="p-3 bg-white border border-[#e7e5de] rounded-[4px]">
+                <span class="text-stone-400 block mb-0.5">High-intent Inactive</span>
+                <span id="metric-intent-inactive" class="text-xl font-medium text-stone-900">0</span>
+                <span class="text-[10px] text-stone-500 block mt-1">Idle &gt; 24 hrs</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Radar Opportunity Filter Toolbar -->
+          <div class="flex items-center gap-1.5 text-xs pb-1">
+            <button class="px-2.5 py-1 bg-stone-900 text-white rounded-[3px] font-medium">All</button>
+            <button class="px-2.5 py-1 bg-white border border-[#e7e5de] hover:bg-stone-50 rounded-[3px] text-stone-600">Hot Deals</button>
+            <button class="px-2.5 py-1 bg-white border border-[#e7e5de] hover:bg-stone-50 rounded-[3px] text-stone-600">Human Needed</button>
+            <button class="px-2.5 py-1 bg-white border border-[#e7e5de] hover:bg-stone-50 rounded-[3px] text-stone-600">Payment Drop-off</button>
+          </div>
+
+          <!-- Actionable Radar Cards (Dynamically Loaded) -->
+          <div id="radar-cards-container" class="space-y-4">
+            <div class="flex items-center justify-center w-full py-12 text-stone-400 text-xs">
+              <i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i> Loading radar opportunities...
+            </div>
+          </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('closing-radar', 'Closing Radar', ['Insights']);
+    });
+  </script>
+</body>
+</html>

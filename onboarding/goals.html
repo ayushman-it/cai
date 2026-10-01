@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Goals — Onboarding — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="bg-[#fcfbfa] text-[#111111] antialiased flex flex-col justify-between min-h-screen">
+
+  <header class="py-5 px-8 border-b border-[#e7e5de] bg-white flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-7 h-7 rounded-[4px] bg-[#111111] text-white flex items-center justify-center font-bold text-xs tracking-wider">CP</div>
+      <span class="text-sm font-semibold tracking-tight">CuboidPilot Setup</span>
+    </div>
+    
+    <div class="hidden sm:flex items-center gap-2 text-xs font-medium">
+      <a href="business.html" class="text-stone-500 hover:underline">1. Business</a>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-[#111111] font-semibold">2. Goals</span>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-stone-400">3. AI Engine</span>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-stone-400">4. Website</span>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-stone-400">5. WhatsApp</span>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-stone-400">6. Ready</span>
+    </div>
+
+    <div class="text-xs text-stone-400">Step 2 of 6</div>
+  </header>
+
+  <main class="flex-1 flex items-center justify-center p-6">
+    <div class="w-full max-w-[540px] bg-white border border-[#e7e5de] rounded-[6px] p-8">
+      
+      <div class="mb-6">
+        <span class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 block mb-1">Objectives</span>
+        <h1 class="text-2xl font-medium tracking-tight text-[#111111]">What should CuboidPilot help you with?</h1>
+        <p class="text-xs text-stone-500 mt-1">Select the primary conversational workflows your business requires. (Select all that apply)</p>
+      </div>
+
+      <form action="ai.html" method="GET" class="space-y-2.5">
+        
+        <label class="flex items-start gap-3 p-3.5 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer transition-colors bg-stone-50/50">
+          <input type="checkbox" checked class="mt-1 rounded-[3px] text-stone-900 focus:ring-0">
+          <div>
+            <div class="text-xs font-semibold text-stone-900">Answer customer questions autonomously</div>
+            <div class="text-[11px] text-stone-500">Provide instant 24/7 answers regarding syllabus, tuition, timings, and policies.</div>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-3.5 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer transition-colors bg-stone-50/50">
+          <input type="checkbox" checked class="mt-1 rounded-[3px] text-stone-900 focus:ring-0">
+          <div>
+            <div class="text-xs font-semibold text-stone-900">Generate and qualify leads</div>
+            <div class="text-[11px] text-stone-500">Extract high-intent prospect contact details and score buying probability.</div>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-3.5 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer transition-colors bg-stone-50/50">
+          <input type="checkbox" checked class="mt-1 rounded-[3px] text-stone-900 focus:ring-0">
+          <div>
+            <div class="text-xs font-semibold text-stone-900">Move conversations to WhatsApp</div>
+            <div class="text-[11px] text-stone-500">Prevent tab abandonment by continuing active threads on mobile WhatsApp.</div>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-3.5 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer transition-colors bg-stone-50/50">
+          <input type="checkbox" checked class="mt-1 rounded-[3px] text-stone-900 focus:ring-0">
+          <div>
+            <div class="text-xs font-semibold text-stone-900">Human handoff for high-value prospects</div>
+            <div class="text-[11px] text-stone-500">Notify Arjun Mehta or sales reps when urgent closing intervention is detected.</div>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-3.5 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer transition-colors">
+          <input type="checkbox" class="mt-1 rounded-[3px] text-stone-900 focus:ring-0">
+          <div>
+            <div class="text-xs font-semibold text-stone-900">Book appointments / counseling demos</div>
+            <div class="text-[11px] text-stone-500">Integrate calendar links directly inside conversational interactions.</div>
+          </div>
+        </label>
+
+        <label class="flex items-start gap-3 p-3.5 border border-[#e7e5de] rounded-[4px] hover:bg-stone-50 cursor-pointer transition-colors">
+          <input type="checkbox" class="mt-1 rounded-[3px] text-stone-900 focus:ring-0">
+          <div>
+            <div class="text-xs font-semibold text-stone-900">Payment & EMI follow-up</div>
+            <div class="text-[11px] text-stone-500">Follow up on pending checkout sessions and surface at-risk revenue.</div>
+          </div>
+        </label>
+
+        <div class="pt-4 flex items-center justify-between">
+          <a href="business.html" class="text-xs text-stone-500 hover:text-stone-900">&larr; Back</a>
+          <button type="submit" class="btn-primary py-2 px-5 text-xs font-medium">
+            Continue to Train AI &rarr;
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </main>
+
+  <footer class="py-4 text-center text-xs text-stone-400 border-t border-[#e7e5de] bg-white">
+    Step 2 of 6 • Clean selectable rule recipes without complex setup.
+  </footer>
+
+  <script>
+    if (window.lucide) window.lucide.createIcons();
+  </script>
+</body>
+</html>

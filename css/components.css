@@ -1,0 +1,346 @@
+/* ==========================================================================
+   CUBOIDPILOT — PRODUCT COMPONENTS & EDITORIAL MOCKUPS
+   Pure HTML/CSS mockups adhering to Intercom-level visual discipline.
+   ========================================================================== */
+
+/* Mega Menu Dropdowns */
+.nav-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  width: 580px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: 0 10px 30px -10px rgba(0,0,0,0.07), 0 2px 6px -2px rgba(0,0,0,0.03);
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all var(--transition-smooth);
+  z-index: 60;
+}
+
+.nav-item:hover .nav-dropdown,
+.nav-item:focus-within .nav-dropdown {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(2px);
+}
+
+.nav-dropdown-link {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  transition: background-color var(--transition-fast);
+  text-decoration: none;
+}
+
+.nav-dropdown-link:hover {
+  background-color: #f7f6f2;
+}
+
+/* Browser Shell Frame */
+.browser-window {
+  background-color: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  overflow: hidden;
+}
+
+.browser-header {
+  background-color: #f9f8f5;
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.browser-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #e2dfd7;
+}
+
+.browser-address {
+  flex: 1;
+  max-width: 440px;
+  margin: 0 auto;
+  background-color: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* CuboidPilot Live Widget Mockup */
+.cuboid-widget {
+  width: 370px;
+  background-color: #ffffff;
+  border: 1px solid var(--border-default);
+  border-radius: 18px;
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.1), 0 2px 8px -2px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cuboid-widget-header {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cuboid-bubble-ai {
+  background-color: #f6f5f1;
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px 14px 14px 4px;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.45;
+  max-width: 86%;
+}
+
+.cuboid-bubble-user {
+  background-color: var(--bg-dark);
+  color: #ffffff;
+  border-radius: 14px 14px 4px 14px;
+  padding: 11px 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 82%;
+  margin-left: auto;
+}
+
+.cuboid-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: 1px solid var(--border-default);
+  background-color: #ffffff;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.cuboid-chip:hover {
+  background-color: #f5f4ef;
+  border-color: #111111;
+  transform: translateY(-1px);
+}
+
+/* Product Storytelling Step Indicators (Intercom Architectural Segmented Tabs) */
+.journey-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 0;
+  background-color: #ffffff;
+  border: none;
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.journey-pill:hover {
+  background-color: #f7f6f2;
+  color: var(--text-primary);
+}
+
+.journey-pill.active {
+  background-color: #111111;
+  color: #ffffff;
+}
+
+/* Radar & Cards */
+.radar-card {
+  background-color: #ffffff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 20px;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.radar-card:hover {
+  border-color: #c9c6bc;
+  box-shadow: 0 4px 16px -4px rgba(0,0,0,0.05);
+}
+
+/* Timeline Styling */
+.timeline-stem {
+  position: relative;
+}
+
+.timeline-stem::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  bottom: 0;
+  left: 17px;
+  width: 1px;
+  background-color: var(--border-subtle);
+}
+
+.timeline-node {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  position: relative;
+}
+
+.timeline-node.active {
+  background-color: var(--bg-dark);
+  color: #ffffff;
+  border-color: var(--bg-dark);
+}
+
+/* Clean restrained sparklines */
+.sparkline-bar {
+  background-color: #e5e3dc;
+  border-radius: 3px;
+  transition: background-color var(--transition-fast), height var(--transition-smooth);
+}
+
+.sparkline-bar:hover,
+.sparkline-bar.highlight {
+  background-color: #111111;
+}
+
+/* Typing animation dots */
+.typing-dot {
+  width: 5px;
+  height: 5px;
+  background-color: #8c8a85;
+  border-radius: 50%;
+  display: inline-block;
+  animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* Mobile Navigation Drawer */
+#mobile-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  background-color: #ffffff;
+  z-index: 999999;
+  transform: translateY(-100%);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-top: max(16px, env(safe-area-inset-top));
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+
+#mobile-drawer.open {
+  transform: translateY(0);
+}
+
+/* Custom Intercom-grade Black Working Checkbox */
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox),
+.cp-custom-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  border: 1.5px solid #d0ceca;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  position: relative;
+  background-color: #ffffff;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):hover,
+.cp-custom-checkbox:hover {
+  border-color: #111111;
+  background-color: #faf9f6;
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):focus-visible,
+.cp-custom-checkbox:focus-visible {
+  box-shadow: 0 0 0 2px rgba(17, 17, 17, 0.2);
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):checked,
+.cp-custom-checkbox:checked {
+  background-color: #111111 !important;
+  border-color: #111111 !important;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.2 4.8L6.5 10.5L3.8 7.8' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):indeterminate,
+.cp-custom-checkbox:indeterminate {
+  background-color: #111111 !important;
+  border-color: #111111 !important;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 8h8' stroke='white' stroke-width='2.2' stroke-linecap='round'/%3E%3C/svg%3E") !important;
+  background-size: 100% 100% !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):active,
+.cp-custom-checkbox:active {
+  transform: scale(0.92);
+}
+
+input[type="checkbox"]:not(.sr-only):not(.native-checkbox):disabled,
+.cp-custom-checkbox:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f5f4ef;
+  border-color: #e2e0d8;
+  transform: none;
+}

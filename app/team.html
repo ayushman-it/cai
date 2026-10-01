@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team & Roles — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <h1 class="app-page-title">Team & Permissions</h1>
+              <p class="text-xs text-stone-500 mt-1">Manage counselors, managers, and administrators handling leads and live conversation handoffs.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <span id="team-seats-label" class="text-xs text-stone-400 mr-2">3 of 5 Seats Used</span>
+              <button class="btn-primary btn-sm text-xs py-1.5 px-3" data-modal-target="invite-member-modal">
+                <i data-lucide="user-plus" class="w-3.5 h-3.5 mr-1"></i> Invite Member
+              </button>
+            </div>
+          </div>
+
+          <!-- Team Table -->
+          <div class="app-table-wrapper">
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>Team Member & Role</th>
+                  <th>Email</th>
+                  <th>Access Role</th>
+                  <th>Phone (WhatsApp)</th>
+                  <th>Live Availability</th>
+                  <th>Widget Routing</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="team-table-tbody">
+                <tr>
+                  <td colspan="7" class="p-8 text-center text-xs text-stone-400">Loading team members...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Role Permissions Guide Panel -->
+          <div class="app-panel">
+            <h3 class="app-panel-title pb-2 border-b border-[#e7e5de] mb-3">Role Capabilities</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px]">
+                <div class="font-semibold text-stone-900 mb-1">Company Owner & Admin</div>
+                <div class="text-stone-500 text-[11px] leading-relaxed">Full access to billing, AI knowledge configuration, team invitation, and analytics.</div>
+              </div>
+              <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px]">
+                <div class="font-semibold text-stone-900 mb-1">Manager</div>
+                <div class="text-stone-500 text-[11px] leading-relaxed">Assign leads, review Closing Radar, and reallocate prospect pipelines.</div>
+              </div>
+              <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px]">
+                <div class="font-semibold text-stone-900 mb-1">Sales Agent</div>
+                <div class="text-stone-500 text-[11px] leading-relaxed">Chat with customers, manage assigned conversations, and update CRM deal stages.</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invite Member Modal -->
+  <div id="invite-member-modal" class="app-modal-overlay">
+    <div class="app-modal p-6 max-w-md w-full">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-4">
+        <div>
+          <h3 class="text-sm font-semibold text-stone-900">Invite Team Member</h3>
+          <p class="text-[11px] text-stone-500 mt-0.5">Add staff, assign job title, live availability, and lead routing.</p>
+        </div>
+        <button data-modal-close class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="invite-member-form" onsubmit="event.preventDefault(); CuboidDashboard.submitInviteMemberForm(event);" class="space-y-4 text-xs">
+        
+        <!-- Profile Picture / Avatar Upload Box -->
+        <div class="p-3 bg-stone-50 border border-[#e7e5de] rounded-[6px]">
+          <label class="block text-stone-700 font-medium mb-1.5">Profile Picture</label>
+          <div class="flex items-center gap-3.5">
+            <div class="relative shrink-0">
+              <div id="invite-avatar-preview-box" class="w-14 h-14 rounded-full bg-stone-200 border-2 border-white shadow-sm flex items-center justify-center overflow-hidden">
+                <i data-lucide="user" class="w-6 h-6 text-stone-400" id="invite-avatar-placeholder"></i>
+                <img id="invite-avatar-img" src="" alt="Preview" class="w-full h-full object-cover hidden">
+              </div>
+              <label for="invite-member-avatar-file" class="absolute -bottom-1 -right-1 w-6 h-6 bg-stone-900 hover:bg-stone-800 text-white rounded-full flex items-center justify-center cursor-pointer shadow transition-all hover:scale-105" title="Choose photo">
+                <i data-lucide="camera" class="w-3 h-3"></i>
+              </label>
+            </div>
+            
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="document.getElementById('invite-member-avatar-file').click()" class="btn-secondary btn-sm text-[11px] py-1 px-2.5">
+                  <i data-lucide="upload" class="w-3 h-3 mr-1"></i> Upload Photo
+                </button>
+                <button type="button" id="invite-avatar-remove-btn" onclick="CuboidDashboard.removeAvatarSelection()" class="text-[11px] text-stone-400 hover:text-rose-600 hidden font-medium">
+                  Remove
+                </button>
+              </div>
+              <p class="text-[10.5px] text-stone-500 mt-1">PNG, JPG, or WEBP (Max 2MB). Shown in CRM and chats.</p>
+              <input type="file" id="invite-member-avatar-file" accept="image/png,image/jpeg,image/webp,image/jpg" class="hidden" onchange="CuboidDashboard.handleAvatarFileSelect(this)">
+              <input type="hidden" id="invite-member-avatar-data" value="">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Full Name *</label>
+            <input type="text" id="invite-member-name" required placeholder="e.g. John Doe" class="app-input w-full">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Work Email *</label>
+            <input type="email" id="invite-member-email" required placeholder="colleague@cuboidsoft.in" class="app-input w-full">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Job Title (Shown in Widget)</label>
+            <input type="text" id="invite-member-job-title" placeholder="e.g. Senior Closer" class="app-input w-full">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Department</label>
+            <select id="invite-member-department" class="app-select w-full">
+              <option value="sales">Sales & Admissions</option>
+              <option value="consulting">Consulting & Advisory</option>
+              <option value="support">Customer Support</option>
+              <option value="technical">Technical Support</option>
+              <option value="general">General</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Access Role</label>
+            <select id="invite-member-role" class="app-select w-full">
+              <option value="sales_agent">Sales Agent</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Live Availability</label>
+            <select id="invite-member-availability" class="app-select w-full">
+              <option value="AVAILABLE">Available Now</option>
+              <option value="BUSY">Busy</option>
+              <option value="APPOINTMENT_ONLY">Appointment Only</option>
+              <option value="OFFLINE">Offline</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1 flex items-center justify-between">
+            <span>Phone Number (for WhatsApp Alerts)</span>
+            <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-medium">WhatsApp Alerts</span>
+          </label>
+          <input type="text" id="invite-member-phone" placeholder="+91 98765 43210" class="app-input w-full font-mono">
+        </div>
+
+        <div class="p-3 bg-stone-50 rounded border border-[#e7e5de] space-y-2">
+          <div class="text-[11px] font-semibold text-stone-900">Customer Widget Routing</div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <label class="flex items-center gap-2 cursor-pointer text-stone-700 text-xs">
+              <input type="checkbox" id="invite-member-instant-help" class="rounded text-stone-900" checked>
+              <span>Instant Human Help</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-stone-700 text-xs">
+              <input type="checkbox" id="invite-member-appointment" class="rounded text-stone-900" checked>
+              <span>Calendar Bookings</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-[#e7e5de] flex justify-end gap-2">
+          <button type="button" data-modal-close class="btn-secondary btn-sm py-1.5 px-3">Cancel</button>
+          <button type="submit" class="btn-primary btn-sm py-1.5 px-4" id="btn-submit-invite">
+            Send Invite
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Update Member Avatar Modal -->
+  <div id="update-avatar-modal" class="app-modal-overlay">
+    <div class="app-modal p-6 max-w-sm w-full">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-3">
+        <h3 class="text-sm font-semibold text-stone-900">Update Profile Picture</h3>
+        <button onclick="CuboidDashboard.closeAvatarModal()" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <form onsubmit="event.preventDefault(); CuboidDashboard.submitAvatarUpdate();" class="space-y-4 text-xs">
+        <input type="hidden" id="edit-avatar-user-id">
+        <div class="text-center py-2">
+          <div class="w-20 h-20 rounded-full mx-auto bg-stone-200 border-2 border-white shadow overflow-hidden flex items-center justify-center relative group">
+            <i data-lucide="user" class="w-9 h-9 text-stone-400" id="edit-avatar-placeholder"></i>
+            <img id="edit-avatar-img" src="" alt="Avatar" class="w-full h-full object-cover hidden">
+          </div>
+          <div id="edit-avatar-user-name" class="font-medium text-stone-900 mt-2 text-xs">Member</div>
+        </div>
+
+        <div class="flex justify-center gap-2">
+          <button type="button" onclick="document.getElementById('edit-avatar-file-input').click()" class="btn-secondary btn-sm py-1.5 px-3">
+            <i data-lucide="upload" class="w-3.5 h-3.5 mr-1"></i> Choose New Photo
+          </button>
+          <input type="file" id="edit-avatar-file-input" accept="image/png,image/jpeg,image/webp,image/jpg" class="hidden" onchange="CuboidDashboard.handleEditAvatarFile(this)">
+          <input type="hidden" id="edit-avatar-base64" value="">
+        </div>
+
+        <div class="pt-3 border-t border-[#e7e5de] flex justify-end gap-2">
+          <button type="button" onclick="CuboidDashboard.closeAvatarModal()" class="btn-secondary btn-sm py-1.5 px-3">Cancel</button>
+          <button type="submit" class="btn-primary btn-sm py-1.5 px-4" id="btn-save-avatar">Save Photo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Quick Phone Update Modal -->
+  <div id="edit-phone-modal" class="app-modal-overlay">
+    <div class="app-modal p-6 max-w-sm">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-3">
+        <h3 class="text-sm font-semibold text-stone-900">Update WhatsApp Alert Phone</h3>
+        <button onclick="document.getElementById('edit-phone-modal').classList.remove('open')" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+      <form onsubmit="event.preventDefault(); CuboidDashboard.submitPhoneUpdate();" class="space-y-3 text-xs">
+        <input type="hidden" id="edit-phone-user-id">
+        <div>
+          <label class="block text-stone-600 mb-1 font-medium" id="edit-phone-user-name">Member Phone</label>
+          <input type="text" id="edit-phone-input" required placeholder="+91 98765 43210" class="app-input w-full font-mono text-xs">
+          <p class="text-[10.5px] text-stone-400 mt-1">Include country code (e.g. +91) for WhatsApp delivery.</p>
+        </div>
+        <div class="pt-3 border-t border-[#e7e5de] flex justify-end gap-2">
+          <button type="button" onclick="document.getElementById('edit-phone-modal').classList.remove('open')" class="btn-secondary btn-sm py-1.5 px-3">Cancel</button>
+          <button type="submit" class="btn-primary btn-sm py-1.5 px-4">Save Phone</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Member Modal -->
+  <div id="edit-member-modal" class="app-modal-overlay">
+    <div class="app-modal p-6 max-w-lg w-full">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-4">
+        <div>
+          <h3 class="text-sm font-semibold text-stone-900">Edit Team Member</h3>
+          <p class="text-[11px] text-stone-500 mt-0.5">Configure role, job title, live availability, and widget routing.</p>
+        </div>
+        <button type="button" onclick="CuboidDashboard.closeEditMemberModal()" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="edit-member-form" onsubmit="event.preventDefault(); CuboidDashboard.submitEditMemberForm(event);" class="space-y-4 text-xs">
+        <input type="hidden" id="edit-member-id">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Full Name *</label>
+            <input type="text" id="edit-member-name" required class="app-input w-full text-xs">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Work Email *</label>
+            <input type="email" id="edit-member-email" required class="app-input w-full text-xs">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Job Title (Shown to Visitors)</label>
+            <input type="text" id="edit-member-job-title" placeholder="e.g. Senior Admissions Advisor" class="app-input w-full text-xs">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Department</label>
+            <select id="edit-member-department" class="app-select w-full text-xs">
+              <option value="sales">Sales & Admissions</option>
+              <option value="consulting">Consulting & Advisory</option>
+              <option value="support">Customer Support</option>
+              <option value="technical">Technical Support</option>
+              <option value="general">General</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Access Role</label>
+            <select id="edit-member-role" class="app-select w-full text-xs">
+              <option value="sales_agent">Sales Agent</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Administrator</option>
+              <option value="owner">Workspace Owner</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Phone Number (WhatsApp Alerts)</label>
+            <input type="text" id="edit-member-phone" placeholder="+91 98765 43210" class="app-input w-full font-mono text-xs">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Live Availability Status</label>
+          <select id="edit-member-availability" class="app-select w-full text-xs">
+            <option value="AVAILABLE">Available Now (Accepts Live Chats & Consultations)</option>
+            <option value="BUSY">Busy (In a Call / Meeting)</option>
+            <option value="APPOINTMENT_ONLY">Appointment Only (Calendar Bookings Only)</option>
+            <option value="OFFLINE">Offline (Hidden in Widget)</option>
+          </select>
+        </div>
+
+        <div class="p-3 bg-stone-50 rounded-md border border-[#e7e5de] space-y-2">
+          <div class="text-[11.5px] font-semibold text-stone-900">Customer Widget Routing</div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <label class="flex items-center gap-2 cursor-pointer text-stone-700">
+              <input type="checkbox" id="edit-member-instant-help" class="rounded text-stone-900">
+              <span>Allow Instant Help chat routing</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-stone-700">
+              <input type="checkbox" id="edit-member-appointment" class="rounded text-stone-900">
+              <span>Allow Calendar Consultation booking</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-[#e7e5de] flex justify-end gap-2">
+          <button type="button" onclick="CuboidDashboard.closeEditMemberModal()" class="btn-secondary btn-sm py-1.5 px-3">Cancel</button>
+          <button type="submit" class="btn-primary btn-sm py-1.5 px-4" id="btn-save-edit-member">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('team', 'Team', ['Manage']);
+      CuboidDashboard.loadTeam();
+    });
+  </script>
+</body>
+</html>

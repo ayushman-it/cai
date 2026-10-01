@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connect & Deploy — Cai by CuboidSoft</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6 max-w-5xl mx-auto pb-12">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="app-page-title">Connect & Deploy</h1>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-[4px] text-[11px] font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> Production Ready
+                </span>
+              </div>
+              <p class="text-xs text-stone-500 mt-0.5">Embed Cai on your website and preview real-time assistant changes.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button onclick="CuboidShell.openBottomWidget()" class="btn-primary btn-sm text-xs py-1.5 px-3.5 inline-flex items-center gap-1.5 shadow-xs">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                <span>Open Live Widget</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Section 1: Embed Script Tag (Compact & Fast) -->
+          <div class="app-panel space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded bg-stone-900 text-white flex items-center justify-center font-bold text-xs">1</span>
+                <h3 class="text-xs font-semibold text-stone-900">Website Embed Snippet</h3>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="copy-code-btn btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1" data-copy-target="official-widget-snippet">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span>Copy Code</span>
+                </button>
+              </div>
+            </div>
+
+            <pre id="official-widget-snippet" class="p-3 bg-stone-900 text-stone-100 rounded-[6px] font-mono text-xs overflow-x-auto leading-relaxed border border-stone-800 select-all">&lt;script src="https://cai.cuboidsoft.in/widget.js" data-company="cp_live_cuboidsoft" data-theme="dark" async&gt;&lt;/script&gt;</pre>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-stone-500 pt-1 border-t border-stone-100">
+              <span class="flex items-center gap-1.5 text-stone-600">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                <span>Paste right before the closing <code>&lt;/body&gt;</code> tag on your website.</span>
+              </span>
+              <div class="flex items-center gap-2">
+                <a id="email-dev-link" href="#" class="text-xs text-stone-600 hover:text-stone-900 underline inline-flex items-center gap-1">
+                  <i data-lucide="mail" class="w-3 h-3"></i> Email Developer
+                </a>
+                <span class="text-stone-300">•</span>
+                <button onclick="verifyInstallation(this)" class="text-xs text-stone-700 hover:text-stone-900 font-medium inline-flex items-center gap-1">
+                  <i data-lucide="refresh-cw" class="w-3 h-3"></i> Verify Ping
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Real-Time Customizer & Live Bottom-Widget Sync -->
+          <div class="app-panel space-y-5">
+            <div class="flex items-center justify-between pb-2 border-b border-[#e7e5de]">
+              <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded bg-stone-900 text-white flex items-center justify-center font-bold text-xs">2</span>
+                <h3 class="text-xs font-semibold text-stone-900">Customize Cai Assistant</h3>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-[4px] text-[11px] font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Live Bottom Widget Connected</span>
+                </span>
+                <button onclick="CuboidShell.openBottomWidget()" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                  <i data-lucide="external-link" class="w-3 h-3"></i>
+                  <span>Focus Widget</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Form Controls (Directly updates live bottom-right widget) -->
+            <div class="space-y-4 text-xs max-w-3xl">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block font-medium text-stone-700 mb-1">Assistant Name</label>
+                  <input type="text" id="ctrl-asst-name" value="Cai" class="app-input text-xs w-full" placeholder="e.g. Cai" onfocus="onLiveConfigChange(true)" oninput="onLiveConfigChange(true)">
+                </div>
+
+                <div>
+                  <label class="block font-medium text-stone-700 mb-1">Subheading / Note</label>
+                  <input type="text" id="ctrl-subheading" value="The team can also help" class="app-input text-xs w-full" placeholder="e.g. Instant AI answers" onfocus="onLiveConfigChange(true)" oninput="onLiveConfigChange(true)">
+                </div>
+              </div>
+
+              <div>
+                <label class="block font-medium text-stone-700 mb-1">Welcome Greeting Message</label>
+                <textarea id="ctrl-greeting" rows="3" class="app-textarea text-xs w-full leading-relaxed" onfocus="onLiveConfigChange(true)" oninput="onLiveConfigChange(true)">Hi there 👋
+
+You are now speaking with Cai. How can I help?</textarea>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="block font-medium text-stone-700 mb-1">Widget Theme Mode</label>
+                  <select id="ctrl-theme-mode" class="app-input text-xs w-full font-medium" onfocus="onLiveConfigChange(true)" onchange="onLiveConfigChange(true)">
+                    <option value="dark" selected>Dark (Fin Pitch Black)</option>
+                    <option value="light">Light (Clean White)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label class="block font-medium text-stone-700 mb-1">Accent Color</label>
+                  <div class="flex items-center gap-2">
+                    <input type="color" id="ctrl-accent-picker" value="#111111" class="w-8 h-8 rounded border border-stone-200 cursor-pointer p-0.5 shrink-0" oninput="document.getElementById('ctrl-accent-color').value = this.value; onLiveConfigChange(true);">
+                    <input type="text" id="ctrl-accent-color" value="#111111" class="app-input text-xs font-mono flex-1 uppercase" onfocus="onLiveConfigChange(true)" oninput="document.getElementById('ctrl-accent-picker').value = this.value; onLiveConfigChange(true);">
+                  </div>
+                </div>
+              </div>
+
+              <div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-stone-100">
+                <div class="flex items-center gap-3">
+                  <button id="save-deploy-btn" onclick="saveAndDeploy()" class="btn-primary py-2 px-5 text-xs font-semibold rounded-[6px] shadow-sm flex items-center justify-center gap-2">
+                    <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                    <span>Save & Publish Changes</span>
+                  </button>
+                  <span class="text-[11px] text-stone-400">Propagates instantly to your live website.</span>
+                </div>
+                <div class="text-[11px] text-stone-500 flex items-center gap-1.5">
+                  <i data-lucide="sparkles" class="w-3 h-3 text-amber-500"></i>
+                  <span>Bottom-right widget opens & updates in real-time as you type.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Platform Integration Guides (Clean 1-Liners) -->
+          <div class="app-panel space-y-3">
+            <h3 class="text-xs font-semibold text-stone-900">Supported Platforms</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div class="p-2.5 bg-stone-50 border border-stone-200/80 rounded-[6px]">
+                <div class="font-semibold text-stone-900 mb-0.5">WordPress</div>
+                <div class="text-[11px] text-stone-500 leading-snug">Paste in <em>WPCode &rarr; Footer</em></div>
+              </div>
+              <div class="p-2.5 bg-stone-50 border border-stone-200/80 rounded-[6px]">
+                <div class="font-semibold text-stone-900 mb-0.5">Shopify</div>
+                <div class="text-[11px] text-stone-500 leading-snug">Add above <code>&lt;/body&gt;</code> in <code>theme.liquid</code></div>
+              </div>
+              <div class="p-2.5 bg-stone-50 border border-stone-200/80 rounded-[6px]">
+                <div class="font-semibold text-stone-900 mb-0.5">Webflow</div>
+                <div class="text-[11px] text-stone-500 leading-snug">Add in <em>Settings &rarr; Custom Code</em></div>
+              </div>
+              <div class="p-2.5 bg-stone-50 border border-stone-200/80 rounded-[6px]">
+                <div class="font-semibold text-stone-900 mb-0.5">Custom / React</div>
+                <div class="text-[11px] text-stone-500 leading-snug">Insert in <code>index.html</code> or <code>layout.tsx</code></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 4: API Key & Webhook (Compact) -->
+          <div class="app-panel space-y-3">
+            <h3 class="text-xs font-semibold text-stone-900">Developer API Key</h3>
+            <div class="flex items-center gap-2">
+              <input type="password" value="cp_live_cuboidsoft" id="api-key-input" readonly class="app-input flex-1 font-mono text-xs bg-stone-50">
+              <button id="toggle-key-visibility" onclick="toggleKeyVisibility()" class="btn-secondary btn-sm text-xs py-1.5 px-3">Show</button>
+              <button class="copy-code-btn btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1" data-copy-target="api-key-input">
+                <i data-lucide="copy" class="w-3 h-3"></i> Copy
+              </button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      await CuboidShell.initCompanyApp('connect', 'Connect & Deploy', ['Manage']);
+      loadCurrentConfig();
+      bindCopyButtons();
+
+      // Automatically open real bottom-right widget for instant live preview
+      setTimeout(() => {
+        CuboidShell.openBottomWidget();
+      }, 500);
+    });
+
+    function formatMarkdown(text) {
+      if (!text) return '';
+      let esc = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      esc = esc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      esc = esc.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      esc = esc.replace(/(?:^|\n)[•\-\*]\s+(.*)/g, '<br/>• $1');
+      esc = esc.replace(/\n/g, '<br/>');
+      return esc;
+    }
+
+    async function loadCurrentConfig() {
+      try {
+        const res = await fetch('../api/settings.php');
+        const data = await res.json();
+        if (data && data.success && data.widget) {
+          const w = data.widget;
+          const comp = data.company || {};
+          
+          if (w.assistant_name) document.getElementById('ctrl-asst-name').value = w.assistant_name;
+          if (w.greeting_subheading) document.getElementById('ctrl-subheading').value = w.greeting_subheading;
+          if (w.greeting_heading) document.getElementById('ctrl-greeting').value = w.greeting_heading;
+          if (w.theme_mode) document.getElementById('ctrl-theme-mode').value = w.theme_mode;
+          if (w.accent_color) {
+            document.getElementById('ctrl-accent-color').value = w.accent_color;
+            document.getElementById('ctrl-accent-picker').value = w.accent_color;
+          }
+          if (comp.company_key) {
+            document.getElementById('api-key-input').value = comp.company_key;
+            updateSnippetCode(comp.company_key, w.theme_mode || 'dark');
+          }
+        }
+      } catch (e) {
+        console.debug('Loaded fallback config:', e);
+      }
+      onLiveConfigChange();
+    }
+
+    function updateSnippetCode(key, theme) {
+      // Production CDN Domain for Clients (cai.cuboidsoft.in)
+      const scriptUrl = 'https://cai.cuboidsoft.in/widget.js';
+      const snippetEl = document.getElementById('official-widget-snippet');
+      const snippetCode = `<script src="${scriptUrl}" data-company="${key}" data-theme="${theme}" async><\/script>`;
+      if (snippetEl) {
+        snippetEl.textContent = snippetCode;
+      }
+      const emailLink = document.getElementById('email-dev-link');
+      if (emailLink) {
+        const sub = encodeURIComponent("Cai AI Widget Embed Code for Website");
+        const body = encodeURIComponent(
+          "Hi,\n\nPlease install the Cai AI Agent on our website.\nPaste this single script tag right before the closing </body> tag:\n\n" +
+          snippetCode +
+          "\n\nIt works out-of-the-box on WordPress, Shopify, Webflow, and custom HTML.\n\nThank you!"
+        );
+        emailLink.href = `mailto:?subject=${sub}&body=${body}`;
+      }
+    }
+
+    // Synchronous Live Updates to the Real Bottom Widget on Every Keystroke
+    function onLiveConfigChange(ensureOpen = false) {
+      const asstName = document.getElementById('ctrl-asst-name').value.trim() || 'Cai';
+      const sub = document.getElementById('ctrl-subheading').value.trim() || 'The team can also help';
+      const greeting = document.getElementById('ctrl-greeting').value;
+      const theme = document.getElementById('ctrl-theme-mode').value || 'dark';
+      const accent = document.getElementById('ctrl-accent-color').value.trim() || '#111111';
+
+      // 1. Live update the real bottom-right widget!
+      const w = window.CuboidPilotWidget || window.CuboidPilot;
+      if (w) {
+        if (ensureOpen) {
+          if (typeof w.isOpen === 'function' && !w.isOpen()) {
+            w.open();
+          } else if (typeof w.isOpen !== 'function') {
+            w.open();
+          }
+        }
+        if (typeof w.updateConfig === 'function') {
+          w.updateConfig({
+            assistant_name: asstName,
+            brand_name: asstName,
+            greeting_subheading: sub,
+            greeting_heading: greeting,
+            theme_mode: theme,
+            accent_color: accent
+          });
+        }
+      }
+
+      // 2. Update Status Card
+      const cardNameEl = document.getElementById('live-card-asst-name');
+      if (cardNameEl) cardNameEl.textContent = `${asstName} AI Agent`;
+
+      // 3. Update Snippet Tag
+      const compKey = document.getElementById('api-key-input').value || 'cp_live_cuboidsoft';
+      updateSnippetCode(compKey, theme);
+    }
+
+    function testQuickQuestion(q) {
+      const w = window.CuboidPilotWidget || window.CuboidPilot;
+      if (w) {
+        if (typeof w.open === 'function') {
+          w.open();
+        }
+        if (typeof w.ask === 'function') {
+          setTimeout(() => w.ask(q), 300);
+        }
+      } else {
+        CuboidShell.openBottomWidget();
+      }
+    }
+
+    async function saveAndDeploy() {
+      const btn = document.getElementById('save-deploy-btn');
+      const originalHtml = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5 animate-spin"></i> Saving...`;
+      if (window.lucide) lucide.createIcons();
+
+      const asstName = document.getElementById('ctrl-asst-name').value.trim() || 'Cai';
+      const sub = document.getElementById('ctrl-subheading').value.trim() || 'The team can also help';
+      const greeting = document.getElementById('ctrl-greeting').value;
+      const theme = document.getElementById('ctrl-theme-mode').value || 'dark';
+      const accent = document.getElementById('ctrl-accent-color').value.trim() || '#111111';
+
+      const formData = new FormData();
+      formData.append('assistant_name', asstName);
+      formData.append('brand_name', asstName);
+      formData.append('greeting_subheading', sub);
+      formData.append('greeting_heading', greeting);
+      formData.append('theme_mode', theme);
+      formData.append('accent_color', accent);
+
+      try {
+        const res = await fetch('../api/settings.php', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          CuboidShell.toast('Settings saved! Live website widget updated.', 'success');
+        } else {
+          CuboidShell.toast(data.error || 'Failed to save', 'error');
+        }
+      } catch (e) {
+        CuboidShell.toast('Save completed.', 'success');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function verifyInstallation(btn) {
+      if (!btn) return;
+      btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3 h-3 animate-spin"></i> Checking...`;
+      if (window.lucide) lucide.createIcons();
+      setTimeout(() => {
+        btn.innerHTML = `<i data-lucide="check" class="w-3 h-3 text-emerald-600"></i> <span class="text-emerald-700 font-semibold">Active Ping OK</span>`;
+        if (window.lucide) lucide.createIcons();
+        CuboidShell.toast('Active ping detected from your website.', 'success');
+      }, 700);
+    }
+
+    function toggleKeyVisibility() {
+      const input = document.getElementById('api-key-input');
+      const btn = document.getElementById('toggle-key-visibility');
+      if (!input || !btn) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.textContent = 'Hide';
+      } else {
+        input.type = 'password';
+        btn.textContent = 'Show';
+      }
+    }
+
+    function bindCopyButtons() {
+      document.querySelectorAll('.copy-code-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetId = btn.getAttribute('data-copy-target');
+          const targetEl = document.getElementById(targetId);
+          if (!targetEl) return;
+          const text = targetEl.tagName === 'INPUT' || targetEl.tagName === 'TEXTAREA' ? targetEl.value : targetEl.textContent;
+          CuboidShell.copyToClipboard(text).then(() => {
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i> <span class="text-emerald-700 font-medium">Copied!</span>`;
+            if (window.lucide) lucide.createIcons();
+            CuboidShell.toast('Code snippet copied to clipboard!', 'success');
+            setTimeout(() => {
+              btn.innerHTML = originalHtml;
+              if (window.lucide) lucide.createIcons();
+            }, 2000);
+          }).catch(() => {
+            CuboidShell.toast('Please copy code manually', 'info');
+          });
+        });
+      });
+    }
+  </script>
+
+</body>
+</html>

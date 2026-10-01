@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acme Academy — Tenant Inspector — Super Admin — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Back Link -->
+          <div>
+            <a href="companies.html" class="text-xs text-stone-500 hover:text-stone-900 inline-flex items-center gap-1 font-medium">
+              &larr; Back to Tenant Directory
+            </a>
+          </div>
+
+          <!-- Top Banner & Quick Actions -->
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-[4px] bg-[#111111] text-white flex items-center justify-center font-bold text-base">
+                AA
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h1 class="text-lg font-semibold text-stone-900 leading-tight">Acme Academy Education Pvt Ltd</h1>
+                  <span class="badge-signal-green text-xs font-semibold">Active</span>
+                  <span class="badge-signal-blue text-xs font-medium">Growth Tier</span>
+                </div>
+                <div class="text-xs text-stone-500 mt-1 flex flex-wrap items-center gap-3">
+                  <span>ID: <code class="font-mono text-stone-700">ws_acme_8910</code></span>
+                  <span>•</span>
+                  <span>Domain: <code class="font-mono text-stone-700">acmeacademy.in</code></span>
+                  <span>•</span>
+                  <span>Owner: <strong class="text-stone-800">Arjun Mehta</strong> (arjun@acmeacademy.in)</span>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <a href="../app/overview.html" target="_blank" class="btn-primary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5">
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                <span>Impersonate (Login as Tenant)</span>
+              </a>
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3 text-red-700 hover:bg-red-50 hover:border-red-300" onclick="alert('Account suspended')">
+                Suspend
+              </button>
+            </div>
+          </div>
+
+          <!-- Tab Navigation -->
+          <div class="flex items-center gap-2 border-b border-[#e7e5de] pb-px overflow-x-auto text-xs font-medium">
+            <button onclick="switchInspectorTab('overview')" id="insp-btn-overview" class="insp-tab-btn px-3 py-2 border-b-2 border-stone-900 text-stone-900 transition-colors">Workspace Fleet Status</button>
+            <button onclick="switchInspectorTab('limits')" id="insp-btn-limits" class="insp-tab-btn px-3 py-2 border-b-2 border-transparent text-stone-500 hover:text-stone-900 transition-colors">Quota Overrides</button>
+            <button onclick="switchInspectorTab('billing')" id="insp-btn-billing" class="insp-tab-btn px-3 py-2 border-b-2 border-transparent text-stone-500 hover:text-stone-900 transition-colors">Subscription & Stripe</button>
+            <button onclick="switchInspectorTab('team')" id="insp-btn-team" class="insp-tab-btn px-3 py-2 border-b-2 border-transparent text-stone-500 hover:text-stone-900 transition-colors">User Roster (3)</button>
+            <button onclick="switchInspectorTab('logs')" id="insp-btn-logs" class="insp-tab-btn px-3 py-2 border-b-2 border-transparent text-stone-500 hover:text-stone-900 transition-colors">Audit Ledger</button>
+          </div>
+
+          <!-- TAB 1: FLEET STATUS OVERVIEW -->
+          <div id="insp-tab-overview" class="insp-panel space-y-6">
+            
+            <!-- 4 Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="app-panel py-3 px-4">
+                <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">AI Chats This Month</div>
+                <div class="text-xl font-semibold text-stone-900 mt-1">742 / 1,500</div>
+                <div class="text-[11px] text-stone-500 mt-1">49.4% limit utilized</div>
+              </div>
+              <div class="app-panel py-3 px-4">
+                <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">WhatsApp Dispatches</div>
+                <div class="text-xl font-semibold text-stone-900 mt-1">312</div>
+                <div class="text-[11px] text-emerald-700 font-medium mt-1">99.7% delivery rate</div>
+              </div>
+              <div class="app-panel py-3 px-4">
+                <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Leads Captured</div>
+                <div class="text-xl font-semibold text-stone-900 mt-1">18 Leads</div>
+                <div class="text-[11px] text-stone-500 mt-1">₹4,20,000 Pipeline Value</div>
+              </div>
+              <div class="app-panel py-3 px-4">
+                <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Knowledge Base</div>
+                <div class="text-xl font-semibold text-stone-900 mt-1">4 Docs / 1 Site</div>
+                <div class="text-[11px] text-stone-500 mt-1">324 Vector chunks</div>
+              </div>
+            </div>
+
+            <!-- Health Breakdown -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="app-panel space-y-3">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Integration Connection Health</h3>
+                <div class="space-y-2 text-xs">
+                  <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-[4px]">
+                    <div>
+                      <div class="font-medium text-stone-900">Embedded Website Widget</div>
+                      <div class="text-[11px] text-stone-400">Pinged 4 mins ago from https://acmeacademy.in</div>
+                    </div>
+                    <span class="badge-signal-green text-[10px]">Active</span>
+                  </div>
+
+                  <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-[4px]">
+                    <div>
+                      <div class="font-medium text-stone-900">Meta WhatsApp Cloud API</div>
+                      <div class="text-[11px] text-stone-400">Phone ID: 109283746190284 • WABA Tier 1</div>
+                    </div>
+                    <span class="badge-signal-green text-[10px]">Verified</span>
+                  </div>
+
+                  <div class="flex items-center justify-between p-2.5 bg-stone-50 border border-stone-200 rounded-[4px]">
+                    <div>
+                      <div class="font-medium text-stone-900">Webhook Forwarding</div>
+                      <div class="text-[11px] text-stone-400">https://api.acmeacademy.in/webhooks/cuboid</div>
+                    </div>
+                    <span class="badge-signal-green text-[10px]">200 OK</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="app-panel space-y-3">
+                <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Tenant Metadata & Keys</h3>
+                <div class="space-y-2.5 text-xs text-stone-600">
+                  <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                    <span>Database Partition:</span>
+                    <span class="font-mono text-stone-800">shard_ap_south_02</span>
+                  </div>
+                  <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                    <span>Primary Model Routed:</span>
+                    <span class="font-mono text-stone-800">claude-3-5-sonnet-20241022</span>
+                  </div>
+                  <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                    <span>Pinecone Namespace:</span>
+                    <span class="font-mono text-stone-800">ns_tenant_acme_8910</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span>Created Date:</span>
+                    <span class="text-stone-800">September 28, 2026, 11:42 AM IST</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- TAB 2: QUOTA OVERRIDES -->
+          <div id="insp-tab-limits" class="insp-panel space-y-6 hidden">
+            <div class="app-panel space-y-5">
+              <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de]">
+                <div>
+                  <h3 class="text-sm font-semibold text-stone-900">Super Admin Quota Overrides</h3>
+                  <p class="text-xs text-stone-500">Temporarily or permanently grant extra conversations, seats, or rate limits without forcing plan change.</p>
+                </div>
+                <button class="btn-primary btn-sm text-xs py-1.5 px-3" onclick="alert('Quota overrides saved')">
+                  Apply Overrides
+                </button>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div>
+                  <label class="block font-medium text-stone-700 mb-1">Monthly AI Conversations Cap</label>
+                  <input type="number" value="1500" class="app-input text-xs">
+                  <div class="text-[11px] text-stone-400 mt-1">Default Growth tier is 1,500 chats/mo.</div>
+                </div>
+
+                <div>
+                  <label class="block font-medium text-stone-700 mb-1">Allowed Team Seats</label>
+                  <input type="number" value="5" class="app-input text-xs">
+                  <div class="text-[11px] text-stone-400 mt-1">Default Growth tier includes 5 seats.</div>
+                </div>
+
+                <div>
+                  <label class="block font-medium text-stone-700 mb-1">Knowledge Base Documents Limit</label>
+                  <input type="number" value="25" class="app-input text-xs">
+                </div>
+
+                <div>
+                  <label class="block font-medium text-stone-700 mb-1">WhatsApp Cloud API Rate Limit (msg/sec)</label>
+                  <input type="number" value="80" class="app-input text-xs">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: SUBSCRIPTION & STRIPE -->
+          <div id="insp-tab-billing" class="insp-panel space-y-6 hidden">
+            <div class="app-panel space-y-4">
+              <h3 class="text-sm font-semibold text-stone-900">Stripe Customer Profile</h3>
+              
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div class="p-3 bg-stone-50 rounded-[4px] border border-stone-200">
+                  <div class="text-[11px] text-stone-400">Stripe Customer ID</div>
+                  <div class="font-mono font-medium text-stone-900 mt-1">cus_R94kmlOq0871</div>
+                </div>
+                <div class="p-3 bg-stone-50 rounded-[4px] border border-stone-200">
+                  <div class="text-[11px] text-stone-400">Active Subscription ID</div>
+                  <div class="font-mono font-medium text-stone-900 mt-1">sub_1Px980Klm9</div>
+                </div>
+                <div class="p-3 bg-stone-50 rounded-[4px] border border-stone-200">
+                  <div class="text-[11px] text-stone-400">Next Renewal Date</div>
+                  <div class="font-medium text-stone-900 mt-1">October 29, 2026 ($149.00)</div>
+                </div>
+              </div>
+
+              <div class="pt-4 border-t border-[#f0eee8] flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-semibold text-stone-900">Complimentary Subscription Pass</div>
+                  <div class="text-[11px] text-stone-500">Mark account as VIP lifetime free tier (bypasses Stripe charge cycles).</div>
+                </div>
+                <button class="btn-secondary btn-sm text-xs py-1.5 px-3">Grant VIP Pass</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: TEAM -->
+          <div id="insp-tab-team" class="insp-panel space-y-6 hidden">
+            <div class="app-panel p-0 overflow-hidden">
+              <table class="app-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>2FA</th>
+                    <th>Last Active</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-medium text-stone-900">Arjun Mehta</td>
+                    <td class="font-mono text-xs text-stone-600">arjun@acmeacademy.in</td>
+                    <td><span class="badge-signal-blue text-[10px]">Owner</span></td>
+                    <td><span class="badge-signal-green text-[10px]">Enabled</span></td>
+                    <td class="text-xs text-stone-500">10 mins ago</td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-1 px-2" onclick="alert('Password reset link sent')">Reset Password</button></td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium text-stone-900">Aman Verma</td>
+                    <td class="font-mono text-xs text-stone-600">aman@acmeacademy.in</td>
+                    <td><span class="badge-signal-blue text-[10px]">Admin</span></td>
+                    <td><span class="badge-signal-green text-[10px]">Enabled</span></td>
+                    <td class="text-xs text-stone-500">2 hours ago</td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-1 px-2" onclick="alert('Password reset link sent')">Reset Password</button></td>
+                  </tr>
+                  <tr>
+                    <td class="font-medium text-stone-900">Rhea Sengupta</td>
+                    <td class="font-mono text-xs text-stone-600">rhea@acmeacademy.in</td>
+                    <td><span class="badge-signal-blue text-[10px]">Agent</span></td>
+                    <td><span class="badge-signal-amber text-[10px]">Pending</span></td>
+                    <td class="text-xs text-stone-500">Yesterday</td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-1 px-2" onclick="alert('Password reset link sent')">Reset Password</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 5: LOGS -->
+          <div id="insp-tab-logs" class="insp-panel space-y-6 hidden">
+            <div class="app-panel p-0 overflow-hidden">
+              <table class="app-table text-xs">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Target Resource</th>
+                    <th>IP Address</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-mono text-stone-400">Sep 29 12:45 IST</td>
+                    <td class="font-medium text-stone-900">Arjun Mehta</td>
+                    <td>Updated AI Knowledge Base</td>
+                    <td class="font-mono text-stone-600">doc_fee_structure_2026.pdf</td>
+                    <td class="font-mono text-stone-500">106.51.24.110</td>
+                  </tr>
+                  <tr>
+                    <td class="font-mono text-stone-400">Sep 29 11:20 IST</td>
+                    <td class="font-medium text-stone-900">Rhea Sengupta</td>
+                    <td>Claimed Lead Conversation</td>
+                    <td class="font-mono text-stone-600">conv_99182 (Rahul Sharma)</td>
+                    <td class="font-mono text-stone-500">106.51.24.110</td>
+                  </tr>
+                  <tr>
+                    <td class="font-mono text-stone-400">Sep 28 14:15 IST</td>
+                    <td class="font-medium text-stone-900">Arjun Mehta</td>
+                    <td>Connected WhatsApp Cloud API</td>
+                    <td class="font-mono text-stone-600">waba_109283746190284</td>
+                    <td class="font-mono text-stone-500">106.51.24.110</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initSuperAdmin('companies', 'Acme Academy Dossier', ['Business', 'Companies']);
+    });
+
+    function switchInspectorTab(tabId) {
+      document.querySelectorAll('.insp-panel').forEach(panel => panel.classList.add('hidden'));
+      document.querySelectorAll('.insp-tab-btn').forEach(btn => {
+        btn.classList.remove('border-stone-900', 'text-stone-900');
+        btn.classList.add('border-transparent', 'text-stone-500');
+      });
+
+      const targetPanel = document.getElementById(`insp-tab-${tabId}`);
+      const targetBtn = document.getElementById(`insp-btn-${tabId}`);
+      if (targetPanel) targetPanel.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.classList.remove('border-transparent', 'text-stone-500');
+        targetBtn.classList.add('border-stone-900', 'text-stone-900');
+      }
+    }
+  </script>
+</body>
+</html>

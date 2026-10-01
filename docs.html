@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Documentation & Onboarding Guide — CuboidPilot</title>
+  <meta name="description" content="Complete documentation and step-by-step onboarding guide for CuboidPilot and Cai AI Agent. Learn how to connect your business, train knowledge documents, embed the web widget, and sync WhatsApp Cloud API.">
+
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              black: '#111111',
+              charcoal: '#1a1918',
+              paper: '#ffffff',
+              warm: '#fbfaf6',
+              border: '#e7e5de',
+              borderDark: '#d5d2c8',
+              muted: '#575653',
+              subtle: '#888680'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Base Theme Styles -->
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/components.css">
+
+  <style>
+    /* Clean documentation typography & styling */
+    .doc-content h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #111111;
+      letter-spacing: -0.02em;
+      margin-top: 2.75rem;
+      margin-bottom: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid #e7e5de;
+    }
+    @media (min-width: 640px) {
+      .doc-content h2 {
+        font-size: 1.75rem;
+        margin-top: 3.25rem;
+      }
+    }
+    .doc-content h2:first-of-type {
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+    }
+    .doc-content h3 {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #111111;
+      margin-top: 1.75rem;
+      margin-bottom: 0.75rem;
+    }
+    .doc-content p {
+      color: #4b4945;
+      font-size: 0.95rem;
+      line-height: 1.65;
+      margin-bottom: 1rem;
+    }
+    .doc-callout {
+      border-left: 3px solid #111111;
+      background-color: #faf9f5;
+      padding: 1rem 1.25rem;
+      border-radius: 2px;
+      margin: 1.5rem 0;
+    }
+    .doc-callout.tip {
+      border-left-color: #10b981;
+      background-color: #f0fdf4;
+    }
+    .doc-callout.warning {
+      border-left-color: #f59e0b;
+      background-color: #fffbeb;
+    }
+    .nav-sidebar-link.active {
+      color: #111111;
+      font-weight: 600;
+      background-color: #f5f4ee;
+      border-left: 2px solid #111111;
+    }
+    /* Mobile Drawer transition */
+    #mobile-doc-drawer {
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+    }
+    #mobile-doc-drawer.drawer-closed {
+      transform: translateX(-100%);
+      opacity: 0;
+      pointer-events: none;
+    }
+    #mobile-doc-drawer.drawer-open {
+      transform: translateX(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="bg-white text-brand-black antialiased selection:bg-brand-black selection:text-white flex flex-col min-h-screen">
+
+  <!-- Top Announcement Bar -->
+  <div id="top-announcement-bar" class="w-full bg-[#111111] text-white text-[12px] sm:text-[13px] py-2 px-4 flex items-center justify-between border-b border-stone-800">
+    <div class="max-w-[1440px] mx-auto w-full flex items-center justify-between px-1 sm:px-2">
+      <div class="flex items-center gap-2 text-stone-300 truncate">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+        <span class="truncate">CuboidPilot Documentation & Onboarding Manual v2.4</span>
+      </div>
+      <div class="flex items-center gap-3 sm:gap-4 text-xs font-medium shrink-0 ml-2">
+        <a href="onboarding/business.html" class="text-stone-300 hover:text-white underline">Setup Wizard &rarr;</a>
+        <a href="app/overview.html" class="text-stone-400 hover:text-white hidden sm:inline">Live Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-brand-border">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 h-[64px] sm:h-[70px] flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo / Wordmark -->
+      <div class="flex items-center gap-3 sm:gap-6 shrink-0">
+        <a href="index.html" class="flex items-center gap-2 text-brand-black group">
+          <div class="w-7 h-7 flex items-center justify-center">
+            <img src="assets/logo-black.png" alt="CuboidPilot" class="w-full h-full object-contain">
+          </div>
+          <span class="text-[18px] sm:text-[19px] font-semibold tracking-tight text-brand-black">CuboidPilot</span>
+        </a>
+        <span class="text-stone-300 hidden sm:inline">/</span>
+        <span class="text-xs font-mono font-medium px-2 py-0.5 rounded-[2px] bg-stone-100 border border-stone-200 text-stone-700 uppercase hidden sm:inline">Docs</span>
+      </div>
+
+      <!-- Quick Search Bar (Desktop) -->
+      <div class="relative flex-1 max-w-md hidden md:block">
+        <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+        <input 
+          id="doc-search-input" 
+          type="text" 
+          placeholder="Search documentation, onboarding steps, API..." 
+          class="w-full pl-9 pr-8 py-1.5 text-xs bg-[#f8f7f4] border border-[#dcdad0] rounded-[3px] focus:bg-white focus:outline-none focus:border-stone-900 transition-colors"
+        >
+        <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-mono text-stone-400 border border-stone-300 rounded px-1">⌘K</span>
+      </div>
+
+      <!-- Header Action Links -->
+      <div class="flex items-center gap-2.5 sm:gap-4 shrink-0">
+        <a href="pricing.html" class="text-xs font-medium text-stone-600 hover:text-black transition-colors hidden sm:block">Pricing</a>
+        <a href="index.html#faq" class="text-xs font-medium text-stone-600 hover:text-black transition-colors hidden lg:block">FAQ</a>
+        <a href="login.html" class="text-xs font-medium text-stone-600 hover:text-black transition-colors hidden sm:block">Sign in</a>
+        
+        <!-- Mobile Sidebar / Topics Drawer Toggle Button -->
+        <button 
+          id="open-mobile-drawer-btn" 
+          aria-label="Open documentation navigation" 
+          class="md:hidden px-3 py-1.5 text-xs font-medium border border-[#dcdad0] bg-[#fbfaf6] hover:bg-stone-100 text-stone-800 rounded-[2px] inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+        >
+          <i data-lucide="menu" class="w-4 h-4"></i>
+          <span>Topics</span>
+        </button>
+
+        <a href="onboarding/business.html" class="px-3 py-1.5 text-xs font-medium bg-[#111111] hover:bg-black text-white rounded-[2px] transition-colors inline-flex items-center gap-1.5 shadow-2xs">
+          <span>Get Started</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5 hidden sm:inline"></i>
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Mobile Subheader Sticky Bar -->
+    <div class="md:hidden border-t border-[#e7e5de] bg-[#fbfaf6] px-4 py-2 flex items-center justify-between gap-3 text-xs">
+      <button id="mobile-subbar-topics-btn" class="flex-1 flex items-center justify-between bg-white border border-[#dcdad0] rounded-[2px] px-3 py-1.5 text-stone-800 font-medium">
+        <span class="flex items-center gap-1.5 truncate">
+          <i data-lucide="list" class="w-3.5 h-3.5 text-stone-500 shrink-0"></i>
+          <span id="mobile-active-label" class="truncate">Table of Contents & Steps</span>
+        </span>
+        <i data-lucide="chevron-down" class="w-3 h-3 text-stone-400 shrink-0 ml-1"></i>
+      </button>
+
+      <a href="pricing.html" class="px-2.5 py-1.5 bg-white border border-[#dcdad0] rounded-[2px] text-stone-700 font-medium shrink-0">
+        Pricing
+      </a>
+    </div>
+  </header>
+
+  <!-- Mobile Slide-Over Navigation Drawer -->
+  <div id="mobile-doc-drawer" class="drawer-closed fixed inset-0 z-50 flex md:hidden" aria-modal="true" role="dialog">
+    <!-- Backdrop overlay -->
+    <div id="mobile-drawer-backdrop" class="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity cursor-pointer"></div>
+
+    <!-- Slide-over panel -->
+    <div class="relative w-full max-w-[320px] bg-white h-full shadow-2xl flex flex-col justify-between z-10 overflow-y-auto">
+      
+      <!-- Drawer Header -->
+      <div class="p-4 border-b border-[#e7e5de] flex items-center justify-between bg-[#fbfaf6]">
+        <div class="flex items-center gap-2">
+          <img src="assets/logo-black.png" alt="CuboidPilot" class="w-5 h-5 object-contain">
+          <span class="font-semibold text-xs text-stone-900 uppercase tracking-wider font-mono">Documentation</span>
+        </div>
+        <button id="close-mobile-drawer-btn" aria-label="Close documentation menu" class="p-1.5 text-stone-500 hover:text-stone-900 rounded hover:bg-stone-200 transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Mobile Search Input -->
+      <div class="p-3 border-b border-[#e7e5de] bg-white">
+        <div class="relative">
+          <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          <input 
+            id="mobile-search-input" 
+            type="text" 
+            placeholder="Filter topics..." 
+            class="w-full pl-8 pr-3 py-1.5 text-xs bg-[#f8f7f4] border border-[#dcdad0] rounded-[2px] focus:bg-white focus:outline-none focus:border-stone-900"
+          >
+        </div>
+      </div>
+
+      <!-- Drawer Navigation Links -->
+      <div class="p-4 flex-1 overflow-y-auto space-y-5 text-xs" id="mobile-sidebar-nav">
+        
+        <!-- Category: Getting Started -->
+        <div>
+          <div class="font-mono text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2 px-1">
+            Overview
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#quickstart" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-800 hover:bg-stone-100 font-medium">
+                5-Minute Quickstart
+              </a>
+            </li>
+            <li>
+              <a href="#system-architecture" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                Architecture & Security
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Category: Onboarding 6 Steps -->
+        <div>
+          <div class="font-mono text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2 px-1 flex items-center justify-between">
+            <span>Onboarding Guide</span>
+            <span class="text-[9px] px-1 py-0.2 bg-emerald-100 text-emerald-800 rounded font-medium">6 Steps</span>
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#step-1-business" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100 flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">01</span>
+                <span>Business Profile</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-2-goals" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100 flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">02</span>
+                <span>Strategic Goals</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-3-ai-engine" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100 flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">03</span>
+                <span>Cai AI & Grounding</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-4-website-embed" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100 flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">04</span>
+                <span>Website Widget Embed</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-5-whatsapp-sync" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100 flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">05</span>
+                <span>WhatsApp Cloud API</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-6-ready-launch" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100 flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">06</span>
+                <span>Simulator & Go-Live</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Category: Platform Operations -->
+        <div>
+          <div class="font-mono text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2 px-1">
+            Using CuboidPilot
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#managing-knowledge" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                Knowledge Base Management
+              </a>
+            </li>
+            <li>
+              <a href="#live-takeover" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                Real-Time Live Chat Takeover
+              </a>
+            </li>
+            <li>
+              <a href="#closing-radar" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                Closing Radar & Intent Scoring
+              </a>
+            </li>
+            <li>
+              <a href="#whatsapp-continuity-guide" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                WhatsApp Continuity & Follow-Up
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Category: Developer & Embeds -->
+        <div>
+          <div class="font-mono text-[10px] font-semibold uppercase tracking-wider text-stone-400 mb-2 px-1">
+            Developer Reference
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#widget-code-snippet" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                Widget Script Tag
+              </a>
+            </li>
+            <li>
+              <a href="#js-sdk-api" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                Client JavaScript SDK
+              </a>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Drawer Footer CTA -->
+      <div class="p-4 border-t border-[#e7e5de] bg-[#fbfaf6]">
+        <a href="onboarding/business.html" class="w-full py-2 bg-[#111111] text-white text-xs font-semibold rounded-[2px] text-center block">
+          Launch Setup Wizard &rarr;
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Documentation Layout Container -->
+  <div class="max-w-[1440px] mx-auto w-full flex-1 flex">
+    
+    <!-- LEFT SIDEBAR: Desktop Navigation Tree -->
+    <aside class="w-64 lg:w-72 shrink-0 border-r border-[#e7e5de] bg-[#fbfaf6] p-5 hidden md:block sticky top-[70px] h-[calc(100vh-70px)] overflow-y-auto">
+      
+      <div class="space-y-6 text-xs" id="sidebar-nav">
+        
+        <!-- Category: Getting Started -->
+        <div>
+          <div class="font-mono text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2.5 px-2">
+            Overview
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#quickstart" class="nav-sidebar-link active block px-2.5 py-1.5 rounded-[2px] text-stone-800 hover:bg-stone-200/60 transition-colors">
+                5-Minute Quickstart
+              </a>
+            </li>
+            <li>
+              <a href="#system-architecture" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                Architecture & Security
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Category: Step-by-Step Onboarding -->
+        <div>
+          <div class="font-mono text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2.5 px-2 flex items-center justify-between">
+            <span>Onboarding Guide</span>
+            <span class="text-[10px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-medium">6 Steps</span>
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#step-1-business" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">01</span>
+                <span>Business Profile</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-2-goals" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">02</span>
+                <span>Strategic Goals</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-3-ai-engine" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">03</span>
+                <span>Cai AI & Grounding</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-4-website-embed" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">04</span>
+                <span>Website Widget Embed</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-5-whatsapp-sync" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">05</span>
+                <span>WhatsApp Cloud API</span>
+              </a>
+            </li>
+            <li>
+              <a href="#step-6-ready-launch" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors flex items-center gap-2">
+                <span class="font-mono text-[10px] text-stone-400">06</span>
+                <span>Simulator & Go-Live</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Category: Platform Operations -->
+        <div>
+          <div class="font-mono text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2.5 px-2">
+            Using CuboidPilot
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#managing-knowledge" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                Knowledge Base Management
+              </a>
+            </li>
+            <li>
+              <a href="#live-takeover" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                Real-Time Live Chat Takeover
+              </a>
+            </li>
+            <li>
+              <a href="#closing-radar" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                Closing Radar & Intent Scoring
+              </a>
+            </li>
+            <li>
+              <a href="#whatsapp-continuity-guide" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                WhatsApp Continuity & Follow-Up
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Category: Developer & Embeds -->
+        <div>
+          <div class="font-mono text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-2.5 px-2">
+            Developer Reference
+          </div>
+          <ul class="space-y-1">
+            <li>
+              <a href="#widget-code-snippet" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                Widget Script Tag
+              </a>
+            </li>
+            <li>
+              <a href="#js-sdk-api" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                Client JavaScript SDK
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Category: Support -->
+        <div class="pt-4 border-t border-[#e7e5de]">
+          <div class="p-3 bg-white border border-[#e7e5de] rounded-[3px]">
+            <div class="text-xs font-semibold text-stone-900 mb-1">Need personal assistance?</div>
+            <p class="text-[11px] text-stone-500 mb-2.5">Our enterprise deployment team can onboard your company in under 24 hours.</p>
+            <a href="index.html#hero-demo" class="text-[11px] font-semibold text-stone-900 hover:underline inline-flex items-center gap-1">
+              <span>Contact engineering</span>
+              <i data-lucide="arrow-right" class="w-3 h-3"></i>
+            </a>
+          </div>
+        </div>
+
+      </div>
+
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 p-4 sm:p-8 lg:p-12 xl:p-14 max-w-4xl doc-content overflow-x-hidden">
+      
+      <!-- Doc Title & Badge -->
+      <div class="mb-8 sm:mb-10">
+        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-[2px] border border-[#dcdad0] bg-[#fbfaf6] text-stone-700 text-[11px] font-mono uppercase tracking-wider mb-4">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+          Official Handbook & Guide
+        </div>
+        <h1 class="text-2xl sm:text-3xl lg:text-[42px] font-semibold tracking-tight text-[#111111] leading-[1.15] mb-4">
+          Getting Started with CuboidPilot & Cai AI Agent
+        </h1>
+        <p class="text-sm sm:text-base lg:text-lg text-stone-600 leading-relaxed font-normal">
+          This comprehensive documentation guides your team through the entire journey: from signing up and completing the 6-step onboarding wizard, to uploading grounding documents, embedding the website widget, connecting WhatsApp Cloud API, and closing high-intent leads with real-time counselor handoffs.
+        </p>
+      </div>
+
+      <!-- Quick Interactive Onboarding Progress Banner -->
+      <div class="border border-[#e7e5de] rounded-[4px] bg-[#faf9f5] p-4 sm:p-5 mb-10 sm:mb-12">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
+          <div>
+            <div class="text-xs sm:text-sm font-semibold text-stone-900">Interactive Setup Wizard</div>
+            <div class="text-[11px] sm:text-xs text-stone-500">Fast-track setup with our automated 6-step guided wizard</div>
+          </div>
+          <a href="onboarding/business.html" class="px-3.5 py-1.5 sm:px-4 sm:py-2 bg-[#111111] text-white text-xs font-medium rounded-[2px] hover:bg-black transition-colors shrink-0 inline-flex items-center gap-1.5 self-start sm:self-auto">
+            <span>Launch Wizard</span>
+            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2 border-t border-[#e8e6df]">
+          <a href="#step-1-business" class="p-2 rounded bg-white border border-[#e8e6df] text-center hover:border-stone-900 transition-colors">
+            <span class="block text-[10px] font-mono text-stone-400">Step 1</span>
+            <span class="text-xs font-medium text-stone-800">Business</span>
+          </a>
+          <a href="#step-2-goals" class="p-2 rounded bg-white border border-[#e8e6df] text-center hover:border-stone-900 transition-colors">
+            <span class="block text-[10px] font-mono text-stone-400">Step 2</span>
+            <span class="text-xs font-medium text-stone-800">Goals</span>
+          </a>
+          <a href="#step-3-ai-engine" class="p-2 rounded bg-white border border-[#e8e6df] text-center hover:border-stone-900 transition-colors">
+            <span class="block text-[10px] font-mono text-stone-400">Step 3</span>
+            <span class="text-xs font-medium text-stone-800">AI Grounding</span>
+          </a>
+          <a href="#step-4-website-embed" class="p-2 rounded bg-white border border-[#e8e6df] text-center hover:border-stone-900 transition-colors">
+            <span class="block text-[10px] font-mono text-stone-400">Step 4</span>
+            <span class="text-xs font-medium text-stone-800">Website</span>
+          </a>
+          <a href="#step-5-whatsapp-sync" class="p-2 rounded bg-white border border-[#e8e6df] text-center hover:border-stone-900 transition-colors">
+            <span class="block text-[10px] font-mono text-stone-400">Step 5</span>
+            <span class="text-xs font-medium text-stone-800">WhatsApp</span>
+          </a>
+          <a href="#step-6-ready-launch" class="p-2 rounded bg-white border border-[#e8e6df] text-center hover:border-stone-900 transition-colors">
+            <span class="block text-[10px] font-mono text-stone-400">Step 6</span>
+            <span class="text-xs font-medium text-stone-800">Go Live</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- SECTION 1: 5-Minute Quickstart -->
+      <section id="quickstart" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">5-Minute Quickstart</h2>
+        <p>
+          CuboidPilot provides a modern alternative to traditional, static chatbots. Instead of rigid decision trees that frustrate visitors, CuboidPilot employs <strong>Cai</strong>—an autonomous, semantically grounded AI Agent that acts as your 24/7 first-line support specialist and top inbound SDR.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 my-5 sm:my-6">
+          <div class="p-4 border border-[#e7e5de] rounded-[3px] bg-white">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-stone-100 flex items-center justify-center font-mono text-xs font-bold text-stone-800 mb-2.5">1</div>
+            <div class="text-xs sm:text-sm font-semibold text-stone-900 mb-1">Upload Documents</div>
+            <div class="text-xs text-stone-600">Provide PDF manuals, pricing sheets, and website FAQs. Cai trains in seconds.</div>
+          </div>
+          <div class="p-4 border border-[#e7e5de] rounded-[3px] bg-white">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-stone-100 flex items-center justify-center font-mono text-xs font-bold text-stone-800 mb-2.5">2</div>
+            <div class="text-xs sm:text-sm font-semibold text-stone-900 mb-1">Paste 1-Line Tag</div>
+            <div class="text-xs text-stone-600">Embed the async script into your website HTML, Webflow, Shopify, or WordPress.</div>
+          </div>
+          <div class="p-4 border border-[#e7e5de] rounded-[3px] bg-white">
+            <div class="w-7 h-7 sm:w-8 sm:h-8 rounded bg-stone-100 flex items-center justify-center font-mono text-xs font-bold text-stone-800 mb-2.5">3</div>
+            <div class="text-xs sm:text-sm font-semibold text-stone-900 mb-1">Close on WhatsApp</div>
+            <div class="text-xs text-stone-600">When visitors leave desktop, they continue in WhatsApp with full session context intact.</div>
+          </div>
+        </div>
+
+        <div class="doc-callout tip">
+          <div class="font-semibold text-xs text-emerald-900 uppercase tracking-wider mb-1">Key Principle: Strict Grounding</div>
+          <div class="text-xs text-emerald-800 leading-relaxed">
+            Cai will <em>never</em> hallucinate or make up discounts or contractual claims. If an answer cannot be verified within your approved documentation, Cai gracefully captures the prospect's details and initiates a warm handoff to your human counselors.
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 2: Architecture & Security -->
+      <section id="system-architecture" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">Architecture & Security</h2>
+        <p>
+          CuboidPilot runs on an enterprise-grade multi-tenant architecture designed for low-latency customer interactions and strict data segregation:
+        </p>
+
+        <!-- Responsive Table Wrapper -->
+        <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 my-5 sm:my-6">
+          <table class="w-full text-left text-xs min-w-[540px] border border-[#e7e5de] rounded-[3px]">
+            <thead class="bg-[#fbfaf6] border-b border-[#e7e5de] font-mono text-stone-500 uppercase">
+              <tr>
+                <th class="p-3">Component</th>
+                <th class="p-3">Technology / Engine</th>
+                <th class="p-3">Security & SLA</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#e7e5de] text-stone-700">
+              <tr>
+                <td class="p-3 font-semibold text-stone-900">AI Runtime (Cai)</td>
+                <td class="p-3">Semantic Vector Embeddings + RAG</td>
+                <td class="p-3 text-emerald-700 font-medium">&lt; 0.8s Mean Latency • Strict Sandbox</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-stone-900">Website Widget</td>
+                <td class="p-3">Lightweight Vanilla JS (&lt; 12KB gzip)</td>
+                <td class="p-3">Async execution, Zero impact on CWV</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-stone-900">WhatsApp Engine</td>
+                <td class="p-3">Meta WhatsApp Cloud API v19.0</td>
+                <td class="p-3">End-to-End Encryption, Webhook Event Signature</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-stone-900">Closing Radar</td>
+                <td class="p-3">Real-time Intent Scoring Pipeline</td>
+                <td class="p-3">Instant WebSocket push notifications</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ONBOARDING STEP 1 -->
+      <section id="step-1-business" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Step 1: Setting Up Your Business Profile
+        </h2>
+        <p>
+          The onboarding begins at <a href="onboarding/business.html" class="underline font-medium text-stone-900"><code>onboarding/business.html</code></a>. Here you configure your organization's legal name, primary website URL, industry sector, and time zone.
+        </p>
+
+        <div class="p-4 sm:p-5 border border-[#e7e5de] rounded-[3px] bg-[#fbfaf6] my-5 sm:my-6 space-y-4">
+          <div class="text-xs font-semibold uppercase tracking-wider text-stone-500">Required Parameters</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-xs">
+            <div>
+              <span class="font-mono font-medium text-stone-900 block">Business Name</span>
+              <span class="text-stone-500">Appears in Cai's greeting and official chat headers.</span>
+            </div>
+            <div>
+              <span class="font-mono font-medium text-stone-900 block">Website URL</span>
+              <span class="text-stone-500">Domain whitelisted for CORS and script widget embedding.</span>
+            </div>
+            <div>
+              <span class="font-mono font-medium text-stone-900 block">Industry</span>
+              <span class="text-stone-500">Selects pre-tuned semantic prompts (SaaS, Education, Clinics, Real Estate, etc.).</span>
+            </div>
+            <div>
+              <span class="font-mono font-medium text-stone-900 block">Operating Timezone</span>
+              <span class="text-stone-500">Calibrates human counselor business hours vs. 24/7 AI coverage.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-callout">
+          <div class="font-semibold text-xs text-stone-900 uppercase tracking-wider mb-1">Configuration Tip</div>
+          <div class="text-xs text-stone-600">
+            Selecting the correct industry automatically configures Cai's default conversational tone. For example, selecting <em>Healthcare & Clinics</em> enables respectful, HIPAA-compliant patient intake prompts, while <em>SaaS & B2B</em> prioritizes technical validation and enterprise SDR qualification.
+          </div>
+        </div>
+      </section>
+
+      <!-- ONBOARDING STEP 2 -->
+      <section id="step-2-goals" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Step 2: Defining Strategic Goals & Workflow
+        </h2>
+        <p>
+          At <a href="onboarding/goals.html" class="underline font-medium text-stone-900"><code>onboarding/goals.html</code></a>, you establish the primary mission for CuboidPilot. Your choice dictates how aggressively Cai engages visitors and when it initiates lead capture forms:
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 my-5 sm:my-6">
+          <div class="p-4 border border-[#e7e5de] rounded-[3px] bg-white">
+            <div class="flex items-center gap-2 text-xs font-semibold text-stone-900 mb-1">
+              <i data-lucide="headphones" class="w-4 h-4 text-stone-700"></i>
+              <span>Support & Deflection</span>
+            </div>
+            <p class="text-xs text-stone-500 leading-relaxed">
+              Prioritizes answering repetitive Tier-1 questions from docs. Intervenes only when visitors explicitly ask for human assistance.
+            </p>
+          </div>
+
+          <div class="p-4 border border-[#e7e5de] rounded-[3px] bg-white">
+            <div class="flex items-center gap-2 text-xs font-semibold text-stone-900 mb-1">
+              <i data-lucide="target" class="w-4 h-4 text-stone-700"></i>
+              <span>Inbound Sales & SDR</span>
+            </div>
+            <p class="text-xs text-stone-500 leading-relaxed">
+              Discovers prospect team size, use case, budget, and booking intent during natural conversation before routing to sales.
+            </p>
+          </div>
+
+          <div class="p-4 border border-[#e7e5de] rounded-[3px] bg-white">
+            <div class="flex items-center gap-2 text-xs font-semibold text-stone-900 mb-1">
+              <i data-lucide="message-circle" class="w-4 h-4 text-emerald-600"></i>
+              <span>WhatsApp Continuity</span>
+            </div>
+            <p class="text-xs text-stone-500 leading-relaxed">
+              Converts desktop drop-offs into persistent WhatsApp threads, allowing counselors to follow up without email spam.
+            </p>
+          </div>
+
+          <div class="p-4 border border-[#e7e5de] rounded-[3px] bg-white">
+            <div class="flex items-center gap-2 text-xs font-semibold text-stone-900 mb-1">
+              <i data-lucide="sparkles" class="w-4 h-4 text-stone-700"></i>
+              <span>Hybrid Autonomous Desk</span>
+            </div>
+            <p class="text-xs text-stone-500 leading-relaxed">
+              Combines 24/7 instant FAQ resolution with intelligent commercial opportunity detection and Closing Radar alerts.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ONBOARDING STEP 3 -->
+      <section id="step-3-ai-engine" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Step 3: Cai Knowledge & Document Grounding
+        </h2>
+        <p>
+          Located at <a href="onboarding/ai.html" class="underline font-medium text-stone-900"><code>onboarding/ai.html</code></a>, this is the foundational core of your AI Agent. Cai's responses are 100% determined by what you upload here.
+        </p>
+
+        <h3>Supported Knowledge Sources:</h3>
+        <ul class="list-disc pl-5 space-y-2 text-xs text-stone-600 my-4">
+          <li><strong>PDF Documents</strong>: Catalogues, course brochures, SLA policies, terms of service, technical specifications.</li>
+          <li><strong>Website URLs & Sitemaps</strong>: Enter your help center root (e.g. <code>https://acme.com/help</code>) to crawl and index public pages automatically.</li>
+          <li><strong>Structured Q&A Pairs</strong>: Explicit questions with exact approved answers for critical policies (e.g., refund policies or pricing exceptions).</li>
+        </ul>
+
+        <div class="doc-callout warning">
+          <div class="font-semibold text-xs text-amber-900 uppercase tracking-wider mb-1">Grounding Best Practices</div>
+          <div class="text-xs text-amber-800 leading-relaxed">
+            Ensure your pricing sheets contain clear currency designations (e.g. USD $ or INR ₹) and seat tiers. If pricing is customized per client, specify: <em>"Custom enterprise pricing requires speaking with sales"</em> so Cai directs prospects to your contact form.
+          </div>
+        </div>
+
+        <h3>Grounding Strictness Threshold</h3>
+        <p>
+          You can toggle Cai's confidence boundary between <strong>Strict</strong> (0.85 semantic score—will only respond if directly in the text) and <strong>Balanced</strong> (0.75 semantic score—synthesizes answers across multiple related paragraphs).
+        </p>
+      </section>
+
+      <!-- ONBOARDING STEP 4 -->
+      <section id="step-4-website-embed" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Step 4: Website Widget Integration
+        </h2>
+        <p>
+          Onboarding screen <a href="onboarding/website.html" class="underline font-medium text-stone-900"><code>onboarding/website.html</code></a> provides your unique embed tag. Copy and paste this single script snippet into your website before the closing <code>&lt;/body&gt;</code> tag:
+        </p>
+
+        <!-- Code Block with Copy Button -->
+        <div class="border border-stone-800 rounded-[3px] bg-stone-900 text-stone-200 overflow-hidden my-5 sm:my-6">
+          <div class="px-3.5 py-2 sm:px-4 sm:py-2.5 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
+            <span class="font-mono text-[11px] sm:text-xs text-stone-400 truncate mr-2">HTML / WordPress / Shopify / Webflow</span>
+            <button onclick="copyCode('embed-snippet-1', this)" class="text-xs text-stone-300 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer shrink-0">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>Copy</span>
+            </button>
+          </div>
+          <pre id="embed-snippet-1" class="p-3 sm:p-4 font-mono text-[11px] sm:text-xs overflow-x-auto leading-relaxed text-emerald-400"><code>&lt;!-- CuboidPilot Cai AI Agent Widget --&gt;
+&lt;script 
+  src="https://cai.cuboidsoft.in/widget.js" 
+  data-company="cp_live_cuboidsoft" 
+  data-color="#111111" 
+  data-position="right"
+  async&gt;
+&lt;/script&gt;</code></pre>
+        </div>
+
+        <h3>CMS Installation Quick Links:</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 my-4 text-xs">
+          <div class="p-3 border border-[#e7e5de] rounded bg-white">
+            <span class="font-semibold text-stone-900 block mb-1">WordPress</span>
+            <span class="text-stone-500">Paste into <em>Theme Settings &rarr; Custom Code &rarr; Footer</em> or via <em>WPCode</em> plugin.</span>
+          </div>
+          <div class="p-3 border border-[#e7e5de] rounded bg-white">
+            <span class="font-semibold text-stone-900 block mb-1">Shopify</span>
+            <span class="text-stone-500">Go to <em>Online Store &rarr; Themes &rarr; Edit Code &rarr; theme.liquid</em> before <code>&lt;/body&gt;</code>.</span>
+          </div>
+          <div class="p-3 border border-[#e7e5de] rounded bg-white">
+            <span class="font-semibold text-stone-900 block mb-1">Webflow</span>
+            <span class="text-stone-500">Go to <em>Project Settings &rarr; Custom Code &rarr; Footer Code</em> and publish site.</span>
+          </div>
+        </div>
+
+        <p class="text-xs text-stone-500 mt-2">
+          Once pasted, the onboarding wizard pings your URL in real-time. As soon as a handshake is recorded, the status indicator turns <span class="text-emerald-700 font-semibold">Active ping detected</span>.
+        </p>
+      </section>
+
+      <!-- ONBOARDING STEP 5 -->
+      <section id="step-5-whatsapp-sync" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Step 5: WhatsApp Cloud API & Mobile Continuity
+        </h2>
+        <p>
+          At <a href="onboarding/whatsapp.html" class="underline font-medium text-stone-900"><code>onboarding/whatsapp.html</code></a>, you connect your official WhatsApp Business Account. This powers <strong>1-Tap WhatsApp Continuity</strong>.
+        </p>
+
+        <div class="p-4 sm:p-5 border border-[#e7e5de] rounded-[3px] bg-white my-5 sm:my-6 space-y-4">
+          <div class="text-xs font-semibold uppercase tracking-wider text-stone-500">Configuration Fields</div>
+          <div class="space-y-3 text-xs">
+            <div>
+              <span class="font-mono font-medium text-stone-900">Phone Number ID</span>
+              <p class="text-stone-500 mt-0.5">Retrieved from Meta for Developers &rarr; WhatsApp &rarr; API Setup.</p>
+            </div>
+            <div>
+              <span class="font-mono font-medium text-stone-900">WhatsApp Business Account ID (WABA ID)</span>
+              <p class="text-stone-500 mt-0.5">Your official business profile container in Meta Business Manager.</p>
+            </div>
+            <div>
+              <span class="font-mono font-medium text-stone-900">Permanent System User Token</span>
+              <p class="text-stone-500 mt-0.5">Bearer token generated under Business Settings &rarr; System Users with <code>whatsapp_business_messaging</code> permissions.</p>
+            </div>
+          </div>
+        </div>
+
+        <h3>Notification & Triage Preferences</h3>
+        <p>
+          CuboidPilot protects your counselors from notification fatigue. You can configure:
+        </p>
+        <ul class="list-disc pl-5 space-y-1.5 text-xs text-stone-600 my-3">
+          <li><strong>High-Intent Qualified Leads Only</strong>: Alerts counselors when budget and enterprise requirements are confirmed.</li>
+          <li><strong>Explicit Human Takeover</strong>: Alerts when the visitor clicks "Speak with a person" or expresses frustration.</li>
+          <li><strong>Cart Abandonment / Pricing Inquiries</strong>: Sends alert if a visitor stays on pricing for &gt; 45 seconds without checking out.</li>
+        </ul>
+      </section>
+
+      <!-- ONBOARDING STEP 6 -->
+      <section id="step-6-ready-launch" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Step 6: Simulator Verification & Going Live
+        </h2>
+        <p>
+          The final onboarding step at <a href="onboarding/ready.html" class="underline font-medium text-stone-900"><code>onboarding/ready.html</code></a> runs an automated system health check:
+        </p>
+
+        <div class="space-y-2.5 my-5 sm:my-6 text-xs font-medium">
+          <div class="flex items-center gap-3 p-3 bg-stone-50 border border-stone-200 rounded-[3px]">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+            <span class="text-stone-800">Business Profile & Operating Hours Configured</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 bg-stone-50 border border-stone-200 rounded-[3px]">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+            <span class="text-stone-800">Knowledge Base Vectorized & Verified for Zero Hallucinations</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 bg-stone-50 border border-stone-200 rounded-[3px]">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+            <span class="text-stone-800">Website Widget Active & Communicating with API Gateway</span>
+          </div>
+          <div class="flex items-center gap-3 p-3 bg-stone-50 border border-stone-200 rounded-[3px]">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+            <span class="text-stone-800">WhatsApp Cloud Webhook Verified for Instant Counselor Alerts</span>
+          </div>
+        </div>
+
+        <p>
+          Clicking <strong>"Launch Business Desk"</strong> completes your onboarding and takes you directly into your live console at <a href="app/overview.html" class="underline font-medium text-stone-900"><code>app/overview.html</code></a>.
+        </p>
+      </section>
+
+      <!-- PLATFORM OPERATIONS -->
+      <section id="managing-knowledge" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Managing Knowledge Documents & Ongoing Grounding
+        </h2>
+        <p>
+          As your business evolves, you can keep Cai up to date through <a href="app/knowledge.html" class="underline font-medium text-stone-900"><code>app/knowledge.html</code></a>:
+        </p>
+        <ul class="list-disc pl-5 space-y-2 text-xs text-stone-600 my-4">
+          <li><strong>Instant Document Refresh</strong>: Upload new PDF policies or add promotional pricing sheets. Indexing completes in under 30 seconds.</li>
+          <li><strong>Crawl On Demand</strong>: Hit <em>Re-crawl URLs</em> to pull fresh documentation from your blog or help docs.</li>
+          <li><strong>Unresolved Inquiries Audit</strong>: The <em>Gaps Radar</em> shows customer inquiries that Cai was not confident enough to answer, letting you write targeted Q&A pairs with a single click.</li>
+        </ul>
+      </section>
+
+      <!-- REAL TIME TAKEOVER -->
+      <section id="live-takeover" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Real-Time Live Chat Takeover
+        </h2>
+        <p>
+          Inside <a href="app/conversations.html" class="underline font-medium text-stone-900"><code>app/conversations.html</code></a>, counselors can monitor visitor sessions in real time:
+        </p>
+        <div class="p-4 border border-[#e7e5de] rounded-[3px] bg-white space-y-3 text-xs text-stone-600 my-4">
+          <p><strong>1. Autonomous Observation</strong>: While Cai is answering, messages appear with a subtle green AI badge.</p>
+          <p><strong>2. 1-Click Takeover Button</strong>: Pressing <code>Take Over Conversation</code> immediately pauses Cai for that session, alerting the visitor: <em>"Counselor [Name] joined the conversation"</em>.</p>
+          <p><strong>3. AI Copilot Assist</strong>: When typing as a human counselor, Cai suggests grounded reply drafts based on your verified knowledge base to speed up resolution.</p>
+        </div>
+      </section>
+
+      <!-- CLOSING RADAR -->
+      <section id="closing-radar" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Closing Radar & Commercial Intent Scoring
+        </h2>
+        <p>
+          The <a href="app/closing-radar.html" class="underline font-medium text-stone-900"><code>app/closing-radar.html</code></a> module automatically categorizes active visitors into 3 commercial intent tiers:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4 text-xs">
+          <div class="p-3 border border-stone-200 bg-stone-50 rounded">
+            <span class="text-stone-500 font-semibold block mb-1">Cold (Tier 3)</span>
+            <span class="text-stone-600">General browsing, basic FAQ queries. Cai answers autonomously with zero human intervention.</span>
+          </div>
+          <div class="p-3 border border-amber-200 bg-amber-50/50 rounded">
+            <span class="text-amber-800 font-semibold block mb-1">Warm (Tier 2)</span>
+            <span class="text-stone-600">Comparing plans, asking about integrations, visited pricing page &gt; 2 times.</span>
+          </div>
+          <div class="p-3 border border-emerald-200 bg-emerald-50 rounded">
+            <span class="text-emerald-800 font-semibold block mb-1">Qualified (Tier 1)</span>
+            <span class="text-stone-600">Explicit team size provided, enterprise SLA requested, calendar booking initiated.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- DEVELOPER JAVASCRIPT SDK -->
+      <section id="js-sdk-api" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Client JavaScript SDK Reference
+        </h2>
+        <p>
+          The CuboidPilot widget exposes a lightweight global JavaScript API on <code>window.Cai</code> for programmatically triggering chats, passing user attributes, or binding to custom buttons on your site:
+        </p>
+
+        <div class="border border-stone-800 rounded-[3px] bg-stone-900 text-stone-200 overflow-hidden my-5 sm:my-6">
+          <div class="px-3.5 py-2 sm:px-4 sm:py-2.5 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
+            <span class="font-mono text-[11px] sm:text-xs text-stone-400">JavaScript SDK Methods</span>
+            <button onclick="copyCode('embed-snippet-2', this)" class="text-xs text-stone-300 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>Copy</span>
+            </button>
+          </div>
+          <pre id="embed-snippet-2" class="p-3 sm:p-4 font-mono text-[11px] sm:text-xs overflow-x-auto leading-relaxed text-emerald-400"><code>// Open the Cai chat widget
+window.Cai && window.Cai.open();
+
+// Close the Cai chat widget
+window.Cai && window.Cai.close();
+
+// Pass authenticated user context from your app
+window.Cai && window.Cai.identify({
+  userId: "user_98124",
+  name: "Arjun Mehta",
+  email: "arjun@example.com",
+  plan: "Enterprise",
+  company: "Nexora Systems"
+});
+
+// Trigger a contextual prompt automatically
+window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</code></pre>
+        </div>
+      </section>
+
+      <!-- Bottom Next Steps Navigation -->
+      <div class="pt-8 border-t border-[#e7e5de] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div class="text-xs text-stone-500">Ready to put this into practice?</div>
+          <div class="text-xs sm:text-sm font-semibold text-stone-900">Start the 6-step guided onboarding wizard now</div>
+        </div>
+        <div class="flex items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
+          <a href="pricing.html" class="flex-1 sm:flex-initial text-center px-4 py-2 text-xs font-semibold border border-[#dcdad0] rounded-[2px] bg-white hover:bg-stone-50 transition-colors">
+            Pricing
+          </a>
+          <a href="onboarding/business.html" class="flex-1 sm:flex-initial text-center px-4 py-2 text-xs font-semibold bg-[#111111] hover:bg-black text-white rounded-[2px] transition-colors inline-flex items-center justify-center gap-1.5">
+            <span>Launch Wizard &rarr;</span>
+          </a>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT MINI TABLE OF CONTENTS (Desktop Large screens) -->
+    <aside class="w-56 shrink-0 p-6 hidden xl:block sticky top-[70px] h-[calc(100vh-70px)] overflow-y-auto text-xs">
+      <div class="font-mono text-[11px] font-semibold uppercase tracking-wider text-stone-400 mb-3">
+        On this page
+      </div>
+      <ul class="space-y-2 text-stone-500">
+        <li><a href="#quickstart" class="hover:text-black transition-colors block">5-Minute Quickstart</a></li>
+        <li><a href="#system-architecture" class="hover:text-black transition-colors block">Architecture & Security</a></li>
+        <li><a href="#step-1-business" class="hover:text-black transition-colors block">Step 1: Business Profile</a></li>
+        <li><a href="#step-2-goals" class="hover:text-black transition-colors block">Step 2: Strategic Goals</a></li>
+        <li><a href="#step-3-ai-engine" class="hover:text-black transition-colors block">Step 3: Cai Grounding</a></li>
+        <li><a href="#step-4-website-embed" class="hover:text-black transition-colors block">Step 4: Website Embed</a></li>
+        <li><a href="#step-5-whatsapp-sync" class="hover:text-black transition-colors block">Step 5: WhatsApp Cloud API</a></li>
+        <li><a href="#step-6-ready-launch" class="hover:text-black transition-colors block">Step 6: Go Live</a></li>
+        <li><a href="#managing-knowledge" class="hover:text-black transition-colors block">Knowledge Management</a></li>
+        <li><a href="#live-takeover" class="hover:text-black transition-colors block">Live Chat Takeover</a></li>
+        <li><a href="#closing-radar" class="hover:text-black transition-colors block">Closing Radar</a></li>
+        <li><a href="#js-sdk-api" class="hover:text-black transition-colors block">JavaScript SDK</a></li>
+      </ul>
+    </aside>
+
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-[#e7e5de] bg-[#fbfaf6] py-8 sm:py-10 px-4 sm:px-6 lg:px-12 text-xs text-stone-500">
+    <div class="max-w-[1440px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+      <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3">
+        <img src="assets/logo-black.png" alt="CuboidPilot" class="w-5 h-5 object-contain">
+        <span class="font-semibold text-stone-900">CuboidPilot Documentation</span>
+        <span class="hidden sm:inline">•</span>
+        <span>© 2026 CuboidPilot Technologies Inc.</span>
+      </div>
+      <div class="flex flex-wrap items-center justify-center gap-4 sm:gap-5">
+        <a href="index.html" class="hover:text-stone-900 transition-colors">Home</a>
+        <a href="pricing.html" class="hover:text-stone-900 transition-colors">Pricing</a>
+        <a href="index.html#faq" class="hover:text-stone-900 transition-colors">FAQ</a>
+        <a href="login.html" class="hover:text-stone-900 transition-colors">Sign in</a>
+        <a href="onboarding/business.html" class="hover:text-stone-900 transition-colors font-medium text-stone-900">Setup Wizard &rarr;</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script for Search, Mobile Drawer, ScrollSpy and 1-Click Code Copy -->
+  <script>
+    // Initialize Lucide Icons
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+
+    // 1-Click Code Copy Helper
+    function copyCode(preId, btn) {
+      const pre = document.getElementById(preId);
+      if (!pre) return;
+      const text = pre.innerText;
+      navigator.clipboard.writeText(text).then(() => {
+        const origHTML = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i><span class="text-emerald-400">Copied!</span>';
+        if (window.lucide) lucide.createIcons();
+        setTimeout(() => {
+          btn.innerHTML = origHTML;
+          if (window.lucide) lucide.createIcons();
+        }, 2000);
+      });
+    }
+
+    // Mobile Drawer Open / Close Logic
+    const drawer = document.getElementById('mobile-doc-drawer');
+    const openBtn = document.getElementById('open-mobile-drawer-btn');
+    const subbarBtn = document.getElementById('mobile-subbar-topics-btn');
+    const closeBtn = document.getElementById('close-mobile-drawer-btn');
+    const backdrop = document.getElementById('mobile-drawer-backdrop');
+    const mobileLinks = document.querySelectorAll('.mobile-nav-link');
+
+    function openDrawer() {
+      drawer.classList.remove('drawer-closed');
+      drawer.classList.add('drawer-open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeDrawer() {
+      drawer.classList.remove('drawer-open');
+      drawer.classList.add('drawer-closed');
+      document.body.style.overflow = '';
+    }
+
+    if (openBtn) openBtn.addEventListener('click', openDrawer);
+    if (subbarBtn) subbarBtn.addEventListener('click', openDrawer);
+    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    if (backdrop) backdrop.addEventListener('click', closeDrawer);
+
+    // Close drawer when any mobile nav link is clicked
+    mobileLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        closeDrawer();
+      });
+    });
+
+    // Client-side quick search filter (Desktop & Mobile)
+    function attachSearch(inputId) {
+      const el = document.getElementById(inputId);
+      if (!el) return;
+      el.addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase().trim();
+        const sections = document.querySelectorAll('.doc-content section');
+        sections.forEach(sec => {
+          if (!term) {
+            sec.style.display = '';
+            return;
+          }
+          const text = sec.innerText.toLowerCase();
+          if (text.includes(term)) {
+            sec.style.display = '';
+          } else {
+            sec.style.display = 'none';
+          }
+        });
+      });
+    }
+    attachSearch('doc-search-input');
+    attachSearch('mobile-search-input');
+
+    // Shortcut: cmd+k or ctrl+k to focus search
+    window.addEventListener('keydown', function(e) {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        const searchInput = document.getElementById('doc-search-input');
+        if (searchInput && window.innerWidth >= 768) {
+          searchInput.focus();
+        } else {
+          openDrawer();
+          const mobInput = document.getElementById('mobile-search-input');
+          if (mobInput) setTimeout(() => mobInput.focus(), 300);
+        }
+      }
+    });
+
+    // ScrollSpy for Sidebar Active State & Mobile Subbar Label
+    const mobileLabel = document.getElementById('mobile-active-label');
+    window.addEventListener('scroll', function() {
+      const sections = document.querySelectorAll('.doc-content section');
+      const navLinks = document.querySelectorAll('#sidebar-nav .nav-sidebar-link');
+      let currentId = '';
+      let currentTitle = '';
+
+      sections.forEach(section => {
+        const top = section.offsetTop - 140;
+        if (window.scrollY >= top) {
+          currentId = section.getAttribute('id');
+          const h2 = section.querySelector('h2');
+          if (h2) currentTitle = h2.innerText;
+        }
+      });
+
+      if (currentId) {
+        navLinks.forEach(link => {
+          if (link.getAttribute('href') === '#' + currentId) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+        if (mobileLabel && currentTitle) {
+          mobileLabel.textContent = currentTitle;
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Usage & Latency — Super Admin — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="app-page-title">AI Engine Telemetry & Tokens</h1>
+                <span class="badge-signal-green text-xs font-semibold">Inference Latency 420ms</span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Cross-tenant LLM token consumption, vector embedding queries, and cache efficiency.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <select class="app-input text-xs w-40 bg-white">
+                <option>Last 30 Days</option>
+                <option>Last 7 Days</option>
+                <option>Last 24 Hours</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Top Metrics -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Total LLM Tokens</div>
+              <div class="text-2xl font-semibold text-stone-900 mt-1">63.0M</div>
+              <div class="text-[11px] text-stone-500 mt-1">48.2M input • 14.8M output</div>
+            </div>
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Avg Response Time</div>
+              <div class="text-2xl font-semibold text-stone-900 mt-1">420 ms</div>
+              <div class="text-[11px] text-emerald-700 font-medium mt-1">P95: 780ms • P99: 1.1s</div>
+            </div>
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Semantic Cache Hit</div>
+              <div class="text-2xl font-semibold text-stone-900 mt-1">38.4%</div>
+              <div class="text-[11px] text-emerald-700 font-medium mt-1">Saved ~$1,820 in compute</div>
+            </div>
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Fallback Rate</div>
+              <div class="text-2xl font-semibold text-stone-900 mt-1">0.12%</div>
+              <div class="text-[11px] text-stone-500 mt-1">Human escalation triggers</div>
+            </div>
+          </div>
+
+          <!-- Model Routing Breakdown & Architecture -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="app-panel md:col-span-2 space-y-3">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">LLM Provider Distribution</h3>
+              <div class="space-y-3 text-xs">
+                <div>
+                  <div class="flex justify-between text-stone-700 mb-1">
+                    <span>Anthropic Claude 3.5 Sonnet (Primary Conversational Brain)</span>
+                    <span class="font-medium text-stone-900">82.4% (51.9M tokens)</span>
+                  </div>
+                  <div class="w-full h-2 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[82.4%] h-full bg-stone-900"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-stone-700 mb-1">
+                    <span>OpenAI GPT-4o-mini (Classification & Fast Intent Router)</span>
+                    <span class="font-medium text-stone-900">14.2% (8.9M tokens)</span>
+                  </div>
+                  <div class="w-full h-2 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[14.2%] h-full bg-stone-600"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex justify-between text-stone-700 mb-1">
+                    <span>Pinecone text-embedding-3-small (Vector Grounding)</span>
+                    <span class="font-medium text-stone-900">3.4% (2.2M tokens)</span>
+                  </div>
+                  <div class="w-full h-2 bg-stone-100 rounded-[2px] overflow-hidden">
+                    <div class="w-[3.4%] h-full bg-stone-400"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="app-panel space-y-3">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Token Cost Guardrails</h3>
+              <div class="space-y-2 text-xs text-stone-600">
+                <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                  <span>Max Tokens / Turn:</span>
+                  <span class="font-mono text-stone-900">600 tokens</span>
+                </div>
+                <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                  <span>Context Sliding Window:</span>
+                  <span class="font-mono text-stone-900">8 turns</span>
+                </div>
+                <div class="flex justify-between border-b border-stone-100 pb-1.5">
+                  <span>Temperature Default:</span>
+                  <span class="font-mono text-stone-900">0.2 (deterministic)</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Monthly Blended Cost:</span>
+                  <span class="font-mono text-stone-900 font-semibold">$3,410.80</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cross-Tenant AI Usage Table -->
+          <div class="app-panel p-0 overflow-hidden">
+            <div class="p-3 border-b border-[#e7e5de] bg-[#fcfbfa] flex items-center justify-between">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Top Tenant AI Consumers (September 2026)</h3>
+              <button class="text-xs text-stone-600 hover:text-stone-900 underline">Export Token Log</button>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="app-table text-xs">
+                <thead>
+                  <tr>
+                    <th>Tenant Organization</th>
+                    <th>Conversations</th>
+                    <th>Input Tokens</th>
+                    <th>Output Tokens</th>
+                    <th>Avg Latency</th>
+                    <th>Est. API Cost</th>
+                    <th class="text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=zenith" class="font-medium text-stone-900 hover:underline">Zenith Fitness Tech</a>
+                      <div class="text-[11px] text-stone-400">zenithfit.co.uk</div>
+                    </td>
+                    <td class="font-medium text-amber-700">1,410 chats (94%)</td>
+                    <td class="font-mono text-stone-600">3.82M</td>
+                    <td class="font-mono text-stone-600">1.14M</td>
+                    <td>410 ms</td>
+                    <td class="font-medium text-stone-900">$28.40</td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-1 px-2">Audit Prompts</button></td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=novacare" class="font-medium text-stone-900 hover:underline">NovaCare Health Systems</a>
+                      <div class="text-[11px] text-stone-400">novacare.ae</div>
+                    </td>
+                    <td class="font-medium text-stone-900">1,820 chats (36%)</td>
+                    <td class="font-mono text-stone-600">5.12M</td>
+                    <td class="font-mono text-stone-600">1.68M</td>
+                    <td>435 ms</td>
+                    <td class="font-medium text-stone-900">$39.10</td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-1 px-2">Audit Prompts</button></td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=acme" class="font-medium text-stone-900 hover:underline">Acme Academy</a>
+                      <div class="text-[11px] text-stone-400">acmeacademy.in</div>
+                    </td>
+                    <td class="font-medium text-stone-900">742 chats (49%)</td>
+                    <td class="font-mono text-stone-600">2.14M</td>
+                    <td class="font-mono text-stone-600">0.78M</td>
+                    <td>395 ms</td>
+                    <td class="font-medium text-stone-900">$16.80</td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-1 px-2">Audit Prompts</button></td>
+                  </tr>
+
+                  <tr>
+                    <td>
+                      <a href="company-detail.html?id=solaris" class="font-medium text-stone-900 hover:underline">Solaris Home Energy</a>
+                      <div class="text-[11px] text-stone-400">solarishome.io</div>
+                    </td>
+                    <td class="font-medium text-stone-900">210 chats (42%)</td>
+                    <td class="font-mono text-stone-600">0.65M</td>
+                    <td class="font-mono text-stone-600">0.24M</td>
+                    <td>415 ms</td>
+                    <td class="font-medium text-stone-900">$5.20</td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-1 px-2">Audit Prompts</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initSuperAdmin('ai-usage', 'AI Telemetry & Tokens', ['Platform Telemetry']);
+    });
+  </script>
+</body>
+</html>

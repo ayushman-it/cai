@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing Plans & Tiers — CuboidPilot</title>
+  <meta name="description" content="Simple, transparent pricing for CuboidPilot helpdesk plans with Cai AI Agent built in. Start your 14-day cardless free trial today.">
+  <link rel="icon" type="image/png" href="assets/logo-black.png">
+
+  <!-- Inter Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              black: '#111111',
+              charcoal: '#1a1918',
+              paper: '#ffffff',
+              warm: '#f6f5f0',
+              border: '#e7e5de',
+              borderDark: '#d5d2c8',
+              muted: '#575653',
+              subtle: '#888680'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom Stylesheets -->
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body class="bg-white text-brand-black antialiased selection:bg-brand-black selection:text-white">
+
+  <!-- Top Announcement Bar -->
+  <div id="top-announcement-bar" class="w-full bg-[#000000] text-white text-[13px] py-2.5 px-4 flex items-center justify-center relative z-50">
+    <div class="text-center font-normal text-stone-200">
+      ✦ Introducing <strong>Cai</strong>: The breakthrough AI Agent for support & sales. Hire Cai to resolve 50%+ of customer questions instantly. <a href="index.html#hire-cai" class="underline hover:text-white font-medium ml-1">Meet Cai &rarr;</a>
+    </div>
+    <button id="close-announcement" class="absolute right-4 text-stone-400 hover:text-white transition-colors" aria-label="Close announcement">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-brand-border transition-all duration-200">
+    <div class="max-w-[1440px] mx-auto px-6 lg:px-10 h-[76px] flex items-center justify-between">
+      
+      <!-- Brand Logo / Wordmark -->
+      <div class="flex items-center gap-8">
+        <a href="index.html" class="flex items-center gap-2.5 text-brand-black group">
+          <div class="w-8 h-8 flex items-center justify-center transition-transform duration-200 group-hover:scale-95">
+            <img src="assets/logo-black.png" alt="CuboidPilot" class="w-full h-full object-contain">
+          </div>
+          <span class="text-[20px] font-semibold tracking-tight text-brand-black">CuboidPilot</span>
+        </a>
+
+        <!-- Desktop Navigation -->
+        <nav class="hidden lg:flex items-center gap-1 text-[14.5px] font-medium text-brand-muted">
+          <a href="index.html#hire-cai" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors inline-flex items-center gap-1.5">
+            Meet Cai
+          </a>
+          <a href="index.html#product-journey" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Product</a>
+          <a href="index.html#customer-journey" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Customer Story</a>
+          <a href="pricing.html" class="px-3 py-1.5 rounded-md text-brand-black font-semibold hover:text-black transition-colors">Pricing</a>
+          <a href="blog.html" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Blog</a>
+          <a href="docs.html" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Docs</a>
+          <a href="index.html#faq" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">FAQ</a>
+        </nav>
+      </div>
+
+      <!-- Header Actions Right -->
+      <div class="hidden md:flex items-center gap-2.5">
+        <a href="login.php" class="text-[14px] font-medium text-stone-700 hover:text-brand-black px-2.5 py-2 transition-colors">Log in</a>
+        <a href="signup.php" class="btn-primary btn-sm text-[13.5px] px-4 py-2">Start free trial</a>
+      </div>
+
+      <!-- Mobile Hamburger Button -->
+      <div class="lg:hidden flex items-center gap-2">
+        <a href="index.html#hire-cai" class="btn-primary btn-sm text-xs px-3 py-1.5">Hire Cai</a>
+        <button id="mobile-menu-btn" aria-label="Toggle navigation" class="p-2 text-brand-black hover:bg-stone-200/50 rounded-lg transition-colors">
+          <i data-lucide="menu" class="w-6 h-6"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer -->
+  <div id="mobile-drawer" class="lg:hidden p-6 flex flex-col justify-between">
+    <div>
+      <div class="flex items-center justify-between pb-6 border-b border-brand-border">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-brand-black text-white flex items-center justify-center font-semibold text-sm">CP</div>
+          <span class="text-[19px] font-semibold tracking-tight text-brand-black">CuboidPilot</span>
+        </div>
+        <button id="close-mobile-menu" aria-label="Close navigation" class="p-2 text-brand-black hover:bg-stone-100 rounded-lg">
+          <i data-lucide="x" class="w-6 h-6"></i>
+        </button>
+      </div>
+      <div class="py-6 flex flex-col gap-3.5 text-base font-medium text-brand-black">
+        <a href="index.html#hire-cai" class="flex items-center gap-2 text-stone-900 font-semibold hover:text-stone-600 transition-colors">
+          Meet Cai (AI Agent)
+        </a>
+        <a href="index.html#product-journey" class="hover:text-stone-600 transition-colors">Product & Platform</a>
+        <a href="pricing.html" class="hover:text-stone-600 transition-colors font-medium">Pricing & Plans</a>
+        <a href="blog.html" class="hover:text-stone-600 transition-colors">Blog & Stories</a>
+        <a href="docs.html" class="hover:text-stone-600 transition-colors flex items-center justify-between">
+          <span>Documentation</span>
+          <span class="text-[10px] font-mono bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded border border-stone-200">Docs</span>
+        </a>
+        <a href="index.html#faq" class="hover:text-stone-600 transition-colors">FAQ</a>
+        <a href="index.html#trust" class="hover:text-stone-600 transition-colors">Customers</a>
+      </div>
+    </div>
+    <div class="pt-6 border-t border-brand-border flex flex-col gap-3">
+      <a href="signup.php" class="btn-primary w-full text-center">Start free trial</a>
+      <a href="login.php" class="btn-secondary w-full text-center">Log in</a>
+      <div class="text-center text-xs text-brand-subtle mt-2">© 2026 CuboidPilot Technologies</div>
+    </div>
+  </div>
+
+  <main>
+    <!-- Main Pricing Section -->
+    <section class="py-16 md:py-24 px-6 lg:px-12 bg-white">
+      <div class="max-w-[1360px] mx-auto">
+        
+        <!-- Hero Header (Transparent Pricing) -->
+        <div class="text-center max-w-[820px] mx-auto mb-8 sm:mb-10">
+          <h1 class="text-4xl sm:text-5xl lg:text-[54px] font-semibold tracking-tight text-[#111111] leading-[1.1] mb-4">
+            Transparent pricing
+          </h1>
+          <p class="text-base sm:text-xl text-stone-600 leading-relaxed max-w-[620px] mx-auto mb-6">
+            A complete human and AI support system with simple, transparent pricing.
+          </p>
+
+          <!-- Controls Bar: Custom Currency Selector & Annual Billing Switcher -->
+          <div class="inline-flex flex-wrap items-center justify-center gap-3.5 p-2 bg-[#faf9f5] border border-[#dcdad0] rounded-[6px] shadow-2xs mb-6">
+            <!-- Custom Currency Selector Dropdown -->
+            <div class="relative" id="cp-currency-dropdown">
+              <button type="button" id="cp-currency-btn" aria-haspopup="true" aria-expanded="false" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-[4px] border border-[#dcdad0] bg-white hover:bg-stone-50 text-xs font-medium text-stone-800 transition-colors shadow-2xs cursor-pointer select-none">
+                <span id="cp-currency-flag">🇮🇳</span>
+                <span id="cp-currency-label" class="font-mono font-semibold">INR (₹)</span>
+                <i data-lucide="chevron-down" id="cp-currency-chevron" class="w-3.5 h-3.5 text-stone-500 transition-transform duration-200"></i>
+              </button>
+              <div id="cp-currency-menu" class="hidden absolute left-0 mt-1.5 w-56 rounded-[4px] border border-[#dcdad0] bg-white shadow-xl py-1 z-50 text-left">
+                <!-- Dynamically populated by js/pricing-currency.js -->
+              </div>
+            </div>
+
+            <div class="w-px h-5 bg-stone-300 hidden sm:block"></div>
+
+            <!-- Annual Billing Switcher -->
+            <div class="flex items-center gap-3 px-1">
+              <label for="page-annual-toggle" class="flex items-center gap-2 cursor-pointer text-xs select-none">
+                <span class="text-stone-700 font-medium">Pay annually</span>
+                <div class="relative">
+                  <input type="checkbox" id="page-annual-toggle" class="sr-only peer" checked>
+                  <div class="w-9 h-5 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#111111]"></div>
+                </div>
+              </label>
+              <span class="px-2 py-0.5 rounded-[2px] bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10.5px] font-mono font-semibold uppercase">
+                Save up to 26%
+              </span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-center gap-6 text-xs sm:text-[13px] font-medium text-stone-700">
+            <span class="inline-flex items-center gap-1.5">
+              <i data-lucide="check-circle" class="w-4 h-4 text-emerald-700"></i>
+              14-day cardless free trial
+            </span>
+            <span class="inline-flex items-center gap-1.5">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-700"></i>
+              Grounded AI accuracy guarantee
+            </span>
+          </div>
+        </div>
+
+        <!-- Featured Transparent Pricing Card (Exact 1:1 match to reference media_1790879411514.png) -->
+        <div class="max-w-[820px] mx-auto mb-16">
+          <div class="rounded-[4px] border border-[#e2dfd5] bg-[#f5f4ef] p-8 sm:p-12 text-center shadow-xs">
+            <h2 class="text-lg sm:text-[22px] font-semibold text-stone-900 tracking-tight mb-2">
+              CuboidPilot helpdesk with Cai AI Agent
+            </h2>
+            <p class="text-xs sm:text-[14px] text-stone-600 max-w-md mx-auto leading-relaxed mb-6 font-normal">
+              Combine CuboidPilot with Cai for a single, fully integrated customer service platform.
+            </p>
+
+            <!-- Big Price Display ($29 + $0.99) -->
+            <div class="flex items-center justify-center gap-3 sm:gap-5 my-6 sm:my-8">
+              <div>
+                <div class="text-4xl sm:text-6xl font-semibold tracking-tight text-stone-900 font-mono cp-hero-seat-price">
+                  ₹79
+                </div>
+                <div class="text-[10px] sm:text-[11.5px] font-mono uppercase tracking-wider text-stone-600 font-semibold mt-1.5">
+                  PER SEAT/MO
+                </div>
+              </div>
+              <div class="text-3xl sm:text-4xl font-light text-stone-400 pb-5">+</div>
+              <div>
+                <div class="text-4xl sm:text-6xl font-semibold tracking-tight text-stone-900 font-mono cp-hero-outcome-price">
+                  ₹1
+                </div>
+                <div class="text-[10px] sm:text-[11.5px] font-mono uppercase tracking-wider text-stone-600 font-semibold mt-1.5 flex items-center justify-center gap-1">
+                  <span>PER OUTCOME</span>
+                  <i data-lucide="help-circle" class="w-3.5 h-3.5 text-stone-400 cursor-pointer" title="Only pay when Cai resolves the customer question without human intervention."></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- CTAs -->
+            <div class="flex flex-wrap items-center justify-center gap-3 mt-7 mb-7">
+              <a href="signup.php" class="py-2.5 px-6 rounded-[2px] bg-[#111111] hover:bg-black text-white text-xs font-semibold transition-colors shadow-2xs">
+                Start free trial
+              </a>
+              <a href="index.html#hero-demo" class="py-2.5 px-6 rounded-[2px] border border-[#dcdad0] bg-white hover:bg-stone-50 text-stone-800 text-xs font-semibold transition-colors shadow-2xs">
+                View demo
+              </a>
+            </div>
+
+            <!-- Lower Outcome Note -->
+            <div class="pt-6 border-t border-[#e2dfd5] text-xs sm:text-[13px] text-stone-600 max-w-lg mx-auto leading-relaxed">
+              Outcome-based pricing you control. Pay only for what you use and set spending limits so costs never exceed your budget. <a href="docs.html" class="underline font-semibold text-stone-900 hover:text-black">Learn more.</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center mb-6">
+          <div class="text-xs font-mono font-semibold uppercase tracking-wider text-stone-500">
+            Compare all plans &amp; deployment options
+          </div>
+        </div>
+
+        <!-- 2-Card Intercom Split Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch mb-10">
+
+          <!-- Left Main Card (3 Columns: Essential, Advanced, Expert) -->
+          <div class="lg:col-span-9 border border-[#dcdad0] rounded-[2px] bg-white flex flex-col justify-between shadow-2xs overflow-hidden">
+            
+            <!-- Left Card Top Bar -->
+            <div class="border-b border-[#eceae4] px-6 py-3.5 bg-[#fbfaf6] flex flex-wrap items-center justify-between gap-4">
+              <div class="flex items-center gap-2 text-xs">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] bg-white border border-[#dcdad0] text-stone-800 font-semibold text-[11px] font-mono">
+                  <i data-lucide="layout" class="w-3.5 h-3.5 text-stone-700"></i>
+                  CuboidPilot helpdesk
+                </span>
+                <span class="text-stone-400 font-bold">+</span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] bg-white border border-[#dcdad0] text-stone-800 font-semibold text-[11px] font-mono">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  Cai AI Agent
+                </span>
+              </div>
+            </div>
+
+            <!-- 3 Columns Inside Left Card -->
+            <div class="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#eceae4] flex-1">
+              
+              <!-- Column 1: Essential -->
+              <div class="p-6 sm:p-7 flex flex-col justify-between space-y-6">
+                <div>
+                  <h3 class="text-lg font-semibold text-[#111111] mb-1">Essential</h3>
+                  <p class="text-xs text-stone-500 leading-relaxed min-h-[34px]">
+                    Customer support for individuals, startups, and small businesses.
+                  </p>
+
+                  <div class="py-5 border-y border-[#eceae4] my-5 space-y-3">
+                    <div>
+                      <div class="text-[11px] font-mono text-stone-500">CuboidPilot helpdesk</div>
+                      <div class="text-2xl font-semibold text-[#111111] tracking-tight font-mono">
+                        <span class="intercom-price" data-plan="essential" data-annual="₹79" data-monthly="₹99">₹79</span>
+                        <span class="text-xs font-normal text-stone-500">per seat/mo</span>
+                      </div>
+                      <div class="text-[10px] text-stone-400 font-mono mt-0.5 intercom-billed-note" data-plan="essential">billed annually</div>
+                    </div>
+
+                    <div class="pt-2 border-t border-[#f0eee9]">
+                      <div class="text-[11px] font-mono text-stone-500">Cai AI Agent</div>
+                      <div class="text-base font-semibold text-[#111111] font-mono flex items-center gap-1">
+                        <span class="cp-cai-outcome-rate">₹1</span>
+                        <span class="text-xs font-normal text-stone-500">per outcome</span>
+                        <i data-lucide="help-circle" class="w-3.5 h-3.5 text-stone-400 cursor-pointer"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="mb-6">
+                    <a href="signup.php?plan=essential" class="block w-full py-2.5 px-4 rounded-[2px] bg-[#111111] hover:bg-black text-white text-xs font-semibold text-center transition-colors shadow-2xs">
+                      Start free trial
+                    </a>
+                  </div>
+
+                  <div class="space-y-3">
+                    <div class="text-xs font-semibold text-[#111111]">Key features include:</div>
+                    <ul class="space-y-2 text-xs text-stone-600">
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Messenger live chat</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Shared inbox and ticketing system</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Pre-built reports</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Public help center</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Basic automation</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Column 2: Advanced (Flagship) -->
+              <div class="p-6 sm:p-7 flex flex-col justify-between space-y-6 bg-[#fcfbfa]">
+                <div>
+                  <h3 class="text-lg font-semibold text-[#111111] mb-1">Advanced</h3>
+                  <p class="text-xs text-stone-500 leading-relaxed min-h-[34px]">
+                    Powerful automation and assignment tools for growing support teams.
+                  </p>
+
+                  <div class="py-5 border-y border-[#e7e5de] my-5 space-y-3">
+                    <div>
+                      <div class="text-[11px] font-mono text-stone-500">CuboidPilot helpdesk</div>
+                      <div class="text-2xl font-semibold text-[#111111] tracking-tight font-mono">
+                        <span class="intercom-price" data-plan="advanced" data-annual="₹159" data-monthly="₹199">₹159</span>
+                        <span class="text-xs font-normal text-stone-500">per seat/mo</span>
+                      </div>
+                      <div class="text-[10px] text-stone-400 font-mono mt-0.5 intercom-billed-note" data-plan="advanced">billed annually</div>
+                    </div>
+
+                    <div class="pt-2 border-t border-[#eceae4]">
+                      <div class="text-[11px] font-mono text-stone-500">Cai AI Agent</div>
+                      <div class="text-base font-semibold text-[#111111] font-mono flex items-center gap-1">
+                        <span class="cp-cai-outcome-rate">₹1</span>
+                        <span class="text-xs font-normal text-stone-500">per outcome</span>
+                        <i data-lucide="help-circle" class="w-3.5 h-3.5 text-stone-400 cursor-pointer"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 mb-6">
+                    <a href="signup.php?plan=advanced" class="flex-1 py-2.5 px-3 rounded-[2px] bg-[#111111] hover:bg-black text-white text-xs font-semibold text-center transition-colors shadow-2xs">
+                      Start free trial
+                    </a>
+                    <a href="index.html#hero-demo" class="flex-1 py-2.5 px-3 rounded-[2px] border border-[#dcdad0] bg-white hover:bg-stone-50 text-stone-800 text-xs font-semibold text-center transition-colors">
+                      Get a demo
+                    </a>
+                  </div>
+
+                  <div class="space-y-3">
+                    <div class="text-xs font-semibold text-[#111111]">Every Essential feature, plus:</div>
+                    <ul class="space-y-2 text-xs text-stone-700">
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Workflow automation builder</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Multiple team Inboxes</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Round robin assignment</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Private and multilingual Help Center</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Includes 20 free Lite seats</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Column 3: Expert -->
+              <div class="p-6 sm:p-7 flex flex-col justify-between space-y-6">
+                <div>
+                  <h3 class="text-lg font-semibold text-[#111111] mb-1">Expert</h3>
+                  <p class="text-xs text-stone-500 leading-relaxed min-h-[34px]">
+                    Collaboration and security features for large support teams.
+                  </p>
+
+                  <div class="py-5 border-y border-[#eceae4] my-5 space-y-3">
+                    <div>
+                      <div class="text-[11px] font-mono text-stone-500">CuboidPilot helpdesk</div>
+                      <div class="text-2xl font-semibold text-[#111111] tracking-tight font-mono">
+                        <span class="intercom-price" data-plan="expert" data-annual="₹279" data-monthly="₹349">₹279</span>
+                        <span class="text-xs font-normal text-stone-500">per seat/mo</span>
+                      </div>
+                      <div class="text-[10px] text-stone-400 font-mono mt-0.5 intercom-billed-note" data-plan="expert">billed annually</div>
+                    </div>
+
+                    <div class="pt-2 border-t border-[#f0eee9]">
+                      <div class="text-[11px] font-mono text-stone-500">Cai AI Agent</div>
+                      <div class="text-base font-semibold text-[#111111] font-mono flex items-center gap-1">
+                        <span class="cp-cai-outcome-rate">₹1</span>
+                        <span class="text-xs font-normal text-stone-500">per outcome</span>
+                        <i data-lucide="help-circle" class="w-3.5 h-3.5 text-stone-400 cursor-pointer"></i>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2 mb-6">
+                    <a href="signup.php?plan=expert" class="flex-1 py-2.5 px-3 rounded-[2px] bg-[#111111] hover:bg-black text-white text-xs font-semibold text-center transition-colors shadow-2xs">
+                      Start free trial
+                    </a>
+                    <a href="index.html#hero-demo" class="flex-1 py-2.5 px-3 rounded-[2px] border border-[#dcdad0] bg-white hover:bg-stone-50 text-stone-800 text-xs font-semibold text-center transition-colors">
+                      Get a demo
+                    </a>
+                  </div>
+
+                  <div class="space-y-3">
+                    <div class="text-xs font-semibold text-[#111111]">Every Advanced feature, plus:</div>
+                    <ul class="space-y-2 text-xs text-stone-600">
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>SSO &amp; identity management</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>HIPAA &amp; SOC2 support</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Service level agreements (SLAs)</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Multibrand Messenger / Help Center</span></li>
+                      <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Includes 50 free Lite seats</span></li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Left Card Bottom Ribbon -->
+            <div class="border-t border-[#eceae4] px-6 py-3 bg-[#fcfbfa] text-center text-xs text-stone-600">
+              <strong>Startups get 90% off:</strong> Under $10M raised and 15 employees or fewer? <a href="signup.php?program=startups" class="underline font-semibold text-[#111111] hover:text-black">Apply now</a>
+            </div>
+
+          </div>
+
+          <!-- Right Standalone Card: Cai AI Agent Alone -->
+          <div class="lg:col-span-3 border border-[#dcdad0] rounded-[2px] bg-white p-6 sm:p-7 flex flex-col justify-between shadow-2xs">
+            <div>
+              <div class="flex items-center justify-between pb-3 border-b border-[#eceae4] mb-4">
+                <div class="flex items-center gap-1.5 font-semibold text-xs text-[#111111] font-mono">
+                  <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-700"></i>
+                  Cai AI Agent
+                </div>
+                <div class="flex items-center gap-1.5 text-stone-400">
+                  <i data-lucide="cloud" class="w-3.5 h-3.5" title="Salesforce"></i>
+                  <i data-lucide="share-2" class="w-3.5 h-3.5" title="HubSpot"></i>
+                  <i data-lucide="phone" class="w-3.5 h-3.5 text-emerald-600" title="WhatsApp"></i>
+                </div>
+              </div>
+
+              <h3 class="text-lg font-semibold text-[#111111] mb-1">Cai AI Agent</h3>
+              <p class="text-xs text-stone-500 leading-relaxed mb-5 min-h-[34px]">
+                Use Cai with an existing helpdesk such as Salesforce, HubSpot, or Freshdesk.
+              </p>
+
+              <div class="py-5 border-y border-[#eceae4] mb-5 space-y-3">
+                <div>
+                  <div class="text-[11px] font-mono text-stone-500">CuboidPilot helpdesk</div>
+                  <div class="text-base text-stone-400 italic">Not included</div>
+                </div>
+
+                <div class="pt-2 border-t border-[#f0eee9]">
+                  <div class="text-[11px] font-mono text-stone-500">Cai AI Agent</div>
+                  <div class="text-2xl font-semibold text-[#111111] font-mono flex items-center gap-1">
+                    <span class="cp-cai-outcome-rate">₹1</span>
+                    <span class="text-xs font-normal text-stone-500">per outcome</span>
+                    <i data-lucide="help-circle" class="w-3.5 h-3.5 text-stone-400 cursor-pointer"></i>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-2 mb-6">
+                <a href="index.html#hero-demo" class="block w-full py-2.5 px-4 rounded-[2px] bg-[#111111] hover:bg-black text-white text-xs font-semibold text-center transition-colors shadow-2xs">
+                  Contact sales
+                </a>
+                <button onclick="window.Cai && window.Cai.open()" class="block w-full py-2.5 px-4 rounded-[2px] border border-[#dcdad0] bg-white hover:bg-stone-50 text-stone-800 text-xs font-semibold text-center transition-colors">
+                  View demo
+                </button>
+              </div>
+
+              <div class="space-y-3">
+                <div class="text-xs font-semibold text-[#111111]">Key features include:</div>
+                <ul class="space-y-2 text-xs text-stone-600">
+                  <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Works with most helpdesks</span></li>
+                  <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Set up in under an hour</span></li>
+                  <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Learns your support content</span></li>
+                  <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Answers across all channels</span></li>
+                  <li class="flex items-start gap-2"><span class="text-stone-400">•</span><span>Transfers to agents in inbox</span></li>
+                </ul>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Social Proof Strip -->
+        <div class="pt-8 border-t border-[#eceae4] text-center mb-16">
+          <div class="text-xs font-medium text-stone-500 mb-6 flex items-center justify-center gap-1.5">
+            <span>Over 2,000 five-star reviews on</span>
+            <span class="font-bold text-stone-900 tracking-wider">G2</span>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16 opacity-75 grayscale hover:grayscale-0 transition-all">
+            <span class="text-base sm:text-lg font-bold tracking-tight text-stone-900 font-sans">amazon</span>
+            <span class="text-base sm:text-lg font-mono font-semibold tracking-wider text-stone-900">ANTHROPIC</span>
+            <span class="text-sm sm:text-base font-semibold text-stone-900 flex items-center gap-1.5">
+              <span class="w-3.5 h-3.5 rounded-full bg-red-600 inline-block"></span> Rocket Money
+            </span>
+            <span class="text-base sm:text-lg font-serif font-bold text-stone-900">GAMMA</span>
+            <span class="text-base sm:text-lg font-bold text-stone-900 font-sans">clay</span>
+            <span class="text-sm sm:text-base font-medium tracking-tight text-stone-900 flex items-center gap-1">
+              ⚡ lightspeed
+            </span>
+            <span class="text-sm sm:text-base font-serif italic text-stone-900">perplexity</span>
+            <span class="text-sm sm:text-base font-bold tracking-tight text-stone-900 flex items-center gap-1.5">
+              <span class="w-3.5 h-3.5 rounded bg-blue-600 inline-block"></span> Amplitude
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-brand-border pt-16 pb-12 px-6 lg:px-12">
+    <div class="max-w-[1360px] mx-auto">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-brand-subtle">
+        <div class="flex items-center gap-2.5">
+          <img src="assets/logo-black.png" alt="CuboidPilot" class="w-6 h-6 object-contain">
+          <span class="font-semibold text-stone-900 text-sm">CuboidPilot</span>
+          <span class="ml-2">© 2026 CuboidPilot. All rights reserved.</span>
+        </div>
+        <div class="flex items-center gap-6">
+          <a href="index.html" class="hover:text-brand-black transition-colors">Home</a>
+          <a href="pricing.html" class="hover:text-brand-black transition-colors font-medium text-stone-900">Pricing</a>
+          <a href="blog.html" class="hover:text-brand-black transition-colors">Blog</a>
+          <a href="docs.html" class="hover:text-brand-black transition-colors">Documentation</a>
+          <a href="index.html#faq" class="hover:text-brand-black transition-colors">FAQ</a>
+          <a href="login.php" class="hover:text-brand-black transition-colors">Log in</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="widget.js" data-company="cp_live_cuboidsoft" async></script>
+  <script src="js/main.js"></script>
+  <script src="js/pricing-currency.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) window.lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

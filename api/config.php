@@ -1,0 +1,132 @@
+<?php
+/**
+ * CUBOIDPILOT — WIDGET CONFIGURATION API (Section 6 & 11)
+ * Returns tenant identity, widget appearance, persona, and features.
+ * Enforces strict multi-tenant resolution via public company key.
+ */
+
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
+header("Content-Type: application/json; charset=UTF-8");
+
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/entitlements.php';
+
+try {
+    $pdo = getDbConnection();
+    
+    // Retrieve company key from GET, POST, or Header
+    $companyKey = $_GET['company_key'] 
+        ?? $_POST['company_key'] 
+        ?? $_SERVER['HTTP_X_COMPANY_KEY'] 
+        ?? '';
+
+    $companyKey = trim($companyKey);
+    if (empty($companyKey) || $companyKey === 'default' || $companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
+        $companyKey = 'cp_live_cuboidsoft';
+    }
+
+    $stmt = $pdo->prepare("
+        SELECT * FROM `companies` 
+        WHERE `company_key` = ? 
+           OR `slug` = ? 
+           OR (slug = 'cuboidsoft' AND ? IN ('cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'))
+        LIMIT 1
+    ");
+    $stmt->execute([$companyKey, $companyKey, $companyKey]);
+    $company = $stmt->fetch();
+
+    if (!$company) {
+        http_response_code(404);
+        echo json_encode([
+            'success' => false,
+            'error'   => 'Workspace not found. Check your widget data-company attribute.'
+        ]);
+        exit;
+    }
+
+    $companyId = (int)$company['id'];
+    $entitlements = getCompanyEntitlements($pdo, $companyId);
+
+    $wStmt = $pdo->prepare("SELECT * FROM `widget_settings` WHERE `company_id` = ? LIMIT 1");
+    $wStmt->execute([$companyId]);
+    $widget = $wStmt->fetch();
+
+    $brandName = !empty($widget['brand_name']) ? $widget['brand_name'] : $company['name'];
+    $assistantName = !empty($widget['assistant_name']) ? $widget['assistant_name'] : 'Cai';
+    $greetingHeading = !empty($widget['greeting_heading']) 
+        ? $widget['greeting_heading'] 
+        : "Hi there \u{1F44B}\n\nYou are now speaking with {$assistantName}. How can I help?";
+    $greetingSubheading = !empty($widget['greeting_subheading']) ? $widget['greeting_subheading'] : "The team can also help";
+    if (strlen($greetingSubheading) > 28) {
+        $greetingSubheading = "The team can also help";
+    }
+    $accentColor = $widget['accent_color'] ?? '#111215';
+    $position = $widget['position'] ?? 'bottom_right';
+
+    // WhatsApp continuation is enabled ONLY if the tenant has premium entitlement AND widget setting allows it
+    $canWhatsapp = !empty($entitlements['capabilities']['can_use_whatsapp_continuation']);
+    $whatsappEnabled = $canWhatsapp && (bool)($widget['enable_whatsapp_continue'] ?? 1);
+    $whatsappNumber = $widget['whatsapp_number'] ?? '';
+
+    $themeMode = !empty($widget['theme_mode']) ? $widget['theme_mode'] : 'dark';
+    $logoDark = !empty($widget['logo_dark_url']) ? $widget['logo_dark_url'] : ($company['logo_dark_url'] ?? '');
+    $logoLight = !empty($widget['logo_light_url']) ? $widget['logo_light_url'] : ($company['logo_light_url'] ?? '');
+    $defaultLogo = !empty($widget['logo_url']) ? $widget['logo_url'] : ($company['logo_url'] ?? '');
+
+    // Select active logo based on current theme mode
+    $activeLogo = ($themeMode === 'light')
+        ? ($logoLight ?: $defaultLogo ?: $logoDark)
+        : ($logoDark ?: $defaultLogo ?: $logoLight);
+
+    echo json_encode([
+        'success' => true,
+        'company' => [
+            'id'             => $companyId,
+            'name'           => $company['name'],
+            'logo_url'       => $activeLogo,
+            'logo_dark_url'  => $logoDark ?: $defaultLogo,
+            'logo_light_url' => $logoLight ?: $defaultLogo,
+            'company_key'    => $company['company_key'],
+            'industry'       => $company['industry'] ?? 'General Business',
+            'is_premium'     => (bool)$entitlements['is_premium'],
+        ],
+        'widget' => [
+            'brand_name'         => $brandName,
+            'logo_url'           => $activeLogo,
+            'logo_dark_url'      => $logoDark ?: $defaultLogo,
+            'logo_light_url'     => $logoLight ?: $defaultLogo,
+            'assistant_name'     => $assistantName,
+            'greeting_heading'   => $greetingHeading,
+            'greeting_subheading'=> $greetingSubheading,
+            'accent_color'       => $accentColor,
+            'theme_mode'         => $themeMode,
+            'position'           => $position,
+            'whatsapp_enabled'   => $whatsappEnabled,
+            'whatsapp_number'    => $whatsappNumber,
+            'require_phone'      => (bool)($widget['require_phone_for_pricing'] ?? 1),
+            'enable_appointments'=> (bool)($widget['enable_appointments'] ?? 1),
+            'enable_human_help'  => (bool)($widget['enable_human_help'] ?? 1),
+            'enable_payments'    => (bool)($widget['enable_payments'] ?? 1),
+            'razorpay_key_id'    => $widget['razorpay_key_id'] ?? '',
+            'bank_name'          => $widget['bank_name'] ?? 'HDFC Bank',
+            'bank_account_no'    => $widget['bank_account_no'] ?? '50200088991122',
+            'bank_ifsc'          => $widget['bank_ifsc'] ?? 'HDFC0001234',
+            'bank_upi_id'        => $widget['bank_upi_id'] ?? 'cuboidsoft@hdfcbank',
+        ],
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error'   => 'Internal server error: ' . $e->getMessage()
+    ]);
+}

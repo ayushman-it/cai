@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Appointments & Consultations — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Page Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <h1 class="app-page-title">Appointments & Consultations</h1>
+              <p class="text-xs text-stone-500 mt-1">Manage scheduled discovery calls, client appointments, and Google Meet video sessions.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <a href="settings.html" class="btn-secondary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5">
+                <i data-lucide="calendar-cog" class="w-3.5 h-3.5 text-stone-600"></i>
+                <span>Calendar Settings</span>
+              </a>
+              <button class="btn-primary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5" onclick="openScheduleModal()">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>New Appointment</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Metric Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div class="app-panel p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Total Bookings</span>
+                <div class="w-7 h-7 rounded bg-stone-100 flex items-center justify-center text-stone-700">
+                  <i data-lucide="calendar" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div id="stat-total" class="text-2xl font-bold text-stone-900 mt-2">0</div>
+              <div class="text-[10.5px] text-stone-400 mt-0.5">All time consultations</div>
+            </div>
+
+            <div class="app-panel p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Today's Schedule</span>
+                <div class="w-7 h-7 rounded bg-emerald-50 flex items-center justify-center text-emerald-700">
+                  <i data-lucide="clock" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div id="stat-today" class="text-2xl font-bold text-emerald-700 mt-2">0</div>
+              <div class="text-[10.5px] text-emerald-600/80 mt-0.5">Sessions scheduled today</div>
+            </div>
+
+            <div class="app-panel p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Completed</span>
+                <div class="w-7 h-7 rounded bg-blue-50 flex items-center justify-center text-blue-700">
+                  <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div id="stat-completed" class="text-2xl font-bold text-stone-900 mt-2">0</div>
+              <div class="text-[10.5px] text-stone-400 mt-0.5">Successfully held calls</div>
+            </div>
+
+            <div class="app-panel p-4">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Cancelled</span>
+                <div class="w-7 h-7 rounded bg-rose-50 flex items-center justify-center text-rose-700">
+                  <i data-lucide="x-circle" class="w-4 h-4"></i>
+                </div>
+              </div>
+              <div id="stat-cancelled" class="text-2xl font-bold text-stone-900 mt-2">0</div>
+              <div class="text-[10.5px] text-stone-400 mt-0.5">Rescheduled or dropped</div>
+            </div>
+          </div>
+
+          <!-- Controls Toolbar -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded border border-[#e7e5de]">
+            <div class="flex items-center gap-1.5 overflow-x-auto">
+              <button onclick="setFilter('all', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-900 text-white font-medium">All</button>
+              <button onclick="setFilter('scheduled', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium">Scheduled</button>
+              <button onclick="setFilter('completed', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium">Completed</button>
+              <button onclick="setFilter('cancelled', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium">Cancelled</button>
+            </div>
+
+            <div class="relative min-w-[240px]">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
+              <input type="text" id="search-input" oninput="handleSearch(this.value)" placeholder="Search client, email or consultant..." class="app-input text-xs pl-8 w-full">
+            </div>
+          </div>
+
+          <!-- Appointments Table -->
+          <div class="app-table-wrapper">
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>Client / Prospect</th>
+                  <th>Consultant (Host)</th>
+                  <th>Date & Time Slot</th>
+                  <th>Meeting Session</th>
+                  <th>Status</th>
+                  <th class="text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="appointments-tbody">
+                <tr>
+                  <td colspan="6" class="p-8 text-center text-xs text-stone-400">Loading appointments...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedule Appointment Modal -->
+  <div id="schedule-modal" class="app-modal-overlay">
+    <div class="app-modal p-6 max-w-lg w-full">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-4">
+        <div>
+          <h3 class="text-sm font-semibold text-stone-900">Schedule New Appointment</h3>
+          <p class="text-[11px] text-stone-500 mt-0.5">Book a consultation or discovery call for an inbound prospect.</p>
+        </div>
+        <button onclick="closeScheduleModal()" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="schedule-form" onsubmit="event.preventDefault(); submitScheduleForm();" class="space-y-4 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Client Name *</label>
+            <input type="text" id="sched-name" required placeholder="e.g. Ramesh Patel" class="app-input w-full text-xs">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Client Email *</label>
+            <input type="email" id="sched-email" required placeholder="client@example.com" class="app-input w-full text-xs">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Client Phone</label>
+            <input type="text" id="sched-phone" placeholder="+91 98765 43210" class="app-input w-full font-mono text-xs">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Assigned Consultant</label>
+            <select id="sched-consultant" class="app-select w-full text-xs">
+              <option value="">Auto-Assign / Any Available</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Session Topic / Title *</label>
+          <input type="text" id="sched-title" required value="Admissions & Solution Discovery Call" class="app-input w-full text-xs">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Date *</label>
+            <input type="date" id="sched-date" required class="app-input w-full text-xs">
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Time Slot *</label>
+            <select id="sched-time" required class="app-select w-full text-xs">
+              <option value="10:00:00">10:00 AM</option>
+              <option value="10:30:00">10:30 AM</option>
+              <option value="11:00:00" selected>11:00 AM</option>
+              <option value="11:30:00">11:30 AM</option>
+              <option value="12:00:00">12:00 PM</option>
+              <option value="14:00:00">02:00 PM</option>
+              <option value="14:30:00">02:30 PM</option>
+              <option value="15:00:00">03:00 PM</option>
+              <option value="15:30:00">03:30 PM</option>
+              <option value="16:00:00">04:00 PM</option>
+              <option value="16:30:00">04:30 PM</option>
+              <option value="17:00:00">05:00 PM</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Google Meet Room Link</label>
+          <input type="url" id="sched-meet" placeholder="https://meet.google.com/xxx-xxxx-xxx" class="app-input w-full font-mono text-xs">
+          <p class="text-[10.5px] text-stone-400 mt-1">Leaves empty to use your default Google Meet room from Calendar Settings.</p>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Notes / Agenda</label>
+          <textarea id="sched-notes" rows="2" placeholder="Specific questions or context for the call..." class="app-input w-full text-xs"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-[#e7e5de] flex justify-end gap-2">
+          <button type="button" onclick="closeScheduleModal()" class="btn-secondary btn-sm py-1.5 px-3">Cancel</button>
+          <button type="submit" id="btn-submit-schedule" class="btn-primary btn-sm py-1.5 px-4">Confirm Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    let currentFilter = 'all';
+    let currentSearch = '';
+    let appointmentsData = [];
+    let defaultMeetUrl = 'https://meet.google.com/cp-consult';
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      CuboidShell.initCompanyApp('appointments', 'Appointments', ['Operations']);
+      
+      // Set default tomorrow date in datepicker
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const dateEl = document.getElementById('sched-date');
+      if (dateEl) {
+        dateEl.value = tomorrow.toISOString().split('T')[0];
+        dateEl.min = new Date().toISOString().split('T')[0];
+      }
+
+      await loadCompanySettings();
+      await loadConsultants();
+      await loadAppointments();
+    });
+
+    async function loadCompanySettings() {
+      try {
+        const res = await fetch('../api/settings.php');
+        const data = await res.json();
+        if (data && data.widget && data.widget.calendar_meet_url) {
+          defaultMeetUrl = data.widget.calendar_meet_url;
+          const meetInput = document.getElementById('sched-meet');
+          if (meetInput) meetInput.placeholder = defaultMeetUrl;
+        }
+      } catch (e) {
+        console.warn('Could not load company meet setting:', e);
+      }
+    }
+
+    async function loadConsultants() {
+      try {
+        const res = await fetch('../api/team.php?action=list');
+        const data = await res.json();
+        if (data && data.success && Array.isArray(data.members)) {
+          const select = document.getElementById('sched-consultant');
+          if (select) {
+            select.innerHTML = '<option value="">Auto-Assign / Any Available</option>';
+            data.members.forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m.id;
+              opt.textContent = `${m.name} (${m.job_title || 'Consultant'})`;
+              select.appendChild(opt);
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load consultants:', e);
+      }
+    }
+
+    async function loadAppointments() {
+      const tbody = document.getElementById('appointments-tbody');
+      if (!tbody) return;
+
+      let url = `../api/appointments.php?action=list`;
+      if (currentFilter !== 'all') url += `&status=${encodeURIComponent(currentFilter)}`;
+      if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data || !data.success) {
+          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-xs text-rose-500">Failed to load appointments.</td></tr>`;
+          return;
+        }
+
+        appointmentsData = data.appointments || [];
+
+        // Update stats
+        if (data.stats) {
+          document.getElementById('stat-total').textContent = data.stats.total || 0;
+          document.getElementById('stat-today').textContent = data.stats.today || 0;
+          document.getElementById('stat-completed').textContent = data.stats.completed || 0;
+          document.getElementById('stat-cancelled').textContent = data.stats.cancelled || 0;
+        }
+
+        if (appointmentsData.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="p-12 text-center text-stone-400">
+                <i data-lucide="calendar-x" class="w-8 h-8 mx-auto mb-2 text-stone-300"></i>
+                <div class="text-xs font-medium text-stone-700">No appointments found</div>
+                <div class="text-[11px] text-stone-400 mt-0.5">Bookings created in your widget or added manually will appear here.</div>
+              </td>
+            </tr>
+          `;
+          if (window.lucide) window.lucide.createIcons();
+          return;
+        }
+
+        let html = '';
+        appointmentsData.forEach(a => {
+          let statusBadge = 'bg-stone-100 text-stone-700 border-stone-200';
+          if (a.status === 'scheduled') statusBadge = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+          else if (a.status === 'completed') statusBadge = 'bg-blue-50 text-blue-800 border-blue-200';
+          else if (a.status === 'cancelled') statusBadge = 'bg-rose-50 text-rose-700 border-rose-200';
+
+          const consultant = a.consultant || {};
+          const cAvatar = consultant.avatar_url
+            ? `<img src="${CuboidShell.resolveAssetUrl(consultant.avatar_url)}" class="w-6 h-6 rounded-full object-cover">`
+            : `<div class="w-6 h-6 rounded-full bg-stone-800 text-white flex items-center justify-center font-bold text-[10px]">
+                 ${((consultant.name || 'C')[0]).toUpperCase()}
+               </div>`;
+
+          const meetLink = a.meet_link || defaultMeetUrl;
+
+          html += `
+            <tr class="hover:bg-stone-50/60 transition-colors">
+              <td class="p-3.5">
+                <div>
+                  <div class="font-medium text-stone-900 text-xs">${escapeHtml(a.customer_name)}</div>
+                  <div class="text-[11px] text-stone-500 font-mono mt-0.5">${escapeHtml(a.customer_email || 'No email')}</div>
+                  ${a.customer_phone ? `<div class="text-[10.5px] text-stone-400 font-mono mt-0.5">${escapeHtml(a.customer_phone)}</div>` : ''}
+                </div>
+              </td>
+              <td class="p-3.5">
+                <div class="flex items-center gap-2">
+                  ${cAvatar}
+                  <div>
+                    <div class="font-medium text-stone-800 text-xs">${escapeHtml(consultant.name || 'Company Consultant')}</div>
+                    <div class="text-[10.5px] text-stone-400">${escapeHtml(consultant.job_title || 'Advisor')}</div>
+                  </div>
+                </div>
+              </td>
+              <td class="p-3.5">
+                <div class="font-medium text-stone-800 text-xs">${escapeHtml(a.formatted_slot || a.slot_datetime)}</div>
+                <div class="text-[10.5px] text-stone-400 capitalize mt-0.5">${escapeHtml(a.appointment_type || 'Discovery')}</div>
+              </td>
+              <td class="p-3.5">
+                <div class="flex items-center gap-1.5">
+                  <a href="${escapeHtml(meetLink)}" target="_blank" class="inline-flex items-center gap-1 text-[11px] font-medium bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2 py-1 rounded transition-colors no-underline">
+                    <i data-lucide="video" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span>Join Room</span>
+                  </a>
+                  <button onclick="copyMeetLink('${escapeHtml(meetLink)}')" class="p-1 text-stone-400 hover:text-stone-700 rounded transition-colors" title="Copy Meeting Link">
+                    <i data-lucide="copy" class="w-3 h-3"></i>
+                  </button>
+                </div>
+              </td>
+              <td class="p-3.5">
+                <span class="inline-block text-[11px] uppercase tracking-wider px-2 py-0.5 rounded border font-medium ${statusBadge}">
+                  ${escapeHtml(a.status)}
+                </span>
+              </td>
+              <td class="p-3.5 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  ${a.status === 'scheduled' ? `
+                    <button onclick="updateAppointmentStatus(${a.id}, 'completed')" class="btn-secondary btn-sm text-xs py-1 px-2 text-emerald-700 hover:bg-emerald-50" title="Mark as Completed">
+                      <i data-lucide="check" class="w-3 h-3 mr-1"></i> Complete
+                    </button>
+                    <button onclick="updateAppointmentStatus(${a.id}, 'cancelled')" class="p-1 text-stone-400 hover:text-rose-600 rounded transition-colors" title="Cancel Appointment">
+                      <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                    </button>
+                  ` : `
+                    <button onclick="updateAppointmentStatus(${a.id}, 'scheduled')" class="btn-secondary btn-sm text-xs py-1 px-2 text-stone-600" title="Reopen / Reschedule">
+                      Reopen
+                    </button>
+                  `}
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+
+        tbody.innerHTML = html;
+        if (window.lucide) window.lucide.createIcons();
+      } catch (e) {
+        console.error('Error loading appointments:', e);
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-xs text-rose-500">Error connecting to server.</td></tr>`;
+      }
+    }
+
+    function setFilter(status, btn) {
+      currentFilter = status;
+      document.querySelectorAll('.filter-pill').forEach(b => {
+        b.classList.remove('bg-stone-900', 'text-white');
+        b.classList.add('bg-stone-100', 'text-stone-600');
+      });
+      if (btn) {
+        btn.classList.remove('bg-stone-100', 'text-stone-600');
+        btn.classList.add('bg-stone-900', 'text-white');
+      }
+      loadAppointments();
+    }
+
+    let searchTimer = null;
+    function handleSearch(val) {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        currentSearch = val.trim();
+        loadAppointments();
+      }, 300);
+    }
+
+    function openScheduleModal() {
+      const modal = document.getElementById('schedule-modal');
+      if (modal) modal.classList.add('open');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeScheduleModal() {
+      const modal = document.getElementById('schedule-modal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    async function submitScheduleForm() {
+      const name = document.getElementById('sched-name')?.value.trim();
+      const email = document.getElementById('sched-email')?.value.trim();
+      const phone = document.getElementById('sched-phone')?.value.trim();
+      const consultantId = document.getElementById('sched-consultant')?.value;
+      const title = document.getElementById('sched-title')?.value.trim();
+      const date = document.getElementById('sched-date')?.value;
+      const time = document.getElementById('sched-time')?.value;
+      const meet = document.getElementById('sched-meet')?.value.trim();
+      const notes = document.getElementById('sched-notes')?.value.trim();
+
+      if (!name || !email || !date || !time) {
+        alert('Please fill out required fields.');
+        return;
+      }
+
+      const slotDatetime = `${date} ${time}`;
+
+      const btn = document.getElementById('btn-submit-schedule');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Scheduling...';
+      }
+
+      try {
+        const res = await fetch('../api/appointments.php?action=create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customer_name: name,
+            customer_email: email,
+            customer_phone: phone,
+            assigned_user_id: consultantId || null,
+            title: title,
+            slot_datetime: slotDatetime,
+            meet_link: meet || defaultMeetUrl,
+            notes: notes
+          })
+        });
+
+        const data = await res.json();
+        if (data && data.success) {
+          CuboidShell.toast('Appointment scheduled successfully!', 'success');
+          closeScheduleModal();
+          document.getElementById('schedule-form')?.reset();
+          loadAppointments();
+        } else {
+          CuboidShell.toast(data.error || 'Failed to schedule appointment', 'error');
+        }
+      } catch (err) {
+        CuboidShell.toast('Connection error scheduling appointment', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Confirm Booking';
+        }
+      }
+    }
+
+    async function updateAppointmentStatus(id, newStatus) {
+      try {
+        const res = await fetch('../api/appointments.php?action=update_status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: id, status: newStatus })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          CuboidShell.toast(`Appointment marked as ${newStatus}`, 'success');
+          loadAppointments();
+        } else {
+          CuboidShell.toast(data.error || 'Failed to update status', 'error');
+        }
+      } catch (e) {
+        CuboidShell.toast('Error connecting to server', 'error');
+      }
+    }
+
+    function copyMeetLink(link) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(link);
+        CuboidShell.toast('Meeting room link copied to clipboard!', 'info');
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>

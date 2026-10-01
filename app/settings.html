@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workspace Settings — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+  <style>
+    /* Cleanly hide horizontal tab scrollbars across all browsers */
+    .no-scrollbar {
+      -ms-overflow-style: none !important; /* IE and Edge */
+      scrollbar-width: none !important;    /* Firefox */
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none !important;            /* Chrome, Safari, Edge */
+      width: 0 !important;
+      height: 0 !important;
+    }
+  </style>
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <h1 class="app-page-title">Workspace Settings</h1>
+              <p class="text-xs text-stone-500 mt-1">Configure company profiles, lead schemas, notification destinations, security policies, and API keys.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">
+                Save All Changes
+              </button>
+            </div>
+          </div>
+
+          <!-- Top Category Tabs (Intercom Flat Underline Tabs — NO Rounded Bubbles) -->
+          <div class="flex items-center gap-1 border-b border-[#e7e5de] mb-6 overflow-x-auto text-xs font-medium no-scrollbar">
+            <button onclick="switchSettingsSection('company-profile')" id="nav-btn-company-profile" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-stone-900 text-stone-900 font-semibold flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
+              <span>Company Profile & Branding</span>
+            </button>
+            <button onclick="switchSettingsSection('ai-persona')" id="nav-btn-ai-persona" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="bot" class="w-3.5 h-3.5"></i>
+              <span>AI Persona & Prompt</span>
+            </button>
+            <button onclick="switchSettingsSection('widget-config')" id="nav-btn-widget-config" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="palette" class="w-3.5 h-3.5"></i>
+              <span>Widget Appearance</span>
+            </button>
+            <button onclick="switchSettingsSection('whatsapp-settings')" id="nav-btn-whatsapp-settings" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="phone-forwarded" class="w-3.5 h-3.5"></i>
+              <span>WhatsApp Gateway</span>
+            </button>
+            <button onclick="switchSettingsSection('team-permissions')" id="nav-btn-team-permissions" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="users" class="w-3.5 h-3.5"></i>
+              <span>Team & Roles</span>
+            </button>
+            <button onclick="switchSettingsSection('billing-plans')" id="nav-btn-billing-plans" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="credit-card" class="w-3.5 h-3.5"></i>
+              <span>Billing & Plans</span>
+            </button>
+            <button onclick="switchSettingsSection('payment-settings')" id="nav-btn-payment-settings" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+              <span>Payments & Banking</span>
+            </button>
+            <button onclick="switchSettingsSection('calendar-settings')" id="nav-btn-calendar-settings" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+              <span>Calendar & Scheduling</span>
+            </button>
+            <button onclick="switchSettingsSection('notifications')" id="nav-btn-notifications" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="bell" class="w-3.5 h-3.5"></i>
+              <span>Notifications</span>
+            </button>
+            <button onclick="switchSettingsSection('api-webhooks')" id="nav-btn-api-webhooks" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="webhook" class="w-3.5 h-3.5"></i>
+              <span>API & Webhooks</span>
+            </button>
+          </div>
+
+          <!-- Settings Panes Container (Full Width, Spacious, Non-Congested) -->
+          <div class="space-y-6">
+            
+            <!-- 1. Company Profile & Logo -->
+            <div id="section-company-profile" class="settings-pane space-y-6">
+              
+              <!-- Personal Profile & Avatar Photo Panel -->
+              <div class="app-panel space-y-4">
+                <div class="flex items-center justify-between pb-2 border-b border-[#e7e5de]">
+                  <div>
+                    <h2 class="text-sm font-semibold text-stone-900">Personal Profile & Photo</h2>
+                    <p class="text-[11px] text-stone-500 mt-0.5">Your profile photo appears on the dashboard rail, topbar header, team roster, pipeline cards, and chat replies.</p>
+                  </div>
+                  <span id="setting-user-role" class="text-[10px] font-mono uppercase px-2 py-0.5 bg-stone-100 text-stone-700 border border-stone-200 rounded font-semibold">OWNER</span>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div class="relative shrink-0">
+                    <div class="w-16 h-16 rounded-full bg-stone-100 border-2 border-[#e7e5de] shadow-2xs flex items-center justify-center overflow-hidden">
+                      <i data-lucide="user" class="w-8 h-8 text-stone-300" id="setting-user-avatar-placeholder"></i>
+                      <img id="setting-user-avatar-preview" src="" alt="Profile Photo" class="w-full h-full object-cover hidden" onerror="this.classList.add('hidden'); document.getElementById('setting-user-avatar-placeholder').classList.remove('hidden');">
+                    </div>
+                    <label for="setting-user-avatar-file" class="absolute bottom-0 right-0 w-6 h-6 bg-stone-900 hover:bg-black text-white rounded-full flex items-center justify-center cursor-pointer shadow transition-transform hover:scale-110" title="Upload new photo">
+                      <i data-lucide="camera" class="w-3 h-3"></i>
+                    </label>
+                  </div>
+
+                  <div class="space-y-3 flex-1">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Your Full Name</label>
+                        <input type="text" id="setting-user-name" placeholder="Your name" class="app-input text-xs w-full">
+                      </div>
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Account Email</label>
+                        <div id="setting-user-email" class="app-input text-xs w-full bg-stone-50 text-stone-500 font-mono flex items-center">loading...</div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <label for="setting-user-avatar-file" class="btn-secondary btn-sm text-xs py-1.5 px-3 cursor-pointer hover:border-stone-400 inline-flex items-center gap-1.5">
+                        <i data-lucide="upload" class="w-3.5 h-3.5 text-stone-600"></i>
+                        <span>Upload New Photo</span>
+                      </label>
+                      <input type="file" id="setting-user-avatar-file" accept="image/png,image/jpeg,image/webp,image/jpg" class="hidden" onchange="previewUserAvatarFile(this)">
+                      <span class="text-[11px] text-stone-400">JPG, PNG, or WEBP. Max 2MB.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="app-panel space-y-5">
+                <h2 class="text-sm font-semibold text-stone-900 pb-2 border-b border-[#e7e5de]">Company Profile & Logo Personalization</h2>
+                
+                <!-- Dual Brand Logos (Dark & Light Themes) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <!-- 1. Dark Theme Logo -->
+                  <div class="p-4 bg-stone-50/80 border border-stone-200/80 rounded-lg space-y-3">
+                    <div class="flex items-center justify-between">
+                      <label class="block text-xs font-semibold text-stone-800">
+                        Dark Theme Logo
+                      </label>
+                      <span class="text-[10px] font-mono bg-stone-900 text-stone-200 px-2 py-0.5 rounded">Dark Mode</span>
+                    </div>
+                    <p class="text-[11px] text-stone-500">Appears on dark dashboard rail & dark mode website widget. White/light logo recommended.</p>
+                    <div class="flex items-center gap-4">
+                      <div class="w-20 h-20 rounded-lg bg-[#15161b] border border-stone-800 flex items-center justify-center p-2.5 overflow-hidden shadow-2xs shrink-0">
+                        <img id="setting-logo-dark-preview" src="../assets/logo-white.png" alt="Dark Logo" onerror="this.onerror=null; this.src='../assets/logo-white.png';" class="max-w-full max-h-full object-contain">
+                      </div>
+                      <div class="space-y-2.5 flex-1">
+                        <label class="btn-secondary btn-sm text-xs py-1.5 px-3 cursor-pointer hover:border-stone-400 inline-flex items-center gap-1.5">
+                          <i data-lucide="upload" class="w-3.5 h-3.5 text-stone-600"></i>
+                          <span>Upload Dark Logo</span>
+                          <input type="file" id="setting-logo-dark-file" accept="image/png,image/jpeg,image/svg+xml,image/webp" class="hidden" onchange="previewLogoDarkFile(this)">
+                        </label>
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-stone-400 text-[11px] font-mono shrink-0">URL:</span>
+                          <input type="text" id="setting-logo-dark-url" placeholder="https://example.com/logo-white.png" class="app-input text-xs flex-1" oninput="updateLogoDarkFromUrl(this.value)">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 2. Light Theme Logo -->
+                  <div class="p-4 bg-stone-50/80 border border-stone-200/80 rounded-lg space-y-3">
+                    <div class="flex items-center justify-between">
+                      <label class="block text-xs font-semibold text-stone-800">
+                        Light Theme Logo
+                      </label>
+                      <span class="text-[10px] font-mono bg-stone-200 text-stone-800 px-2 py-0.5 rounded">Light Mode</span>
+                    </div>
+                    <p class="text-[11px] text-stone-500">Appears on light surfaces & clean white website widget. Dark/colored logo recommended.</p>
+                    <div class="flex items-center gap-4">
+                      <div class="w-20 h-20 rounded-lg bg-white border border-stone-200 flex items-center justify-center p-2.5 overflow-hidden shadow-2xs shrink-0">
+                        <img id="setting-logo-light-preview" src="../assets/logo-black.png" alt="Light Logo" onerror="this.onerror=null; this.src='../assets/logo-black.png';" class="max-w-full max-h-full object-contain">
+                      </div>
+                      <div class="space-y-2.5 flex-1">
+                        <label class="btn-secondary btn-sm text-xs py-1.5 px-3 cursor-pointer hover:border-stone-400 inline-flex items-center gap-1.5">
+                          <i data-lucide="upload" class="w-3.5 h-3.5 text-stone-600"></i>
+                          <span>Upload Light Logo</span>
+                          <input type="file" id="setting-logo-light-file" accept="image/png,image/jpeg,image/svg+xml,image/webp" class="hidden" onchange="previewLogoLightFile(this)">
+                        </label>
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-stone-400 text-[11px] font-mono shrink-0">URL:</span>
+                          <input type="text" id="setting-logo-light-url" placeholder="https://example.com/logo-black.png" class="app-input text-xs flex-1" oninput="updateLogoLightFromUrl(this.value)">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Company Display Name</label>
+                      <input type="text" id="setting-company-name" value="" class="app-input text-xs" placeholder="e.g. CuboidSoft">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Industry / Category</label>
+                      <input type="text" id="setting-industry" value="" class="app-input text-xs" placeholder="e.g. Software & AI Solutions">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">City / Location</label>
+                      <input type="text" id="setting-city" value="" class="app-input text-xs" placeholder="e.g. Bengaluru">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Country</label>
+                      <input type="text" id="setting-country" value="India" class="app-input text-xs">
+                    </div>
+                  </div>
+
+                  <div class="pt-2 flex justify-end">
+                    <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save Changes</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 2. AI Persona & Directives -->
+              <div id="section-ai-persona" class="settings-pane space-y-6 hidden">
+                <div class="app-panel space-y-6">
+                  
+                  <!-- Section Header -->
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#e7e5de]">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <h2 class="text-sm font-semibold text-stone-900">AI Persona & Behavioral Directives</h2>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-stone-900 text-white">Autonomous Brain</span>
+                      </div>
+                      <p class="text-xs text-stone-500 mt-0.5">Control your AI's identity, conversational tone, reasoning boundaries, and lead qualification rules.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button class="btn-primary btn-sm text-xs py-1.5 px-4 flex items-center gap-1.5" onclick="saveSettings()">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                        <span>Save Changes</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- 1. AI Identity & Primary Role -->
+                  <div class="space-y-4">
+                    <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                      <i data-lucide="bot" class="w-3.5 h-3.5 text-stone-600"></i>
+                      <span>AI Identity & Core Role</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Assistant Public Name</label>
+                        <div class="relative">
+                          <input type="text" id="setting-assistant-name" value="Cai" class="app-input text-xs pl-8 font-medium" placeholder="e.g. Cai, Sarah, Atlas" oninput="updatePersonaLivePreview()">
+                          <i data-lucide="sparkles" class="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-stone-400"></i>
+                        </div>
+                        <p class="text-[11px] text-stone-500 mt-1">Appears in widget headers, AI introductions, and booking confirmations.</p>
+                      </div>
+
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Primary Conversation Objective</label>
+                        <select id="setting-primary-objective" class="app-input text-xs font-medium" onchange="updatePersonaLivePreview()">
+                          <option value="generate_leads" selected>Lead Generation & Qualification (Identify high-intent prospects)</option>
+                          <option value="book_appointments">Appointment & Demo Booking (Drive calendar consultations)</option>
+                          <option value="sales">Sales & Commercial Conversion (Close deals and pricing quotes)</option>
+                          <option value="customer_support">Customer Support & FAQs (Answer technical & product inquiries)</option>
+                        </select>
+                        <p class="text-[11px] text-stone-500 mt-1">Guides the AI's internal objective when answering visitor questions.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 2. Conversational Tone of Voice -->
+                  <div class="space-y-3 pt-2">
+                    <div class="flex items-center justify-between">
+                      <label class="block font-medium text-stone-700 text-xs">Conversational Tone of Voice</label>
+                      <span id="active-tone-badge" class="text-[11px] text-stone-600 font-medium bg-stone-100 px-2 py-0.5 rounded">Active: Professional & Consultative</span>
+                    </div>
+
+                    <input type="hidden" id="setting-ai-tone" value="professional">
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5" id="tone-options-grid">
+                      <!-- Tone Option 1: Professional -->
+                      <div class="tone-card active p-3 rounded-lg border-2 border-stone-900 bg-stone-50/80 cursor-pointer transition-all flex flex-col justify-between" onclick="selectAiTone('professional', this)">
+                        <div>
+                          <div class="flex items-center justify-between mb-1">
+                            <span class="font-semibold text-stone-900 text-xs">Professional</span>
+                            <i data-lucide="briefcase" class="w-3.5 h-3.5 text-stone-800"></i>
+                          </div>
+                          <p class="text-[11px] text-stone-500 leading-relaxed">Polite, structured, authoritative business tone. Avoids informal slang.</p>
+                        </div>
+                      </div>
+
+                      <!-- Tone Option 2: Friendly -->
+                      <div class="tone-card p-3 rounded-lg border border-stone-200 hover:border-stone-400 bg-white cursor-pointer transition-all flex flex-col justify-between" onclick="selectAiTone('friendly', this)">
+                        <div>
+                          <div class="flex items-center justify-between mb-1">
+                            <span class="font-semibold text-stone-900 text-xs">Warm & Friendly</span>
+                            <i data-lucide="smile" class="w-3.5 h-3.5 text-stone-600"></i>
+                          </div>
+                          <p class="text-[11px] text-stone-500 leading-relaxed">Approachable, conversational, enthusiastic with polite friendly emojis 👋</p>
+                        </div>
+                      </div>
+
+                      <!-- Tone Option 3: Casual -->
+                      <div class="tone-card p-3 rounded-lg border border-stone-200 hover:border-stone-400 bg-white cursor-pointer transition-all flex flex-col justify-between" onclick="selectAiTone('casual', this)">
+                        <div>
+                          <div class="flex items-center justify-between mb-1">
+                            <span class="font-semibold text-stone-900 text-xs">Direct & Concise</span>
+                            <i data-lucide="zap" class="w-3.5 h-3.5 text-stone-600"></i>
+                          </div>
+                          <p class="text-[11px] text-stone-500 leading-relaxed">Short, quick, to-the-point answers. No unnecessary fluff.</p>
+                        </div>
+                      </div>
+
+                      <!-- Tone Option 4: Custom / Executive -->
+                      <div class="tone-card p-3 rounded-lg border border-stone-200 hover:border-stone-400 bg-white cursor-pointer transition-all flex flex-col justify-between" onclick="selectAiTone('custom', this)">
+                        <div>
+                          <div class="flex items-center justify-between mb-1">
+                            <span class="font-semibold text-stone-900 text-xs">Executive Advisory</span>
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-stone-600"></i>
+                          </div>
+                          <p class="text-[11px] text-stone-500 leading-relaxed">High-level enterprise tone. Focuses on ROI, strategy, and executive summaries.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- 3. System Directives & Master Prompt Studio -->
+                  <div class="space-y-3 pt-2">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <div>
+                        <label class="block font-medium text-stone-700 text-xs">System Directives & Master Prompt</label>
+                        <p class="text-[11px] text-stone-500">Core system instructions injected into every AI inference cycle.</p>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <span id="prompt-char-count" class="text-[10px] text-stone-400 font-mono">0 / 4,000 chars</span>
+                        <button type="button" class="text-[11px] text-stone-600 hover:text-stone-900 underline" onclick="resetPromptToDefault()">
+                          Reset Template
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Quick Preset Insertion Tags -->
+                    <div class="flex flex-wrap items-center gap-1.5 pb-1">
+                      <span class="text-[10px] uppercase font-semibold text-stone-400 tracking-wider">Quick Directives:</span>
+                      <button type="button" onclick="insertPromptSnippet('whatsapp')" class="px-2 py-1 rounded bg-stone-100 hover:bg-stone-200 text-stone-700 text-[11px] transition-colors flex items-center gap-1 border border-stone-200">
+                        <span>+ WhatsApp Handoff</span>
+                      </button>
+                      <button type="button" onclick="insertPromptSnippet('pricing')" class="px-2 py-1 rounded bg-stone-100 hover:bg-stone-200 text-stone-700 text-[11px] transition-colors flex items-center gap-1 border border-stone-200">
+                        <span>+ Pricing & Quotes</span>
+                      </button>
+                      <button type="button" onclick="insertPromptSnippet('booking')" class="px-2 py-1 rounded bg-stone-100 hover:bg-stone-200 text-stone-700 text-[11px] transition-colors flex items-center gap-1 border border-stone-200">
+                        <span>+ 1-on-1 Consultation CTA</span>
+                      </button>
+                      <button type="button" onclick="insertPromptSnippet('hallucination')" class="px-2 py-1 rounded bg-stone-100 hover:bg-stone-200 text-stone-700 text-[11px] transition-colors flex items-center gap-1 border border-stone-200">
+                        <span>+ Strict Fact Grounding</span>
+                      </button>
+                    </div>
+
+                    <!-- Monaco-Style Prompt Editor Container -->
+                    <div class="rounded-lg border border-stone-300 overflow-hidden shadow-xs focus-within:border-stone-900 focus-within:ring-1 focus-within:ring-stone-900 transition-all bg-white">
+                      <div class="bg-stone-50 px-3 py-1.5 border-b border-stone-200 flex items-center justify-between text-[11px] text-stone-500 font-mono">
+                        <span class="flex items-center gap-1.5">
+                          <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+                          <span>system_prompt.txt</span>
+                        </span>
+                        <span>Markdown & Rules Supported</span>
+                      </div>
+                      <textarea id="setting-system-prompt" rows="8" class="w-full p-3 font-mono text-xs text-stone-800 leading-relaxed outline-none resize-y border-none" style="min-height: 180px;" oninput="updatePromptCharCount(); updatePersonaLivePreview();" placeholder="Enter system instructions..."></textarea>
+                    </div>
+                  </div>
+
+                  <!-- 4. Lead Qualification & Information to Capture -->
+                  <div class="space-y-3 pt-2">
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="target" class="w-3.5 h-3.5 text-stone-600"></i>
+                        <span>Lead Qualification & Data Extraction</span>
+                      </h3>
+                      <p class="text-[11px] text-stone-500 mt-0.5">Select the key attributes Cai should naturally discover and extract from customer conversations.</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                      <label class="flex items-center gap-2 p-2.5 rounded-lg border border-stone-200 bg-stone-50/60 cursor-pointer hover:bg-stone-100/60 transition-colors">
+                        <input type="checkbox" id="info-col-name" class="rounded text-stone-900" checked disabled>
+                        <div>
+                          <span class="font-medium text-stone-900 text-xs">Visitor Name</span>
+                          <span class="block text-[10px] text-stone-500">Always captured</span>
+                        </div>
+                      </label>
+
+                      <label class="flex items-center gap-2 p-2.5 rounded-lg border border-stone-200 bg-stone-50/60 cursor-pointer hover:bg-stone-100/60 transition-colors">
+                        <input type="checkbox" id="info-col-phone" class="rounded text-stone-900" checked>
+                        <div>
+                          <span class="font-medium text-stone-900 text-xs">Phone / WhatsApp</span>
+                          <span class="block text-[10px] text-stone-500">For SMS & WhatsApp handoff</span>
+                        </div>
+                      </label>
+
+                      <label class="flex items-center gap-2 p-2.5 rounded-lg border border-stone-200 bg-stone-50/60 cursor-pointer hover:bg-stone-100/60 transition-colors">
+                        <input type="checkbox" id="info-col-email" class="rounded text-stone-900" checked>
+                        <div>
+                          <span class="font-medium text-stone-900 text-xs">Work Email</span>
+                          <span class="block text-[10px] text-stone-500">For calendar invites & decks</span>
+                        </div>
+                      </label>
+
+                      <label class="flex items-center gap-2 p-2.5 rounded-lg border border-stone-200 bg-stone-50/60 cursor-pointer hover:bg-stone-100/60 transition-colors">
+                        <input type="checkbox" id="info-col-requirement" class="rounded text-stone-900" checked>
+                        <div>
+                          <span class="font-medium text-stone-900 text-xs">Project Requirement</span>
+                          <span class="block text-[10px] text-stone-500">Scope and feature needs</span>
+                        </div>
+                      </label>
+
+                      <label class="flex items-center gap-2 p-2.5 rounded-lg border border-stone-200 bg-stone-50/60 cursor-pointer hover:bg-stone-100/60 transition-colors">
+                        <input type="checkbox" id="info-col-budget" class="rounded text-stone-900" checked>
+                        <div>
+                          <span class="font-medium text-stone-900 text-xs">Budget Range</span>
+                          <span class="block text-[10px] text-stone-500">Commercial qualification</span>
+                        </div>
+                      </label>
+
+                      <label class="flex items-center gap-2 p-2.5 rounded-lg border border-stone-200 bg-stone-50/60 cursor-pointer hover:bg-stone-100/60 transition-colors">
+                        <input type="checkbox" id="info-col-timeline" class="rounded text-stone-900" checked>
+                        <div>
+                          <span class="font-medium text-stone-900 text-xs">Implementation Timeline</span>
+                          <span class="block text-[10px] text-stone-500">Urgency & purchase readiness</span>
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  <!-- 5. Live Persona Greeting Simulation Card -->
+                  <div class="space-y-3 pt-2">
+                    <label class="block font-medium text-stone-700 text-xs">Live Persona Greeting Preview</label>
+                    <div class="p-3.5 rounded-xl border border-stone-200 bg-stone-50 flex items-start gap-3">
+                      <div class="w-8 h-8 rounded-full bg-stone-900 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs" id="persona-preview-avatar">
+                        C
+                      </div>
+                      <div class="space-y-1 flex-1">
+                        <div class="flex items-center gap-2">
+                          <span class="text-xs font-semibold text-stone-900" id="persona-preview-name">Cai</span>
+                          <span class="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Online
+                          </span>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-white border border-stone-200 text-xs text-stone-800 shadow-2xs leading-relaxed" id="persona-preview-bubble">
+                          Hi there 👋 I'm Cai, your AI advisor. How can I help you explore our solutions today?
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Action Bar -->
+                  <div class="pt-4 border-t border-[#e7e5de] flex items-center justify-between">
+                    <div class="text-[11px] text-stone-400">
+                      Changes take effect on all live widget conversations immediately.
+                    </div>
+                    <button class="btn-primary btn-sm text-xs py-2 px-5 flex items-center gap-2" onclick="saveSettings()">
+                      <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                      <span>Save Persona & Directives</span>
+                    </button>
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- 3. AI Widget Configuration -->
+              <div id="section-widget-config" class="settings-pane space-y-6 hidden">
+                <div class="app-panel space-y-4">
+                  <h2 class="text-sm font-semibold text-stone-900 pb-2 border-b border-[#e7e5de]">AI Widget Customization</h2>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Widget Brand Name</label>
+                      <input type="text" id="setting-widget-brand" value="" class="app-input text-xs" placeholder="e.g. CuboidSoft Assistant">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Theme Accent Color</label>
+                      <div class="flex items-center gap-2">
+                        <input type="color" id="setting-accent-picker" value="#111111" class="w-8 h-8 rounded border border-stone-200 cursor-pointer p-0.5" oninput="document.getElementById('setting-accent-color').value = this.value">
+                        <input type="text" id="setting-accent-color" value="#111111" class="app-input text-xs font-mono flex-1" oninput="document.getElementById('setting-accent-picker').value = this.value">
+                      </div>
+                    </div>
+                    <div class="md:col-span-2">
+                      <label class="block font-medium text-stone-700 mb-1">Greeting Headline (Header Teaser)</label>
+                      <input type="text" id="setting-greeting-heading" value="" class="app-input text-xs" placeholder="Ask anything about our solutions, pricing or EMI">
+                    </div>
+                    <div class="md:col-span-2">
+                      <label class="block font-medium text-stone-700 mb-1">Greeting Subheading</label>
+                      <input type="text" id="setting-greeting-subheading" value="" class="app-input text-xs" placeholder="Instant AI answers • The team is also available on WhatsApp">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">WhatsApp Business Number</label>
+                      <input type="text" id="setting-wa-number" value="" class="app-input text-xs" placeholder="+91 98201 12345">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Widget Theme Mode</label>
+                      <select id="setting-theme-mode" class="app-input text-xs font-medium">
+                        <option value="light">Light Mode (Crisp White / Modern Clean)</option>
+                        <option value="dark" selected>Dark Mode (Fin AI Pitch Black / Executive)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Position on Website</label>
+                      <select class="app-input text-xs" disabled>
+                        <option selected>Bottom-Right (Standard)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="pt-4 border-t border-[#e7e5de] space-y-4">
+                    <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">Customer Action Toggles</h3>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <label class="flex items-center gap-2 text-xs p-2.5 rounded-lg border border-stone-200 bg-stone-50 cursor-pointer">
+                        <input type="checkbox" id="setting-action-appointments" class="rounded text-stone-900" checked>
+                        <div>
+                          <div class="font-medium text-stone-900">Book Appointment</div>
+                          <div class="text-[10px] text-stone-500">Calendar scheduling</div>
+                        </div>
+                      </label>
+
+                      <label class="flex items-center gap-2 text-xs p-2.5 rounded-lg border border-stone-200 bg-stone-50 cursor-pointer">
+                        <input type="checkbox" id="setting-action-human" class="rounded text-stone-900" checked>
+                        <div>
+                          <div class="font-medium text-stone-900">Instant Human Help</div>
+                          <div class="text-[10px] text-stone-500">Live team chat & handoff</div>
+                        </div>
+                      </label>
+
+                      <label class="flex items-center gap-2 text-xs p-2.5 rounded-lg border border-stone-200 bg-stone-50 cursor-pointer">
+                        <input type="checkbox" id="setting-action-payments" class="rounded text-stone-900" checked>
+                        <div>
+                          <div class="font-medium text-stone-900">Accept Payments</div>
+                          <div class="text-[10px] text-stone-500">UPI, Bank transfer & Cards</div>
+                        </div>
+                      </label>
+                    </div>
+
+                    <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider pt-2">Direct Bank Transfer Details</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Bank Name</label>
+                        <input type="text" id="setting-bank-name" class="app-input text-xs" placeholder="e.g. HDFC Bank">
+                      </div>
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Account Number</label>
+                        <input type="text" id="setting-bank-acc" class="app-input text-xs font-mono" placeholder="e.g. 50200088991122">
+                      </div>
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">IFSC Code</label>
+                        <input type="text" id="setting-bank-ifsc" class="app-input text-xs font-mono uppercase" placeholder="e.g. HDFC0001234">
+                      </div>
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">UPI ID</label>
+                        <input type="text" id="setting-bank-upi" class="app-input text-xs" placeholder="e.g. cuboidsoft@hdfcbank">
+                      </div>
+                      <div class="sm:col-span-2">
+                        <label class="block font-medium text-stone-700 mb-1">Razorpay Key ID (Optional — For Online Gateway Checkout)</label>
+                        <input type="text" id="setting-razorpay-key" class="app-input text-xs font-mono" placeholder="e.g. rzp_live_xxxxxxxxxxxx or rzp_test_xxxxxxxxxxxx">
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="pt-2 flex justify-end">
+                    <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save Changes</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. WhatsApp Settings -->
+              <div id="section-whatsapp-settings" class="settings-pane space-y-6 hidden">
+                <div class="app-panel space-y-4">
+                  <div class="flex items-center justify-between pb-2 border-b border-[#e7e5de]">
+                    <h2 class="text-sm font-semibold text-stone-900">WhatsApp Gateway Configuration</h2>
+                    <span class="badge-neutral text-[10px] bg-amber-50 text-amber-800 border-amber-200">Pro Feature</span>
+                  </div>
+
+                  <div class="text-xs space-y-4">
+                    <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px]">
+                      <div class="font-medium text-stone-900">Phone Number Binding</div>
+                      <div class="text-stone-500 text-[11px] mt-0.5">Meta Cloud API Number: <strong>+91 98400 12890</strong> (CuboidSoft Official)</div>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Automated Follow-up Delay</label>
+                      <select class="app-input text-xs">
+                        <option selected>2 Hours After Inactivity</option>
+                        <option>4 Hours After Inactivity</option>
+                        <option>Next Morning (09:30 AM)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="pt-2 flex justify-end">
+                    <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save Changes</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 5. Team & Permissions -->
+              <div id="section-team-permissions" class="settings-pane space-y-6 hidden">
+                <div class="app-panel space-y-4">
+                  <div class="flex items-center justify-between pb-2 border-b border-[#e7e5de]">
+                    <h2 class="text-sm font-semibold text-stone-900">Team Members & Access Roles</h2>
+                    <a href="team.html" class="btn-secondary btn-sm text-xs py-1 px-2.5">Open Full Team Directory &rarr;</a>
+                  </div>
+
+                  <div class="space-y-2 text-xs">
+                    <div class="p-2.5 bg-stone-50/70 border border-[#e7e5de] rounded-[4px] flex items-center justify-between">
+                      <div>
+                        <div class="font-semibold text-stone-900">Admin User (You)</div>
+                        <div class="text-[11px] text-stone-400">admin@cuboidsoft.in • Workspace Owner</div>
+                      </div>
+                      <span class="badge-neutral text-[10px]">Owner</span>
+                    </div>
+
+                    <div class="p-2.5 bg-stone-50/70 border border-[#e7e5de] rounded-[4px] flex items-center justify-between">
+                      <div>
+                        <div class="font-semibold text-stone-900">Support Operations</div>
+                        <div class="text-[11px] text-stone-400">support@cuboidsoft.in • Operations Team</div>
+                      </div>
+                      <span class="badge-neutral text-[10px]">Agent</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 6. Billing & Plans -->
+              <div id="section-billing-plans" class="settings-pane space-y-6 hidden">
+                <div class="app-panel space-y-4">
+                  <div class="flex items-center justify-between pb-2 border-b border-[#e7e5de]">
+                    <h2 class="text-sm font-semibold text-stone-900">Subscription & Invoices</h2>
+                    <a href="billing.html" class="btn-secondary btn-sm text-xs py-1 px-2.5">Manage Billing &rarr;</a>
+                  </div>
+
+                  <div class="p-4 bg-stone-50 border border-stone-200 rounded-[4px] text-xs space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="font-semibold text-stone-900">14-Day Free Trial</span>
+                      <span class="text-emerald-700 font-semibold">14 Days Remaining</span>
+                    </div>
+                    <p class="text-stone-500 text-[11px]">
+                      Enjoy unlimited AI conversations, knowledge indexing, and test simulations during trial.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 7. Notifications -->
+              <div id="section-notifications" class="settings-pane space-y-6 hidden">
+                <div class="app-panel space-y-4">
+                  <h2 class="text-sm font-semibold text-stone-900 pb-2 border-b border-[#e7e5de]">Notification Channels</h2>
+                  
+                  <div class="space-y-3 text-xs">
+                    <div class="flex items-center justify-between p-3 border border-[#e7e5de] rounded-[4px] bg-stone-50/40">
+                      <div>
+                        <div class="font-medium text-stone-900">Hot Lead WhatsApp Alerts</div>
+                        <div class="text-[11px] text-stone-500">Alert sales team on mobile when lead intent score exceeds 85%.</div>
+                      </div>
+                      <input type="checkbox" checked class="rounded-[3px] text-stone-900">
+                    </div>
+
+                    <div class="flex items-center justify-between p-3 border border-[#e7e5de] rounded-[4px] bg-stone-50/40">
+                      <div>
+                        <div class="font-medium text-stone-900">Human Escalation Sound Chime</div>
+                        <div class="text-[11px] text-stone-500">Audible browser alert when visitor clicks "Talk to person".</div>
+                      </div>
+                      <input type="checkbox" checked class="rounded-[3px] text-stone-900">
+                    </div>
+                  </div>
+
+                  <div class="pt-2 flex justify-end">
+                    <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save Changes</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 8. API & Webhooks -->
+              <div id="section-api-webhooks" class="settings-pane space-y-6 hidden">
+                <div class="app-panel space-y-4">
+                  <h2 class="text-sm font-semibold text-stone-900 pb-2 border-b border-[#e7e5de]">API & Developer Webhooks</h2>
+                  
+                  <div class="text-xs space-y-4">
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Company Live Secret Key</label>
+                      <div class="flex items-center gap-2">
+                        <input type="password" value="cp_live_cuboidsoft" id="settings-key-val" readonly class="app-input font-mono text-xs flex-1 bg-stone-50">
+                        <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="toggleApiKeyVisibility('settings-key-val')">Show</button>
+                        <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CuboidShell.copyToClipboard('cp_live_cuboidsoft'); CuboidShell.toast('API Key copied!', 'success')">Copy</button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Outbound Webhook URL</label>
+                      <input type="url" value="https://api.cuboidsoft.in/v1/leads/cai" class="app-input text-xs">
+                    </div>
+                  </div>
+
+                  <div class="pt-2 flex justify-end">
+                    <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save Changes</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 9. Payments & Banking Configuration -->
+            <div id="section-payment-settings" class="settings-pane space-y-6 hidden">
+              <div class="app-panel space-y-5">
+                <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de]">
+                  <div>
+                    <h2 class="text-sm font-semibold text-stone-900">Payments & Banking Configuration</h2>
+                    <p class="text-[11px] text-stone-500 mt-0.5">Configure your Razorpay payment gateway, verified direct bank accounts, and UPI payment methods used inside the widget.</p>
+                  </div>
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Gateway Active
+                  </span>
+                </div>
+
+                <!-- Customer Action Toggles -->
+                <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-[6px] space-y-2.5">
+                  <div class="text-xs font-semibold text-stone-900">Widget Customer Action Channels</div>
+                  <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-md border border-stone-200 bg-white cursor-pointer hover:border-stone-300 transition-colors">
+                      <input type="checkbox" id="setting-action-payments" class="rounded text-stone-900" checked>
+                      <div>
+                        <div class="font-medium text-stone-900">Accept Payments</div>
+                        <div class="text-[11px] text-stone-500">Show payment cards in widget</div>
+                      </div>
+                    </label>
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-md border border-stone-200 bg-white cursor-pointer hover:border-stone-300 transition-colors">
+                      <input type="checkbox" id="setting-action-appointments" class="rounded text-stone-900" checked>
+                      <div>
+                        <div class="font-medium text-stone-900">Book Consultations</div>
+                        <div class="text-[11px] text-stone-500">Calendar scheduling</div>
+                      </div>
+                    </label>
+                    <label class="flex items-center gap-2.5 p-2.5 rounded-md border border-stone-200 bg-white cursor-pointer hover:border-stone-300 transition-colors">
+                      <input type="checkbox" id="setting-action-human" class="rounded text-stone-900" checked>
+                      <div>
+                        <div class="font-medium text-stone-900">Instant Human Help</div>
+                        <div class="text-[11px] text-stone-500">Live agent chat routing</div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Part A: Razorpay Gateway Details -->
+                <div class="space-y-3 pt-2">
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">Razorpay Online Gateway (Cards, NetBanking, UPI, Wallets)</h3>
+                      <p class="text-[11px] text-stone-500 mt-0.5">Powers instant online checkout when visitors click "Pay Online" or "Custom Amount" in the widget.</p>
+                    </div>
+                    <a href="https://dashboard.razorpay.com/app/keys" target="_blank" class="text-xs text-stone-700 hover:text-stone-900 underline flex items-center gap-1 font-medium">
+                      <span>Get API Keys</span>
+                      <i data-lucide="external-link" class="w-3 h-3"></i>
+                    </a>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Razorpay Key ID *</label>
+                      <input type="text" id="setting-razorpay-key" class="app-input text-xs font-mono" placeholder="rzp_live_xxxxxxxxxxxx or rzp_test_xxxxxxxxxxxx">
+                      <p class="text-[10.5px] text-stone-400 mt-1">Found in Razorpay Dashboard > Settings > API Keys.</p>
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Razorpay Key Secret</label>
+                      <div class="relative">
+                        <input type="password" id="setting-razorpay-secret" class="app-input text-xs font-mono pr-8" placeholder="••••••••••••••••••••••••">
+                        <button type="button" onclick="togglePasswordVisibility('setting-razorpay-secret', this)" class="absolute right-2.5 top-2 text-stone-400 hover:text-stone-600">
+                          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                      <p class="text-[10.5px] text-stone-400 mt-1">Kept encrypted on server for webhook signature verification.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Part B: Direct Bank Transfer & UPI Details -->
+                <div class="space-y-3 pt-3 border-t border-[#e7e5de]">
+                  <div>
+                    <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">Direct Bank Transfer & UPI Account</h3>
+                    <p class="text-[11px] text-stone-500 mt-0.5">These verified details are shown on the widget's "Bank Transfer" screen with 1-click copy buttons and UTR receipt generation.</p>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Account Holder / Beneficiary Name *</label>
+                      <input type="text" id="setting-bank-holder" class="app-input text-xs" placeholder="e.g. CuboidSoft Technologies Pvt Ltd">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Bank Name *</label>
+                      <input type="text" id="setting-bank-name" class="app-input text-xs" placeholder="e.g. HDFC Bank, ICICI Bank">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Account Number *</label>
+                      <input type="text" id="setting-bank-acc" class="app-input text-xs font-mono" placeholder="e.g. 50200088991122">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">IFSC Code *</label>
+                      <input type="text" id="setting-bank-ifsc" class="app-input text-xs font-mono uppercase" placeholder="e.g. HDFC0001234">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">UPI ID / VPA *</label>
+                      <input type="text" id="setting-bank-upi" class="app-input text-xs font-mono" placeholder="e.g. cuboidsoft@hdfcbank">
+                    </div>
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">UPI QR Code (Image Upload)</label>
+                      <div class="flex items-center gap-2">
+                        <input type="file" id="setting-bank-qr-file" accept="image/*" class="text-xs text-stone-500 file:mr-2 file:py-1 file:px-2.5 file:rounded file:border file:border-stone-200 file:text-xs file:font-medium file:bg-stone-50 hover:file:bg-stone-100" onchange="previewBankQr(this)">
+                        <input type="hidden" id="setting-bank-qr-url" value="">
+                        <img id="setting-bank-qr-preview" src="" alt="QR" class="w-8 h-8 rounded border border-stone-200 object-contain hidden">
+                      </div>
+                      <p class="text-[10.5px] text-stone-400 mt-1">Visitors can scan this QR code directly inside the widget to pay.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-3 border-t border-[#e7e5de] flex justify-end">
+                  <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save Payment Settings</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 10. Calendar & Scheduling Configuration -->
+            <div id="section-calendar-settings" class="settings-pane space-y-6 hidden">
+              <div class="app-panel space-y-5">
+                <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de]">
+                  <div>
+                    <h2 class="text-sm font-semibold text-stone-900">Calendar & Consultation Scheduling</h2>
+                    <p class="text-[11px] text-stone-500 mt-0.5">Configure your business operating days, time slot generation engine, duration, and Google Meet integration.</p>
+                  </div>
+                  <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                    Dynamic Engine
+                  </span>
+                </div>
+
+                <!-- Working Days -->
+                <div class="space-y-2">
+                  <label class="block text-xs font-semibold text-stone-900 uppercase tracking-wider">Working Days Available for Bookings</label>
+                  <div class="flex flex-wrap gap-2 text-xs" id="setting-cal-days-wrap">
+                    <label class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-stone-200 bg-stone-50 cursor-pointer hover:bg-stone-100">
+                      <input type="checkbox" name="cal_day" value="1" class="rounded text-stone-900" checked>
+                      <span>Mon</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-stone-200 bg-stone-50 cursor-pointer hover:bg-stone-100">
+                      <input type="checkbox" name="cal_day" value="2" class="rounded text-stone-900" checked>
+                      <span>Tue</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-stone-200 bg-stone-50 cursor-pointer hover:bg-stone-100">
+                      <input type="checkbox" name="cal_day" value="3" class="rounded text-stone-900" checked>
+                      <span>Wed</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-stone-200 bg-stone-50 cursor-pointer hover:bg-stone-100">
+                      <input type="checkbox" name="cal_day" value="4" class="rounded text-stone-900" checked>
+                      <span>Thu</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-stone-200 bg-stone-50 cursor-pointer hover:bg-stone-100">
+                      <input type="checkbox" name="cal_day" value="5" class="rounded text-stone-900" checked>
+                      <span>Fri</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-stone-200 bg-stone-50 cursor-pointer hover:bg-stone-100">
+                      <input type="checkbox" name="cal_day" value="6" class="rounded text-stone-900" checked>
+                      <span>Sat</span>
+                    </label>
+                    <label class="flex items-center gap-1.5 px-3 py-1.5 rounded border border-stone-200 bg-stone-50 cursor-pointer hover:bg-stone-100">
+                      <input type="checkbox" name="cal_day" value="7" class="rounded text-stone-900">
+                      <span>Sun</span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Operating Hours & Duration -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs pt-2">
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Operating Start Time *</label>
+                    <input type="time" id="setting-cal-start" value="10:00" class="app-input text-xs font-medium">
+                    <p class="text-[10.5px] text-stone-400 mt-1">First available slot of the day.</p>
+                  </div>
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Operating End Time *</label>
+                    <input type="time" id="setting-cal-end" value="18:00" class="app-input text-xs font-medium">
+                    <p class="text-[10.5px] text-stone-400 mt-1">Latest consultation slot ends here.</p>
+                  </div>
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Consultation Duration *</label>
+                    <select id="setting-cal-duration" class="app-input text-xs font-medium">
+                      <option value="15">15 minutes (Quick discovery)</option>
+                      <option value="30" selected>30 minutes (Standard consultation)</option>
+                      <option value="45">45 minutes (Solution deep dive)</option>
+                      <option value="60">60 minutes (Executive review)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Buffer Between Consultations</label>
+                    <select id="setting-cal-buffer" class="app-input text-xs font-medium">
+                      <option value="0" selected>None (Back-to-back)</option>
+                      <option value="15">15 minutes breathing buffer</option>
+                      <option value="30">30 minutes preparation buffer</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Advance Booking Window</label>
+                    <select id="setting-cal-advance" class="app-input text-xs font-medium">
+                      <option value="7" selected>Up to 7 days ahead</option>
+                      <option value="14">Up to 14 days ahead</option>
+                      <option value="30">Up to 30 days ahead</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Meeting Platform</label>
+                    <select class="app-input text-xs font-medium" disabled>
+                      <option selected>Google Meet / WebRTC (Automatic)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Meeting URL -->
+                <div class="pt-2">
+                  <label class="block font-medium text-stone-700 mb-1">Permanent Meeting URL (Optional)</label>
+                  <input type="url" id="setting-cal-meet-url" class="app-input text-xs font-mono" placeholder="https://meet.google.com/your-room or https://zoom.us/j/your-id">
+                  <p class="text-[10.5px] text-stone-400 mt-1">If provided, this link is included in meeting confirmation and calendar (.ics) invites. Leave blank to generate unique secure links automatically.</p>
+                </div>
+
+                <div class="pt-3 border-t border-[#e7e5de] flex justify-end">
+                  <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save Calendar Settings</button>
+                </div>
+              </div>
+
+              <!-- Dedicated Calendar API & Third-Party Sync Card -->
+              <div class="app-panel space-y-5">
+                <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de]">
+                  <div>
+                    <h3 class="text-sm font-semibold text-stone-900 flex items-center gap-2">
+                      <i data-lucide="calendar-plus" class="w-4 h-4 text-stone-700"></i>
+                      <span>Calendar API &amp; Third-Party Sync</span>
+                    </h3>
+                    <p class="text-[11px] text-stone-500 mt-0.5">Connect your active calendar API (Cal.com, Calendly, Google Calendar, or Custom Webhook) so bookings sync automatically.</p>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <label class="flex items-center gap-2 text-xs cursor-pointer select-none">
+                      <input type="checkbox" id="setting-cal-sync-enabled" class="cp-custom-checkbox" checked>
+                      <span class="text-stone-700 font-medium">Sync Active</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <!-- Provider -->
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Calendar Provider / Service</label>
+                    <select id="setting-cal-provider" class="app-input text-xs font-medium" onchange="toggleCalendarProviderFields()">
+                      <option value="native">Native Cuboid Engine (Default)</option>
+                      <option value="calcom">Cal.com (API Key &amp; Event URL)</option>
+                      <option value="calendly">Calendly (Personal Access Token)</option>
+                      <option value="google">Google Calendar API (Service Account)</option>
+                      <option value="custom">Custom Calendar Webhook API</option>
+                    </select>
+                    <p class="text-[10.5px] text-stone-400 mt-1">Select the calendar provider you want to use.</p>
+                  </div>
+
+                  <!-- Direct Booking Link -->
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Personal / Team Booking URL</label>
+                    <input type="url" id="setting-cal-booking-url" class="app-input text-xs font-mono" placeholder="https://cal.com/your-team/30min or https://calendly.com/your-name">
+                    <p class="text-[10.5px] text-stone-400 mt-1">Direct scheduling link shown in widget/chat if preferred.</p>
+                  </div>
+
+                  <!-- Calendar API Key / Token -->
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Calendar API Key / Access Token</label>
+                    <div class="relative">
+                      <input type="password" id="setting-cal-api-key" class="app-input text-xs font-mono pr-8" placeholder="cal_live_... or Bearer Token">
+                      <button type="button" onclick="togglePasswordVisibility('setting-cal-api-key')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer">
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                      </button>
+                    </div>
+                    <p class="text-[10.5px] text-stone-400 mt-1">Bearer token / API key used for authenticated requests.</p>
+                  </div>
+
+                  <!-- Webhook Dispatch Endpoint -->
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Webhook Dispatch Endpoint URL</label>
+                    <input type="url" id="setting-cal-webhook-url" class="app-input text-xs font-mono" placeholder="https://api.yourdomain.com/webhooks/calendar">
+                    <p class="text-[10.5px] text-stone-400 mt-1">Receives real-time JSON POST notifications when a booking is created.</p>
+                  </div>
+                </div>
+
+                <div class="p-3 rounded bg-stone-50 border border-stone-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span class="text-stone-700 font-medium" id="cal-api-status-text">Calendar Engine Ready • Built-in .ICS exports &amp; direct Webhook dispatch available</span>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <button type="button" class="btn-secondary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5" onclick="testCalendarApiConnection()">
+                      <i data-lucide="activity" class="w-3.5 h-3.5 text-stone-600"></i>
+                      <span>Test Connection</span>
+                    </button>
+                    <button type="button" class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">
+                      Save Calendar Settings
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    let currentUploadedFile = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('settings', 'Workspace Settings', ['Manage']);
+      loadSettings();
+    });
+
+    function resolveAssetUrl(url) {
+      if (!url || typeof url !== 'string') return '';
+      url = url.trim();
+      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('//')) {
+        return url;
+      }
+      if (url.startsWith('../')) return url;
+      const clean = url.replace(/^(\.\/|\/)+/, '');
+      return '../' + clean;
+    }
+
+    function switchSettingsSection(sectionId) {
+      document.querySelectorAll('.settings-pane').forEach(p => p.classList.add('hidden'));
+      document.querySelectorAll('.settings-nav-btn').forEach(b => {
+        b.classList.remove('border-stone-900', 'text-stone-900', 'font-semibold');
+        b.classList.add('border-transparent', 'text-stone-500');
+      });
+
+      const targetPane = document.getElementById(`section-${sectionId}`);
+      const targetBtn = document.getElementById(`nav-btn-${sectionId}`);
+      if (targetPane) targetPane.classList.remove('hidden');
+      if (targetBtn) {
+        targetBtn.classList.remove('border-transparent', 'text-stone-500');
+        targetBtn.classList.add('border-stone-900', 'text-stone-900', 'font-semibold');
+      }
+      if (window.lucide && window.lucide.createIcons) {
+        setTimeout(() => window.lucide.createIcons(), 50);
+      }
+    }
+
+    let currentUploadedDarkFile = null;
+    let currentUploadedLightFile = null;
+
+    function resolveAssetUrl(url, fallback = '../assets/logo-white.png') {
+      if (window.CuboidShell && typeof window.CuboidShell.resolveAssetUrl === 'function') {
+        return window.CuboidShell.resolveAssetUrl(url, fallback);
+      }
+      if (!url) return fallback;
+      const trimmed = String(url).trim();
+      if (!trimmed) return fallback;
+      if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+        return trimmed;
+      }
+      let clean = trimmed.replace(/^\.?\/?/, '');
+      if (clean.startsWith('cuboidpilot/')) {
+        clean = clean.replace(/^cuboidpilot\//, '');
+      }
+      return '../' + clean;
+    }
+
+    function updateEmbedCodeSnippet() {
+      const keyEl = document.getElementById('setting-company-key');
+      const themeEl = document.getElementById('setting-theme-mode');
+      const embedEl = document.getElementById('setting-embed-code');
+      if (keyEl && keyEl.value && embedEl) {
+        const scriptUrl = 'https://cai.cuboidsoft.in/widget.js';
+        const theme = themeEl ? themeEl.value : 'dark';
+        embedEl.value = `<script src="${scriptUrl}" data-company="${keyEl.value}" data-theme="${theme}" async><\/script>`;
+      }
+    }
+
+    function selectAiTone(tone, element) {
+      const toneInput = document.getElementById('setting-ai-tone');
+      if (toneInput) toneInput.value = tone;
+
+      // Update card UI
+      document.querySelectorAll('.tone-card').forEach(card => {
+        card.classList.remove('border-2', 'border-stone-900', 'bg-stone-50/80', 'active');
+        card.classList.add('border', 'border-stone-200', 'bg-white');
+      });
+
+      if (element) {
+        element.classList.remove('border', 'border-stone-200', 'bg-white');
+        element.classList.add('border-2', 'border-stone-900', 'bg-stone-50/80', 'active');
+      } else {
+        const found = document.querySelector(`.tone-card[onclick*="'${tone}'"]`);
+        if (found) {
+          found.classList.remove('border', 'border-stone-200', 'bg-white');
+          found.classList.add('border-2', 'border-stone-900', 'bg-stone-50/80', 'active');
+        }
+      }
+
+      const badge = document.getElementById('active-tone-badge');
+      if (badge) {
+        const labels = {
+          'professional': 'Active: Professional & Consultative',
+          'friendly': 'Active: Warm & Friendly',
+          'casual': 'Active: Direct & Concise',
+          'custom': 'Active: Executive Advisory'
+        };
+        badge.textContent = labels[tone] || `Active: ${tone}`;
+      }
+
+      updatePersonaLivePreview();
+    }
+
+    function updatePromptCharCount() {
+      const promptEl = document.getElementById('setting-system-prompt');
+      const countEl = document.getElementById('prompt-char-count');
+      if (promptEl && countEl) {
+        const len = promptEl.value.length;
+        countEl.textContent = `${len.toLocaleString()} / 4,000 chars`;
+        if (len > 3800) {
+          countEl.classList.add('text-amber-600', 'font-semibold');
+        } else {
+          countEl.classList.remove('text-amber-600', 'font-semibold');
+        }
+      }
+    }
+
+    function insertPromptSnippet(type) {
+      const promptEl = document.getElementById('setting-system-prompt');
+      if (!promptEl) return;
+
+      const snippets = {
+        'whatsapp': '\n\n• WhatsApp Gateway Directive: Proactively offer WhatsApp handoff when the user requests brochures, formal PDF documents, or direct instant advisor communication.',
+        'pricing': '\n\n• Pricing & Proposals Directive: State starting investment ranges clearly and offer to arrange custom proposals tailored to their specific project requirements.',
+        'booking': '\n\n• Consultation Booking Directive: Proactively offer a 1-on-1 calendar consultation when visitors show purchase intent or evaluate solution delivery timelines.',
+        'hallucination': '\n\n• Knowledge Grounding Directive: Strictly ground answers in verified company knowledge. If information is unavailable, politely offer to connect with a human advisor.'
+      };
+
+      if (snippets[type]) {
+        promptEl.value = (promptEl.value.trim() + snippets[type]).trim();
+        updatePromptCharCount();
+        updatePersonaLivePreview();
+      }
+    }
+
+    function resetPromptToDefault() {
+      const promptEl = document.getElementById('setting-system-prompt');
+      if (!promptEl) return;
+      if (confirm('Reset system directives to the recommended default template?')) {
+        promptEl.value = "You are the official consultative AI advisor for our company. Always maintain a professional, helpful, and courteous tone. When prospective clients inquire about services, pricing, or delivery timelines, answer using verified knowledge sources and encourage booking a 1-on-1 consultation or continuing on WhatsApp for direct quotes.";
+        updatePromptCharCount();
+        updatePersonaLivePreview();
+      }
+    }
+
+    function updatePersonaLivePreview() {
+      const astInput = document.getElementById('setting-assistant-name');
+      const name = (astInput && astInput.value.trim()) ? astInput.value.trim() : 'Cai';
+
+      const previewAvatar = document.getElementById('persona-preview-avatar');
+      if (previewAvatar) previewAvatar.textContent = name.charAt(0).toUpperCase();
+
+      const previewName = document.getElementById('persona-preview-name');
+      if (previewName) previewName.textContent = name;
+
+      const toneInput = document.getElementById('setting-ai-tone');
+      const tone = toneInput ? toneInput.value : 'professional';
+
+      const previewBubble = document.getElementById('persona-preview-bubble');
+      if (previewBubble) {
+        const toneGreetings = {
+          'professional': `Hello. I am ${name}, your AI consultant. How may I assist with your business requirements today?`,
+          'friendly': `Hi there 👋 I'm ${name}! Welcome to our team. How can I help you explore our solutions today?`,
+          'casual': `Hey! I'm ${name}. What are you looking to build or solve? I can get you answers right away.`,
+          'custom': `Greetings. ${name} online. Please share your inquiry regarding our capabilities, enterprise pricing, or scheduling.`
+        };
+        previewBubble.textContent = toneGreetings[tone] || toneGreetings['professional'];
+      }
+    }
+
+    async function loadSettings() {
+      try {
+        const res = await fetch('../api/settings.php');
+        const data = await res.json();
+        if (!data.success) return;
+
+        const u = data.user || {};
+        const c = data.company || {};
+        const w = data.widget || {};
+        const ai = data.ai_config || {};
+        if (u.name) {
+          const userNameInput = document.getElementById('setting-user-name');
+          if (userNameInput) userNameInput.value = u.name;
+        }
+        if (u.email) {
+          const userEmailEl = document.getElementById('setting-user-email');
+          if (userEmailEl) userEmailEl.textContent = u.email;
+        }
+        if (u.role) {
+          const userRoleEl = document.getElementById('setting-user-role');
+          if (userRoleEl) userRoleEl.textContent = u.role.toUpperCase();
+        }
+        const userAvatarPreview = document.getElementById('setting-user-avatar-preview');
+        const userPlaceholder = document.getElementById('setting-user-avatar-placeholder');
+        if (userAvatarPreview && u.avatar_url) {
+          userAvatarPreview.src = resolveAssetUrl(u.avatar_url);
+          userAvatarPreview.classList.remove('hidden');
+          if (userPlaceholder) userPlaceholder.classList.add('hidden');
+        } else if (userAvatarPreview) {
+          userAvatarPreview.classList.add('hidden');
+          if (userPlaceholder) userPlaceholder.classList.remove('hidden');
+        }
+
+        if (c.name) document.getElementById('setting-company-name').value = c.name;
+        if (c.industry) document.getElementById('setting-industry').value = c.industry;
+        if (c.city) document.getElementById('setting-city').value = c.city;
+        if (c.country) document.getElementById('setting-country').value = c.country;
+        
+        // 1. Dark Theme Logo
+        const darkLogo = c.logo_dark_url || w.logo_dark_url || c.logo_url || w.logo_url || '';
+        if (darkLogo) {
+          const previewDark = document.getElementById('setting-logo-dark-preview');
+          if (previewDark) previewDark.src = resolveAssetUrl(darkLogo);
+          const urlDarkInput = document.getElementById('setting-logo-dark-url');
+          if (urlDarkInput) urlDarkInput.value = darkLogo;
+        }
+
+        // 2. Light Theme Logo
+        const lightLogo = c.logo_light_url || w.logo_light_url || c.logo_url || w.logo_url || '';
+        if (lightLogo) {
+          const previewLight = document.getElementById('setting-logo-light-preview');
+          if (previewLight) previewLight.src = resolveAssetUrl(lightLogo);
+          const urlLightInput = document.getElementById('setting-logo-light-url');
+          if (urlLightInput) urlLightInput.value = lightLogo;
+        }
+
+        if (w.brand_name) document.getElementById('setting-widget-brand').value = w.brand_name;
+        
+        // AI Persona & Directives
+        const assistantName = ai.ai_name || w.assistant_name || 'Cai';
+        const astInput = document.getElementById('setting-assistant-name');
+        if (astInput) astInput.value = assistantName;
+
+        const promptText = ai.custom_instructions || '';
+        const promptInput = document.getElementById('setting-system-prompt');
+        if (promptInput) promptInput.value = promptText;
+
+        const objSelect = document.getElementById('setting-primary-objective');
+        if (objSelect && ai.primary_objective) {
+          objSelect.value = ai.primary_objective;
+        }
+
+        if (ai.tone) {
+          selectAiTone(ai.tone);
+        } else {
+          selectAiTone('professional');
+        }
+
+        if (Array.isArray(ai.info_to_collect)) {
+          const infoMap = {
+            'phone': 'info-col-phone',
+            'email': 'info-col-email',
+            'requirement': 'info-col-requirement',
+            'budget': 'info-col-budget',
+            'timeline': 'info-col-timeline'
+          };
+          Object.keys(infoMap).forEach(key => {
+            const el = document.getElementById(infoMap[key]);
+            if (el) el.checked = ai.info_to_collect.includes(key);
+          });
+        }
+
+        updatePromptCharCount();
+        updatePersonaLivePreview();
+        if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+        if (w.greeting_heading) document.getElementById('setting-greeting-heading').value = w.greeting_heading;
+        if (w.greeting_subheading) document.getElementById('setting-greeting-subheading').value = w.greeting_subheading;
+        if (w.accent_color) {
+          document.getElementById('setting-accent-color').value = w.accent_color;
+          const picker = document.getElementById('setting-accent-picker');
+          if (picker) picker.value = w.accent_color;
+        }
+        if (w.whatsapp_number) {
+          document.getElementById('setting-wa-number').value = w.whatsapp_number;
+          const dispWa = document.getElementById('setting-display-wa');
+          if (dispWa) dispWa.textContent = w.whatsapp_number;
+        }
+
+        if (w.theme_mode) {
+          const themeEl = document.getElementById('setting-theme-mode');
+          if (themeEl) {
+            themeEl.value = w.theme_mode;
+          }
+        }
+
+        if (typeof w.enable_appointments !== 'undefined') {
+          const apptEl = document.getElementById('setting-action-appointments');
+          if (apptEl) apptEl.checked = !!w.enable_appointments;
+        }
+        if (typeof w.enable_human_help !== 'undefined') {
+          const humanEl = document.getElementById('setting-action-human');
+          if (humanEl) humanEl.checked = !!w.enable_human_help;
+        }
+        if (typeof w.enable_payments !== 'undefined') {
+          const payEl = document.getElementById('setting-action-payments');
+          if (payEl) payEl.checked = !!w.enable_payments;
+        }
+        if (w.bank_name) {
+          const bName = document.getElementById('setting-bank-name');
+          if (bName) bName.value = w.bank_name;
+        }
+        if (w.bank_account_no) {
+          const bAcc = document.getElementById('setting-bank-acc');
+          if (bAcc) bAcc.value = w.bank_account_no;
+        }
+        if (w.bank_ifsc) {
+          const bIfsc = document.getElementById('setting-bank-ifsc');
+          if (bIfsc) bIfsc.value = w.bank_ifsc;
+        }
+        if (w.bank_upi_id) {
+          const bUpi = document.getElementById('setting-bank-upi');
+          if (bUpi) bUpi.value = w.bank_upi_id;
+        }
+        if (w.razorpay_key_id) {
+          const rzEl = document.getElementById('setting-razorpay-key');
+          if (rzEl) rzEl.value = w.razorpay_key_id;
+        }
+        if (w.razorpay_key_secret) {
+          const rzSec = document.getElementById('setting-razorpay-secret');
+          if (rzSec) rzSec.value = w.razorpay_key_secret;
+        }
+        if (w.bank_account_holder) {
+          const bHolder = document.getElementById('setting-bank-holder');
+          if (bHolder) bHolder.value = w.bank_account_holder;
+        }
+        if (w.bank_qr_url) {
+          const bQrUrl = document.getElementById('setting-bank-qr-url');
+          const bQrPrev = document.getElementById('setting-bank-qr-preview');
+          if (bQrUrl) bQrUrl.value = w.bank_qr_url;
+          if (bQrPrev) {
+            bQrPrev.src = resolveAssetUrl(w.bank_qr_url);
+            bQrPrev.classList.remove('hidden');
+          }
+        }
+
+        // Calendar Scheduling
+        if (w.calendar_start_time) {
+          const cStart = document.getElementById('setting-cal-start');
+          if (cStart) cStart.value = w.calendar_start_time;
+        }
+        if (w.calendar_end_time) {
+          const cEnd = document.getElementById('setting-cal-end');
+          if (cEnd) cEnd.value = w.calendar_end_time;
+        }
+        if (w.calendar_slot_duration) {
+          const cDur = document.getElementById('setting-cal-duration');
+          if (cDur) cDur.value = String(w.calendar_slot_duration);
+        }
+        if (typeof w.calendar_buffer_minutes !== 'undefined') {
+          const cBuf = document.getElementById('setting-cal-buffer');
+          if (cBuf) cBuf.value = String(w.calendar_buffer_minutes);
+        }
+        if (w.calendar_advance_days) {
+          const cAdv = document.getElementById('setting-cal-advance');
+          if (cAdv) cAdv.value = String(w.calendar_advance_days);
+        }
+        if (w.calendar_meet_url) {
+          const cMeet = document.getElementById('setting-cal-meet-url');
+          if (cMeet) cMeet.value = w.calendar_meet_url;
+        }
+        if (w.calendar_working_days) {
+          const daysArr = String(w.calendar_working_days).split(',').map(s => s.trim());
+          document.querySelectorAll('input[name="cal_day"]').forEach(cb => {
+            cb.checked = daysArr.includes(cb.value);
+          });
+        }
+
+        // Calendar API Integration
+        if (w.calendar_provider) {
+          const cProv = document.getElementById('setting-cal-provider');
+          if (cProv) cProv.value = w.calendar_provider;
+        }
+        if (w.calendar_api_key) {
+          const cKey = document.getElementById('setting-cal-api-key');
+          if (cKey) cKey.value = w.calendar_api_key;
+        }
+        if (w.calendar_booking_url) {
+          const cBook = document.getElementById('setting-cal-booking-url');
+          if (cBook) cBook.value = w.calendar_booking_url;
+        }
+        if (w.calendar_webhook_url) {
+          const cHook = document.getElementById('setting-cal-webhook-url');
+          if (cHook) cHook.value = w.calendar_webhook_url;
+        }
+        if (typeof w.calendar_sync_enabled !== 'undefined') {
+          const cSync = document.getElementById('setting-cal-sync-enabled');
+          if (cSync) cSync.checked = !!w.calendar_sync_enabled;
+        }
+        if (typeof toggleCalendarProviderFields === 'function') {
+          toggleCalendarProviderFields();
+        }
+
+        if (c.company_key) {
+          const keyEl = document.getElementById('setting-company-key');
+          if (keyEl) keyEl.value = c.company_key;
+          updateEmbedCodeSnippet();
+        }
+
+        // Listen for theme mode changes to auto-update embed snippet
+        const themeSelect = document.getElementById('setting-theme-mode');
+        if (themeSelect) {
+          themeSelect.removeEventListener('change', updateEmbedCodeSnippet);
+          themeSelect.addEventListener('change', updateEmbedCodeSnippet);
+        }
+      } catch (err) {
+        console.warn('Could not load workspace settings:', err);
+      }
+    }
+
+    let currentUploadedUserAvatarFile = null;
+    function previewUserAvatarFile(input) {
+      if (input.files && input.files[0]) {
+        currentUploadedUserAvatarFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('setting-user-avatar-preview');
+          const placeholder = document.getElementById('setting-user-avatar-placeholder');
+          if (preview) {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+          }
+          if (placeholder) placeholder.classList.add('hidden');
+        };
+        reader.readAsDataURL(currentUploadedUserAvatarFile);
+      }
+    }
+
+    function previewLogoDarkFile(input) {
+      if (input.files && input.files[0]) {
+        currentUploadedDarkFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('setting-logo-dark-preview');
+          if (preview) preview.src = e.target.result;
+        };
+        reader.readAsDataURL(currentUploadedDarkFile);
+      }
+    }
+
+    function updateLogoDarkFromUrl(url) {
+      if (url && url.trim()) {
+        const preview = document.getElementById('setting-logo-dark-preview');
+        if (preview) preview.src = resolveAssetUrl(url.trim());
+        currentUploadedDarkFile = null;
+      }
+    }
+
+    function previewLogoLightFile(input) {
+      if (input.files && input.files[0]) {
+        currentUploadedLightFile = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('setting-logo-light-preview');
+          if (preview) preview.src = e.target.result;
+        };
+        reader.readAsDataURL(currentUploadedLightFile);
+      }
+    }
+
+    function updateLogoLightFromUrl(url) {
+      if (url && url.trim()) {
+        const preview = document.getElementById('setting-logo-light-preview');
+        if (preview) preview.src = resolveAssetUrl(url.trim());
+        currentUploadedLightFile = null;
+      }
+    }
+
+    function previewBankQr(input) {
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const preview = document.getElementById('setting-bank-qr-preview');
+          if (preview) {
+            preview.src = e.target.result;
+            preview.classList.remove('hidden');
+          }
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function togglePasswordVisibility(inputId, btn) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      if (input.type === 'password') {
+        input.type = 'text';
+        if (btn) btn.innerHTML = '<i data-lucide="eye-off" class="w-3.5 h-3.5"></i>';
+      } else {
+        input.type = 'password';
+        if (btn) btn.innerHTML = '<i data-lucide="eye" class="w-3.5 h-3.5"></i>';
+      }
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+    }
+
+    async function saveSettings() {
+      const btn = document.getElementById('save-all-btn');
+      const originalText = btn ? btn.textContent : 'Save';
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+      }
+
+      const formData = new FormData();
+      formData.append('name', document.getElementById('setting-company-name').value.trim());
+      formData.append('industry', document.getElementById('setting-industry').value.trim());
+      formData.append('city', document.getElementById('setting-city').value.trim());
+      formData.append('brand_name', document.getElementById('setting-widget-brand').value.trim());
+      const astNameInput = document.getElementById('setting-assistant-name');
+      formData.append('assistant_name', astNameInput ? astNameInput.value.trim() : 'Cai');
+      
+      const sysPromptInput = document.getElementById('setting-system-prompt');
+      if (sysPromptInput) formData.append('system_prompt', sysPromptInput.value.trim());
+
+      const aiToneInput = document.getElementById('setting-ai-tone');
+      if (aiToneInput) formData.append('ai_tone', aiToneInput.value);
+
+      const objSelect = document.getElementById('setting-primary-objective');
+      if (objSelect) formData.append('primary_objective', objSelect.value);
+
+      const collectedInfo = ['name'];
+      ['phone', 'email', 'requirement', 'budget', 'timeline'].forEach(f => {
+        const el = document.getElementById(`info-col-${f}`);
+        if (el && el.checked) collectedInfo.push(f);
+      });
+      formData.append('info_to_collect', JSON.stringify(collectedInfo));
+      formData.append('greeting_heading', document.getElementById('setting-greeting-heading').value.trim());
+      formData.append('greeting_subheading', document.getElementById('setting-greeting-subheading').value.trim());
+      formData.append('accent_color', document.getElementById('setting-accent-color').value.trim());
+      formData.append('whatsapp_number', document.getElementById('setting-wa-number').value.trim());
+      
+      const themeMode = document.getElementById('setting-theme-mode').value;
+      formData.append('theme_mode', themeMode);
+
+      const apptCheck = document.getElementById('setting-action-appointments');
+      if (apptCheck) formData.append('enable_appointments', apptCheck.checked ? '1' : '0');
+      const humanCheck = document.getElementById('setting-action-human');
+      if (humanCheck) formData.append('enable_human_help', humanCheck.checked ? '1' : '0');
+      const payCheck = document.getElementById('setting-action-payments');
+      if (payCheck) formData.append('enable_payments', payCheck.checked ? '1' : '0');
+
+      const bName = document.getElementById('setting-bank-name');
+      if (bName) formData.append('bank_name', bName.value.trim());
+      const bHolder = document.getElementById('setting-bank-holder');
+      if (bHolder) formData.append('bank_account_holder', bHolder.value.trim());
+      const bAcc = document.getElementById('setting-bank-acc');
+      if (bAcc) formData.append('bank_account_no', bAcc.value.trim());
+      const bIfsc = document.getElementById('setting-bank-ifsc');
+      if (bIfsc) formData.append('bank_ifsc', bIfsc.value.trim());
+      const bUpi = document.getElementById('setting-bank-upi');
+      if (bUpi) formData.append('bank_upi_id', bUpi.value.trim());
+      const rzKey = document.getElementById('setting-razorpay-key');
+      if (rzKey) formData.append('razorpay_key_id', rzKey.value.trim());
+      const rzSec = document.getElementById('setting-razorpay-secret');
+      if (rzSec) formData.append('razorpay_key_secret', rzSec.value.trim());
+
+      // QR Code
+      const qrFileInput = document.getElementById('setting-bank-qr-file');
+      if (qrFileInput && qrFileInput.files && qrFileInput.files[0]) {
+        formData.append('bank_qr_file', qrFileInput.files[0]);
+      }
+      const qrUrlInput = document.getElementById('setting-bank-qr-url');
+      if (qrUrlInput && qrUrlInput.value) {
+        formData.append('bank_qr_url', qrUrlInput.value);
+      }
+
+      // Calendar & Scheduling Settings
+      const cStart = document.getElementById('setting-cal-start');
+      if (cStart) formData.append('calendar_start_time', cStart.value);
+      const cEnd = document.getElementById('setting-cal-end');
+      if (cEnd) formData.append('calendar_end_time', cEnd.value);
+      const cDur = document.getElementById('setting-cal-duration');
+      if (cDur) formData.append('calendar_slot_duration', cDur.value);
+      const cBuf = document.getElementById('setting-cal-buffer');
+      if (cBuf) formData.append('calendar_buffer_minutes', cBuf.value);
+      const cAdv = document.getElementById('setting-cal-advance');
+      if (cAdv) formData.append('calendar_advance_days', cAdv.value);
+      const cMeet = document.getElementById('setting-cal-meet-url');
+      if (cMeet) formData.append('calendar_meet_url', cMeet.value.trim());
+
+      // Calendar API Integration fields
+      const cProv = document.getElementById('setting-cal-provider');
+      if (cProv) formData.append('calendar_provider', cProv.value);
+      const cKey = document.getElementById('setting-cal-api-key');
+      if (cKey) formData.append('calendar_api_key', cKey.value.trim());
+      const cBook = document.getElementById('setting-cal-booking-url');
+      if (cBook) formData.append('calendar_booking_url', cBook.value.trim());
+      const cHook = document.getElementById('setting-cal-webhook-url');
+      if (cHook) formData.append('calendar_webhook_url', cHook.value.trim());
+      const cSync = document.getElementById('setting-cal-sync-enabled');
+      if (cSync) formData.append('calendar_sync_enabled', cSync.checked ? '1' : '0');
+
+      const selectedDays = [];
+      document.querySelectorAll('input[name="cal_day"]:checked').forEach(cb => {
+        selectedDays.push(cb.value);
+      });
+      formData.append('calendar_working_days', selectedDays.join(','));
+
+      // User profile & avatar
+      const userNameInput = document.getElementById('setting-user-name');
+      if (userNameInput && userNameInput.value.trim()) {
+        formData.append('user_name', userNameInput.value.trim());
+      }
+      if (currentUploadedUserAvatarFile) {
+        formData.append('user_avatar_file', currentUploadedUserAvatarFile);
+      }
+
+      // Dark logo
+      const darkUrl = document.getElementById('setting-logo-dark-url').value.trim();
+      if (darkUrl) formData.append('logo_dark_url', darkUrl);
+      if (currentUploadedDarkFile) formData.append('logo_dark_file', currentUploadedDarkFile);
+
+      // Light logo
+      const lightUrl = document.getElementById('setting-logo-light-url').value.trim();
+      if (lightUrl) formData.append('logo_light_url', lightUrl);
+      if (currentUploadedLightFile) formData.append('logo_light_file', currentUploadedLightFile);
+
+      try {
+        const res = await fetch('../api/settings.php', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          const msg = document.getElementById('save-status-msg');
+          if (msg) {
+            msg.classList.remove('hidden');
+            setTimeout(() => msg.classList.add('hidden'), 3500);
+          }
+
+          if (data.user_avatar_url) {
+            const preview = document.getElementById('setting-user-avatar-preview');
+            if (preview) {
+              preview.src = resolveAssetUrl(data.user_avatar_url);
+              preview.classList.remove('hidden');
+            }
+            const placeholder = document.getElementById('setting-user-avatar-placeholder');
+            if (placeholder) placeholder.classList.add('hidden');
+
+            const shellAvatar = document.getElementById('shell-user-avatar');
+            if (shellAvatar) {
+              shellAvatar.innerHTML = `<img src="${resolveAssetUrl(data.user_avatar_url)}" class="w-full h-full object-cover rounded-full">`;
+              shellAvatar.classList.remove('bg-stone-900', 'text-white');
+            }
+            const topbarAvatar = document.getElementById('topbar-user-avatar');
+            if (topbarAvatar) {
+              topbarAvatar.innerHTML = `<img src="${resolveAssetUrl(data.user_avatar_url)}" class="w-full h-full object-cover rounded-full">`;
+              topbarAvatar.classList.remove('bg-stone-900', 'text-white');
+            }
+            if (window.CuboidShell && window.CuboidShell.user) {
+              window.CuboidShell.user.avatar_url = data.user_avatar_url;
+            }
+            currentUploadedUserAvatarFile = null;
+          }
+
+          if (data.user_name) {
+            const shellName = document.getElementById('shell-user-name');
+            if (shellName) shellName.textContent = data.user_name;
+            const topbarName = document.getElementById('topbar-user-name');
+            if (topbarName) topbarName.textContent = data.user_name;
+            if (window.CuboidShell && window.CuboidShell.user) {
+              window.CuboidShell.user.name = data.user_name;
+            }
+          }
+
+          if (data.logo_dark_url) {
+            const previewDark = document.getElementById('setting-logo-dark-preview');
+            if (previewDark) previewDark.src = resolveAssetUrl(data.logo_dark_url);
+            const urlDarkInput = document.getElementById('setting-logo-dark-url');
+            if (urlDarkInput) urlDarkInput.value = data.logo_dark_url;
+            currentUploadedDarkFile = null;
+          }
+
+          if (data.logo_light_url) {
+            const previewLight = document.getElementById('setting-logo-light-preview');
+            if (previewLight) previewLight.src = resolveAssetUrl(data.logo_light_url);
+            const urlLightInput = document.getElementById('setting-logo-light-url');
+            if (urlLightInput) urlLightInput.value = data.logo_light_url;
+            currentUploadedLightFile = null;
+          }
+
+          // Update sidebar rail logo immediately
+          const activeRailLogo = (themeMode === 'light')
+            ? (data.logo_light_url || data.logo_dark_url || data.logo_url)
+            : (data.logo_dark_url || data.logo_light_url || data.logo_url);
+          const railLogo = document.getElementById('shell-rail-logo');
+          if (railLogo && activeRailLogo) railLogo.src = resolveAssetUrl(activeRailLogo);
+
+          // Sync snippet
+          updateEmbedCodeSnippet();
+
+          alert('Workspace settings and profile updated successfully!');
+        } else {
+          alert(data.error || 'Failed to save settings.');
+        }
+      } catch (err) {
+        alert('Network error while saving settings.');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
+      }
+    }
+
+    function copyCompanyKey() {
+      const input = document.getElementById('setting-company-key');
+      if (input) {
+        navigator.clipboard.writeText(input.value);
+        alert('Company key copied to clipboard!');
+      }
+    }
+
+    function copyEmbedCode() {
+      const input = document.getElementById('setting-embed-code');
+      if (input) {
+        navigator.clipboard.writeText(input.value);
+        alert('Embed script tag copied to clipboard!');
+      }
+    }
+
+    function toggleCalendarProviderFields() {
+      const prov = document.getElementById('setting-cal-provider')?.value || 'native';
+      const keyInput = document.getElementById('setting-cal-api-key');
+      const bookInput = document.getElementById('setting-cal-booking-url');
+      const statusText = document.getElementById('cal-api-status-text');
+
+      if (prov === 'calcom') {
+        if (keyInput && !keyInput.value) keyInput.placeholder = 'cal_live_... (Cal.com API key)';
+        if (bookInput && !bookInput.value) bookInput.placeholder = 'https://cal.com/your-team/30min';
+        if (statusText) statusText.textContent = 'Cal.com Integration Ready • Real-time event bookings & ICS sync active';
+      } else if (prov === 'calendly') {
+        if (keyInput && !keyInput.value) keyInput.placeholder = 'Personal Access Token from Calendly Integrations';
+        if (bookInput && !bookInput.value) bookInput.placeholder = 'https://calendly.com/your-team/consultation';
+        if (statusText) statusText.textContent = 'Calendly Integration Ready • Direct link and booking sync active';
+      } else if (prov === 'google') {
+        if (keyInput && !keyInput.value) keyInput.placeholder = 'Google API Key / Service Account JSON path';
+        if (statusText) statusText.textContent = 'Google Calendar API Ready • Google Meet & event creation enabled';
+      } else if (prov === 'custom') {
+        if (statusText) statusText.textContent = 'Custom Webhook API Active • JSON payloads dispatched to your server on booking';
+      } else {
+        if (statusText) statusText.textContent = 'Native Engine Active • Auto Google Meet generation & .ICS downloads';
+      }
+    }
+
+    function togglePasswordVisibility(fieldId) {
+      const field = document.getElementById(fieldId);
+      if (!field) return;
+      field.type = field.type === 'password' ? 'text' : 'password';
+    }
+
+    async function testCalendarApiConnection() {
+      const hookUrl = document.getElementById('setting-cal-webhook-url')?.value.trim() || '';
+      const apiKey = document.getElementById('setting-cal-api-key')?.value.trim() || '';
+      const provider = document.getElementById('setting-cal-provider')?.value || 'calcom';
+      const statusText = document.getElementById('cal-api-status-text');
+
+      if (statusText) {
+        statusText.innerHTML = '<span class="inline-flex items-center gap-1.5 text-stone-600"><span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Testing connection to Calendar API...</span>';
+      }
+
+      try {
+        const res = await fetch('../api/appointments.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'test_calendar',
+            webhook_url: hookUrl,
+            api_key: apiKey,
+            provider: provider
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (statusText) {
+            statusText.innerHTML = `<span class="inline-flex items-center gap-1.5 text-emerald-700 font-semibold"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> ${data.message}</span>`;
+          }
+          if (window.CuboidShell && window.CuboidShell.toast) {
+            window.CuboidShell.toast(data.message, 'success');
+          } else {
+            alert(data.message);
+          }
+        } else {
+          if (statusText) {
+            statusText.innerHTML = `<span class="inline-flex items-center gap-1.5 text-red-600 font-medium"><span class="w-2 h-2 rounded-full bg-red-500"></span> ${data.error || 'Connection failed'}</span>`;
+          }
+          if (window.CuboidShell && window.CuboidShell.toast) {
+            window.CuboidShell.toast(data.error || 'Connection failed', 'error');
+          } else {
+            alert(data.error || 'Connection failed');
+          }
+        }
+      } catch (e) {
+        if (statusText) {
+          statusText.innerHTML = '<span class="text-red-600">Error connecting to server</span>';
+        }
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Activity Logs — Super Admin — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          
+          <!-- Header -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2">
+                <h1 class="app-page-title">Platform Audit Ledger</h1>
+                <span class="badge-signal-green text-xs font-semibold">SOC2 Compliant Trail</span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Immutable record of security authentications, quota overrides, tenant provisioning, and billing events.</p>
+            </div>
+            
+            <div class="flex items-center gap-2">
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="alert('Exporting cryptographically signed JSON audit ledger')">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5 mr-1.5"></i>
+                Export Signed JSON
+              </button>
+            </div>
+          </div>
+
+          <!-- Multi-filter bar -->
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 border border-[#e7e5de] rounded-[4px]">
+            <div class="flex items-center gap-2 flex-1">
+              <div class="relative w-full max-w-sm">
+                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></i>
+                <input type="text" placeholder="Search actor, event type, or tenant..." class="app-input pl-8 text-xs w-full">
+              </div>
+
+              <select class="app-input text-xs w-40 bg-white hidden md:block">
+                <option>All Event Types</option>
+                <option>Authentication (2FA)</option>
+                <option>Quota Overrides</option>
+                <option>Billing & Stripe</option>
+                <option>Tenant Provisioning</option>
+                <option>API Key Rotations</option>
+              </select>
+
+              <select class="app-input text-xs w-36 bg-white hidden md:block">
+                <option>All Actors</option>
+                <option>Super Admins</option>
+                <option>Tenant Admins</option>
+                <option>System Workers</option>
+              </select>
+            </div>
+
+            <span class="text-xs text-stone-400">Showing last 24 hours</span>
+          </div>
+
+          <!-- Audit Table -->
+          <div class="app-panel p-0 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="app-table text-xs">
+                <thead>
+                  <tr>
+                    <th>Timestamp (UTC)</th>
+                    <th>Actor</th>
+                    <th>Event Type</th>
+                    <th>Target Resource</th>
+                    <th>IP Address & Location</th>
+                    <th>Status</th>
+                    <th class="text-right">Payload</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-mono text-stone-500">2026-09-29 07:12:44</td>
+                    <td>
+                      <div class="font-medium text-stone-900">super_admin_root</div>
+                      <div class="text-[10px] font-mono text-stone-400">auth_id: 00192</div>
+                    </td>
+                    <td><span class="badge-signal-blue text-[10px]">tenant.quota_override</span></td>
+                    <td class="font-mono text-stone-700">ws_acme_8910 (Acme Academy)</td>
+                    <td>
+                      <div class="font-mono text-stone-800">14.139.120.4</div>
+                      <div class="text-[10px] text-stone-400">Mumbai, IN (VPN)</div>
+                    </td>
+                    <td><span class="badge-signal-green text-[10px]">Success</span></td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-0.5 px-2" onclick="alert(JSON.stringify({event: 'quota_override', before: 1500, after: 1500, actor: 'super_admin_root'}, null, 2))">JSON</button></td>
+                  </tr>
+
+                  <tr>
+                    <td class="font-mono text-stone-500">2026-09-29 06:45:10</td>
+                    <td>
+                      <div class="font-medium text-stone-900">arjun@acmeacademy.in</div>
+                      <div class="text-[10px] font-mono text-stone-400">Owner Session</div>
+                    </td>
+                    <td><span class="badge-signal-blue text-[10px]">knowledge.document_upload</span></td>
+                    <td class="font-mono text-stone-700">doc_fee_structure_2026.pdf</td>
+                    <td>
+                      <div class="font-mono text-stone-800">106.51.24.110</div>
+                      <div class="text-[10px] text-stone-400">Bengaluru, IN</div>
+                    </td>
+                    <td><span class="badge-signal-green text-[10px]">Success</span></td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-0.5 px-2" onclick="alert(JSON.stringify({filename: 'fee_structure_2026.pdf', bytes: 841920}, null, 2))">JSON</button></td>
+                  </tr>
+
+                  <tr>
+                    <td class="font-mono text-stone-500">2026-09-29 04:30:19</td>
+                    <td>
+                      <div class="font-medium text-stone-900">stripe_webhook_worker</div>
+                      <div class="text-[10px] font-mono text-stone-400">Daemon Worker</div>
+                    </td>
+                    <td><span class="badge-signal-green text-[10px]">invoice.payment_succeeded</span></td>
+                    <td class="font-mono text-stone-700">in_1Px980Klm9 ($149.00)</td>
+                    <td>
+                      <div class="font-mono text-stone-800">54.187.174.169</div>
+                      <div class="text-[10px] text-stone-400">Stripe Webhook Egress</div>
+                    </td>
+                    <td><span class="badge-signal-green text-[10px]">Success</span></td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-0.5 px-2" onclick="alert(JSON.stringify({amount: 14900, currency: 'usd', status: 'paid'}, null, 2))">JSON</button></td>
+                  </tr>
+
+                  <tr>
+                    <td class="font-mono text-stone-500">2026-09-29 03:00:00</td>
+                    <td>
+                      <div class="font-medium text-stone-900">solaris_billing_retry</div>
+                      <div class="text-[10px] font-mono text-stone-400">Stripe Automated</div>
+                    </td>
+                    <td><span class="badge-signal-red text-[10px]">invoice.payment_failed</span></td>
+                    <td class="font-mono text-stone-700">in_1Pv442Xmn1 ($49.00)</td>
+                    <td>
+                      <div class="font-mono text-stone-800">54.187.174.169</div>
+                      <div class="text-[10px] text-stone-400">Stripe Webhook Egress</div>
+                    </td>
+                    <td><span class="badge-signal-red text-[10px]">Failed</span></td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-0.5 px-2" onclick="alert(JSON.stringify({amount: 4900, reason: 'insufficient_funds'}, null, 2))">JSON</button></td>
+                  </tr>
+
+                  <tr>
+                    <td class="font-mono text-stone-500">2026-09-28 22:15:33</td>
+                    <td>
+                      <div class="font-medium text-stone-900">david@zenithfit.co.uk</div>
+                      <div class="text-[10px] font-mono text-stone-400">Owner Session</div>
+                    </td>
+                    <td><span class="badge-signal-blue text-[10px]">auth.login_2fa</span></td>
+                    <td class="font-mono text-stone-700">user_zenith_01</td>
+                    <td>
+                      <div class="font-mono text-stone-800">81.187.30.94</div>
+                      <div class="text-[10px] text-stone-400">London, UK</div>
+                    </td>
+                    <td><span class="badge-signal-green text-[10px]">Verified</span></td>
+                    <td class="text-right"><button class="btn-secondary btn-sm text-xs py-0.5 px-2" onclick="alert(JSON.stringify({method: 'totp', agent: 'Chrome 128 Mac'}, null, 2))">JSON</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="p-3 border-t border-[#e7e5de] bg-[#fcfbfa] flex items-center justify-between text-xs text-stone-500">
+              <div>Showing 5 of 1,842 ledger entries</div>
+              <div class="flex items-center gap-1">
+                <button class="btn-secondary btn-sm text-xs py-1 px-2.5" disabled>Previous</button>
+                <button class="btn-secondary btn-sm text-xs py-1 px-2.5">Next</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script src="../js/dashboard.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initSuperAdmin('activity', 'Platform Audit Ledger', ['Operations']);
+    });
+  </script>
+</body>
+</html>

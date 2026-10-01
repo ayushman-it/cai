@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Train Your AI — Onboarding — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="bg-[#fcfbfa] text-[#111111] antialiased flex flex-col justify-between min-h-screen">
+
+  <header class="py-5 px-8 border-b border-[#e7e5de] bg-white flex items-center justify-between">
+    <div class="flex items-center gap-2.5">
+      <div class="w-7 h-7 rounded-[4px] bg-[#111111] text-white flex items-center justify-center font-bold text-xs tracking-wider">CP</div>
+      <span class="text-sm font-semibold tracking-tight">CuboidPilot Setup</span>
+    </div>
+    
+    <div class="hidden sm:flex items-center gap-2 text-xs font-medium">
+      <a href="business.html" class="text-stone-500 hover:underline">1. Business</a>
+      <span class="text-stone-300">&rarr;</span>
+      <a href="goals.html" class="text-stone-500 hover:underline">2. Goals</a>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-[#111111] font-semibold">3. AI Engine</span>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-stone-400">4. Website</span>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-stone-400">5. WhatsApp</span>
+      <span class="text-stone-300">&rarr;</span>
+      <span class="text-stone-400">6. Ready</span>
+    </div>
+
+    <div class="text-xs text-stone-400">Step 3 of 6</div>
+  </header>
+
+  <main class="flex-1 max-w-[1100px] w-full mx-auto p-6 md:p-8">
+    <div class="mb-6">
+      <span class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 block mb-1">Knowledge Grounding</span>
+      <h1 class="text-2xl font-medium tracking-tight text-[#111111]">Train your AI Assistant</h1>
+      <p class="text-xs text-stone-500 mt-1">Give CuboidPilot the verified information it needs to answer customer inquiries without hallucinations.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- Left Column: Knowledge Sources -->
+      <div class="lg:col-span-7 space-y-5">
+        
+        <!-- Web Import Section -->
+        <div class="bg-white border border-[#e7e5de] rounded-[6px] p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-600">Website Crawler</h3>
+            <span class="badge-signal-green text-[10px]">Synced</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="url" value="https://acmeacademy.com" class="app-input flex-1 text-xs">
+            <button class="btn-secondary btn-sm text-xs py-1.5 px-3">Re-import</button>
+          </div>
+          <p class="text-[11px] text-stone-400 mt-2">18 pages indexed including /courses, /admissions, and /tuition.</p>
+        </div>
+
+        <!-- Document Store Section -->
+        <div class="bg-white border border-[#e7e5de] rounded-[6px] p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-600">Business Documents</h3>
+            <button class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+              <i data-lucide="upload" class="w-3 h-3"></i> Upload PDF/DOC
+            </button>
+          </div>
+
+          <!-- Document Rows -->
+          <div class="space-y-2 text-xs">
+            <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-[4px] flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 text-stone-500"></i>
+                <div>
+                  <div class="font-medium text-stone-900">pricing_and_emi_policy_2026.pdf</div>
+                  <div class="text-[10px] text-stone-400">142 KB • 4 pages</div>
+                </div>
+              </div>
+              <span class="badge-signal-green text-[10px]">Ready</span>
+            </div>
+
+            <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-[4px] flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 text-stone-500"></i>
+                <div>
+                  <div class="font-medium text-stone-900">fullstack_curriculum_syllabus.pdf</div>
+                  <div class="text-[10px] text-stone-400">890 KB • 12 pages</div>
+                </div>
+              </div>
+              <span class="badge-signal-green text-[10px]">Ready</span>
+            </div>
+
+            <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-[4px] flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i data-lucide="file-text" class="w-4 h-4 text-stone-500"></i>
+                <div>
+                  <div class="font-medium text-stone-900">admission_eligibility_criteria.pdf</div>
+                  <div class="text-[10px] text-stone-400">310 KB • 6 pages</div>
+                </div>
+              </div>
+              <span class="badge-signal-amber text-[10px]">Processing</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQs & Policies -->
+        <div class="bg-white border border-[#e7e5de] rounded-[6px] p-5 flex items-center justify-between">
+          <div>
+            <div class="text-xs font-semibold text-stone-900">12 Verified FAQs & Policies Grounded</div>
+            <div class="text-[11px] text-stone-500">Tuition installment rates, refund guarantee, and placement support.</div>
+          </div>
+          <button class="btn-secondary btn-sm text-xs py-1.5 px-3">Add FAQ</button>
+        </div>
+
+        <div class="flex items-center justify-between pt-2">
+          <a href="goals.html" class="text-xs text-stone-500 hover:text-stone-900">&larr; Back to Goals</a>
+          <a href="website.html" class="btn-primary py-2 px-5 text-xs font-medium">
+            Continue to Connect Website &rarr;
+          </a>
+        </div>
+
+      </div>
+
+      <!-- Right Column: AI Live Test Sandbox -->
+      <div class="lg:col-span-5 bg-white border border-[#e7e5de] rounded-[6px] p-5 flex flex-col h-[520px]">
+        
+        <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-5 h-5 rounded-[2px] bg-stone-900 text-white flex items-center justify-center text-[10px]">✦</div>
+            <span class="text-xs font-semibold text-stone-900">Test Your AI</span>
+          </div>
+          <span class="text-[11px] font-mono text-stone-400">Live Sandbox</span>
+        </div>
+
+        <!-- Dialogue area -->
+        <div id="onboarding-chat-messages" class="flex-1 overflow-y-auto space-y-3 text-xs pr-1">
+          <div class="flex items-start gap-2">
+            <div class="w-5 h-5 rounded-[2px] bg-stone-900 text-white flex items-center justify-center text-[9px] mt-0.5">CP</div>
+            <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-[4px] max-w-[85%] text-stone-800">
+              Hi! I'm trained on your Acme Academy course sheets and pricing. Try asking me about tuition fees or syllabus.
+            </div>
+          </div>
+
+          <div class="flex justify-end">
+            <div class="p-2.5 bg-stone-900 text-white rounded-[4px] max-w-[85%]">
+              Do you provide EMI for the Full Stack course?
+            </div>
+          </div>
+
+          <div class="flex items-start gap-2">
+            <div class="w-5 h-5 rounded-[2px] bg-stone-900 text-white flex items-center justify-center text-[9px] mt-0.5">CP</div>
+            <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-[4px] max-w-[85%] text-stone-800">
+              Yes. Our Full Stack Program supports 3-month and 6-month zero-cost EMI plans. Would you like me to connect you with an admissions counselor on WhatsApp?
+              <div class="mt-2 text-[10px] text-emerald-700 flex items-center gap-1 font-medium">
+                <i data-lucide="check" class="w-3 h-3"></i> Citing: pricing_and_emi_policy_2026.pdf
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Prompts -->
+        <div class="pt-3 border-t border-[#e7e5de] flex items-center gap-1.5 overflow-x-auto text-[11px] pb-2">
+          <button class="px-2 py-1 bg-stone-50 border border-stone-200 rounded-[3px] hover:bg-stone-100 whitespace-nowrap" onclick="appendTestQuery('What is the course duration?')">
+            Duration?
+          </button>
+          <button class="px-2 py-1 bg-stone-50 border border-stone-200 rounded-[3px] hover:bg-stone-100 whitespace-nowrap" onclick="appendTestQuery('Is placement guaranteed?')">
+            Placement policy?
+          </button>
+        </div>
+
+        <!-- Input Area -->
+        <div class="flex items-center gap-2 pt-2 border-t border-[#e7e5de]">
+          <input id="test-chat-input" type="text" placeholder="Ask your AI something..." class="app-input flex-1 text-xs">
+          <button id="test-chat-send" class="btn-primary btn-sm px-3 py-2 text-xs">Send</button>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="py-4 text-center text-xs text-stone-400 border-t border-[#e7e5de] bg-white">
+    Step 3 of 6 • Real-time knowledge synthesis verification.
+  </footer>
+
+  <script>
+    if (window.lucide) window.lucide.createIcons();
+
+    function appendTestQuery(text) {
+      const container = document.getElementById('onboarding-chat-messages');
+      if (!container) return;
+
+      const userBubble = document.createElement('div');
+      userBubble.className = 'flex justify-end';
+      userBubble.innerHTML = `<div class="p-2.5 bg-stone-900 text-white rounded-[4px] max-w-[85%]">${text}</div>`;
+      container.appendChild(userBubble);
+      container.scrollTop = container.scrollHeight;
+
+      setTimeout(() => {
+        const aiBubble = document.createElement('div');
+        aiBubble.className = 'flex items-start gap-2';
+        aiBubble.innerHTML = `
+          <div class="w-5 h-5 rounded-[2px] bg-stone-900 text-white flex items-center justify-center text-[9px] mt-0.5">CP</div>
+          <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-[4px] max-w-[85%] text-stone-800">
+            Based on the curriculum guidelines, our Full Stack track is 16 weeks full-time or 24 weeks part-time with dedicated mentor reviews.
+          </div>
+        `;
+        container.appendChild(aiBubble);
+        container.scrollTop = container.scrollHeight;
+        if (window.lucide) window.lucide.createIcons();
+      }, 500);
+    }
+
+    const testSend = document.getElementById('test-chat-send');
+    const testInput = document.getElementById('test-chat-input');
+    if (testSend && testInput) {
+      testSend.addEventListener('click', () => {
+        const v = testInput.value.trim();
+        if (v) {
+          testInput.value = '';
+          appendTestQuery(v);
+        }
+      });
+    }
+  </script>
+</body>
+</html>
