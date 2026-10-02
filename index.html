@@ -71,68 +71,110 @@
         </a>
 
         <!-- Desktop Navigation -->
-        <nav class="hidden lg:flex items-center gap-1 text-[14.5px] font-medium text-brand-muted">
+        <!-- Desktop Navigation with Sleek Dropdowns -->
+        <nav class="hidden lg:flex items-center gap-1.5 text-[14.5px] font-medium text-brand-muted">
           
-          <a href="#hire-cai" class="px-3 py-1.5 rounded-md text-brand-black font-semibold hover:text-black transition-colors inline-flex items-center gap-1.5">
-            Meet Cai
-          </a>
-
-          <a href="why-choose-cai.html" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">
-            Why Choose Cai
-          </a>
-
           <!-- Product Dropdown -->
           <div class="relative nav-item py-6">
             <button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">
               Product
               <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60"></i>
             </button>
-            <div class="nav-dropdown" style="width: 380px;">
-              <div class="flex flex-col gap-2">
+            <div class="nav-dropdown" style="width: 440px;">
+              <div class="flex flex-col gap-1.5">
                 <a href="#hire-cai" class="nav-dropdown-link">
-                  <div class="w-9 h-9 rounded-lg bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0 p-1.5">
-                    <img src="assets/logo-black.png" alt="Cai" class="w-4 h-4 object-contain">
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0 p-2">
+                    <img src="assets/logo-black.png" alt="Cai" class="w-full h-full object-contain">
                   </div>
                   <div>
-                    <div class="text-[14px] font-medium text-brand-black">Cai AI Agent</div>
+                    <div class="text-[14px] font-semibold text-brand-black">Cai AI Agent</div>
                     <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Autonomous support resolution & sales qualification.</div>
                   </div>
                 </a>
 
-                <a href="why-choose-cai.html" class="nav-dropdown-link">
-                  <div class="w-9 h-9 rounded-lg bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
-                    <i data-lucide="award" class="w-4 h-4"></i>
-                  </div>
-                  <div>
-                    <div class="text-[14px] font-medium text-brand-black">Why Choose Cai</div>
-                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">6 reasons Cai leads AI customer service.</div>
-                  </div>
-                </a>
-
                 <a href="#product-journey" class="nav-dropdown-link">
-                  <div class="w-9 h-9 rounded-lg bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i>
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="git-branch" class="w-5 h-5 text-black"></i>
                   </div>
                   <div>
-                    <div class="text-[14px] font-medium text-brand-black">Platform & Journey</div>
+                    <div class="text-[14px] font-semibold text-brand-black">Platform & Pipeline</div>
                     <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">End-to-end website, lead capture & WhatsApp handoff.</div>
                   </div>
                 </a>
 
                 <a href="pricing.html" class="nav-dropdown-link">
-                  <div class="w-9 h-9 rounded-lg bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
-                    <i data-lucide="layers" class="w-4 h-4"></i>
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="inbox" class="w-5 h-5 text-black"></i>
                   </div>
                   <div>
-                    <div class="text-[14px] font-medium text-brand-black">Helpdesk & Plans</div>
-                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Shared inbox seats, SLA routing & tier options.</div>
+                    <div class="text-[14px] font-semibold text-brand-black">Helpdesk & Team Inbox</div>
+                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Shared inbox seats, Copilot for reps & tier options.</div>
+                  </div>
+                </a>
+
+                <a href="why-choose-cai.html#reason-4" class="nav-dropdown-link">
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="credit-card" class="w-5 h-5 text-black"></i>
+                  </div>
+                  <div>
+                    <div class="text-[14px] font-semibold text-brand-black">In-Widget Payments</div>
+                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Native Razorpay, UPI, NEFT & invoices in chat.</div>
                   </div>
                 </a>
               </div>
             </div>
           </div>
 
-          <a href="#trust" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Customers</a>
+          <!-- Why Cai Dropdown -->
+          <div class="relative nav-item py-6">
+            <button class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">
+              Why Cai
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60"></i>
+            </button>
+            <div class="nav-dropdown" style="width: 420px;">
+              <div class="flex flex-col gap-1.5">
+                <a href="why-choose-cai.html" class="nav-dropdown-link">
+                  <div class="w-10 h-10 rounded-xl bg-brand-black text-white flex items-center justify-center shrink-0">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-[14px] font-semibold text-brand-black">6 Reasons to Choose Cai</div>
+                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Why modern businesses choose Cai over legacy helpdesks.</div>
+                  </div>
+                </a>
+
+                <a href="why-choose-cai.html#reason-1" class="nav-dropdown-link">
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600"></i>
+                  </div>
+                  <div>
+                    <div class="text-[14px] font-semibold text-brand-black">Zero Hallucinations Guarantee</div>
+                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Strict context grounding in verified business documentation.</div>
+                  </div>
+                </a>
+
+                <a href="why-choose-cai.html#reason-4" class="nav-dropdown-link">
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="smartphone" class="w-5 h-5 text-emerald-600"></i>
+                  </div>
+                  <div>
+                    <div class="text-[14px] font-semibold text-brand-black">Unified WhatsApp Continuity</div>
+                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">100% transcript preserved when switching to WhatsApp.</div>
+                  </div>
+                </a>
+
+                <a href="#trust" class="nav-dropdown-link">
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="users" class="w-5 h-5 text-blue-600"></i>
+                  </div>
+                  <div>
+                    <div class="text-[14px] font-semibold text-brand-black">Customer Stories</div>
+                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Trusted by forward-thinking founders and teams.</div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          </div>
 
           <!-- Resources Dropdown -->
           <div class="relative nav-item py-6">
@@ -140,54 +182,56 @@
               Resources
               <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60"></i>
             </button>
-            <div class="nav-dropdown" style="width: 380px;">
-              <div class="flex flex-col gap-2">
-                <a href="docs.html" class="nav-dropdown-link">
-                  <div class="w-9 h-9 rounded-lg bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
-                    <i data-lucide="book-open" class="w-4 h-4"></i>
+            <div class="nav-dropdown" style="width: 420px;">
+              <div class="flex flex-col gap-1.5">
+                <a href="blog.html" class="nav-dropdown-link">
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="newspaper" class="w-5 h-5"></i>
                   </div>
                   <div>
-                    <div class="text-[14px] font-medium text-brand-black">Documentation & Guides</div>
+                    <div class="text-[14px] font-semibold text-brand-black">The Cai Blog</div>
+                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Latest stories, product updates & AI insights.</div>
+                  </div>
+                </a>
+
+                <a href="docs.html" class="nav-dropdown-link">
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="book-open" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-[14px] font-semibold text-brand-black">Documentation & Guides</div>
                     <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Complete onboarding manual and tutorials.</div>
                   </div>
                 </a>
 
                 <a href="docs.html#js-sdk-api" class="nav-dropdown-link">
-                  <div class="w-9 h-9 rounded-lg bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
-                    <i data-lucide="code" class="w-4 h-4"></i>
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="code" class="w-5 h-5"></i>
                   </div>
                   <div>
-                    <div class="text-[14px] font-medium text-brand-black">API & Embed Code</div>
-                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Website widget tag and JavaScript SDK.</div>
+                    <div class="text-[14px] font-semibold text-brand-black">JavaScript SDK & API</div>
+                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Website widget tag and REST webhooks.</div>
                   </div>
                 </a>
 
                 <a href="#faq" class="nav-dropdown-link">
-                  <div class="w-9 h-9 rounded-lg bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
-                    <i data-lucide="help-circle" class="w-4 h-4"></i>
+                  <div class="w-10 h-10 rounded-xl bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
+                    <i data-lucide="help-circle" class="w-5 h-5"></i>
                   </div>
                   <div>
-                    <div class="text-[14px] font-medium text-brand-black">FAQ & Help Center</div>
+                    <div class="text-[14px] font-semibold text-brand-black">FAQ & Help Center</div>
                     <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Answers to common onboarding and setup questions.</div>
-                  </div>
-                </a>
-
-                <a href="blog.html" class="nav-dropdown-link">
-                  <div class="w-9 h-9 rounded-lg bg-[#f4f2ec] border border-brand-border flex items-center justify-center text-brand-black shrink-0">
-                    <i data-lucide="newspaper" class="w-4 h-4"></i>
-                  </div>
-                  <div>
-                    <div class="text-[14px] font-medium text-brand-black">Blog & Product Stories</div>
-                    <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Autonomous AI research, product launches & guides.</div>
                   </div>
                 </a>
               </div>
             </div>
           </div>
 
-          <a href="pricing.html" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Pricing</a>
-          <a href="blog.html" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Blog</a>
-          <a href="#faq" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">FAQ</a>
+          <!-- Pricing Link -->
+          <a href="pricing.html" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">
+            Pricing
+          </a>
+
         </nav>
       </div>
 
