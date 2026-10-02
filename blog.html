@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title id="page-title">Blog & Product Stories — CuboidPilot</title>
-  <meta name="description" id="page-desc" content="Explore stories, research, and deep dives on autonomous AI helpdesks, Cai conversational intelligence, WhatsApp sales continuity, and customer support engineering.">
+  <title id="page-title">The Cai Blog — Autonomous AI, Product & Customer Service</title>
+  <meta name="description" id="page-desc" content="Articles and Insights on Autonomous AI Agents, Customer Service, Engineering, Product, and more from the creators of Cai.">
   
   <!-- OpenGraph / Social Meta -->
   <meta property="og:type" content="article">
-  <meta property="og:title" id="og-title" content="CuboidPilot Blog — Autonomous AI Helpdesk & SDR Insights">
+  <meta property="og:title" id="og-title" content="The Cai Blog — Autonomous AI Helpdesk & SDR Insights">
   <meta property="og:description" id="og-desc" content="Read the latest news, product releases, and engineering stories from the CuboidPilot and Cai AI agent team.">
   <meta property="og:image" id="og-image" content="assets/blog/meet-cai-founder.png">
   <meta name="twitter:card" content="summary_large_image">
@@ -31,6 +31,14 @@
               muted: '#575653',
               border: '#e7e5de',
               accent: '#0057ff'
+            },
+            intercom: {
+              black: '#121212',
+              gray: '#656565',
+              border: '#e3e1dc',
+              bg: '#ffffff',
+              pill: '#f4f3ef',
+              hover: '#f9f8f6'
             }
           },
           fontFamily: {
@@ -50,7 +58,313 @@
   <link rel="stylesheet" href="css/components.css">
 
   <style>
-    /* Editorial Typography & Reading Styles */
+    /* Intercom Blog Design System */
+    :root {
+      --intercom-text: #121212;
+      --intercom-meta: #656565;
+      --intercom-border: #e3e1dc;
+      --intercom-card-bg: #ffffff;
+      --intercom-pill-active: #121212;
+      --intercom-pill-inactive: #656565;
+    }
+
+    body {
+      color: var(--intercom-text);
+      background-color: #ffffff;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Intercom Front Hero */
+    .c-hero-front {
+      padding-top: 3.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--intercom-border);
+    }
+    .c-hero-front__title {
+      font-size: 3.25rem;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+      font-weight: 750;
+      color: var(--intercom-text);
+    }
+    @media (min-width: 768px) {
+      .c-hero-front__title {
+        font-size: 4.25rem;
+      }
+    }
+    .c-hero-front__description {
+      margin-top: 1rem;
+      font-size: 1.15rem;
+      line-height: 1.5;
+      color: var(--intercom-meta);
+      max-width: 780px;
+    }
+
+    /* Intercom Horizontal Category Navigation */
+    .c-hero-front__nav {
+      margin-top: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.75rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      padding-bottom: 0.75rem;
+    }
+    .c-hero-front__nav::-webkit-scrollbar {
+      display: none;
+    }
+    .c-hero-front__link {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      color: var(--intercom-meta);
+      white-space: nowrap;
+      text-decoration: none;
+      position: relative;
+      padding: 0.4rem 0;
+      transition: color 0.15s ease;
+      cursor: pointer;
+    }
+    .c-hero-front__link:hover {
+      color: var(--intercom-text);
+    }
+    .c-hero-front__link.active {
+      color: var(--intercom-text);
+      font-weight: 700;
+    }
+    .c-hero-front__link.active::after {
+      content: '';
+      position: absolute;
+      bottom: -0.75rem;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background-color: var(--intercom-text);
+      border-radius: 2px;
+    }
+
+    /* Intercom Featured Premier Post (c-posts-card-latest) */
+    .c-posts-card-latest {
+      margin-top: 2.5rem;
+      margin-bottom: 3.5rem;
+      cursor: pointer;
+    }
+    .c-posts-card-latest__image {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      background: #f4f3ef;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+    }
+    @media (min-width: 1024px) {
+      .c-posts-card-latest__image {
+        aspect-ratio: 21 / 10;
+        max-height: 480px;
+      }
+    }
+    .c-posts-card-latest__image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .c-posts-card-latest:hover .c-posts-card-latest__image img {
+      transform: scale(1.025);
+    }
+    .c-posts-card-latest__content {
+      margin-top: 1.5rem;
+    }
+    .c-posts-card-latest__meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--intercom-meta);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+    .c-posts-card-latest__reading-time {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .c-posts-card-latest__title {
+      margin-top: 0.65rem;
+      font-size: 1.75rem;
+      line-height: 1.25;
+      font-weight: 750;
+      letter-spacing: -0.025em;
+      color: var(--intercom-text);
+      transition: color 0.15s ease;
+    }
+    @media (min-width: 768px) {
+      .c-posts-card-latest__title {
+        font-size: 2.25rem;
+      }
+    }
+    .c-posts-card-latest:hover .c-posts-card-latest__title {
+      color: #0057ff;
+    }
+    .c-posts-card-latest__excerpt {
+      margin-top: 0.85rem;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      color: #444444;
+      max-width: 820px;
+    }
+    .c-posts-card-latest__author {
+      margin-top: 1.15rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--intercom-text);
+    }
+
+    /* Intercom Article Cards Grid (c-posts-card) */
+    .c-posts-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2.75rem 2rem;
+    }
+    @media (min-width: 640px) {
+      .c-posts-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (min-width: 1024px) {
+      .c-posts-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .c-posts-card {
+      display: flex;
+      flex-direction: column;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .c-posts-card__image {
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #f4f3ef;
+      aspect-ratio: 16 / 10;
+      width: 100%;
+      margin-bottom: 1.1rem;
+    }
+    .c-posts-card__image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .c-posts-card:hover .c-posts-card__image img {
+      transform: scale(1.035);
+    }
+    .c-posts-card__meta {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.78125rem;
+      color: var(--intercom-meta);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.45rem;
+    }
+    .c-posts-card__reading-time {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .c-posts-card__title {
+      font-size: 1.2rem;
+      line-height: 1.35;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--intercom-text);
+      transition: color 0.15s ease;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .c-posts-card:hover .c-posts-card__title {
+      color: #0057ff;
+    }
+    .c-posts-card__excerpt {
+      margin-top: 0.5rem;
+      font-size: 0.875rem;
+      line-height: 1.55;
+      color: #555555;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .c-posts-card__author {
+      margin-top: 0.85rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--intercom-text);
+    }
+
+    /* Intercom Pagination */
+    .c-posts-pagination {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--intercom-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .c-pagination-btn {
+      min-width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--intercom-meta);
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+      padding: 0 0.5rem;
+    }
+    .c-pagination-btn:hover {
+      color: var(--intercom-text);
+      background-color: #f4f3ef;
+    }
+    .c-pagination-btn.active {
+      color: #ffffff;
+      background-color: var(--intercom-text);
+    }
+    .c-pagination-arrow {
+      width: 38px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      border: 1px solid var(--intercom-border);
+      color: var(--intercom-text);
+      transition: all 0.15s ease;
+    }
+    .c-pagination-arrow:hover {
+      background-color: #f4f3ef;
+    }
+
+    /* Editorial Typography for Single Reader View */
     .article-body {
       font-size: 1.125rem;
       line-height: 1.85;
@@ -61,8 +375,8 @@
     }
     .article-body h2 {
       font-size: 1.75rem;
-      font-weight: 700;
-      letter-spacing: -0.02em;
+      font-weight: 750;
+      letter-spacing: -0.025em;
       color: #111111;
       margin-top: 2.75rem;
       margin-bottom: 1rem;
@@ -70,7 +384,7 @@
     }
     .article-body h3 {
       font-size: 1.35rem;
-      font-weight: 600;
+      font-weight: 650;
       letter-spacing: -0.015em;
       color: #111111;
       margin-top: 2rem;
@@ -94,7 +408,7 @@
     }
     .article-body strong {
       color: #111111;
-      font-weight: 600;
+      font-weight: 650;
     }
     .article-body .lead {
       font-size: 1.25rem;
@@ -157,91 +471,100 @@
       letter-spacing: 0.04em;
       line-height: 1.3;
     }
-    .badge-category {
-      display: inline-flex;
-      align-items: center;
-      padding: 0.25rem 0.65rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      background: #f4f2ec;
-      color: #1c1b18;
-      border: 1px solid #e7e5de;
+
+    /* Search Bar Inline Form (Intercom style) */
+    .c-search-bar-inline {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.25s ease, opacity 0.25s ease;
+      opacity: 0;
     }
-    .article-card {
-      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
-    }
-    .article-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px -8px rgba(0,0,0,0.06);
-      border-color: #d1cfc7;
-    }
-    .cover-zoom {
-      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .article-card:hover .cover-zoom {
-      transform: scale(1.03);
+    .c-search-bar-inline.open {
+      max-height: 70px;
+      opacity: 1;
     }
   </style>
 </head>
-<body class="bg-white text-brand-black antialiased selection:bg-brand-black selection:text-white flex flex-col min-h-screen">
+<body class="bg-white text-intercom-black antialiased selection:bg-black selection:text-white flex flex-col min-h-screen">
 
-  <!-- Top Reading Progress Indicator -->
-  <div id="reading-progress-bar" class="fixed top-0 left-0 h-[3px] bg-brand-black z-[100] transition-all duration-75 w-0 pointer-events-none"></div>
+  <!-- Top Reading Progress Indicator (Reader View) -->
+  <div id="reading-progress-bar" class="fixed top-0 left-0 h-[3px] bg-black z-[100] transition-all duration-75 w-0 pointer-events-none"></div>
 
-  <!-- Top Announcement Bar -->
-  <div id="top-announcement-bar" class="w-full bg-[#111111] text-white text-[13px] py-2.5 px-4 flex items-center justify-center relative z-50">
-    <div class="text-center font-normal text-stone-200 flex items-center gap-2">
-      <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-      <span>Introducing <strong>Cai 2.0</strong>: Autonomous AI Helpdesk & SDR with sub-second resolution.</span>
-      <a href="index.html#hire-cai" class="underline hover:text-white font-medium ml-1">Meet Cai &rarr;</a>
-    </div>
-  </div>
-
-  <!-- Header -->
-  <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-brand-border transition-all duration-200">
-    <div class="max-w-[1440px] mx-auto px-6 lg:px-10 h-[74px] flex items-center justify-between">
+  <!-- Intercom Site Header (c-site-header) -->
+  <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-intercom-border transition-all duration-200">
+    <div class="max-w-[1360px] mx-auto px-6 lg:px-10 h-[72px] flex items-center justify-between">
       
       <!-- Brand Logo / Wordmark -->
-      <div class="flex items-center gap-5">
-        <a href="index.html" class="flex items-center gap-2.5 text-brand-black group">
+      <div class="flex items-center gap-6">
+        <a href="index.html" class="flex items-center gap-2.5 text-black group" aria-label="CuboidPilot Home">
           <div class="w-8 h-8 flex items-center justify-center transition-transform duration-200 group-hover:scale-95">
             <img src="assets/logo-black.png" alt="CuboidPilot" class="w-full h-full object-contain">
           </div>
-          <span class="text-[20px] font-semibold tracking-tight text-brand-black">CuboidPilot</span>
+          <span class="text-[20px] font-bold tracking-tight text-black">CuboidPilot</span>
         </a>
 
         <span class="hidden sm:inline-block h-4 w-px bg-stone-300"></span>
 
-        <a href="blog.html" class="hidden sm:inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-stone-700 bg-stone-100 hover:bg-stone-200 px-2.5 py-1 rounded-full border border-stone-200 transition-colors">
-          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-          <span>Inside Stories</span>
+        <!-- Active Blog Indicator -->
+        <a href="blog.html" class="hidden sm:inline-flex items-center gap-1.5 text-[13px] font-bold tracking-tight text-stone-900 hover:text-black">
+          <span>The Cai Blog</span>
         </a>
 
         <!-- Desktop Navigation -->
-        <nav class="hidden xl:flex items-center gap-1 text-[14px] font-medium text-brand-muted ml-4">
-          <a href="index.html#hire-cai" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Meet Cai</a>
-          <a href="index.html#product-journey" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Platform</a>
-          <a href="pricing.html" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Pricing</a>
-          <a href="blog.html" class="px-3 py-1.5 rounded-md text-brand-black font-semibold bg-stone-100/70 transition-colors">Blog</a>
-          <a href="docs.html" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">Docs</a>
-          <a href="index.html#faq" class="px-3 py-1.5 rounded-md hover:text-brand-black transition-colors">FAQ</a>
+        <nav class="hidden xl:flex items-center gap-6 text-[14px] font-medium text-stone-600 ml-4">
+          <a href="index.html#hire-cai" class="hover:text-black transition-colors">AI Agent</a>
+          <a href="index.html#product-journey" class="hover:text-black transition-colors">Platform</a>
+          <a href="pricing.html" class="hover:text-black transition-colors">Pricing</a>
+          <a href="docs.html" class="hover:text-black transition-colors">Docs</a>
         </nav>
       </div>
 
-      <!-- Header Actions Right -->
-      <div class="hidden md:flex items-center gap-2.5">
-        <a href="#dispatch-newsletter-section" class="text-[13.5px] font-medium text-stone-700 hover:text-brand-black px-3 py-1.5 rounded-lg border border-brand-border hover:border-black transition-all">Subscribe</a>
-        <a href="login.php" class="text-[14px] font-medium text-stone-700 hover:text-brand-black px-2.5 py-2 transition-colors">Log in</a>
-        <a href="signup.html" class="btn-primary btn-sm text-[13.5px] px-4 py-2">Start free trial</a>
-      </div>
-
-      <!-- Mobile Hamburger Button -->
-      <div class="lg:hidden flex items-center gap-2">
-        <a href="signup.html" class="btn-primary btn-sm text-xs px-3 py-1.5">Free Trial</a>
-        <button id="mobile-menu-btn" aria-label="Toggle navigation" class="p-2 text-brand-black hover:bg-stone-100 rounded-lg transition-colors">
-          <i data-lucide="menu" class="w-6 h-6"></i>
+      <!-- Header Actions Right (Search, Log in, Demo, Free Trial) -->
+      <div class="flex items-center gap-3">
+        <!-- Search Trigger Button (Intercom Style) -->
+        <button 
+          id="header-search-toggle" 
+          aria-label="Toggle search" 
+          class="flex items-center gap-2 px-3 py-1.5 rounded-full text-stone-600 hover:text-black hover:bg-stone-100 transition-colors text-[13.5px] font-medium"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span class="hidden sm:inline">Search</span>
         </button>
+
+        <a href="login.php" class="hidden md:inline-block text-[14px] font-medium text-stone-700 hover:text-black px-2.5 py-2 transition-colors">Sign in</a>
+        
+        <a href="index.html#hero-interactive" class="hidden lg:inline-block text-[14px] font-medium text-stone-700 hover:text-black px-3.5 py-1.5 rounded-full border border-stone-300 hover:border-black transition-all">
+          View demo
+        </a>
+
+        <a href="signup.html" class="px-4 py-2 bg-black hover:bg-stone-800 text-white text-[13.5px] font-semibold rounded-full transition-all shadow-sm">
+          Start free trial
+        </a>
+
+        <!-- Mobile Hamburger Button -->
+        <button id="mobile-menu-btn" aria-label="Toggle mobile menu" class="lg:hidden p-2 text-black hover:bg-stone-100 rounded-lg transition-colors ml-1">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Inline Search Form Bar (Opens when Search is clicked) -->
+    <div id="inline-search-bar" class="c-search-bar-inline border-t border-intercom-border bg-stone-50 px-6 lg:px-10">
+      <div class="max-w-[1360px] mx-auto py-3 flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" class="text-stone-400">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="search" 
+          id="blog-search-input" 
+          placeholder="What are you searching for?" 
+          class="w-full bg-transparent text-sm sm:text-base font-normal text-black focus:outline-none placeholder:text-stone-400"
+        />
+        <button id="close-search-btn" class="p-1 text-stone-400 hover:text-black text-xs font-semibold uppercase">Close</button>
       </div>
     </div>
   </header>
@@ -249,102 +572,120 @@
   <!-- Mobile Drawer -->
   <div id="mobile-drawer" class="fixed inset-0 bg-white z-50 p-6 flex flex-col justify-between hidden lg:hidden">
     <div>
-      <div class="flex items-center justify-between pb-6 border-b border-brand-border">
+      <div class="flex items-center justify-between pb-6 border-b border-intercom-border">
         <div class="flex items-center gap-2.5">
           <img src="assets/logo-black.png" alt="CuboidPilot" class="w-7 h-7 object-contain">
-          <span class="text-[19px] font-semibold tracking-tight text-brand-black">CuboidPilot</span>
+          <span class="text-[19px] font-bold tracking-tight text-black">CuboidPilot</span>
         </div>
-        <button id="close-mobile-menu" aria-label="Close navigation" class="p-2 text-brand-black hover:bg-stone-100 rounded-lg">
+        <button id="close-mobile-menu" aria-label="Close navigation" class="p-2 text-black hover:bg-stone-100 rounded-lg">
           <i data-lucide="x" class="w-6 h-6"></i>
         </button>
       </div>
-      <div class="py-6 flex flex-col gap-3.5 text-base font-medium text-brand-black">
+      <div class="py-6 flex flex-col gap-4 text-base font-medium text-black">
         <a href="index.html#hire-cai" class="hover:text-stone-600 transition-colors">Meet Cai (AI Agent)</a>
-        <a href="index.html#product-journey" class="hover:text-stone-600 transition-colors">Product & Platform</a>
+        <a href="index.html#product-journey" class="hover:text-stone-600 transition-colors">Platform</a>
         <a href="pricing.html" class="hover:text-stone-600 transition-colors">Pricing & Plans</a>
-        <a href="blog.html" class="hover:text-stone-600 transition-colors font-semibold text-black">Inside Stories & Blog</a>
+        <a href="blog.html" class="font-bold text-black flex items-center justify-between">
+          <span>The Cai Blog</span>
+          <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">Active</span>
+        </a>
         <a href="docs.html" class="hover:text-stone-600 transition-colors">Documentation</a>
-        <a href="index.html#faq" class="hover:text-stone-600 transition-colors">FAQ</a>
       </div>
     </div>
-    <div class="pt-6 border-t border-brand-border flex flex-col gap-3">
-      <a href="signup.html" class="btn-primary w-full text-center">Start free trial</a>
-      <a href="login.php" class="btn-secondary w-full text-center">Log in</a>
-      <div class="text-center text-xs text-brand-subtle mt-2">© 2026 CuboidPilot Technologies</div>
+    <div class="pt-6 border-t border-intercom-border flex flex-col gap-3">
+      <a href="signup.html" class="w-full py-3 bg-black text-white text-center font-semibold rounded-full">Start free trial</a>
+      <a href="login.php" class="w-full py-3 border border-stone-300 text-center font-medium rounded-full">Sign in</a>
+      <div class="text-center text-xs text-stone-400 mt-2">© 2026 CuboidPilot Technologies</div>
     </div>
   </div>
 
-  <!-- MAIN CONTAINER -->
+  <!-- MAIN BODY -->
   <main class="flex-1">
 
-    <!-- VIEW 1: BLOG DIRECTORY / INDEX MODE -->
+    <!-- ======================================================== -->
+    <!-- VIEW 1: INTERCOM BLOG DIRECTORY / INDEX (FRONT PAGE)     -->
+    <!-- ======================================================== -->
     <div id="blog-index-view">
       
-      <!-- Hero Header (Intercom Inside Magazine Aesthetic) -->
-      <section class="border-b border-brand-border bg-[#faf9f5] pt-14 pb-14 px-6 lg:px-12">
-        <div class="max-w-[1360px] mx-auto">
-          <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-            <div class="max-w-[820px]">
-              <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-brand-border text-xs font-semibold text-stone-800 mb-4 shadow-sm">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="uppercase tracking-wider">Inside CuboidPilot • Thought Leadership</span>
-              </div>
-              <h1 class="text-3xl sm:text-5xl lg:text-[54px] font-bold tracking-tight text-brand-black leading-[1.12]">
-                Autonomous AI Helpdesk, RAG Systems & High-Conversion Playbooks
-              </h1>
-              <p class="mt-4 text-base sm:text-lg text-brand-muted leading-relaxed max-w-[700px]">
-                Engineering deep-dives, product updates, and commercial blueprints from the creators of Cai. Designed for modern founders, engineering leaders, and support teams.
-              </p>
-            </div>
+      <div class="max-w-[1360px] mx-auto px-6 lg:px-10">
 
-            <!-- Search Bar with Keyboard Indicator -->
-            <div class="w-full lg:w-88 shrink-0">
-              <div class="relative">
-                <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                <input 
-                  type="text" 
-                  id="blog-search-input" 
-                  placeholder="Search stories, topics, RAG, Cai..." 
-                  class="w-full pl-10 pr-10 py-3 text-sm bg-white border border-brand-border rounded-xl focus:outline-none focus:border-brand-black transition-all shadow-sm placeholder:text-stone-400"
-                >
-                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono font-medium text-stone-400 px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200 hidden sm:inline-block">/</span>
-              </div>
-            </div>
-          </div>
+        <!-- 1. Front Hero Header (c-hero-front) -->
+        <header class="c-hero-front">
+          <h1 class="c-hero-front__title">The Cai Blog</h1>
+          <p class="c-hero-front__description">
+            Articles and insights on Autonomous AI Agents, Customer Service, AI Engineering, Product, and more
+          </p>
 
-          <!-- Category Filter Pills -->
-          <div class="flex flex-wrap items-center gap-2.5 mt-10 pt-6 border-t border-brand-border/60" id="category-pills">
-            <button data-cat="all" class="cat-pill px-4 py-2 rounded-full text-xs font-semibold bg-brand-black text-white border border-brand-black transition-all shadow-sm">All Stories</button>
-            <button data-cat="Special Event" class="cat-pill px-4 py-2 rounded-full text-xs font-medium bg-white text-stone-700 border border-brand-border hover:border-brand-black hover:text-black transition-all">Special Event</button>
-            <button data-cat="Product Launch & AI" class="cat-pill px-4 py-2 rounded-full text-xs font-medium bg-white text-stone-700 border border-brand-border hover:border-brand-black hover:text-black transition-all">Product Launch & AI</button>
-            <button data-cat="Support Automation" class="cat-pill px-4 py-2 rounded-full text-xs font-medium bg-white text-stone-700 border border-brand-border hover:border-brand-black hover:text-black transition-all">Support Automation</button>
-            <button data-cat="Engineering" class="cat-pill px-4 py-2 rounded-full text-xs font-medium bg-white text-stone-700 border border-brand-border hover:border-brand-black hover:text-black transition-all">Engineering</button>
-            <button data-cat="Guides & Playbooks" class="cat-pill px-4 py-2 rounded-full text-xs font-medium bg-white text-stone-700 border border-brand-border hover:border-brand-black hover:text-black transition-all">Guides & Playbooks</button>
-          </div>
-        </div>
-      </section>
+          <!-- Intercom Category Navigation Bar (c-hero-front__nav) -->
+          <nav class="c-hero-front__nav" id="category-nav-bar" aria-label="Blog categories">
+            <span class="c-hero-front__link active" data-cat="all">All Articles</span>
+            <span class="c-hero-front__link" data-cat="Special Event">Special Events</span>
+            <span class="c-hero-front__link" data-cat="Product Launch & AI">AI & Automation</span>
+            <span class="c-hero-front__link" data-cat="Support Automation">Customer Service</span>
+            <span class="c-hero-front__link" data-cat="Engineering">Engineering</span>
+            <span class="c-hero-front__link" data-cat="Guides & Playbooks">Guides & Reports</span>
+          </nav>
+        </header>
 
-      <!-- Featured Story (Pinned/Top Post) -->
-      <section id="featured-story-wrapper" class="py-12 px-6 lg:px-12 bg-white">
-        <div class="max-w-[1360px] mx-auto">
+        <!-- 2. Premier Featured Hero Post (c-posts-card-latest) -->
+        <div id="featured-story-wrapper">
           <div id="featured-post-container">
-            <!-- Dynamically populated via JS -->
-            <div class="animate-pulse bg-[#f4f2ec] rounded-2xl h-[440px] w-full"></div>
+            <!-- Populated dynamically via JS -->
+            <div class="animate-pulse bg-[#f4f3ef] rounded-2xl h-[420px] w-full my-8"></div>
           </div>
         </div>
-      </section>
 
-      <!-- The CuboidPilot Dispatch: Signature Intercom Newsletter Strip -->
-      <section id="dispatch-newsletter-section" class="py-12 px-6 lg:px-12 bg-[#111111] text-white">
-        <div class="max-w-[1360px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-8">
-          <div class="max-w-[640px]">
-            <div class="inline-flex items-center gap-2 text-xs font-bold text-amber-400 uppercase tracking-widest mb-2.5">
-              <i data-lucide="mail" class="w-3.5 h-3.5"></i>
-              Weekly Editorial Dispatch
+        <!-- 3. Intercom Article Grid (c-posts-grid) -->
+        <section class="py-10">
+          <div class="flex items-center justify-between pb-6 mb-8 border-b border-intercom-border">
+            <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-black flex items-center gap-2">
+              <span id="current-category-heading">All Articles</span>
+            </h2>
+            <div class="text-xs font-medium text-stone-500" id="articles-count-label">Loading stories...</div>
+          </div>
+
+          <!-- Empty State -->
+          <div id="empty-state" class="hidden text-center py-20 bg-[#faf9f6] rounded-2xl border border-dashed border-stone-300">
+            <svg class="w-12 h-12 text-stone-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+            </svg>
+            <h3 class="text-base font-bold text-stone-900">No matching stories found</h3>
+            <p class="text-xs text-stone-500 mt-1 max-w-sm mx-auto">Try clearing your search query or selecting another category.</p>
+            <button onclick="resetFilters()" class="mt-4 px-4 py-2 bg-black text-white text-xs font-semibold rounded-full hover:bg-stone-800">Clear filters</button>
+          </div>
+
+          <!-- The Article Grid -->
+          <div id="blog-cards-grid" class="c-posts-grid">
+            <!-- Populated dynamically -->
+          </div>
+
+          <!-- Intercom Signature Pagination (c-posts-pagination) -->
+          <nav class="c-posts-pagination" id="posts-pagination" aria-label="Posts navigation">
+            <button class="c-pagination-arrow" id="pag-prev-btn" aria-label="Previous page" disabled>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+            </button>
+            <div id="pagination-pages" class="flex items-center gap-1">
+              <span class="c-pagination-btn active">1</span>
             </div>
-            <h3 class="text-2xl sm:text-3xl font-bold tracking-tight">The CuboidPilot Dispatch</h3>
-            <p class="mt-2 text-stone-300 text-sm sm:text-base leading-relaxed">
-              Join 8,400+ product builders and support leaders receiving our weekly dispatches on autonomous AI helpdesk architectures, conversational intent scoring, and sub-second resolution engineering.
+            <button class="c-pagination-arrow" id="pag-next-btn" aria-label="Next page">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z"/></svg>
+            </button>
+          </nav>
+        </section>
+
+      </div>
+
+      <!-- 4. Signature Newsletter Strip (The CuboidPilot Dispatch) -->
+      <section id="dispatch-newsletter-section" class="mt-12 py-16 px-6 lg:px-10 bg-[#121212] text-white">
+        <div class="max-w-[1360px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-8">
+          <div class="max-w-[620px]">
+            <div class="inline-flex items-center gap-2 text-[11px] font-bold text-emerald-400 uppercase tracking-widest mb-3">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              Weekly AI Helpdesk Dispatch
+            </div>
+            <h3 class="text-3xl font-bold tracking-tight text-white leading-tight">The Cai Editorial Dispatch</h3>
+            <p class="mt-3 text-stone-400 text-base leading-relaxed">
+              Join 8,400+ support leaders, engineers, and product founders receiving our weekly insights on autonomous AI agents, omnichannel WhatsApp conversion, and high-precision RAG systems.
             </p>
           </div>
           <form id="newsletter-form" class="w-full lg:w-auto flex flex-col sm:flex-row items-center gap-3 shrink-0" onsubmit="handleNewsletterSubmit(event)">
@@ -352,263 +693,191 @@
               type="email" 
               id="newsletter-email" 
               required 
-              placeholder="Enter your work email..." 
-              class="w-full sm:w-80 px-4 py-3 rounded-xl bg-stone-900 border border-stone-700 text-white text-sm focus:outline-none focus:border-white transition-colors placeholder:text-stone-500"
+              placeholder="Enter your work email" 
+              class="w-full sm:w-80 px-4 py-3 bg-stone-900 border border-stone-800 rounded-full text-sm text-white placeholder:text-stone-500 focus:outline-none focus:border-white transition-colors"
             >
-            <button type="submit" class="w-full sm:w-auto px-6 py-3 rounded-xl bg-white text-black font-semibold text-sm hover:bg-stone-100 transition-colors shrink-0">
-              Subscribe for free
+            <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-white text-black hover:bg-stone-200 font-semibold text-sm rounded-full transition-colors whitespace-nowrap">
+              Subscribe
             </button>
           </form>
         </div>
       </section>
 
-      <!-- Articles Grid -->
-      <section class="py-12 pb-24 px-6 lg:px-12 bg-white border-t border-brand-border">
-        <div class="max-w-[1360px] mx-auto">
-          <div class="flex items-center justify-between mb-8">
-            <div>
-              <h2 class="text-xl sm:text-2xl font-bold tracking-tight text-brand-black" id="articles-grid-heading">
-                Latest Articles
-              </h2>
-              <p class="text-xs text-stone-500 mt-1">Research, tutorials, and behind-the-scenes engineering</p>
-            </div>
-            <span class="text-xs text-brand-subtle font-mono px-3 py-1 rounded-full bg-stone-100 border border-stone-200" id="articles-count-label">Loading articles...</span>
-          </div>
-
-          <div id="blog-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Populated dynamically via JS -->
-          </div>
-
-          <div id="empty-state" class="hidden py-16 text-center">
-            <div class="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center mx-auto mb-3 text-stone-400">
-              <i data-lucide="book-open" class="w-6 h-6"></i>
-            </div>
-            <h3 class="text-base font-semibold text-stone-900">No articles found</h3>
-            <p class="text-sm text-stone-500 mt-1 max-w-sm mx-auto">Try clearing your search query or selecting a different category filter.</p>
-            <button onclick="resetFilters()" class="mt-4 px-4 py-2 rounded-lg text-xs font-medium bg-stone-900 text-white">Reset Filters</button>
-          </div>
-        </div>
-      </section>
-
     </div>
 
-
-    <!-- VIEW 2: SINGLE ARTICLE READER MODE -->
-    <article id="blog-reader-view" class="hidden">
+    <!-- ======================================================== -->
+    <!-- VIEW 2: SINGLE ARTICLE READER MODE (?slug=...)           -->
+    <!-- ======================================================== -->
+    <div id="blog-reader-view" class="hidden">
       
-      <!-- Reader Header & Breadcrumbs -->
-      <div class="bg-[#faf9f5] border-b border-brand-border pt-8 pb-10 px-6 lg:px-12">
-        <div class="max-w-[820px] mx-auto">
-          
-          <!-- Back button & Breadcrumb -->
-          <div class="flex items-center justify-between gap-4 mb-6 text-xs text-brand-muted">
-            <a href="blog.html" id="back-to-blogs-btn" class="inline-flex items-center gap-1.5 font-medium text-stone-700 hover:text-black transition-colors group">
-              <i data-lucide="arrow-left" class="w-4 h-4 transition-transform group-hover:-translate-x-1"></i>
-              <span>All Articles</span>
-            </a>
-            <div class="flex items-center gap-2">
-              <span id="reader-category-badge" class="badge-category">Product Launch & AI</span>
-              <span class="text-stone-300">•</span>
-              <span id="reader-read-time" class="font-medium text-stone-500">3 min read</span>
-            </div>
+      <!-- Sticky Editorial Sub-Header -->
+      <div class="sticky top-[72px] z-30 bg-white/95 backdrop-blur-md border-b border-intercom-border py-3 px-6 lg:px-10">
+        <div class="max-w-[1040px] mx-auto flex items-center justify-between">
+          <button id="back-to-blogs-btn" class="inline-flex items-center gap-2 text-xs font-semibold text-stone-600 hover:text-black transition-colors">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+            <span>Back to All Articles</span>
+          </button>
+
+          <!-- Quick Share Buttons -->
+          <div class="flex items-center gap-2">
+            <button onclick="shareArticle('twitter')" title="Share on X" class="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 hover:text-black">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </button>
+            <button onclick="shareArticle('linkedin')" title="Share on LinkedIn" class="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 hover:text-black">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+            </button>
+            <button onclick="shareArticle('copy')" title="Copy link" class="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 hover:text-black">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+            </button>
           </div>
-
-          <!-- Main Article Title -->
-          <h1 id="reader-title" class="text-3xl sm:text-4xl lg:text-[44px] font-bold tracking-tight text-brand-black leading-[1.18] mb-6">
-            Meet Cai: Why We Built the World’s First Autonomous AI Helpdesk & SDR Agent
-          </h1>
-
-          <!-- Excerpt Lead -->
-          <p id="reader-excerpt" class="text-lg sm:text-xl text-brand-muted leading-relaxed mb-8 font-normal">
-            Discover how Cai transforms visitor conversations into qualified pipeline, cuts ticket volume by 70%, and bridges autonomous AI support with instant WhatsApp sales handoffs.
-          </p>
-
-          <!-- Author Row & Share Action Bar -->
-          <div class="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-brand-border">
-            <div class="flex items-center gap-3">
-              <div id="reader-author-avatar-wrap" class="w-11 h-11 rounded-full bg-stone-900 text-white flex items-center justify-center font-bold text-sm overflow-hidden shrink-0 border border-stone-200">
-                <span id="reader-author-initials">A</span>
-              </div>
-              <div>
-                <div class="text-sm font-semibold text-brand-black" id="reader-author-name">Ayush</div>
-                <div class="text-xs text-brand-subtle flex items-center gap-1.5 mt-0.5">
-                  <span id="reader-author-role">Founder & AI Architect</span>
-                  <span>•</span>
-                  <span id="reader-date">Oct 02, 2026</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Social Share Bar -->
-            <div class="flex items-center gap-2">
-              <span class="text-xs text-stone-400 font-medium mr-1 hidden sm:inline">Share:</span>
-              <button onclick="shareArticle('whatsapp')" title="Share on WhatsApp" class="w-8 h-8 rounded-lg border border-brand-border bg-white hover:border-[#25D366] hover:bg-[#f0fdf4] flex items-center justify-center text-stone-700 hover:text-[#25D366] transition-colors">
-                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-              </button>
-              <button onclick="shareArticle('twitter')" title="Share on X" class="w-8 h-8 rounded-lg border border-brand-border bg-white hover:border-black flex items-center justify-center text-stone-700 transition-colors">
-                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-              </button>
-              <button onclick="shareArticle('linkedin')" title="Share on LinkedIn" class="w-8 h-8 rounded-lg border border-brand-border bg-white hover:border-black flex items-center justify-center text-stone-700 transition-colors">
-                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-              </button>
-              <button onclick="shareArticle('native')" title="Share Image &amp; Post" class="w-8 h-8 rounded-lg border border-brand-border bg-white hover:border-black flex items-center justify-center text-stone-700 transition-colors">
-                <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
-              </button>
-              <button onclick="shareArticle('copy')" id="copy-link-btn" title="Copy Link &amp; Preview" class="w-8 h-8 rounded-lg border border-brand-border bg-white hover:border-black flex items-center justify-center text-stone-700 transition-colors">
-                <i data-lucide="link" class="w-3.5 h-3.5"></i>
-              </button>
-            </div>
-          </div>
-
         </div>
       </div>
 
-      <!-- Cover Image Banner -->
-      <div class="max-w-[960px] mx-auto px-6 lg:px-12 -mt-4 mb-10">
-        <div class="rounded-2xl overflow-hidden border border-brand-border shadow-lg bg-stone-100 aspect-[16/9] sm:aspect-[21/9] max-h-[500px]">
-          <img 
-            id="reader-cover-img" 
-            src="assets/blog/meet-cai-founder.png" 
-            alt="CuboidPilot Cover" 
-            class="w-full h-full object-cover object-center"
-          >
-        </div>
-      </div>
-
-      <!-- Main Article Body -->
-      <div class="max-w-[780px] mx-auto px-6 lg:px-8 pb-16">
+      <!-- Article Header & Cover -->
+      <article class="max-w-[940px] mx-auto px-6 py-12">
         
+        <!-- Meta info -->
+        <div class="flex items-center gap-3 text-xs text-stone-500 font-medium mb-4">
+          <span id="reader-category-badge" class="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-800 font-semibold uppercase tracking-wider text-[11px]">Special Event</span>
+          <span>•</span>
+          <span id="reader-date">Oct 02, 2026</span>
+          <span>•</span>
+          <span id="reader-read-time">3 min read</span>
+        </div>
+
+        <!-- Title -->
+        <h1 id="reader-title" class="text-3xl sm:text-5xl font-bold tracking-tight text-black leading-[1.15]">
+          Article Title
+        </h1>
+
+        <!-- Subtitle / Excerpt -->
+        <p id="reader-excerpt" class="mt-5 text-lg sm:text-xl text-stone-600 leading-relaxed font-normal">
+          Article excerpt preview
+        </p>
+
+        <!-- Author Row -->
+        <div class="flex items-center gap-3.5 my-8 pt-6 border-t border-intercom-border">
+          <div id="reader-author-avatar-box" class="w-11 h-11 rounded-full bg-black text-white flex items-center justify-center font-bold text-sm">
+            <span id="reader-author-initials">A</span>
+          </div>
+          <div>
+            <div id="reader-author-name" class="text-sm font-bold text-black">Ayush</div>
+            <div id="reader-author-role" class="text-xs text-stone-500">Founder &amp; AI Architect</div>
+          </div>
+        </div>
+
+        <!-- Cover Image -->
+        <div class="rounded-2xl overflow-hidden bg-stone-100 mb-12 border border-intercom-border shadow-sm aspect-[16/9]">
+          <img id="reader-cover-img" src="assets/blog/gandhi-jayanti-2026.png" alt="" class="w-full h-full object-cover">
+        </div>
+
+        <!-- Editorial Content Body -->
         <div id="reader-content-body" class="article-body">
-          <!-- Populated from DB via HTML -->
+          <!-- Rendered dynamically -->
         </div>
 
         <!-- Tags List -->
-        <div class="mt-12 pt-6 border-t border-brand-border">
-          <div class="flex items-center gap-2 mb-3">
-            <i data-lucide="tag" class="w-3.5 h-3.5 text-stone-400"></i>
-            <span class="text-xs font-semibold uppercase tracking-wider text-stone-500">Related Topics</span>
-          </div>
-          <div class="flex flex-wrap gap-2" id="reader-tags-container">
-            <!-- Populated via JS -->
+        <div class="mt-12 pt-8 border-t border-intercom-border">
+          <div class="text-xs font-semibold text-stone-400 uppercase tracking-wider mb-3">Topics &amp; Tags</div>
+          <div id="reader-tags-container" class="flex flex-wrap gap-2">
+            <!-- Dynamic tags -->
           </div>
         </div>
 
         <!-- Author Bio Card -->
-        <div class="mt-12 p-6 sm:p-8 rounded-2xl bg-[#faf9f5] border border-brand-border flex flex-col sm:flex-row items-center sm:items-start gap-5">
-          <div class="w-16 h-16 rounded-full bg-stone-900 text-white flex items-center justify-center font-bold text-xl overflow-hidden shrink-0 shadow-sm border border-stone-300">
-            <span>A</span>
+        <div class="mt-12 p-8 rounded-2xl bg-[#faf9f6] border border-intercom-border flex flex-col sm:flex-row items-center gap-6">
+          <div class="w-16 h-16 rounded-full bg-stone-900 text-white flex items-center justify-center font-bold text-xl shrink-0">
+            A
           </div>
-          <div class="text-center sm:text-left flex-1">
-            <div class="flex items-center justify-center sm:justify-between">
-              <div>
-                <h4 class="text-base font-bold text-brand-black" id="bio-author-name">Ayush</h4>
-                <div class="text-xs text-brand-muted" id="bio-author-role">Founder & AI Architect, CuboidPilot</div>
-              </div>
-              <a href="https://linkedin.com" target="_blank" rel="noopener" class="hidden sm:inline-flex items-center gap-1 text-xs font-medium text-blue-700 hover:underline">
-                <span>Follow</span>
-                <i data-lucide="arrow-up-right" class="w-3 h-3"></i>
-              </a>
-            </div>
-            <p class="mt-2.5 text-xs sm:text-sm text-brand-muted leading-relaxed">
-              Ayush designs autonomous conversational architectures and autonomous customer support systems. Passionate about empowering high-growth teams with sub-second AI resolutions and seamless WhatsApp continuity.
+          <div class="text-center sm:text-left">
+            <div class="font-bold text-base text-black" id="bio-author-name">Ayush</div>
+            <div class="text-xs text-stone-500 mb-2" id="bio-author-role">Founder &amp; AI Architect, CuboidPilot</div>
+            <p class="text-xs sm:text-sm text-stone-600 leading-relaxed">
+              Leading the research and architectural design of autonomous, grounded AI agents for omnichannel enterprise support and automated sales qualification.
             </p>
           </div>
         </div>
 
-        <!-- Article Reader Footer CTA -->
-        <div class="mt-12 p-8 rounded-2xl bg-brand-black text-white text-center">
-          <h3 class="text-2xl font-bold tracking-tight mb-2">Want to see Cai in action on your site?</h3>
-          <p class="text-stone-300 text-sm max-w-lg mx-auto mb-6">
-            Get started in 5 minutes with our no-code embed snippet. Free 14-day trial, no credit card required.
-          </p>
-          <div class="flex flex-wrap items-center justify-center gap-3">
-            <a href="signup.html" class="px-5 py-2.5 rounded-lg bg-white text-black font-semibold text-sm hover:bg-stone-100 transition-colors">Start Free Trial</a>
-            <a href="pricing.html" class="px-5 py-2.5 rounded-lg border border-stone-700 text-white font-medium text-sm hover:border-white transition-colors">View Pricing & Plans</a>
+        <!-- Related Stories -->
+        <div class="mt-16 pt-10 border-t border-intercom-border">
+          <h3 class="text-2xl font-bold tracking-tight text-black mb-6">Related Stories</h3>
+          <div id="reader-related-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <!-- Dynamically populated -->
           </div>
         </div>
 
-        <!-- More From Inside CuboidPilot (Related Articles Grid) -->
-        <div class="mt-16 pt-12 border-t border-brand-border">
-          <div class="flex items-center justify-between mb-8">
-            <div>
-              <h3 class="text-xl sm:text-2xl font-bold tracking-tight text-brand-black">More from Inside CuboidPilot</h3>
-              <p class="text-xs text-stone-500 mt-1">Recommended reading from our engineering and product teams</p>
-            </div>
-            <a href="blog.html" class="inline-flex items-center gap-1.5 text-xs font-semibold text-stone-800 hover:text-black group">
-              <span>View all stories</span>
-              <i data-lucide="arrow-right" class="w-3.5 h-3.5 transition-transform group-hover:translate-x-1"></i>
-            </a>
-          </div>
-          <div id="reader-related-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Populated dynamically via JS -->
-          </div>
-        </div>
+      </article>
 
-      </div>
-
-    </article>
+    </div>
 
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-white border-t border-brand-border pt-16 pb-12 px-6 lg:px-12 mt-auto">
+  <!-- Intercom Minimalist Footer (c-site-footer) -->
+  <footer class="border-t border-intercom-border bg-white py-14 px-6 lg:px-10">
     <div class="max-w-[1360px] mx-auto">
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12">
         
-        <!-- Brand column -->
-        <div class="col-span-2">
-          <div class="flex items-center gap-2.5 mb-3">
-            <img src="assets/logo-black.png" alt="CuboidPilot" class="w-7 h-7 object-contain">
-            <span class="text-lg font-bold tracking-tight text-brand-black">CuboidPilot</span>
+        <!-- Logo & Mission -->
+        <div class="md:col-span-4 space-y-4">
+          <div class="flex items-center gap-2.5">
+            <img src="assets/logo-black.png" alt="CuboidPilot" class="w-8 h-8 object-contain">
+            <span class="text-[20px] font-bold tracking-tight text-black">CuboidPilot</span>
           </div>
-          <p class="text-xs text-brand-muted max-w-sm leading-relaxed mb-4">
-            Autonomous AI agent helpdesk for modern software companies, high-growth startups, and eCommerce leaders.
+          <p class="text-xs sm:text-sm text-stone-500 leading-relaxed max-w-sm">
+            The autonomous AI helpdesk and SDR platform built for sub-second resolution, verified grounding, and instant WhatsApp continuity.
           </p>
-          <div class="text-xs text-brand-subtle">
-            Published with pride by CuboidPilot Editorial Team.
-          </div>
         </div>
 
-        <!-- Col 2: Navigation -->
-        <div>
-          <div class="text-xs font-semibold uppercase tracking-wider text-brand-black mb-4">PLATFORM</div>
-          <ul class="space-y-2.5 text-xs text-brand-muted">
-            <li><a href="index.html#hire-cai" class="hover:text-black transition-colors">Meet Cai AI</a></li>
-            <li><a href="index.html#product-journey" class="hover:text-black transition-colors">Omnichannel Handoff</a></li>
-            <li><a href="pricing.html" class="hover:text-black transition-colors">Helpdesk Pricing</a></li>
-            <li><a href="docs.html" class="hover:text-black transition-colors">Integrations & API</a></li>
+        <!-- Navigation Columns -->
+        <div class="md:col-span-2 space-y-3">
+          <div class="text-xs font-bold uppercase tracking-wider text-black">Platform</div>
+          <ul class="space-y-2 text-xs font-medium text-stone-500">
+            <li><a href="index.html#hire-cai" class="hover:text-black transition-colors">Cai AI Agent</a></li>
+            <li><a href="index.html#product-journey" class="hover:text-black transition-colors">Omnichannel Inbox</a></li>
+            <li><a href="pricing.html" class="hover:text-black transition-colors">Pricing Plans</a></li>
+            <li><a href="docs.html" class="hover:text-black transition-colors">API &amp; Docs</a></li>
           </ul>
         </div>
 
-        <!-- Col 3: Resources -->
-        <div>
-          <div class="text-xs font-semibold uppercase tracking-wider text-brand-black mb-4">EDITORIAL</div>
-          <ul class="space-y-2.5 text-xs text-brand-muted">
-            <li><a href="blog.html" class="hover:text-black transition-colors font-medium text-black">All Articles</a></li>
-            <li><a href="blog.html?category=Product+Launch+%26+AI" class="hover:text-black transition-colors">AI & Product News</a></li>
-            <li><a href="blog.html?category=Support+Automation" class="hover:text-black transition-colors">Support Automation</a></li>
-            <li><a href="docs.html" class="hover:text-black transition-colors">Documentation</a></li>
+        <div class="md:col-span-3 space-y-3">
+          <div class="text-xs font-bold uppercase tracking-wider text-black">Resources</div>
+          <ul class="space-y-2 text-xs font-medium text-stone-500">
+            <li><a href="blog.html" class="hover:text-black transition-colors text-black font-semibold">The Cai Blog</a></li>
+            <li><a href="blog.html?category=Product+Launch+%26+AI" class="hover:text-black transition-colors">AI &amp; Automation</a></li>
+            <li><a href="blog.html?category=Support+Automation" class="hover:text-black transition-colors">Customer Service</a></li>
+            <li><a href="blog.html?category=Special+Event" class="hover:text-black transition-colors">Special Events</a></li>
           </ul>
         </div>
 
-        <!-- Col 4: Account -->
-        <div>
-          <div class="text-xs font-semibold uppercase tracking-wider text-brand-black mb-4">PORTAL</div>
-          <ul class="space-y-2.5 text-xs text-brand-muted">
-            <li><a href="login.php" class="hover:text-black transition-colors">Customer Login</a></li>
-            <li><a href="login.php" class="hover:text-black transition-colors">SuperAdmin Portal</a></li>
-            <li><a href="signup.html" class="hover:text-black transition-colors">Create Free Account</a></li>
+        <div class="md:col-span-3 space-y-3">
+          <div class="text-xs font-bold uppercase tracking-wider text-black">Connect</div>
+          <ul class="flex items-center gap-3 pt-1">
+            <li>
+              <a href="https://x.com/" target="_blank" aria-label="X Twitter" class="w-9 h-9 rounded-full border border-intercom-border flex items-center justify-center text-stone-700 hover:text-black hover:border-black transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </a>
+            </li>
+            <li>
+              <a href="https://linkedin.com/" target="_blank" aria-label="LinkedIn" class="w-9 h-9 rounded-full border border-intercom-border flex items-center justify-center text-stone-700 hover:text-black hover:border-black transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+              </a>
+            </li>
+            <li>
+              <a href="https://youtube.com/" target="_blank" aria-label="YouTube" class="w-9 h-9 rounded-full border border-intercom-border flex items-center justify-center text-stone-700 hover:text-black hover:border-black transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M21.997 6.985a2.61 2.61 0 0 0-1.838-1.838c-1.632-.447-8.16-.447-8.16-.447s-6.526 0-8.158.43a2.67 2.67 0 0 0-1.838 1.855C1.573 8.616 1.573 12 1.573 12s0 3.401.43 5.016c.24.893.945 1.597 1.838 1.838C5.49 19.3 12 19.3 12 19.3s6.527 0 8.159-.43a2.61 2.61 0 0 0 1.838-1.837c.429-1.632.429-5.016.429-5.016s.017-3.4-.43-5.032M9.922 15.126V8.874L15.349 12z"/></svg>
+              </a>
+            </li>
           </ul>
         </div>
 
       </div>
 
-      <div class="pt-8 border-t border-brand-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-brand-subtle">
+      <div class="pt-8 border-t border-intercom-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-400">
         <div>© 2026 CuboidPilot Technologies Inc. All rights reserved.</div>
         <div class="flex items-center gap-6">
           <a href="index.html" class="hover:text-black transition-colors">Home</a>
           <a href="pricing.html" class="hover:text-black transition-colors">Pricing</a>
-          <a href="blog.html" class="hover:text-black transition-colors text-black font-medium">Blog</a>
+          <a href="blog.html" class="hover:text-black transition-colors text-black font-semibold">The Cai Blog</a>
           <a href="docs.html" class="hover:text-black transition-colors">Docs</a>
         </div>
       </div>
@@ -640,20 +909,44 @@
       });
     }
 
-    // Category Filter Pills
-    document.querySelectorAll('.cat-pill').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.cat-pill').forEach(b => {
-          b.className = 'cat-pill px-4 py-1.5 rounded-full text-xs font-medium bg-white text-stone-700 border border-brand-border hover:border-brand-black hover:text-black transition-all';
-        });
-        btn.className = 'cat-pill px-4 py-1.5 rounded-full text-xs font-medium bg-brand-black text-white border border-brand-black transition-all';
-        currentCategory = btn.getAttribute('data-cat');
+    // Intercom Search Bar Toggle
+    const searchToggleBtn = document.getElementById('header-search-toggle');
+    const inlineSearchBar = document.getElementById('inline-search-bar');
+    const closeSearchBtn = document.getElementById('close-search-btn');
+    const searchInput = document.getElementById('blog-search-input');
+
+    if (searchToggleBtn && inlineSearchBar) {
+      searchToggleBtn.addEventListener('click', () => {
+        inlineSearchBar.classList.toggle('open');
+        if (inlineSearchBar.classList.contains('open') && searchInput) {
+          searchInput.focus();
+        }
+      });
+    }
+    if (closeSearchBtn && inlineSearchBar) {
+      closeSearchBtn.addEventListener('click', () => {
+        inlineSearchBar.classList.remove('open');
+        if (searchInput) searchInput.value = '';
+        searchQuery = '';
+        filterAndRenderBlogs();
+      });
+    }
+
+    // Intercom Category Navigation Links
+    document.querySelectorAll('.c-hero-front__link').forEach(link => {
+      link.addEventListener('click', () => {
+        document.querySelectorAll('.c-hero-front__link').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        currentCategory = link.getAttribute('data-cat') || 'all';
+        const heading = document.getElementById('current-category-heading');
+        if (heading) {
+          heading.textContent = (currentCategory === 'all') ? 'All Articles' : link.textContent;
+        }
         filterAndRenderBlogs();
       });
     });
 
     // Search Input with Debounce
-    const searchInput = document.getElementById('blog-search-input');
     if (searchInput) {
       let debounceTimer;
       searchInput.addEventListener('input', (e) => {
@@ -669,15 +962,31 @@
       if (searchInput) searchInput.value = '';
       searchQuery = '';
       currentCategory = 'all';
-      document.querySelectorAll('.cat-pill').forEach(b => {
-        if (b.getAttribute('data-cat') === 'all') {
-          b.className = 'cat-pill px-4 py-1.5 rounded-full text-xs font-medium bg-brand-black text-white border border-brand-black transition-all';
+      document.querySelectorAll('.c-hero-front__link').forEach(l => {
+        if (l.getAttribute('data-cat') === 'all') {
+          l.classList.add('active');
         } else {
-          b.className = 'cat-pill px-4 py-1.5 rounded-full text-xs font-medium bg-white text-stone-700 border border-brand-border hover:border-brand-black hover:text-black transition-all';
+          l.classList.remove('active');
         }
       });
+      const heading = document.getElementById('current-category-heading');
+      if (heading) heading.textContent = 'All Articles';
       filterAndRenderBlogs();
     }
+
+    const DEFAULT_GANDHI_POST = {
+      id: 3,
+      slug: 'gandhi-jayanti-truth-technology-self-reliance',
+      title: 'Gandhi Jayanti Special: Truth, Decentralized Technology & The Spirit of Self-Reliance',
+      excerpt: "On October 2nd, we honor Mahatma Gandhi's enduring ideals — Satya (Truth), Swavalamban (Self-Reliance), and Sarvodaya (Welfare of All). Here is how these principles guide the future of autonomous, grounded AI at CuboidPilot.",
+      cover_image: 'assets/blog/gandhi-jayanti-2026.png',
+      author_name: 'Ayush',
+      author_role: 'Founder & AI Architect',
+      category: 'Special Event',
+      tags: 'Gandhi Jayanti, Ethics in AI, Swadeshi, Technology, CuboidPilot, Self Reliance',
+      read_time: '2 min read',
+      formatted_date: 'Oct 02, 2026'
+    };
 
     const DEFAULT_LAUNCH_POST = {
       id: 1,
@@ -739,17 +1048,17 @@
         if (data.success && Array.isArray(data.blogs) && data.blogs.length > 0) {
           allBlogs = data.blogs;
         } else {
-          allBlogs = [DEFAULT_LAUNCH_POST];
+          allBlogs = [DEFAULT_GANDHI_POST, DEFAULT_LAUNCH_POST];
         }
       } catch (err) {
-        console.warn('Using local fallback post:', err);
-        allBlogs = [DEFAULT_LAUNCH_POST];
+        console.warn('Using local fallback posts:', err);
+        allBlogs = [DEFAULT_GANDHI_POST, DEFAULT_LAUNCH_POST];
       }
       renderFeaturedHero(allBlogs[0]);
       filterAndRenderBlogs();
     }
 
-    // Render Featured Hero Post
+    // Render Premier Featured Hero Post (c-posts-card-latest)
     function renderFeaturedHero(post) {
       const container = document.getElementById('featured-post-container');
       if (!container) return;
@@ -759,60 +1068,58 @@
         return;
       }
 
-      const coverSrc = post.cover_image || 'assets/blog/meet-cai-founder.png';
+      const coverSrc = post.cover_image || 'assets/blog/gandhi-jayanti-2026.png';
 
       container.innerHTML = `
-        <div class="article-card group bg-white border border-brand-border rounded-2xl overflow-hidden grid grid-cols-1 lg:grid-cols-12 cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300" onclick="navigateToArticle('${post.slug}')">
-          <div class="lg:col-span-7 p-7 sm:p-10 lg:p-12 flex flex-col justify-between order-2 lg:order-1">
-            <div>
-              <div class="flex flex-wrap items-center gap-2.5 mb-4">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-[#111111] text-white uppercase tracking-wider shadow-sm">
-                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Cover Story
-                </span>
-                <span class="badge-category font-semibold">${escapeHtml(post.category || 'Product Launch & AI')}</span>
-                <span class="text-xs text-stone-400 font-mono hidden sm:inline">• ${post.read_time || '3 min read'}</span>
-              </div>
-              <h2 class="text-2xl sm:text-3xl lg:text-[38px] font-bold tracking-tight text-brand-black leading-[1.18] group-hover:text-blue-600 transition-colors">
-                ${escapeHtml(post.title)}
-              </h2>
-              <p class="mt-4 text-stone-600 text-sm sm:text-base leading-relaxed line-clamp-3 font-normal">
-                ${escapeHtml(post.excerpt)}
-              </p>
-            </div>
-
-            <div class="pt-8 mt-6 border-t border-brand-border flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-stone-900 text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                  ${(post.author_name || 'A')[0]}
-                </div>
-                <div>
-                  <div class="text-xs font-bold text-stone-900">${escapeHtml(post.author_name || 'Ayush')}</div>
-                  <div class="text-[11px] text-stone-500">${escapeHtml(post.author_role || 'Founder & AI Architect')} • ${post.formatted_date || 'Oct 02, 2026'}</div>
-                </div>
-              </div>
-
-              <span class="inline-flex items-center gap-2 text-xs font-semibold text-stone-900 group-hover:text-blue-600 group-hover:translate-x-1.5 transition-all">
-                <span>Read full story</span>
-                <i data-lucide="arrow-right" class="w-4 h-4"></i>
-              </span>
-            </div>
-          </div>
-
-          <div class="lg:col-span-5 relative overflow-hidden bg-stone-100 order-1 lg:order-2 aspect-[16/10] lg:aspect-auto">
+        <article class="c-posts-card-latest" onclick="navigateToArticle('${post.slug}')">
+          <div class="c-posts-card-latest__image">
             <img 
               src="${coverSrc}" 
               alt="${escapeHtml(post.title)}" 
-              class="cover-zoom w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-              onerror="this.src='assets/blog/meet-cai-founder.png'"
-            >
+              fetchpriority="high"
+              onerror="this.src='https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/gandhi-jayanti-2026.png'"
+            />
           </div>
-        </div>
+
+          <div class="c-posts-card-latest__content">
+            <p class="c-posts-card-latest__meta">
+              <span>Published <time datetime="${post.published_at || ''}">${post.formatted_date || 'Oct 02, 2026'}</time></span>
+              <span>•</span>
+              <span class="c-posts-card-latest__reading-time">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2">
+                  <path d="M18.462 0H5.539a1.846 1.846 0 0 0-1.847 1.846V6a1.85 1.85 0 0 0 .739 1.477L10.462 12l-6.031 4.523A1.85 1.85 0 0 0 3.692 18v4.154A1.846 1.846 0 0 0 5.54 24h12.923a1.846 1.846 0 0 0 1.846-1.846V18.04a1.86 1.86 0 0 0-.733-1.473L13.531 12l6.044-4.57a1.85 1.85 0 0 0 .733-1.472V1.846A1.846 1.846 0 0 0 18.462 0" />
+                </svg>
+                ${post.read_time || '3 min'}
+              </span>
+              <span>•</span>
+              <span class="text-xs font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                ${escapeHtml(post.category || 'Featured Story')}
+              </span>
+            </p>
+
+            <h2 class="c-posts-card-latest__title">
+              ${escapeHtml(post.title)}
+            </h2>
+
+            <div class="c-posts-card-latest__excerpt">
+              ${escapeHtml(post.excerpt)}
+            </div>
+
+            <p class="c-posts-card-latest__author">
+              <span class="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center font-bold text-xs">
+                ${(post.author_name || 'A')[0]}
+              </span>
+              <span>${escapeHtml(post.author_name || 'Ayush')}</span>
+              <span class="text-xs text-stone-400 font-normal">• ${escapeHtml(post.author_role || 'Founder & AI Architect')}</span>
+            </p>
+          </div>
+        </article>
       `;
 
       if (window.lucide) window.lucide.createIcons();
     }
 
-    // Filter & Render Grid Cards
+    // Filter & Render Grid Cards (c-posts-card)
     function filterAndRenderBlogs() {
       const grid = document.getElementById('blog-cards-grid');
       const emptyState = document.getElementById('empty-state');
@@ -843,47 +1150,45 @@
       grid.innerHTML = filtered.map(b => {
         const coverSrc = b.cover_image || 'assets/blog/meet-cai-founder.png';
         return `
-          <div class="article-card group bg-white border border-brand-border rounded-xl overflow-hidden flex flex-col justify-between cursor-pointer" onclick="navigateToArticle('${b.slug}')">
-            <div>
-              <div class="aspect-[16/10] overflow-hidden bg-stone-100 relative">
-                <img 
-                  src="${coverSrc}" 
-                  alt="${escapeHtml(b.title)}" 
-                  class="cover-zoom w-full h-full object-cover object-center"
-                  onerror="this.src='assets/blog/meet-cai-founder.png'"
-                >
-                <div class="absolute top-3 left-3">
-                  <span class="badge-category bg-white/90 backdrop-blur-sm shadow-sm">${escapeHtml(b.category || 'General')}</span>
-                </div>
-              </div>
-              <div class="p-6">
-                <div class="flex items-center gap-2 text-xs text-stone-400 mb-2.5">
-                  <span>${b.formatted_date || 'Oct 02, 2026'}</span>
-                  <span>•</span>
-                  <span>${b.read_time || '3 min read'}</span>
-                  ${b.views_count ? `<span>•</span><span><i data-lucide="eye" class="w-3 h-3 inline mr-0.5"></i>${b.views_count}</span>` : ''}
-                </div>
-                <h3 class="text-lg font-bold tracking-tight text-brand-black group-hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
-                  ${escapeHtml(b.title)}
-                </h3>
-                <p class="mt-2 text-xs sm:text-sm text-stone-600 line-clamp-2 leading-relaxed">
-                  ${escapeHtml(b.excerpt)}
-                </p>
-              </div>
+          <article class="c-posts-card" onclick="navigateToArticle('${b.slug}')">
+            <div class="c-posts-card__image">
+              <img 
+                src="${coverSrc}" 
+                alt="${escapeHtml(b.title)}" 
+                loading="lazy"
+                onerror="this.src='https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/meet-cai-founder.png'"
+              />
             </div>
-            <div class="px-6 pb-6 pt-2 flex items-center justify-between border-t border-brand-border/60">
-              <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-full bg-stone-900 text-white flex items-center justify-center font-bold text-[10px]">
+
+            <div class="c-posts-card__content">
+              <p class="c-posts-card__meta">
+                <span>Published <time>${b.formatted_date || 'Recent'}</time></span>
+                <span>•</span>
+                <span class="c-posts-card__reading-time">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="12" height="12" stroke="currentColor" stroke-width="2">
+                    <path d="M18.462 0H5.539a1.846 1.846 0 0 0-1.847 1.846V6a1.85 1.85 0 0 0 .739 1.477L10.462 12l-6.031 4.523A1.85 1.85 0 0 0 3.692 18v4.154A1.846 1.846 0 0 0 5.54 24h12.923a1.846 1.846 0 0 0 1.846-1.846V18.04a1.86 1.86 0 0 0-.733-1.473L13.531 12l6.044-4.57a1.85 1.85 0 0 0 .733-1.472V1.846A1.846 1.846 0 0 0 18.462 0" />
+                  </svg>
+                  ${b.read_time || '3 min'}
+                </span>
+                ${b.category ? `<span>•</span><span class="text-[11px] font-semibold text-stone-700">${escapeHtml(b.category)}</span>` : ''}
+              </p>
+
+              <h2 class="c-posts-card__title">
+                ${escapeHtml(b.title)}
+              </h2>
+
+              <p class="c-posts-card__excerpt">
+                ${escapeHtml(b.excerpt)}
+              </p>
+
+              <div class="c-posts-card__author">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white flex items-center justify-center font-bold text-[9px]">
                   ${(b.author_name || 'A')[0]}
-                </div>
-                <span class="text-xs font-medium text-stone-800">${escapeHtml(b.author_name || 'Ayush')}</span>
+                </span>
+                <span class="text-xs text-stone-800">${escapeHtml(b.author_name || 'Ayush')}</span>
               </div>
-              <span class="text-xs font-semibold text-stone-900 group-hover:text-blue-600 flex items-center gap-1 transition-colors">
-                <span>Read</span>
-                <i data-lucide="chevron-right" class="w-3 h-3"></i>
-              </span>
             </div>
-          </div>
+          </article>
         `;
       }).join('');
 
@@ -920,10 +1225,13 @@
       if (!b && (slug === 'meet-cai-autonomous-ai-agent' || !slug)) {
         b = DEFAULT_LAUNCH_POST;
       }
+      if (!b && slug === 'gandhi-jayanti-truth-technology-self-reliance') {
+        b = DEFAULT_GANDHI_POST;
+      }
 
       if (b) {
         // Update Meta Title & Tags
-        document.getElementById('page-title').textContent = `${b.title} — CuboidPilot Blog`;
+        document.getElementById('page-title').textContent = `${b.title} — The Cai Blog`;
         if (b.meta_description) {
           const mDesc = document.getElementById('page-desc');
           if (mDesc) mDesc.setAttribute('content', b.meta_description);
@@ -945,6 +1253,14 @@
         const coverImg = document.getElementById('reader-cover-img');
         coverImg.src = b.cover_image || 'assets/blog/meet-cai-founder.png';
         coverImg.alt = b.title;
+        coverImg.onerror = function() {
+          this.onerror = null;
+          if (b.cover_image && b.cover_image.includes('gandhi')) {
+            this.src = 'https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/gandhi-jayanti-2026.png';
+          } else {
+            this.src = 'https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/meet-cai-founder.png';
+          }
+        };
 
         // HTML Content
         const bodyContainer = document.getElementById('reader-content-body');
@@ -969,22 +1285,19 @@
           const others = allBlogs.filter(item => item.slug !== slug).slice(0, 2);
           if (others.length > 0) {
             relatedGrid.innerHTML = others.map(item => `
-              <div class="article-card group bg-white border border-brand-border rounded-xl overflow-hidden flex flex-col justify-between cursor-pointer p-6 hover:shadow-md transition-all" onclick="navigateToArticle('${item.slug}')">
-                <div>
-                  <span class="badge-category mb-2.5">${escapeHtml(item.category || 'Story')}</span>
-                  <h4 class="text-base sm:text-lg font-bold text-brand-black group-hover:text-blue-600 transition-colors line-clamp-2 mt-2 leading-snug">
-                    ${escapeHtml(item.title)}
-                  </h4>
-                  <p class="text-xs sm:text-sm text-stone-600 line-clamp-2 mt-2 leading-relaxed">
-                    ${escapeHtml(item.excerpt)}
-                  </p>
+              <div class="c-posts-card p-6 rounded-xl border border-intercom-border hover:shadow-md transition-all" onclick="navigateToArticle('${item.slug}')">
+                <div class="text-xs font-semibold text-stone-400 mb-2">
+                  <span>${item.formatted_date || 'Oct 2026'}</span> • <span>${item.read_time || '3 min'}</span>
                 </div>
-                <div class="mt-5 pt-3.5 border-t border-brand-border/60 flex items-center justify-between text-xs text-stone-400">
-                  <span>${item.formatted_date || 'Oct 2026'} • ${item.read_time || '3 min'}</span>
-                  <span class="font-semibold text-stone-900 group-hover:text-blue-600 flex items-center gap-1">
-                    <span>Read story</span>
-                    <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
-                  </span>
+                <h4 class="text-base sm:text-lg font-bold text-black hover:text-blue-600 transition-colors line-clamp-2 leading-snug">
+                  ${escapeHtml(item.title)}
+                </h4>
+                <p class="text-xs sm:text-sm text-stone-600 line-clamp-2 mt-2 leading-relaxed">
+                  ${escapeHtml(item.excerpt)}
+                </p>
+                <div class="mt-4 pt-3 border-t border-intercom-border flex items-center justify-between text-xs">
+                  <span class="font-semibold text-black">${escapeHtml(item.author_name || 'Ayush')}</span>
+                  <span class="font-semibold text-black hover:text-blue-600 flex items-center gap-1">Read &rarr;</span>
                 </div>
               </div>
             `).join('');
@@ -1009,7 +1322,7 @@
       if (pushHistory) {
         history.pushState({}, '', 'blog.html');
       }
-      document.getElementById('page-title').textContent = 'Blog & Product Stories — CuboidPilot';
+      document.getElementById('page-title').textContent = 'The Cai Blog — Autonomous AI, Product & Customer Service';
       document.getElementById('blog-reader-view').classList.add('hidden');
       document.getElementById('blog-index-view').classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1029,16 +1342,6 @@
         window.open(`https://twitter.com/intent/tweet?url=${url}&text=${title}`, '_blank', 'width=600,height=400');
       } else if (network === 'linkedin') {
         window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'width=600,height=400');
-      } else if (network === 'native') {
-        if (navigator.share) {
-          navigator.share({
-            title: rawTitle,
-            text: document.getElementById('reader-excerpt')?.textContent || rawTitle,
-            url: rawUrl
-          }).catch(() => {});
-        } else {
-          shareArticle('copy');
-        }
       } else if (network === 'copy') {
         navigator.clipboard.writeText(rawUrl).then(() => {
           showToast('Link copied to clipboard!');
@@ -1054,7 +1357,7 @@
 
       const toast = document.createElement('div');
       toast.id = 'blog-toast';
-      toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center gap-2 border transition-all ${isError ? 'bg-red-900 text-white border-red-700' : 'bg-stone-900 text-white border-stone-800'}`;
+      toast.className = `fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-full shadow-xl text-xs font-semibold flex items-center gap-2 border transition-all ${isError ? 'bg-red-900 text-white border-red-700' : 'bg-black text-white border-stone-800'}`;
       toast.innerHTML = `<span>${msg}</span>`;
       document.body.appendChild(toast);
       setTimeout(() => {
@@ -1099,7 +1402,7 @@
       const input = document.getElementById('newsletter-email');
       const email = input ? input.value.trim() : '';
       if (!email) return;
-      showToast('Thank you! You have subscribed to The CuboidPilot Dispatch.');
+      showToast('Thank you! You have subscribed to The Cai Editorial Dispatch.');
       if (input) input.value = '';
     }
 
@@ -1117,26 +1420,21 @@
       bar.style.width = `${Math.min(100, Math.max(0, scrolled))}%`;
     }, { passive: true });
 
-    // Keyboard shortcut '/' to focus search
-    window.addEventListener('keydown', (e) => {
-      if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-        const searchInput = document.getElementById('blog-search-input');
-        if (searchInput && !document.getElementById('blog-index-view').classList.contains('hidden')) {
-          e.preventDefault();
-          searchInput.focus();
-        }
-      }
-    });
-
-    // Initial Route Detection
+    // Initial Route & Query Param Detection
     document.addEventListener('DOMContentLoaded', async () => {
       if (window.lucide) window.lucide.createIcons();
       await loadBlogs();
 
       const urlParams = new URLSearchParams(window.location.search);
       const slug = urlParams.get('slug');
+      const cat = urlParams.get('category');
       if (slug) {
         navigateToArticle(slug, false);
+      } else if (cat) {
+        const matchingLink = Array.from(document.querySelectorAll('.c-hero-front__link')).find(l => l.getAttribute('data-cat') === cat);
+        if (matchingLink) {
+          matchingLink.click();
+        }
       }
     });
   </script>
