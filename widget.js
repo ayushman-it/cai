@@ -1653,7 +1653,7 @@
     }
 
     /* Card 2: Featured Story / Announcement Banner Card (India Edition, Clear Image) */
-    /* Card 2 / Bottom: Lightweight Featured Story Card (media_1790922633144.png) */
+    /* Card 2 / Bottom: Lightweight Featured Story Card (media_1790922633144.png / media_1790923294302.png) */
     .cp-featured-banner-card {
       background: #ffffff;
       border: 1px solid #e7e5de;
@@ -1666,6 +1666,7 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       user-select: none;
+      flex-shrink: 0;
     }
 
     .cp-featured-banner-card:hover {
@@ -1696,6 +1697,9 @@
       overflow: hidden;
       border-radius: 10px;
       background: #fbfaf8;
+      display: block;
+      margin-bottom: 10px;
+      flex-shrink: 0;
     }
 
     .cp-banner-cover-photo {
@@ -1712,7 +1716,7 @@
     }
 
     .cp-banner-body {
-      padding: 10px 2px 0 2px;
+      padding: 0 2px;
       display: flex;
       flex-direction: column;
     }
@@ -4933,10 +4937,14 @@
         </div>
       </div>
 
-      <!-- 5. Featured Story: Lightweight Card (media_1790922633144.png) -->
-      <div class="cp-featured-banner-card" id="cp-card-latest-blog" role="button" tabindex="0" title="Read Gandhi Jayanti Special Feature">
+      <!-- 5. Featured Story: Lightweight Latest Blog Card (media_1790923294302.png) -->
+      <div class="cp-featured-banner-card" id="cp-card-latest-blog" role="button" tabindex="0" title="Read Latest Story">
         <div class="cp-banner-img-box">
-          <img src="${baseUrl}/assets/blog/gandhi-jayanti-2026.png" id="cp-home-blog-img" class="cp-banner-cover-photo" alt="Gandhi Jayanti" onerror="this.onerror=null; this.src='assets/blog/gandhi-jayanti-2026.png';" />
+          <img src="${baseUrl}/assets/blog/gandhi-jayanti-2026.png" 
+               id="cp-home-blog-img" 
+               class="cp-banner-cover-photo" 
+               alt="Gandhi Jayanti Special" 
+               onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/gandhi-jayanti-2026.png';" />
         </div>
         <div class="cp-banner-body">
           <div class="cp-banner-meta-row">
@@ -4964,13 +4972,58 @@
       })
       .catch(() => {});
 
-    // Gandhi Jayanti Card click listener
+    // Dynamic Latest Blog Card fetch & click listener (media_1790923294302.png)
+    let currentBlogSlug = 'gandhi-jayanti-truth-technology-self-reliance';
     const blogCard = shadow.getElementById('cp-card-latest-blog');
     if (blogCard) {
       blogCard.addEventListener('click', () => {
-        window.open(`${baseUrl}/blog.html?slug=gandhi-jayanti-truth-technology-self-reliance`, '_blank');
+        window.open(`${baseUrl}/blog.html?slug=${encodeURIComponent(currentBlogSlug)}`, '_blank');
       });
     }
+
+    fetch(`${baseUrl}/api/blogs.php?action=list&limit=1`)
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.success && d.blogs && d.blogs.length > 0) {
+          const b = d.blogs[0];
+          if (b.slug) currentBlogSlug = b.slug;
+          const blogImg = shadow.getElementById('cp-home-blog-img');
+          const blogTag = shadow.getElementById('cp-home-blog-tag');
+          const blogDate = shadow.getElementById('cp-home-blog-date');
+          const blogTitle = shadow.getElementById('cp-home-blog-title');
+          const blogDesc = shadow.getElementById('cp-home-blog-desc');
+
+          if (blogImg && b.cover_image) {
+            let imgUrl = b.cover_image;
+            if (!imgUrl.startsWith('http')) {
+              imgUrl = `${baseUrl}/${imgUrl.replace(/^\.?\//, '')}`;
+            }
+            blogImg.src = imgUrl;
+            blogImg.alt = b.title || 'Latest Story';
+            blogImg.onerror = function() {
+              this.onerror = null;
+              if (b.cover_image.includes('gandhi')) {
+                this.src = 'https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/gandhi-jayanti-2026.png';
+              } else if (b.cover_image.includes('meet-cai')) {
+                this.src = 'https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/meet-cai-founder.png';
+              }
+            };
+          }
+          if (blogTag && b.category) {
+            blogTag.textContent = b.category.toUpperCase();
+          }
+          if (blogDate && b.formatted_date) {
+            blogDate.textContent = b.formatted_date;
+          }
+          if (blogTitle && b.title) {
+            blogTitle.textContent = b.title;
+          }
+          if (blogDesc && b.excerpt) {
+            blogDesc.textContent = b.excerpt;
+          }
+        }
+      })
+      .catch(() => {});
 
 
     const askCard = shadow.getElementById('cp-card-ask');
