@@ -236,9 +236,9 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
           <span>Your account region</span>
           <div class="relative inline-block">
             <select id="account-region" name="region" form="login-form" class="appearance-none bg-transparent font-medium text-stone-900 pl-1 pr-4 py-0 cursor-pointer text-[11.5px] focus:outline-none">
-              <option value="us" selected>us United States</option>
+              <option value="in" selected>in India / Asia-Pacific</option>
+              <option value="us">us United States</option>
               <option value="eu">eu Europe</option>
-              <option value="in">in India / Asia-Pacific</option>
               <option value="au">au Australia</option>
             </select>
             <i data-lucide="chevron-down" class="w-3 h-3 text-stone-400 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none"></i>
@@ -416,14 +416,19 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
               Agent
             </button>
           </div>
-        </div>
 
       </div>
 
       <!-- Right Column: Latest Blog & Editorial Feature Story -->
       <div class="w-full shrink-0" style="max-width: 380px;">
-        <!-- Top spacer on desktop to align card tops with left column below the region selector -->
-        <div class="hidden lg:block h-[22px] mb-2"></div>
+        <!-- Top header on desktop to align card tops with left column region selector -->
+        <div class="hidden lg:flex items-center justify-between text-[11.5px] text-stone-500 mb-2 px-1">
+          <span class="font-medium text-stone-600">Latest from Cai Editorial</span>
+          <a href="blog.html" class="text-stone-500 hover:text-stone-900 transition-colors inline-flex items-center gap-0.5">
+            <span>All posts</span>
+            <i data-lucide="arrow-right" class="w-3 h-3 text-stone-400"></i>
+          </a>
+        </div>
 
         <div class="bg-white border border-[#e7e5de] rounded-[8px] p-5 sm:p-6 shadow-xs hover:border-[#d7d5ce] transition-all group">
           

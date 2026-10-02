@@ -1447,6 +1447,7 @@
     }
 
     /* Header Avatar Stack on Home Screen (media_1790884814897.png) */
+    /* Header Avatar Stack on Home Screen (media_1790884814897.png) */
     .cp-team-avatar-stack {
       display: none;
       align-items: center;
@@ -1458,10 +1459,6 @@
     }
 
     .cp-window.screen-home .cp-header-title-box {
-      display: none;
-    }
-
-    .cp-window.screen-home #cp-options-btn {
       display: none;
     }
 
@@ -1487,25 +1484,25 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     }
 
-    /* Action Home Hero Typography & Moody Atmosphere (media_1790884814897.png) */
+    /* Action Home Hero Typography & Refined Weight (media_1790885561631.png) */
     .cp-hero-section {
-      padding: 8px 4px 12px 4px;
+      padding: 8px 4px 10px 4px;
       user-select: none;
     }
 
     .cp-hero-greeting-sub {
-      font-size: 25px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.65);
-      letter-spacing: -0.025em;
+      font-size: 24px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.7);
+      letter-spacing: -0.02em;
       line-height: 1.15;
     }
 
     .cp-hero-greeting-main {
-      font-size: 27px;
-      font-weight: 800;
+      font-size: 26px;
+      font-weight: 650;
       color: #ffffff;
-      letter-spacing: -0.025em;
+      letter-spacing: -0.02em;
       line-height: 1.18;
       margin-top: 2px;
     }
@@ -1607,122 +1604,153 @@
       transform: translateX(3px);
     }
 
-    /* Card 2: Featured Story / Announcement Banner Card (media_1790884814897.png) */
+    /* Card 2: Featured Story / Announcement Banner Card (India Edition, Clear Image) */
     .cp-featured-banner-card {
-      position: relative;
+      background: #181920;
+      border: 1px solid #282932;
       border-radius: 14px;
       overflow: hidden;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      min-height: 125px;
-      padding: 15px 16px;
       display: flex;
       flex-direction: column;
-      justify-content: space-between;
       cursor: pointer;
-      background: linear-gradient(135deg, #1c1d25 0%, #111216 100%);
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
       transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       user-select: none;
     }
 
     .cp-featured-banner-card:hover {
-      border-color: rgba(255, 255, 255, 0.28);
+      border-color: #3b3e4e;
       transform: translateY(-1px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
     }
 
-    .cp-banner-bg-img {
-      position: absolute;
-      inset: 0;
+    :host([data-theme="light"]) .cp-featured-banner-card,
+    .cp-light-theme .cp-featured-banner-card,
+    .theme-light .cp-featured-banner-card {
+      background: #ffffff;
+      border-color: #e2e8f0;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    :host([data-theme="light"]) .cp-featured-banner-card:hover,
+    .cp-light-theme .cp-featured-banner-card:hover,
+    .theme-light .cp-featured-banner-card:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .cp-banner-img-box {
+      width: 100%;
+      height: 120px;
+      position: relative;
+      overflow: hidden;
+      background: #111217;
+    }
+
+    .cp-banner-cover-photo {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      opacity: 0.35;
-      filter: grayscale(100%) contrast(120%);
-      transition: opacity 0.2s ease, transform 0.3s ease;
-      z-index: 1;
+      object-position: center;
+      transition: transform 0.3s ease;
     }
 
-    .cp-featured-banner-card:hover .cp-banner-bg-img {
-      opacity: 0.45;
+    .cp-featured-banner-card:hover .cp-banner-cover-photo {
       transform: scale(1.03);
     }
 
-    .cp-banner-overlay {
+    .cp-banner-badge-tag {
       position: absolute;
-      inset: 0;
-      background: linear-gradient(180deg, rgba(15, 16, 21, 0.45) 0%, rgba(15, 16, 21, 0.9) 100%);
-      z-index: 2;
-    }
-
-    .cp-banner-content {
-      position: relative;
-      z-index: 3;
-    }
-
-    .cp-banner-badge {
-      display: inline-block;
-      font-size: 10px;
+      top: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(6px);
+      color: #fbbf24;
+      font-size: 9.5px;
       font-weight: 750;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      color: #ffffff;
-      background: rgba(255, 255, 255, 0.18);
-      backdrop-filter: blur(4px);
-      padding: 3px 8px;
+      padding: 3px 7px;
       border-radius: 4px;
-      margin-bottom: 7px;
+      border: 1px solid rgba(251, 191, 36, 0.3);
     }
 
-    .cp-banner-title {
-      font-size: 14.5px;
-      font-weight: 750;
+    .cp-banner-body {
+      padding: 12px 14px 11px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .cp-banner-headline {
+      font-size: 13.5px;
+      font-weight: 650;
       color: #ffffff;
       line-height: 1.3;
       letter-spacing: -0.01em;
-      text-transform: uppercase;
     }
 
-    .cp-banner-sub {
+    :host([data-theme="light"]) .cp-banner-headline,
+    .cp-light-theme .cp-banner-headline,
+    .theme-light .cp-banner-headline {
+      color: #0f172a;
+    }
+
+    .cp-banner-subline {
       font-size: 11px;
-      font-weight: 600;
-      color: rgba(255, 255, 255, 0.7);
-      margin-top: 4px;
-      letter-spacing: 0.02em;
+      color: #8e929f;
+      line-height: 1.35;
     }
 
-    .cp-banner-bottom {
-      position: relative;
-      z-index: 3;
+    :host([data-theme="light"]) .cp-banner-subline,
+    .cp-light-theme .cp-banner-subline,
+    .theme-light .cp-banner-subline {
+      color: #64748b;
+    }
+
+    .cp-banner-footer-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 8px;
-      padding-top: 8px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
     }
 
-    .cp-banner-brand-icon {
-      width: 17px;
-      height: 17px;
-      object-fit: contain;
-      opacity: 0.85;
+    :host([data-theme="light"]) .cp-banner-footer-row,
+    .cp-light-theme .cp-banner-footer-row,
+    .theme-light .cp-banner-footer-row {
+      border-top-color: #f1f5f9;
     }
 
-    .cp-banner-cta {
-      font-size: 11.5px;
+    .cp-banner-meta-pill {
+      font-size: 10px;
+      color: #717686;
+      font-weight: 500;
+    }
+
+    :host([data-theme="light"]) .cp-banner-meta-pill,
+    .cp-light-theme .cp-banner-meta-pill,
+    .theme-light .cp-banner-meta-pill {
+      color: #64748b;
+    }
+
+    .cp-banner-arrow-link {
+      font-size: 11px;
       font-weight: 600;
       color: #ffffff;
-      opacity: 0.9;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      transition: gap 0.2s ease;
+      transition: transform 0.2s ease;
     }
 
-    .cp-featured-banner-card:hover .cp-banner-cta {
-      gap: 7px;
-      opacity: 1;
+    :host([data-theme="light"]) .cp-banner-arrow-link,
+    .cp-light-theme .cp-banner-arrow-link,
+    .theme-light .cp-banner-arrow-link {
+      color: #0f172a;
+    }
+
+    .cp-featured-banner-card:hover .cp-banner-arrow-link {
+      transform: translateX(2px);
     }
 
     /* Sub-screen Header (e.g. Make a payment, media_1790861393761.png) */
@@ -2017,6 +2045,13 @@
       min-width: 0;
     }
 
+    .cp-member-name-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
     .cp-member-name {
       font-size: 13.5px;
       font-weight: 600;
@@ -2025,26 +2060,46 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      max-width: 145px;
+    }
+
+    :host([data-theme="light"]) .cp-member-name,
+    .cp-light-theme .cp-member-name,
+    .theme-light .cp-member-name {
+      color: #0f172a;
     }
 
     .cp-member-role {
       font-size: 11px;
       color: var(--cp-text-secondary, #8e929f);
       margin-top: 2px;
-      line-height: 1.25;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 160px;
     }
 
     .cp-dept-tag {
-      font-size: 9.5px;
-      font-weight: 600;
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
-      padding: 1px 5px;
+      padding: 1.5px 5px;
       border-radius: 3px;
       background: rgba(255, 255, 255, 0.08);
       color: #94a3b8;
+      line-height: 1.2;
+      display: inline-block;
+      vertical-align: middle;
+    }
+
+    :host([data-theme="light"]) .cp-dept-tag,
+    .cp-light-theme .cp-dept-tag,
+    .theme-light .cp-dept-tag {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
     }
 
     .cp-member-status-text {
@@ -4779,18 +4834,19 @@
         </div>
       </div>
 
-      <!-- 2. Featured Story / Announcement Banner Card (media_1790884814897.png) -->
+      <!-- 2. Featured Story / Announcement Banner Card (India Edition) -->
       <div class="cp-featured-banner-card" id="cp-card-featured-banner" role="button" tabindex="0">
-        <img src="${baseUrl}/assets/blog/meet-cai-founder.png" class="cp-banner-bg-img" alt="" onerror="this.onerror=null; this.src='${baseUrl}/assets/login-blog-banner.png';" />
-        <div class="cp-banner-overlay"></div>
-        <div class="cp-banner-content">
-          <div class="cp-banner-badge">PIONEER • SAVE THE DATE</div>
-          <div class="cp-banner-title">OCTOBER 8TH, 2026<br/>SAN FRANCISCO, USA</div>
-          <div class="cp-banner-sub">IN-PERSON + VIRTUAL</div>
+        <div class="cp-banner-img-box">
+          <img src="${baseUrl}/assets/blog/meet-cai-founder.png" class="cp-banner-cover-photo" alt="Meet Cai India" onerror="this.onerror=null; this.src='${baseUrl}/assets/login-blog-banner.png';" />
+          <div class="cp-banner-badge-tag">INDIA LAUNCH</div>
         </div>
-        <div class="cp-banner-bottom">
-          <img src="${logoUrl}" class="cp-banner-brand-icon" alt="" onerror="this.onerror=null; this.src='${fallbackLogo}';" />
-          <span class="cp-banner-cta">Explore article &rarr;</span>
+        <div class="cp-banner-body">
+          <div class="cp-banner-headline">Meet Cai: India's 1st Autonomous AI Helpdesk & SDR Agent</div>
+          <div class="cp-banner-subline">Autonomous lead capture, WhatsApp syncing & 1-on-1 team bookings.</div>
+          <div class="cp-banner-footer-row">
+            <span class="cp-banner-meta-pill">Bengaluru, IN • Available Now</span>
+            <span class="cp-banner-arrow-link">Read story &rarr;</span>
+          </div>
         </div>
       </div>
 
@@ -5073,6 +5129,9 @@
         const fallbackAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
         const avatarUrl = m.avatar_url ? (m.avatar_url.startsWith('http') ? m.avatar_url : `${baseUrl}/${m.avatar_url.replace(/^\/+/, '')}`) : fallbackAvatar;
 
+        const cleanName = (m.name || '').replace(/\s*\([^)]*\)/g, '').trim();
+        const deptUpper = (m.department || '').trim();
+
         card.innerHTML = `
           <div class="cp-member-left">
             <div class="cp-action-avatar-wrap">
@@ -5080,11 +5139,11 @@
               <div class="cp-action-status-dot ${statusClass}"></div>
             </div>
             <div class="cp-action-text-box">
-              <div class="cp-member-name">${escapeHtml(m.name)}</div>
-              <div class="cp-member-role">
-                <span>${escapeHtml(m.job_title)}</span>
-                <span class="cp-dept-tag">${escapeHtml(m.department)}</span>
+              <div class="cp-member-name-row">
+                <span class="cp-member-name">${escapeHtml(cleanName || m.name)}</span>
+                ${deptUpper ? `<span class="cp-dept-tag">${escapeHtml(deptUpper)}</span>` : ''}
               </div>
+              <div class="cp-member-role">${escapeHtml(m.job_title || deptUpper || 'Specialist')}</div>
             </div>
           </div>
           <div class="cp-member-actions">
