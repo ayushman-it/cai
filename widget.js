@@ -1510,108 +1510,8 @@
 
     /* Action Home Hero Typography (Clean Classic Intercom Look) */
     .cp-hero-section {
-      padding: 4px 4px 8px 4px;
+      padding: 6px 4px 10px 4px;
       user-select: none;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 5px;
-    }
-
-    /* What is Today Inline Strip (Ultra-compact, not a card) */
-    .cp-today-strip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6.5px;
-      padding: 3px 10px 3px 4px;
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 9999px;
-      text-decoration: none;
-      color: #ffffff;
-      font-size: 11.5px;
-      line-height: 1.2;
-      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-      cursor: pointer;
-      user-select: none;
-      max-width: 100%;
-      margin-bottom: 2px;
-    }
-
-    .cp-today-strip:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(255, 255, 255, 0.28);
-      transform: translateX(2px);
-    }
-
-    :host([data-theme="light"]) .cp-today-strip,
-    .cp-light-theme .cp-today-strip,
-    .theme-light .cp-today-strip {
-      background: #f1f5f9;
-      border-color: #e2e8f0;
-      color: #0f172a;
-    }
-
-    :host([data-theme="light"]) .cp-today-strip:hover,
-    .cp-light-theme .cp-today-strip:hover,
-    .theme-light .cp-today-strip:hover {
-      background: #e2e8f0;
-      border-color: #cbd5e1;
-    }
-
-    .cp-today-thumb {
-      width: 19px;
-      height: 19px;
-      border-radius: 50%;
-      object-fit: cover;
-      flex-shrink: 0;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-    }
-
-    :host([data-theme="light"]) .cp-today-thumb,
-    .cp-light-theme .cp-today-thumb,
-    .theme-light .cp-today-thumb {
-      border-color: rgba(0, 0, 0, 0.12);
-    }
-
-    .cp-today-tag {
-      font-size: 9.5px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      padding: 1.5px 6.5px;
-      border-radius: 9999px;
-      background: #f59e0b;
-      color: #78350f;
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
-
-    :host([data-theme="dark"]) .cp-today-tag {
-      background: rgba(245, 158, 11, 0.22);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.35);
-    }
-
-    .cp-today-title {
-      font-weight: 550;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      flex: 1;
-      font-size: 11.5px;
-      color: inherit;
-    }
-
-    .cp-today-arrow {
-      flex-shrink: 0;
-      opacity: 0.7;
-      transition: transform 0.2s ease, opacity 0.2s ease;
-    }
-
-    .cp-today-strip:hover .cp-today-arrow {
-      opacity: 1;
-      transform: translateX(2px);
     }
 
     .cp-hero-greeting-sub {
@@ -4975,16 +4875,6 @@
     screensView.innerHTML = `
       <!-- Moody Hero Greeting (Classic Intercom Aesthetic) -->
       <div class="cp-hero-section">
-        <!-- What is Today: Ultra-compact Pill Link (Not a card) -->
-        <a href="${baseUrl}/blog.html?slug=gandhi-jayanti-truth-technology-self-reliance" target="_blank" rel="noopener noreferrer" class="cp-today-strip" id="cp-today-strip" title="Read What is Today: Gandhi Jayanti Special Feature">
-          <img src="${baseUrl}/assets/blog/gandhi-jayanti-2026.png" class="cp-today-thumb" alt="Today" onerror="this.style.display='none';" />
-          <span class="cp-today-tag">What is Today</span>
-          <span class="cp-today-title" id="cp-today-title-text">Gandhi Jayanti: Truth &amp; Tech</span>
-          <svg class="cp-today-arrow" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </a>
-
         <div class="cp-hero-greeting-sub">Hello there.</div>
         <div class="cp-hero-greeting-main">How can we help?</div>
       </div>
@@ -5065,6 +4955,22 @@
           </svg>
         </div>
       </div>
+
+      <!-- 5. Latest Story / Featured Blog Card (At the bottom of Home screen) -->
+      <div class="cp-featured-banner-card" id="cp-card-latest-blog" role="button" tabindex="0" title="Read Latest Story">
+        <div class="cp-banner-img-box">
+          <img src="${baseUrl}/assets/blog/gandhi-jayanti-2026.png" id="cp-home-blog-img" class="cp-banner-cover-photo" alt="Latest Story" onerror="this.src='${baseUrl}/assets/blog/meet-cai-founder.png';" />
+          <div class="cp-banner-badge-tag" id="cp-home-blog-tag">SPECIAL EVENT</div>
+        </div>
+        <div class="cp-banner-body">
+          <div class="cp-banner-headline" id="cp-home-blog-title">Gandhi Jayanti Special: Truth, Decentralized Technology &amp; Self-Reliance</div>
+          <div class="cp-banner-subline" id="cp-home-blog-desc">On October 2nd, honoring Mahatma Gandhi's ideals of Satya, Swavalamban &amp; Sarvodaya in ethical technology.</div>
+          <div class="cp-banner-footer-row">
+            <span class="cp-banner-meta-pill" id="cp-home-blog-date">Oct 02, 2026 • 3 min read</span>
+            <span class="cp-banner-arrow-link">Read story &rarr;</span>
+          </div>
+        </div>
+      </div>
     `;
 
     // Fetch dynamic executive LinkedIn profiles for header avatars
@@ -5082,27 +4988,34 @@
       })
       .catch(() => {});
 
-    // Fetch dynamic "What is Today" special event or featured story
-    fetch(`${baseUrl}/api/blogs.php?action=list&category=Special+Event&limit=1`)
+    // Latest blog click listener and dynamic fetch
+    let latestBlogSlug = 'gandhi-jayanti-truth-technology-self-reliance';
+    const blogCard = shadow.getElementById('cp-card-latest-blog');
+    if (blogCard) {
+      blogCard.addEventListener('click', () => {
+        window.open(`${baseUrl}/blog.html?slug=${encodeURIComponent(latestBlogSlug)}`, '_blank');
+      });
+    }
+
+    // Fetch latest published blog post dynamically for the bottom card
+    fetch(`${baseUrl}/api/blogs.php?action=list&limit=1`)
       .then(r => r.json())
       .then(d => {
         if (d && d.success && d.blogs && d.blogs.length > 0) {
-          const ev = d.blogs[0];
-          const strip = shadow.getElementById('cp-today-strip');
-          const title = shadow.getElementById('cp-today-title-text');
-          const thumb = shadow.querySelector('.cp-today-thumb');
-          if (strip && ev.slug) {
-            strip.href = `${baseUrl}/blog.html?slug=${encodeURIComponent(ev.slug)}`;
-            strip.title = `Read What is Today: ${ev.title}`;
+          const b = d.blogs[0];
+          latestBlogSlug = b.slug || latestBlogSlug;
+          const img = shadow.getElementById('cp-home-blog-img');
+          const tag = shadow.getElementById('cp-home-blog-tag');
+          const title = shadow.getElementById('cp-home-blog-title');
+          const desc = shadow.getElementById('cp-home-blog-desc');
+          const date = shadow.getElementById('cp-home-blog-date');
+          if (img && b.cover_image) {
+            img.src = b.cover_image.startsWith('http') ? b.cover_image : `${baseUrl}/${b.cover_image.replace(/^\.?\//, '')}`;
           }
-          if (title && ev.title) {
-            let shortTitle = ev.title.replace(/^Gandhi Jayanti Special:\s*/i, 'Gandhi Jayanti: ');
-            if (shortTitle.length > 34) shortTitle = shortTitle.substring(0, 32) + '...';
-            title.textContent = shortTitle;
-          }
-          if (thumb && ev.cover_image) {
-            thumb.src = ev.cover_image.startsWith('http') ? ev.cover_image : `${baseUrl}/${ev.cover_image.replace(/^\.?\//, '')}`;
-          }
+          if (tag) tag.textContent = (b.category || 'LATEST STORY').toUpperCase();
+          if (title && b.title) title.textContent = b.title;
+          if (desc && b.excerpt) desc.textContent = b.excerpt;
+          if (date) date.textContent = `${b.formatted_date || 'Recent'} • ${b.read_time || '3 min read'}`;
         }
       })
       .catch(() => {});
