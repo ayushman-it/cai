@@ -12,6 +12,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- Components & Mega Menu CSS -->
+  <link rel="stylesheet" href="css/components.css">
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -19,11 +22,11 @@
       theme: {
         extend: {
           colors: {
-            cream: '#f4f3ec',
-            chalk: '#efeee9',
-            canvas: '#e7e3db',
-            clay: '#d3cec6',
-            linen: '#dedbd6',
+            cream: '#ffffff',
+            chalk: '#fafafa',
+            canvas: '#f4f4f5',
+            clay: '#e4e4e7',
+            linen: '#f4f4f5',
             'off-black': '#111111',
             helpdesk: '#0007cb',
             fin: '#ff5600',
@@ -42,49 +45,52 @@
 
   <style>
     :root {
-      --color-cream: #f4f3ec;
-      --color-chalk: #efeee9;
-      --color-canvas: #e7e3db;
+      --color-cream: #ffffff;
+      --color-chalk: #f9fafb;
+      --color-canvas: #f3f4f6;
       --color-off-black: #111111;
       --color-helpdesk: #0007cb;
       --color-fin: #ff5600;
     }
     body {
-      background-color: var(--color-cream);
+      background-color: #ffffff;
       color: var(--color-off-black);
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       -webkit-font-smoothing: antialiased;
     }
     
-    /* Authentic Intercom compact mobile widget presentation (Never oversized) */
-    .intercom-widget-img {
+    /* Authentic clean mobile widget presentation (Never oversized, natural appearance) */
+    .cai-mobile-widget {
       width: 100%;
       max-width: 295px;
       margin: 0 auto;
-      border-radius: 28px;
-      box-shadow: 0 25px 55px -12px rgba(0, 0, 0, 0.18), 0 8px 20px -6px rgba(0, 0, 0, 0.08);
-      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 26px;
+      box-shadow: 0 16px 38px -10px rgba(0, 0, 0, 0.12), 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+      border: 1px solid #e5e7eb;
       background-color: #ffffff;
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
       display: block;
     }
-    .intercom-widget-img:hover {
+    .cai-mobile-widget:hover {
       transform: translateY(-4px);
-      box-shadow: 0 32px 70px -15px rgba(0, 0, 0, 0.22);
+      box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.16);
     }
     
-    /* Intercom desktop dashboard frame (For 1024x481 wide images) */
-    .intercom-dashboard-window {
-      border-radius: 20px;
-      border: 1px solid rgba(0, 0, 0, 0.12);
-      box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.12), 0 8px 20px -6px rgba(0, 0, 0, 0.06);
+    /* Clean dashboard image presentation (Direct image display with subtle border & depth, NO faux browser cards) */
+    .cai-dashboard-img {
+      width: 100%;
+      max-width: 780px;
+      border-radius: 16px;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.1), 0 4px 12px -4px rgba(0, 0, 0, 0.04);
       background-color: #ffffff;
-      overflow: hidden;
+      margin: 0 auto;
+      display: block;
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
     }
-    .intercom-dashboard-window:hover {
+    .cai-dashboard-img:hover {
       transform: translateY(-3px);
-      box-shadow: 0 30px 75px -18px rgba(0, 0, 0, 0.16);
+      box-shadow: 0 22px 50px -15px rgba(0, 0, 0, 0.14);
     }
 
     /* FAQ accordion */
@@ -103,7 +109,7 @@
     }
   </style>
 </head>
-<body class="selection:bg-black selection:text-white">
+<body class="bg-white selection:bg-black selection:text-white">
 
   <!-- Top Announcement Bar -->
   <div class="w-full bg-[#111111] text-white text-[13px] py-2.5 px-6 flex items-center justify-between">
@@ -119,7 +125,7 @@
   </div>
 
   <!-- Header Navigation -->
-  <header class="sticky top-0 z-50 w-full bg-[#f4f3ec]/90 backdrop-blur-md border-b border-black/10">
+  <header class="sticky top-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-gray-100">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12 h-[76px] flex items-center justify-between">
       
       <!-- Brand Logo & Nav -->
@@ -136,49 +142,49 @@
           
           <!-- 1. Product Dropdown -->
           <div class="relative nav-item py-6">
-            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-black hover:bg-black/5 transition-colors">
+            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-black hover:bg-gray-100 transition-colors">
               Product
               <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60"></i>
             </button>
             <div class="nav-dropdown" style="width: 440px;">
               <div class="flex flex-col gap-1.5">
                 <a href="index.html#hire-cai" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0 p-2">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0 p-2">
                     <img src="assets/logo-black.png" alt="Cai" class="w-full h-full object-contain">
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">Cai AI Agent</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Autonomous support resolution & real-time intent qualification.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Autonomous support resolution & real-time intent qualification.</div>
                   </div>
                 </a>
 
                 <a href="index.html#product-journey" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="git-branch" class="w-5 h-5 text-black"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">Platform & Pipeline</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">End-to-end journey from web chat to CRM & WhatsApp handoff.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">End-to-end journey from web chat to CRM & WhatsApp handoff.</div>
                   </div>
                 </a>
 
                 <a href="pricing.html" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="inbox" class="w-5 h-5 text-black"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">Helpdesk & Team Inbox</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Shared inbox seats, Copilot for reps & SLA trigger workflows.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Shared inbox seats, Copilot for reps & SLA trigger workflows.</div>
                   </div>
                 </a>
 
                 <a href="why-choose-cai.html#reason-4" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="credit-card" class="w-5 h-5 text-black"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">In-Widget Payments</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Native Razorpay, UPI, NEFT & invoices directly in chat.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Native Razorpay, UPI, NEFT & invoices directly in chat.</div>
                   </div>
                 </a>
               </div>
@@ -187,7 +193,7 @@
 
           <!-- 2. Why Cai Dropdown -->
           <div class="relative nav-item py-6">
-            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-black hover:bg-black/5 transition-colors font-semibold text-black">
+            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-black hover:bg-gray-100 transition-colors font-semibold text-black">
               Why Cai
               <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60"></i>
             </button>
@@ -199,37 +205,37 @@
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">6 Reasons to Choose Cai</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Why fast-growing companies choose Cai over legacy helpdesks.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Why fast-growing companies choose Cai over legacy helpdesks.</div>
                   </div>
                 </a>
 
                 <a href="why-choose-cai.html#reason-1" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">Zero Hallucinations Guarantee</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Strict context grounding in verified business documentation.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Strict context grounding in verified business documentation.</div>
                   </div>
                 </a>
 
                 <a href="why-choose-cai.html#reason-4" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="smartphone" class="w-5 h-5 text-emerald-600"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">Unified WhatsApp Continuity</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">100% transcript preserved when switching from web to WhatsApp.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">100% transcript preserved when switching from web to WhatsApp.</div>
                   </div>
                 </a>
 
                 <a href="why-choose-cai.html#reason-6" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="zap" class="w-5 h-5 text-amber-600"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">5-Minute Setup & Pricing</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Outcome-based economics with a 1-line JS embed tag.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Outcome-based economics with a 1-line JS embed tag.</div>
                   </div>
                 </a>
               </div>
@@ -238,49 +244,49 @@
 
           <!-- 3. Resources Dropdown -->
           <div class="relative nav-item py-6">
-            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-black hover:bg-black/5 transition-colors">
+            <button class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:text-black hover:bg-gray-100 transition-colors">
               Resources
               <i data-lucide="chevron-down" class="w-3.5 h-3.5 opacity-60"></i>
             </button>
             <div class="nav-dropdown" style="width: 420px;">
               <div class="flex flex-col gap-1.5">
                 <a href="blog.html" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="newspaper" class="w-5 h-5 text-black"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">The Cai Blog</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Stories, product updates & AI customer service insights.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Stories, product updates & AI customer service insights.</div>
                   </div>
                 </a>
 
                 <a href="docs.html" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="book-open" class="w-5 h-5 text-black"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">Documentation & Guides</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Complete onboarding manual and step-by-step tutorials.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Complete onboarding manual and step-by-step tutorials.</div>
                   </div>
                 </a>
 
                 <a href="docs.html#js-sdk-api" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="code" class="w-5 h-5 text-black"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">JavaScript SDK & API</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Widget embed code, JavaScript triggers & webhooks.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Widget embed code, JavaScript triggers & webhooks.</div>
                   </div>
                 </a>
 
                 <a href="index.html#faq" class="nav-dropdown-link">
-                  <div class="w-10 h-10 rounded-xl bg-[#f4f3ec] border border-black/10 flex items-center justify-center text-black shrink-0">
+                  <div class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200/80 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="help-circle" class="w-5 h-5 text-black"></i>
                   </div>
                   <div>
                     <div class="text-[14px] font-semibold text-black">Help Center & FAQs</div>
-                    <div class="text-[12.5px] text-black/60 mt-0.5 leading-snug">Answers to common onboarding and technical questions.</div>
+                    <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Answers to common onboarding and technical questions.</div>
                   </div>
                 </a>
               </div>
@@ -288,7 +294,7 @@
           </div>
 
           <!-- 4. Direct Pricing Link -->
-          <a href="pricing.html" class="px-3 py-1.5 rounded-lg hover:text-black hover:bg-black/5 transition-colors">
+          <a href="pricing.html" class="px-3 py-1.5 rounded-lg hover:text-black hover:bg-gray-100 transition-colors">
             Pricing
           </a>
 
@@ -300,7 +306,7 @@
         <a href="app/login.php" class="hidden md:inline-block text-[14px] font-medium text-black/80 hover:text-black px-3 py-2">
           Sign in
         </a>
-        <a href="index.html#hero-interactive" class="hidden sm:inline-block text-[14px] font-medium text-black px-4 py-2 rounded-full border border-black/20 hover:border-black transition-all">
+        <a href="index.html#hero-interactive" class="hidden sm:inline-block text-[14px] font-medium text-black px-4 py-2 rounded-full border border-gray-300 hover:border-black transition-all">
           View demo
         </a>
         <a href="index.html#hire-cai" class="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-[14px] font-medium rounded-full transition-all shadow-sm">
@@ -313,7 +319,7 @@
   <!-- ========================================================
        HERO SECTION (Authentic Intercom Hero with 6-Item Numbered TOC)
        ======================================================== -->
-  <section class="pt-16 pb-20 lg:pt-24 lg:pb-28 border-b border-black/10">
+  <section class="pt-16 pb-20 lg:pt-24 lg:pb-28 border-b border-gray-100 bg-white">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
       
       <!-- Eyebrow with Intercom Square Dot -->
@@ -327,7 +333,7 @@
         <h1 class="text-[3.25rem] sm:text-[4.5rem] lg:text-[5.75rem] font-normal tracking-[-0.14rem] leading-[0.93] text-black">
           6 reasons Cai <span class="text-black/40">leads customer service</span>
         </h1>
-        <p class="text-[1.25rem] sm:text-[1.45rem] lg:text-[1.65rem] text-black/75 font-normal leading-relaxed mt-7 max-w-[920px]">
+        <p class="text-[1.25rem] sm:text-[1.45rem] lg:text-[1.65rem] text-gray-700 font-normal leading-relaxed mt-7 max-w-[920px]">
           Most customer service platforms are a legacy ticketing inbox with a generic AI chatbot bolted on. Cai was built natively as an autonomous conversation runtime: resolving queries, qualifying buyers, continuing to WhatsApp, and collecting payments.
         </p>
       </div>
@@ -337,73 +343,65 @@
         <a href="index.html#hire-cai" class="px-7 py-3.5 bg-black hover:bg-neutral-800 text-white font-medium rounded-full text-[15px] transition-all">
           Start free trial
         </a>
-        <a href="index.html#hero-interactive" class="px-7 py-3.5 bg-[#e7e3db] hover:bg-[#dedbd6] text-black font-medium rounded-full text-[15px] transition-all">
+        <a href="index.html#hero-interactive" class="px-7 py-3.5 bg-gray-100 hover:bg-gray-200 text-black font-medium rounded-full text-[15px] transition-all border border-gray-200">
           View demo
         </a>
       </div>
 
       <!-- Intercom 6-Item Numbered Navigation Grid -->
-      <div class="mt-20 pt-12 border-t border-black/10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+      <div class="mt-20 pt-12 border-t border-gray-100 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
         
         <!-- Left Column: The 6 Numbered Links -->
         <div class="lg:col-span-5">
           <ol class="flex flex-col">
-            <li class="border-t border-black/15">
+            <li class="border-t border-gray-200">
               <a href="#reason-1" class="group flex items-center gap-4 py-4 transition-colors">
-                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-[#0007cb] text-white">1</span>
+                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-[#0007cb] text-white rounded">1</span>
                 <span class="text-[1.125rem] font-medium tracking-tight text-black group-hover:underline">A native integration with Cai AI Agent</span>
               </a>
             </li>
-            <li class="border-t border-black/15">
+            <li class="border-t border-gray-200">
               <a href="#reason-2" class="group flex items-center gap-4 py-4 transition-colors">
-                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-[#dedbd6] text-black group-hover:bg-black group-hover:text-white transition-colors">2</span>
-                <span class="text-[1.125rem] font-medium tracking-tight text-black/70 group-hover:text-black transition-colors">A fully-featured helpdesk</span>
+                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-gray-100 text-gray-700 group-hover:bg-black group-hover:text-white transition-colors rounded">2</span>
+                <span class="text-[1.125rem] font-medium tracking-tight text-gray-700 group-hover:text-black transition-colors">A fully-featured helpdesk</span>
               </a>
             </li>
-            <li class="border-t border-black/15">
+            <li class="border-t border-gray-200">
               <a href="#reason-3" class="group flex items-center gap-4 py-4 transition-colors">
-                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-[#dedbd6] text-black group-hover:bg-black group-hover:text-white transition-colors">3</span>
-                <span class="text-[1.125rem] font-medium tracking-tight text-black/70 group-hover:text-black transition-colors">A seamless, self-improving system</span>
+                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-gray-100 text-gray-700 group-hover:bg-black group-hover:text-white transition-colors rounded">3</span>
+                <span class="text-[1.125rem] font-medium tracking-tight text-gray-700 group-hover:text-black transition-colors">A seamless, self-improving system</span>
               </a>
             </li>
-            <li class="border-t border-black/15">
+            <li class="border-t border-gray-200">
               <a href="#reason-4" class="group flex items-center gap-4 py-4 transition-colors">
-                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-[#dedbd6] text-black group-hover:bg-black group-hover:text-white transition-colors">4</span>
-                <span class="text-[1.125rem] font-medium tracking-tight text-black/70 group-hover:text-black transition-colors">Support across every channel</span>
+                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-gray-100 text-gray-700 group-hover:bg-black group-hover:text-white transition-colors rounded">4</span>
+                <span class="text-[1.125rem] font-medium tracking-tight text-gray-700 group-hover:text-black transition-colors">Support across every channel</span>
               </a>
             </li>
-            <li class="border-t border-black/15">
+            <li class="border-t border-gray-200">
               <a href="#reason-5" class="group flex items-center gap-4 py-4 transition-colors">
-                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-[#dedbd6] text-black group-hover:bg-black group-hover:text-white transition-colors">5</span>
-                <span class="text-[1.125rem] font-medium tracking-tight text-black/70 group-hover:text-black transition-colors">Outbound support, built in</span>
+                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-gray-100 text-gray-700 group-hover:bg-black group-hover:text-white transition-colors rounded">5</span>
+                <span class="text-[1.125rem] font-medium tracking-tight text-gray-700 group-hover:text-black transition-colors">Outbound support, built in</span>
               </a>
             </li>
-            <li class="border-t border-b border-black/15">
+            <li class="border-t border-b border-gray-200">
               <a href="#reason-6" class="group flex items-center gap-4 py-4 transition-colors">
-                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-[#dedbd6] text-black group-hover:bg-black group-hover:text-white transition-colors">6</span>
-                <span class="text-[1.125rem] font-medium tracking-tight text-black/70 group-hover:text-black transition-colors">Transparent, outcome-based pricing</span>
+                <span class="flex size-7 shrink-0 items-center justify-center font-semibold text-[13px] bg-gray-100 text-gray-700 group-hover:bg-black group-hover:text-white transition-colors rounded">6</span>
+                <span class="text-[1.125rem] font-medium tracking-tight text-gray-700 group-hover:text-black transition-colors">Transparent, outcome-based pricing</span>
               </a>
             </li>
           </ol>
         </div>
 
-        <!-- Right Column: Clean Compact Mobile Widgets Side-by-Side (Never Stretched!) -->
-        <div class="lg:col-span-7 flex flex-col sm:flex-row items-center justify-center gap-6 lg:gap-8">
-          <div class="w-full sm:w-[290px] shrink-0 text-center">
-            <img 
-              src="assets/why-choose/cai-widget-home.png" 
-              alt="Cai Widget Home Interface" 
-              class="intercom-widget-img"
-            >
-            <div class="text-[12.5px] text-black/60 font-medium mt-3">Widget Home: Action Cards & Gandhi Jayanti Banner</div>
-          </div>
-          <div class="w-full sm:w-[290px] shrink-0 text-center">
-            <img 
-              src="assets/why-choose/cai-live-chat.png" 
-              alt="Cai Live Multi-Modal Chat Conversation" 
-              class="intercom-widget-img"
-            >
-            <div class="text-[12.5px] text-black/60 font-medium mt-3">Active Chat: Voice, Emoji & Attachment Input</div>
+        <!-- Right Column: Flagship Conversation Pipeline Overview (Direct clean image, NO faux browser card) -->
+        <div class="lg:col-span-7">
+          <img 
+            src="assets/journey/pipeline-overview.png" 
+            alt="Cai End-to-End Conversation Pipeline Overview" 
+            class="cai-dashboard-img"
+          >
+          <div class="text-[12.5px] text-gray-500 font-medium text-center mt-3">
+            Unified Conversation Pipeline: Website Visitor &rarr; Autonomous Intent Qualification &rarr; Helpdesk &rarr; WhatsApp Handoff
           </div>
         </div>
 
@@ -414,9 +412,9 @@
 
   <!-- ========================================================
        REASON 1: A NATIVE INTEGRATION WITH CAI AI AGENT
-       (Fixed: No giant stretched image! Showcases dashboard + compact mobile widget!)
+       (Showcasing Two Unique Mobile Screens: Prompt Runtime + Live Natural Chat)
        ======================================================== -->
-  <section id="reason-1" class="py-24 lg:py-32 border-b border-black/10">
+  <section id="reason-1" class="py-24 lg:py-32 border-b border-gray-100 bg-white">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12 space-y-16">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
@@ -427,7 +425,7 @@
             1. A native integration with Cai AI Agent
           </h2>
           
-          <div class="text-[1.125rem] text-black/80 font-normal leading-relaxed space-y-4">
+          <div class="text-[1.125rem] text-gray-700 font-normal leading-relaxed space-y-4">
             <p>
               CuboidPilot is the only helpdesk engineered with a natively integrated AI conversation agent.
             </p>
@@ -436,42 +434,42 @@
             </p>
           </div>
 
-          <div class="pt-4 border-t border-black/10 space-y-3">
-            <div class="text-[15px] font-semibold text-black flex items-center gap-2">
-              <span class="w-1.5 h-1.5 bg-[#0007cb] inline-block"></span>
+          <div class="pt-4 border-t border-gray-100 space-y-3">
+            <div class="text-[15px] font-semibold text-black flex items-center gap-2.5">
+              <span class="w-1.5 h-1.5 bg-[#0007cb] inline-block rounded-full"></span>
               <span>Zero hallucinations guaranteed via verified context retrieval</span>
             </div>
-            <div class="text-[15px] font-semibold text-black flex items-center gap-2">
-              <span class="w-1.5 h-1.5 bg-[#0007cb] inline-block"></span>
+            <div class="text-[15px] font-semibold text-black flex items-center gap-2.5">
+              <span class="w-1.5 h-1.5 bg-[#0007cb] inline-block rounded-full"></span>
               <span>Instant response time under 2 seconds 24/7/365</span>
             </div>
-            <div class="text-[15px] font-semibold text-black flex items-center gap-2">
-              <span class="w-1.5 h-1.5 bg-[#0007cb] inline-block"></span>
+            <div class="text-[15px] font-semibold text-black flex items-center gap-2.5">
+              <span class="w-1.5 h-1.5 bg-[#0007cb] inline-block rounded-full"></span>
               <span>Automatic sentiment and commercial buying intent qualification</span>
             </div>
           </div>
         </div>
 
-        <!-- Visual: Two Compact Mobile Screens Side-by-Side at True Natural Size (NOT STRETCHED!) -->
+        <!-- Visual: Two Compact Mobile Screens Side-by-Side (Clean direct images, NO wrapper cards) -->
         <div class="lg:col-span-7 flex flex-col sm:flex-row items-center justify-center gap-6 lg:gap-8">
           <div class="w-full sm:w-[290px] shrink-0 text-center">
             <img 
               src="assets/why-choose/cai-experience-runtime.png" 
-              alt="Experience Cai in Production" 
-              class="intercom-widget-img"
+              alt="Experience Cai in Production Interface" 
+              class="cai-mobile-widget"
             >
-            <div class="text-[12.5px] text-black/60 font-medium mt-3">
+            <div class="text-[12.5px] text-gray-500 font-medium mt-3">
               Production Runtime & Intent Prompt
             </div>
           </div>
           <div class="w-full sm:w-[290px] shrink-0 text-center">
             <img 
               src="assets/why-choose/cai-live-chat.png" 
-              alt="Cai Live Multi-Modal Chat" 
-              class="intercom-widget-img"
+              alt="Cai Live Natural Multi-Modal Chat" 
+              class="cai-mobile-widget"
             >
-            <div class="text-[12.5px] text-black/60 font-medium mt-3">
-              Direct Contact Capture & Natural Chat
+            <div class="text-[12.5px] text-gray-500 font-medium mt-3">
+              Live Visitor Conversation & Intent Extraction
             </div>
           </div>
         </div>
@@ -479,16 +477,16 @@
       </div>
 
       <!-- Signature Intercom Big Quote Banner -->
-      <div class="pt-16 border-t border-black/10">
+      <div class="pt-16 border-t border-gray-100">
         <div class="max-w-[1050px]">
           <p class="text-[1.75rem] sm:text-[2.25rem] lg:text-[2.75rem] font-normal leading-tight tracking-tight text-black">
             "In the first month of deploying Cai, we'd already saved <span class="bg-[#ff5600] text-white px-2 py-0.5">over 1,200 hours</span> of our customer support team's time."
           </p>
           <div class="flex items-center gap-3.5 mt-8">
-            <img src="assets/avatar-ayush.png" alt="Ayushmann" class="w-11 h-11 rounded-full object-cover border border-black/20">
+            <img src="assets/avatar-ayush.png" alt="Ayushmann" class="w-11 h-11 rounded-full object-cover border border-gray-300">
             <div>
               <div class="text-[15px] font-bold text-black">Ayushmann</div>
-              <div class="text-[13px] text-black/60">Founder & CEO, CuboidSoft</div>
+              <div class="text-[13px] text-gray-500">Founder & CEO, CuboidSoft</div>
             </div>
           </div>
         </div>
@@ -499,9 +497,9 @@
 
   <!-- ========================================================
        REASON 2: A FULLY-FEATURED HELPDESK
-       (Showcasing Real Enterprise Dashboard Windows!)
+       (Showcasing Real Human Team Inbox - 1 Single Unique Image, NO Duplicates, NO Browser Cards)
        ======================================================== -->
-  <section id="reason-2" class="py-24 lg:py-32 border-b border-black/10">
+  <section id="reason-2" class="py-24 lg:py-32 border-b border-gray-100 bg-white">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12 space-y-16">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
@@ -511,81 +509,46 @@
             2. A fully-featured helpdesk
           </h2>
 
-          <div class="text-[1.125rem] text-black/80 font-normal leading-relaxed space-y-4">
+          <div class="text-[1.125rem] text-gray-700 font-normal leading-relaxed space-y-4">
             <p>
               CuboidPilot has everything your human team needs to resolve queries faster and keep improving: a natively integrated AI agent, shared team inbox, AI-powered ticketing, and Copilot for reps.
             </p>
           </div>
 
           <div class="space-y-6 pt-2">
-            <div class="border-t border-black/10 pt-4">
+            <div class="border-t border-gray-100 pt-4">
               <h3 class="text-[1.25rem] font-bold text-black tracking-tight">Copilot for Agents</h3>
-              <p class="text-[15px] text-black/70 mt-1 leading-relaxed">
+              <p class="text-[15px] text-gray-600 mt-1 leading-relaxed">
                 Give every human agent an AI assistant that pulls context from past conversations, surfaces instant answers from your knowledge base, and drafts replies. In testing, agents closed 31% more conversations daily.
               </p>
             </div>
 
-            <div class="border-t border-black/10 pt-4">
+            <div class="border-t border-gray-100 pt-4">
               <h3 class="text-[1.25rem] font-bold text-black tracking-tight">AI-Enhanced Ticketing & Lead Scoring</h3>
-              <p class="text-[15px] text-black/70 mt-1 leading-relaxed">
+              <p class="text-[15px] text-gray-600 mt-1 leading-relaxed">
                 Convert any conversation into a prioritized ticket with one click, automatically categorized, scored for buying intent, and routed to the right team with full background.
               </p>
             </div>
 
-            <div class="border-t border-black/10 pt-4">
+            <div class="border-t border-gray-100 pt-4">
               <h3 class="text-[1.25rem] font-bold text-black tracking-tight">No-Code Automations</h3>
-              <p class="text-[15px] text-black/70 mt-1 leading-relaxed">
+              <p class="text-[15px] text-gray-600 mt-1 leading-relaxed">
                 Build powerful automations to route conversations, manage SLAs, and configure escalation triggers without engineering support.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Dashboard Image in Authentic Browser Window -->
-        <div class="lg:col-span-7 space-y-8">
-          
-          <!-- Dashboard Window 1: Pipeline Overview -->
-          <div class="intercom-dashboard-window">
-            <div class="h-10 bg-[#efeee9] border-b border-black/10 px-4 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-              </div>
-              <div class="text-[11.5px] font-mono text-black/50 tracking-tight">cuboidpilot.com/dashboard/pipeline</div>
-              <div class="w-8"></div>
-            </div>
-            <img 
-              src="assets/journey/pipeline-overview.png" 
-              alt="Cai Complete Pipeline Architecture Dashboard" 
-              class="w-full object-cover block"
-            >
+        <!-- Helpdesk Team Inbox Dashboard (Direct image, NO browser frame, NO card wrapper, NO duplicate!) -->
+        <div class="lg:col-span-7">
+          <img 
+            src="assets/journey/step-06-human-team.png" 
+            alt="CuboidPilot Shared Helpdesk Team Inbox" 
+            class="cai-dashboard-img"
+          >
+          <div class="text-[12.5px] text-gray-500 font-medium text-center mt-3">
+            Shared Team Helpdesk: Multi-seat inbox, conversation triage, agent assignment & Copilot replies
           </div>
-          <div class="text-[13px] text-black/60 font-medium text-center">
-            Complete Conversation Journey: Website Visitor &rarr; Intent Scoring &rarr; WhatsApp Handoff &rarr; Closed Revenue
-          </div>
-
-          <!-- Dashboard Window 2: Lead Intent Scored -->
-          <div class="intercom-dashboard-window">
-            <div class="h-10 bg-[#efeee9] border-b border-black/10 px-4 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-              </div>
-              <div class="text-[11.5px] font-mono text-black/50 tracking-tight">cuboidpilot.com/dashboard/leads</div>
-              <div class="w-8"></div>
-            </div>
-            <img 
-              src="assets/journey/step-04-lead-captured.png" 
-              alt="High-Intent Lead Captured Dashboard" 
-              class="w-full object-cover block"
-            >
-          </div>
-          <div class="text-[13px] text-black/60 font-medium text-center">
-            Automated commercial buyer intent scoring & verified customer data profile
-          </div>
-
         </div>
 
       </div>
@@ -595,9 +558,9 @@
 
   <!-- ========================================================
        REASON 3: A SEAMLESS, SELF-IMPROVING SYSTEM
-       (Grounded Reasoning Engine Dashboard Window)
+       (Grounded Reasoning Architecture - Direct Clean Image)
        ======================================================== -->
-  <section id="reason-3" class="py-24 lg:py-32 border-b border-black/10">
+  <section id="reason-3" class="py-24 lg:py-32 border-b border-gray-100 bg-white">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
@@ -608,7 +571,7 @@
             3. A seamless, self-improving system
           </h2>
 
-          <div class="text-[1.125rem] text-black/80 font-normal leading-relaxed space-y-4">
+          <div class="text-[1.125rem] text-gray-700 font-normal leading-relaxed space-y-4">
             <p>
               Cai and CuboidPilot are built together and run in one system, so you get 100% coverage of every conversation across AI and your team, with zero context silos.
             </p>
@@ -618,36 +581,25 @@
           </div>
 
           <div class="grid grid-cols-2 gap-5 pt-4">
-            <div class="p-5 bg-white border border-black/10 rounded-xl">
+            <div class="p-6 bg-gray-50 border border-gray-200/80 rounded-2xl">
               <div class="text-[2.25rem] font-bold text-black tracking-tight">99.4%</div>
-              <div class="text-[13px] text-black/60 font-medium mt-1">Adherence to verified knowledge guidelines</div>
+              <div class="text-[13px] text-gray-500 font-medium mt-1">Adherence to verified knowledge guidelines</div>
             </div>
-            <div class="p-5 bg-white border border-black/10 rounded-xl">
+            <div class="p-6 bg-gray-50 border border-gray-200/80 rounded-2xl">
               <div class="text-[2.25rem] font-bold text-black tracking-tight">&lt; 30s</div>
-              <div class="text-[13px] text-black/60 font-medium mt-1">Propagation time for new SuperAdmin knowledge</div>
+              <div class="text-[13px] text-gray-500 font-medium mt-1">Propagation time for new SuperAdmin knowledge</div>
             </div>
           </div>
         </div>
 
-        <!-- Dashboard Image: Grounded Reasoning Architecture -->
+        <!-- AI Multi-Step Grounded Reasoning Engine (Direct clean image, NO faux browser window) -->
         <div class="lg:col-span-7">
-          <div class="intercom-dashboard-window">
-            <div class="h-10 bg-[#efeee9] border-b border-black/10 px-4 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-              </div>
-              <div class="text-[11.5px] font-mono text-black/50 tracking-tight">cuboidpilot.com/engine/reasoning</div>
-              <div class="w-8"></div>
-            </div>
-            <img 
-              src="assets/journey/step-03-cai-reasoning.png" 
-              alt="Cai Multi-Step Grounded Reasoning Engine" 
-              class="w-full object-cover block"
-            >
-          </div>
-          <div class="text-[13px] text-black/60 font-medium mt-3 text-center">
+          <img 
+            src="assets/journey/step-03-cai-reasoning.png" 
+            alt="Cai Multi-Step Grounded Reasoning Architecture" 
+            class="cai-dashboard-img"
+          >
+          <div class="text-[12.5px] text-gray-500 font-medium text-center mt-3">
             Multi-step reasoning: Intent extraction &rarr; Business grounding &rarr; Policy check &rarr; Action execution
           </div>
         </div>
@@ -659,9 +611,9 @@
 
   <!-- ========================================================
        REASON 4: SUPPORT ACROSS EVERY CHANNEL
-       (WhatsApp Dashboard + In-Widget Payment Screen)
+       (WhatsApp Continuity Dashboard + In-Widget Payment Screen - Clean Direct Presentation)
        ======================================================== -->
-  <section id="reason-4" class="py-24 lg:py-32 border-b border-black/10">
+  <section id="reason-4" class="py-24 lg:py-32 border-b border-gray-100 bg-white">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12 space-y-16">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
@@ -671,7 +623,7 @@
             4. Support across every channel
           </h2>
 
-          <div class="text-[1.125rem] text-black/80 font-normal leading-relaxed space-y-4">
+          <div class="text-[1.125rem] text-gray-700 font-normal leading-relaxed space-y-4">
             <p>
               Bring every conversation across web chat, WhatsApp, email, and social messaging into one unified inbox, so your team works from one place.
             </p>
@@ -681,53 +633,44 @@
           </div>
 
           <div class="space-y-4 pt-2">
-            <div class="border-t border-black/10 pt-4">
+            <div class="border-t border-gray-100 pt-4">
               <h3 class="text-[1.15rem] font-bold text-black">In-Widget Razorpay & UPI Payments</h3>
-              <p class="text-[15px] text-black/70 mt-1 leading-relaxed">
+              <p class="text-[15px] text-gray-600 mt-1 leading-relaxed">
                 Customers can select "Make a payment", choose Razorpay, UPI, or invoice payment, and complete the transaction without leaving the chat.
               </p>
             </div>
-            <div class="border-t border-black/10 pt-4">
+            <div class="border-t border-gray-100 pt-4">
               <h3 class="text-[1.15rem] font-bold text-black">Native WhatsApp Handoff</h3>
-              <p class="text-[15px] text-black/70 mt-1 leading-relaxed">
+              <p class="text-[15px] text-gray-600 mt-1 leading-relaxed">
                 Seamlessly transfer prospects from web widget to official WhatsApp, carrying over the full question history and qualified lead score.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Visuals: WhatsApp Dashboard + Compact Payment Widget -->
-        <div class="lg:col-span-7 space-y-8">
+        <!-- Visuals: WhatsApp Dashboard + Compact Payment Screen (Both direct images, NO cards) -->
+        <div class="lg:col-span-7 space-y-10">
           
-          <!-- WhatsApp Dashboard Window -->
-          <div class="intercom-dashboard-window">
-            <div class="h-10 bg-[#efeee9] border-b border-black/10 px-4 flex items-center justify-between">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
-              </div>
-              <div class="text-[11.5px] font-mono text-black/50 tracking-tight">cuboidpilot.com/integrations/whatsapp</div>
-              <div class="w-8"></div>
-            </div>
+          <!-- WhatsApp Continuity Dashboard Image -->
+          <div>
             <img 
               src="assets/journey/step-05-whatsapp.png" 
-              alt="Continue on WhatsApp with full history" 
-              class="w-full object-cover block"
+              alt="Continue on WhatsApp with full conversation history" 
+              class="cai-dashboard-img"
             >
-          </div>
-          <div class="text-[13px] text-black/60 font-medium text-center">
-            Unified WhatsApp Handoff: Full chat transcript & buyer intent preserved
+            <div class="text-[12.5px] text-gray-500 font-medium text-center mt-3">
+              Unified WhatsApp Continuity: Full conversation transcript & lead score preserved automatically
+            </div>
           </div>
 
-          <!-- Compact Payment Screen (Natural size, never stretched!) -->
+          <!-- In-Widget Payment Options (Natural mobile presentation) -->
           <div class="text-center pt-2">
             <img 
               src="assets/why-choose/cai-payment-options.png" 
               alt="Make a payment inside Cai Widget" 
-              class="intercom-widget-img"
+              class="cai-mobile-widget"
             >
-            <div class="text-[12.5px] text-black/60 font-medium mt-3">
+            <div class="text-[12.5px] text-gray-500 font-medium text-center mt-3">
               In-Widget Razorpay, UPI & Bank Transfer Checkout
             </div>
           </div>
@@ -741,9 +684,9 @@
 
   <!-- ========================================================
        REASON 5: OUTBOUND SUPPORT, BUILT IN
-       (Gandhi Jayanti Event Banner & Preferences Dropdown)
+       (Gandhi Jayanti Event Banner & Preferences Dropdown - Unique Visuals)
        ======================================================== -->
-  <section id="reason-5" class="py-24 lg:py-32 border-b border-black/10">
+  <section id="reason-5" class="py-24 lg:py-32 border-b border-gray-100 bg-white">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
@@ -754,7 +697,7 @@
             5. Outbound support, built in
           </h2>
 
-          <div class="text-[1.125rem] text-black/80 font-normal leading-relaxed space-y-4">
+          <div class="text-[1.125rem] text-gray-700 font-normal leading-relaxed space-y-4">
             <p>
               CuboidPilot helps you get ahead of issues before they become support volume, with tools to onboard, educate, and notify customers proactively.
             </p>
@@ -764,39 +707,43 @@
           </div>
 
           <div class="space-y-4 pt-2">
-            <div class="border-t border-black/10 pt-4">
+            <div class="border-t border-gray-100 pt-4">
               <h3 class="text-[1.15rem] font-bold text-black">Special Event Cards & News Broadcasts</h3>
-              <p class="text-[15px] text-black/70 mt-1 leading-relaxed">
+              <p class="text-[15px] text-gray-600 mt-1 leading-relaxed">
                 Broadcast announcements, holiday greetings, and release updates directly into the widget home feed from your SuperAdmin portal.
               </p>
             </div>
-            <div class="border-t border-black/10 pt-4">
+            <div class="border-t border-gray-100 pt-4">
               <h3 class="text-[1.15rem] font-bold text-black">Direct Appointment Booking</h3>
-              <p class="text-[15px] text-black/70 mt-1 leading-relaxed">
+              <p class="text-[15px] text-gray-600 mt-1 leading-relaxed">
                 Allow prospects to request meetings and book appointments directly with your team without friction.
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Images: Two Compact Floating Widgets Side-by-Side (Natural dimensions) -->
+        <!-- Images: Two Unique Mobile Screens (Widget Home with Event Banner + Preferences Menu) -->
         <div class="lg:col-span-7 flex flex-col sm:flex-row items-center justify-center gap-6 lg:gap-8">
           <div class="w-full sm:w-[290px] shrink-0 text-center">
             <img 
               src="assets/why-choose/cai-widget-home.png" 
               alt="Cai Widget Home Feed with Special Event Banner" 
-              class="intercom-widget-img"
+              class="cai-mobile-widget"
             >
-            <div class="text-[12.5px] text-black/60 font-medium mt-3">Widget Home: Action Cards & Gandhi Jayanti News</div>
+            <div class="text-[12.5px] text-gray-500 font-medium mt-3">
+              Widget Home: Action Cards & Gandhi Jayanti News
+            </div>
           </div>
 
           <div class="w-full sm:w-[290px] shrink-0 text-center">
             <img 
               src="assets/why-choose/cai-widget-menu.png" 
               alt="Cai Widget 3-Dot Preferences Dropdown" 
-              class="intercom-widget-img"
+              class="cai-mobile-widget"
             >
-            <div class="text-[12.5px] text-black/60 font-medium mt-3">3-Dot Menu: Dark Mode, Mute Sounds & WhatsApp</div>
+            <div class="text-[12.5px] text-gray-500 font-medium mt-3">
+              Preferences Menu: Dark Theme, Audio & WhatsApp
+            </div>
           </div>
         </div>
 
@@ -808,87 +755,87 @@
   <!-- ========================================================
        REASON 6: TRANSPARENT, OUTCOME-BASED PRICING
        ======================================================== -->
-  <section id="reason-6" class="py-24 lg:py-32 border-b border-black/10">
+  <section id="reason-6" class="py-24 lg:py-32 border-b border-gray-100 bg-white">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12 space-y-14">
       
       <div class="max-w-[900px] space-y-5">
         <h2 class="text-[2.5rem] sm:text-[3.25rem] lg:text-[3.75rem] font-normal tracking-[-0.1rem] leading-[0.98] text-black">
           6. Transparent, outcome-based pricing
         </h2>
-        <p class="text-[1.25rem] text-black/80 font-normal leading-relaxed">
+        <p class="text-[1.25rem] text-gray-700 font-normal leading-relaxed">
           CuboidPilot keeps pricing simple: straightforward plans for the human helpdesk, plus outcome-based pricing for Cai, so you only pay for AI when it delivers verified value.
         </p>
       </div>
 
-      <!-- Intercom Style Comparison Grid -->
-      <div class="overflow-x-auto rounded-2xl border border-black/15 bg-white">
+      <!-- Intercom Style Comparison Grid with Clean White Aesthetic -->
+      <div class="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
         <table class="w-full text-left border-collapse min-w-[760px]">
           <thead>
-            <tr class="border-b border-black/15 bg-[#faf9f6]">
+            <tr class="border-b border-gray-200 bg-gray-50/80">
               <th class="py-5 px-8 text-[14px] font-bold text-black uppercase tracking-wider w-[34%]">Capability</th>
-              <th class="py-5 px-8 text-[14px] font-bold text-black bg-[#f4f3ec] border-x border-black/15 w-[33%]">
+              <th class="py-5 px-8 text-[14px] font-bold text-[#0007cb] bg-blue-50/50 border-x border-gray-200 w-[33%]">
                 <div class="flex items-center gap-2">
                   <img src="assets/logo-black.png" alt="CuboidPilot" class="w-4 h-4 object-contain">
                   <span>CuboidPilot + Cai</span>
                 </div>
               </th>
-              <th class="py-5 px-8 text-[14px] font-bold text-black/50 w-[33%]">Legacy Helpdesks</th>
+              <th class="py-5 px-8 text-[14px] font-bold text-gray-400 w-[33%]">Legacy Helpdesks</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-black/10 text-[15px]">
+          <tbody class="divide-y divide-gray-100 text-[15px]">
             <tr>
               <td class="py-5 px-8 font-semibold text-black">AI Architecture</td>
-              <td class="py-5 px-8 font-semibold text-black bg-[#f4f3ec]/60 border-x border-black/15">
+              <td class="py-5 px-8 font-semibold text-black bg-blue-50/20 border-x border-gray-200">
                 <span class="inline-flex items-center gap-2 text-[#0007cb]">
                   <i data-lucide="check" class="w-4 h-4"></i> Natively integrated conversation runtime
                 </span>
               </td>
-              <td class="py-5 px-8 text-black/60">Third-party chatbots bolted onto legacy ticketing queues</td>
+              <td class="py-5 px-8 text-gray-500">Third-party chatbots bolted onto legacy ticketing queues</td>
             </tr>
             <tr>
               <td class="py-5 px-8 font-semibold text-black">WhatsApp Continuity</td>
-              <td class="py-5 px-8 font-semibold text-black bg-[#f4f3ec]/60 border-x border-black/15">
+              <td class="py-5 px-8 font-semibold text-black bg-blue-50/20 border-x border-gray-200">
                 <span class="inline-flex items-center gap-2 text-[#0007cb]">
                   <i data-lucide="check" class="w-4 h-4"></i> 1-Click handoff with full transcript preserved
                 </span>
               </td>
-              <td class="py-5 px-8 text-black/60">Requires separate expensive BSP connectors and add-ons</td>
+              <td class="py-5 px-8 text-gray-500">Requires separate expensive BSP connectors and add-ons</td>
             </tr>
             <tr>
               <td class="py-5 px-8 font-semibold text-black">In-Widget Payments</td>
-              <td class="py-5 px-8 font-semibold text-black bg-[#f4f3ec]/60 border-x border-black/15">
+              <td class="py-5 px-8 font-semibold text-black bg-blue-50/20 border-x border-gray-200">
                 <span class="inline-flex items-center gap-2 text-[#0007cb]">
                   <i data-lucide="check" class="w-4 h-4"></i> Native Razorpay, UPI, NEFT & invoices in chat
                 </span>
               </td>
-              <td class="py-5 px-8 text-black/60">Redirects customers out of chat to external portals</td>
+              <td class="py-5 px-8 text-gray-500">Redirects customers out of chat to external portals</td>
             </tr>
             <tr>
               <td class="py-5 px-8 font-semibold text-black">Hallucination Prevention</td>
-              <td class="py-5 px-8 font-semibold text-black bg-[#f4f3ec]/60 border-x border-black/15">
+              <td class="py-5 px-8 font-semibold text-black bg-blue-50/20 border-x border-gray-200">
                 <span class="inline-flex items-center gap-2 text-[#0007cb]">
                   <i data-lucide="check" class="w-4 h-4"></i> Strict verified business context grounding
                 </span>
               </td>
-              <td class="py-5 px-8 text-black/60">High risk of hallucinated policies and pricing</td>
+              <td class="py-5 px-8 text-gray-500">High risk of hallucinated policies and pricing</td>
             </tr>
             <tr>
               <td class="py-5 px-8 font-semibold text-black">Lead Qualification</td>
-              <td class="py-5 px-8 font-semibold text-black bg-[#f4f3ec]/60 border-x border-black/15">
+              <td class="py-5 px-8 font-semibold text-black bg-blue-50/20 border-x border-gray-200">
                 <span class="inline-flex items-center gap-2 text-[#0007cb]">
                   <i data-lucide="check" class="w-4 h-4"></i> Automated commercial intent scoring & CRM sync
                 </span>
               </td>
-              <td class="py-5 px-8 text-black/60">Manual tagging or costly enterprise add-on modules</td>
+              <td class="py-5 px-8 text-gray-500">Manual tagging or costly enterprise add-on modules</td>
             </tr>
             <tr>
               <td class="py-5 px-8 font-semibold text-black">Setup & Deployment</td>
-              <td class="py-5 px-8 font-semibold text-black bg-[#f4f3ec]/60 border-x border-black/15">
+              <td class="py-5 px-8 font-semibold text-black bg-blue-50/20 border-x border-gray-200">
                 <span class="inline-flex items-center gap-2 text-[#0007cb]">
                   <i data-lucide="check" class="w-4 h-4"></i> 5 minutes (single copy-paste script tag)
                 </span>
               </td>
-              <td class="py-5 px-8 text-black/60">Weeks of consultant configuration and IT onboarding</td>
+              <td class="py-5 px-8 text-gray-500">Weeks of consultant configuration and IT onboarding</td>
             </tr>
           </tbody>
         </table>
@@ -900,54 +847,54 @@
   <!-- ========================================================
        FAQS SECTION
        ======================================================== -->
-  <section id="faqs" class="py-24 lg:py-32 border-b border-black/10">
+  <section id="faqs" class="py-24 lg:py-32 border-b border-gray-100 bg-white">
     <div class="max-w-[960px] mx-auto px-6 lg:px-12 space-y-12">
       
       <div class="text-center space-y-3">
         <h2 class="text-[2.5rem] sm:text-[3.25rem] font-normal tracking-[-0.1rem] text-black">FAQs</h2>
-        <p class="text-[1.125rem] text-black/70 max-w-[620px] mx-auto">
+        <p class="text-[1.125rem] text-gray-600 max-w-[620px] mx-auto">
           Everything you need to know about choosing Cai and migrating from legacy helpdesks.
         </p>
       </div>
 
       <div class="space-y-4" id="faq-accordion">
         
-        <div class="faq-item border border-black/15 rounded-xl bg-white overflow-hidden active">
-          <button class="w-full py-5 px-7 text-left flex items-center justify-between gap-4 font-semibold text-[1.125rem] text-black hover:bg-neutral-50/60 transition-colors" onclick="toggleFaq(this)">
+        <div class="faq-item border border-gray-200 rounded-2xl bg-white overflow-hidden active shadow-sm transition-colors hover:border-gray-300">
+          <button class="w-full py-5 px-7 text-left flex items-center justify-between gap-4 font-semibold text-[1.125rem] text-black hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
             <span>How is Cai different from standalone AI agents that bolt onto your helpdesk?</span>
-            <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-black/50 transition-transform duration-300 shrink-0"></i>
+            <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-gray-400 transition-transform duration-300 shrink-0"></i>
           </button>
-          <div class="faq-content px-7 pb-6 text-[15.5px] text-black/75 leading-relaxed border-t border-black/10 pt-4">
+          <div class="faq-content px-7 pb-6 text-[15.5px] text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
             CuboidPilot is the only helpdesk with a natively integrated AI agent, so Cai and your human team work from the same workspace, customer data, and reporting rather than syncing across separate systems. Standalone agents bolted onto a helpdesk add integration overhead and see only partial context, whereas Cai has full context on every conversation and one place to manage AI and human support together.
           </div>
         </div>
 
-        <div class="faq-item border border-black/15 rounded-xl bg-white overflow-hidden">
-          <button class="w-full py-5 px-7 text-left flex items-center justify-between gap-4 font-semibold text-[1.125rem] text-black hover:bg-neutral-50/60 transition-colors" onclick="toggleFaq(this)">
+        <div class="faq-item border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-sm transition-colors hover:border-gray-300">
+          <button class="w-full py-5 px-7 text-left flex items-center justify-between gap-4 font-semibold text-[1.125rem] text-black hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
             <span>Which AI customer service agent is most accurate at resolving complex queries?</span>
-            <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-black/50 transition-transform duration-300 shrink-0"></i>
+            <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-gray-400 transition-transform duration-300 shrink-0"></i>
           </button>
-          <div class="faq-content px-7 pb-6 text-[15.5px] text-black/75 leading-relaxed border-t border-black/10 pt-4">
+          <div class="faq-content px-7 pb-6 text-[15.5px] text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
             Cai resolves 76% of customer queries on average, and many teams reach 85% or higher. It handles complex, multi-step questions by drawing strictly on verified business knowledge configured in your SuperAdmin portal. If an issue requires human authority, Cai gracefully transitions the user with 100% transcript continuity.
           </div>
         </div>
 
-        <div class="faq-item border border-black/15 rounded-xl bg-white overflow-hidden">
-          <button class="w-full py-5 px-7 text-left flex items-center justify-between gap-4 font-semibold text-[1.125rem] text-black hover:bg-neutral-50/60 transition-colors" onclick="toggleFaq(this)">
+        <div class="faq-item border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-sm transition-colors hover:border-gray-300">
+          <button class="w-full py-5 px-7 text-left flex items-center justify-between gap-4 font-semibold text-[1.125rem] text-black hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
             <span>Can customers make payments directly inside the chat widget?</span>
-            <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-black/50 transition-transform duration-300 shrink-0"></i>
+            <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-gray-400 transition-transform duration-300 shrink-0"></i>
           </button>
-          <div class="faq-content px-7 pb-6 text-[15.5px] text-black/75 leading-relaxed border-t border-black/10 pt-4">
+          <div class="faq-content px-7 pb-6 text-[15.5px] text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
             Yes. Cai features native in-widget integration with Razorpay, UPI, NEFT, and invoice links. Customers can select "Make a payment", choose their payment method, and complete transactions securely right in the conversation without being redirected away.
           </div>
         </div>
 
-        <div class="faq-item border border-black/15 rounded-xl bg-white overflow-hidden">
-          <button class="w-full py-5 px-7 text-left flex items-center justify-between gap-4 font-semibold text-[1.125rem] text-black hover:bg-neutral-50/60 transition-colors" onclick="toggleFaq(this)">
+        <div class="faq-item border border-gray-200 rounded-2xl bg-white overflow-hidden shadow-sm transition-colors hover:border-gray-300">
+          <button class="w-full py-5 px-7 text-left flex items-center justify-between gap-4 font-semibold text-[1.125rem] text-black hover:bg-gray-50 transition-colors" onclick="toggleFaq(this)">
             <span>Does adopting Cai create vendor lock-in?</span>
-            <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-black/50 transition-transform duration-300 shrink-0"></i>
+            <i data-lucide="chevron-down" class="faq-icon w-5 h-5 text-gray-400 transition-transform duration-300 shrink-0"></i>
           </button>
-          <div class="faq-content px-7 pb-6 text-[15.5px] text-black/75 leading-relaxed border-t border-black/10 pt-4">
+          <div class="faq-content px-7 pb-6 text-[15.5px] text-gray-600 leading-relaxed border-t border-gray-100 pt-4">
             No. Cai connects to your existing website via a single JavaScript embed tag and provides documented REST webhooks. You can export conversation histories, customer records, and lead data at any time.
           </div>
         </div>
@@ -966,7 +913,7 @@
         <h2 class="text-[3rem] sm:text-[4rem] lg:text-[4.75rem] font-normal tracking-[-0.12rem] leading-[0.96]">
           Get the best customer service today
         </h2>
-        <p class="text-[1.25rem] sm:text-[1.4rem] text-white/70 font-normal max-w-[680px] mx-auto leading-relaxed">
+        <p class="text-[1.25rem] sm:text-[1.4rem] text-gray-300 font-normal max-w-[680px] mx-auto leading-relaxed">
           Deploy in 5 minutes. Resolve 75%+ of customer inquiries with verified AI reasoning, and seamlessly route high-value buyers to WhatsApp.
         </p>
 
@@ -982,27 +929,27 @@
     </div>
   </section>
 
-  <!-- Intercom Multi-Column Footer -->
-  <footer class="bg-[#f4f3ec] border-t border-black/10 py-16">
+  <!-- Clean Multi-Column Footer with Pure White Background -->
+  <footer class="bg-white border-t border-gray-100 py-16">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-10 lg:gap-14 pb-14 border-b border-black/10">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-10 lg:gap-14 pb-14 border-b border-gray-100">
         
         <div class="col-span-2">
           <div class="flex items-center gap-2.5 mb-4">
             <img src="assets/logo-black.png" alt="CuboidPilot" class="w-6 h-6 object-contain">
             <span class="text-[18px] font-bold tracking-tight text-black">CuboidPilot</span>
           </div>
-          <p class="text-[14px] text-black/60 leading-relaxed max-w-[340px]">
+          <p class="text-[14px] text-gray-500 leading-relaxed max-w-[340px]">
             The autonomous AI conversation platform engineered for enterprise customer support, lead qualification, and WhatsApp sales continuity.
           </p>
-          <div class="text-[12.5px] text-black/40 mt-5">
+          <div class="text-[12.5px] text-gray-400 mt-5">
             &copy; 2026 CuboidPilot / CuboidSoft. All rights reserved.
           </div>
         </div>
 
         <div>
           <div class="text-[13px] font-bold uppercase tracking-wider text-black mb-4">Product</div>
-          <ul class="space-y-3 text-[14.5px] text-black/75">
+          <ul class="space-y-3 text-[14.5px] text-gray-600">
             <li><a href="why-choose-cai.html" class="font-semibold text-black">Why choose Cai</a></li>
             <li><a href="index.html#hire-cai" class="hover:text-black transition-colors">Meet Cai</a></li>
             <li><a href="index.html#product-journey" class="hover:text-black transition-colors">Platform Pipeline</a></li>
@@ -1012,7 +959,7 @@
 
         <div>
           <div class="text-[13px] font-bold uppercase tracking-wider text-black mb-4">Resources</div>
-          <ul class="space-y-3 text-[14.5px] text-black/75">
+          <ul class="space-y-3 text-[14.5px] text-gray-600">
             <li><a href="blog.html" class="hover:text-black transition-colors">The Cai Blog</a></li>
             <li><a href="docs.html" class="hover:text-black transition-colors">Documentation</a></li>
             <li><a href="docs.html#js-sdk-api" class="hover:text-black transition-colors">JavaScript SDK</a></li>
@@ -1022,7 +969,7 @@
 
         <div>
           <div class="text-[13px] font-bold uppercase tracking-wider text-black mb-4">Company</div>
-          <ul class="space-y-3 text-[14.5px] text-black/75">
+          <ul class="space-y-3 text-[14.5px] text-gray-600">
             <li><a href="blog.html?slug=meet-cai-the-ai-worker" class="hover:text-black transition-colors">About Cai</a></li>
             <li><a href="https://linkedin.com" target="_blank" rel="noopener" class="hover:text-black transition-colors">LinkedIn</a></li>
             <li><a href="https://x.com" target="_blank" rel="noopener" class="hover:text-black transition-colors">X (Twitter)</a></li>
@@ -1032,7 +979,7 @@
 
       </div>
 
-      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-black/50">
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-gray-400">
         <div>Designed following the official Intercom design system and typography standards.</div>
         <div class="flex items-center gap-6">
           <a href="privacy.html" class="hover:text-black transition-colors">Privacy Policy</a>
