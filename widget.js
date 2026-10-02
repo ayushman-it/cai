@@ -1484,39 +1484,145 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     }
 
-    /* Action Home Hero Typography & Refined Weight (media_1790885561631.png) */
-    .cp-hero-section {
-      padding: 8px 4px 10px 4px;
+    /* Action Home Hero Card with Founder Background & Frosted Glass Blur (media_1790919040211.png) */
+    .cp-hero-card {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--cp-border-bubble, #282a35);
+      background-color: #121316;
+      min-height: 98px;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       user-select: none;
+      margin-bottom: 2px;
+    }
+
+    .cp-hero-card:hover {
+      border-color: #3e414f;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+    }
+
+    .cp-hero-bg-layer {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: right 25%;
+      background-repeat: no-repeat;
+      z-index: 1;
+      transition: transform 0.4s ease;
+    }
+
+    .cp-hero-card:hover .cp-hero-bg-layer {
+      transform: scale(1.04);
+    }
+
+    .cp-hero-glass-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      background: linear-gradient(90deg, rgba(16, 17, 22, 0.90) 0%, rgba(16, 17, 22, 0.70) 52%, rgba(16, 17, 22, 0.28) 100%);
+    }
+
+    :host([data-theme="light"]) .cp-hero-card,
+    .cp-light-theme .cp-hero-card,
+    .theme-light .cp-hero-card {
+      border-color: #e2e8f0;
+      background-color: #ffffff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    :host([data-theme="light"]) .cp-hero-card:hover,
+    .cp-light-theme .cp-hero-card:hover,
+    .theme-light .cp-hero-card:hover {
+      border-color: #cbd5e1;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    :host([data-theme="light"]) .cp-hero-glass-layer,
+    .cp-light-theme .cp-hero-glass-layer,
+    .theme-light .cp-hero-glass-layer {
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.74) 55%, rgba(255, 255, 255, 0.32) 100%);
+    }
+
+    .cp-hero-content {
+      position: relative;
+      z-index: 3;
+      padding: 13px 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      max-width: 78%;
+    }
+
+    .cp-hero-pill-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(6px);
+      padding: 2px 7.5px;
+      border-radius: 9999px;
+      font-size: 9.5px;
+      font-weight: 600;
+      color: #e2e8f0;
+      width: fit-content;
+      margin-bottom: 2px;
+      letter-spacing: 0.02em;
+    }
+
+    :host([data-theme="light"]) .cp-hero-pill-badge,
+    .cp-light-theme .cp-hero-pill-badge,
+    .theme-light .cp-hero-pill-badge {
+      background: rgba(0, 0, 0, 0.06);
+      border-color: rgba(0, 0, 0, 0.08);
+      color: #334155;
+    }
+
+    .cp-hero-pill-dot {
+      width: 5.5px;
+      height: 5.5px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 5px #10B981;
+      display: inline-block;
     }
 
     .cp-hero-greeting-sub {
-      font-size: 24px;
-      font-weight: 500;
-      color: rgba(255, 255, 255, 0.7);
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-    }
-
-    .cp-hero-greeting-main {
-      font-size: 26px;
-      font-weight: 650;
-      color: #ffffff;
-      letter-spacing: -0.02em;
-      line-height: 1.18;
-      margin-top: 2px;
+      font-size: 15px;
+      font-weight: 550;
+      color: rgba(255, 255, 255, 0.88);
+      letter-spacing: -0.01em;
+      line-height: 1.2;
     }
 
     :host([data-theme="light"]) .cp-hero-greeting-sub,
     .cp-light-theme .cp-hero-greeting-sub,
     .theme-light .cp-hero-greeting-sub {
-      color: #64748b;
+      color: #475569;
+    }
+
+    .cp-hero-greeting-main {
+      font-size: 19.5px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      line-height: 1.22;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
     }
 
     :host([data-theme="light"]) .cp-hero-greeting-main,
     .cp-light-theme .cp-hero-greeting-main,
     .theme-light .cp-hero-greeting-main {
       color: #0f172a;
+      text-shadow: none;
     }
 
     /* Card 1: Ask a question (Top hero card in media_1790884814897.png) */
@@ -4815,10 +4921,18 @@
     const proBadge = !hasPremium ? '<span class="cp-pro-badge">PRO</span>' : '';
 
     screensView.innerHTML = `
-      <!-- Moody Hero Greeting (media_1790884814897.png) -->
-      <div class="cp-hero-section">
-        <div class="cp-hero-greeting-sub">Hello there.</div>
-        <div class="cp-hero-greeting-main">How can we help?</div>
+      <!-- Moody Glassmorphic Hero Banner Card (media_1790919040211.png) -->
+      <div class="cp-hero-card" id="cp-hero-card" role="button" tabindex="0">
+        <div class="cp-hero-bg-layer" style="background-image: url('${baseUrl}/assets/widget-hero-bg.png'), url('${baseUrl}/assets/blog/meet-cai-founder.png');"></div>
+        <div class="cp-hero-glass-layer"></div>
+        <div class="cp-hero-content">
+          <div class="cp-hero-pill-badge">
+            <span class="cp-hero-pill-dot"></span>
+            <span>Cai AI &amp; Team</span>
+          </div>
+          <div class="cp-hero-greeting-sub">Hi there 👋</div>
+          <div class="cp-hero-greeting-main">How can we help?</div>
+        </div>
       </div>
 
       <!-- 1. Ask a question Card (media_1790884814897.png) -->
@@ -4834,23 +4948,7 @@
         </div>
       </div>
 
-      <!-- 2. Featured Story / Announcement Banner Card (India Edition) -->
-      <div class="cp-featured-banner-card" id="cp-card-featured-banner" role="button" tabindex="0">
-        <div class="cp-banner-img-box">
-          <img src="${baseUrl}/assets/blog/meet-cai-founder.png" class="cp-banner-cover-photo" alt="Meet Cai India" onerror="this.onerror=null; this.src='${baseUrl}/assets/login-blog-banner.png';" />
-          <div class="cp-banner-badge-tag">INDIA LAUNCH</div>
-        </div>
-        <div class="cp-banner-body">
-          <div class="cp-banner-headline">Meet Cai: India's 1st Autonomous AI Helpdesk & SDR Agent</div>
-          <div class="cp-banner-subline">Autonomous lead capture, WhatsApp syncing & 1-on-1 team bookings.</div>
-          <div class="cp-banner-footer-row">
-            <span class="cp-banner-meta-pill">Bengaluru, IN • Available Now</span>
-            <span class="cp-banner-arrow-link">Read story &rarr;</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 3. Book an appointment -->
+      <!-- 2. Book an appointment -->
       <div class="cp-action-card" id="cp-card-book" role="button" tabindex="0">
         <div class="cp-action-card-left">
           <div class="cp-action-icon-box">
@@ -4873,7 +4971,7 @@
         </div>
       </div>
 
-      <!-- 4. Instant human help -->
+      <!-- 3. Instant human help -->
       <div class="cp-action-card" id="cp-card-human" role="button" tabindex="0">
         <div class="cp-action-card-left">
           <div class="cp-action-icon-box">
@@ -4893,7 +4991,7 @@
         </div>
       </div>
 
-      <!-- 5. Make a payment -->
+      <!-- 4. Make a payment -->
       <div class="cp-action-card" id="cp-card-payment" role="button" tabindex="0">
         <div class="cp-action-card-left">
           <div class="cp-action-icon-box">
@@ -4915,9 +5013,9 @@
       </div>
     `;
 
-    const askCard = shadow.getElementById('cp-card-ask');
-    if (askCard) {
-      askCard.addEventListener('click', () => {
+    const heroCard = shadow.getElementById('cp-hero-card');
+    if (heroCard) {
+      heroCard.addEventListener('click', () => {
         navigateTo('chat');
         setTimeout(() => {
           if (inputField) inputField.focus();
@@ -4925,10 +5023,13 @@
       });
     }
 
-    const bannerCard = shadow.getElementById('cp-card-featured-banner');
-    if (bannerCard) {
-      bannerCard.addEventListener('click', () => {
-        window.open(`${baseUrl}/blog.html?slug=meet-cai-autonomous-ai-agent`, '_blank');
+    const askCard = shadow.getElementById('cp-card-ask');
+    if (askCard) {
+      askCard.addEventListener('click', () => {
+        navigateTo('chat');
+        setTimeout(() => {
+          if (inputField) inputField.focus();
+        }, 80);
       });
     }
     
