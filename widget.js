@@ -1653,153 +1653,129 @@
     }
 
     /* Card 2: Featured Story / Announcement Banner Card (India Edition, Clear Image) */
+    /* Card 2 / Bottom: Lightweight Featured Story Card (media_1790922633144.png) */
     .cp-featured-banner-card {
-      background: #181920;
-      border: 1px solid #282932;
-      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid #e7e5de;
+      border-radius: 16px;
+      padding: 12px 12px 14px 12px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       cursor: pointer;
-      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       user-select: none;
     }
 
     .cp-featured-banner-card:hover {
-      border-color: #3b3e4e;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-    }
-
-    :host([data-theme="light"]) .cp-featured-banner-card,
-    .cp-light-theme .cp-featured-banner-card,
-    .theme-light .cp-featured-banner-card {
-      background: #ffffff;
-      border-color: #e2e8f0;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    :host([data-theme="light"]) .cp-featured-banner-card:hover,
-    .cp-light-theme .cp-featured-banner-card:hover,
-    .theme-light .cp-featured-banner-card:hover {
-      background: #f8fafc;
       border-color: #cbd5e1;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
+
+    :host([data-theme="dark"]) .cp-featured-banner-card,
+    .cp-dark-theme .cp-featured-banner-card,
+    .theme-dark .cp-featured-banner-card {
+      background: #181920;
+      border-color: #282932;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    :host([data-theme="dark"]) .cp-featured-banner-card:hover,
+    .cp-dark-theme .cp-featured-banner-card:hover,
+    .theme-dark .cp-featured-banner-card:hover {
+      border-color: #3b3e4e;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
     }
 
     .cp-banner-img-box {
       width: 100%;
-      height: 128px;
+      height: 112px;
       position: relative;
       overflow: hidden;
-      background: #111217;
+      border-radius: 10px;
+      background: #fbfaf8;
     }
 
     .cp-banner-cover-photo {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center 20%;
+      object-position: center;
       display: block;
       transition: transform 0.3s ease;
     }
 
     .cp-featured-banner-card:hover .cp-banner-cover-photo {
-      transform: scale(1.03);
-    }
-
-    .cp-banner-badge-tag {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(6px);
-      color: #fbbf24;
-      font-size: 9.5px;
-      font-weight: 750;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 3px 7px;
-      border-radius: 4px;
-      border: 1px solid rgba(251, 191, 36, 0.3);
+      transform: scale(1.02);
     }
 
     .cp-banner-body {
-      padding: 12px 14px 11px 14px;
+      padding: 10px 2px 0 2px;
       display: flex;
       flex-direction: column;
-      gap: 3px;
+    }
+
+    .cp-banner-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .cp-banner-badge-tag {
+      background: #d1fae5;
+      color: #065f46;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      padding: 2.5px 8px;
+      border-radius: 9999px;
+      display: inline-block;
+    }
+
+    :host([data-theme="dark"]) .cp-banner-badge-tag,
+    .cp-dark-theme .cp-banner-badge-tag,
+    .theme-dark .cp-banner-badge-tag {
+      background: rgba(16, 185, 129, 0.18);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .cp-banner-date-label {
+      font-size: 11px;
+      color: #94a3b8;
+      font-weight: 500;
     }
 
     .cp-banner-headline {
       font-size: 13.5px;
-      font-weight: 650;
-      color: #ffffff;
-      line-height: 1.3;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.35;
       letter-spacing: -0.01em;
+      margin: 0;
     }
 
-    :host([data-theme="light"]) .cp-banner-headline,
-    .cp-light-theme .cp-banner-headline,
-    .theme-light .cp-banner-headline {
-      color: #0f172a;
+    :host([data-theme="dark"]) .cp-banner-headline,
+    .cp-dark-theme .cp-banner-headline,
+    .theme-dark .cp-banner-headline {
+      color: #ffffff;
     }
 
     .cp-banner-subline {
-      font-size: 11px;
-      color: #8e929f;
-      line-height: 1.35;
-    }
-
-    :host([data-theme="light"]) .cp-banner-subline,
-    .cp-light-theme .cp-banner-subline,
-    .theme-light .cp-banner-subline {
+      font-size: 11.5px;
       color: #64748b;
+      line-height: 1.45;
+      margin-top: 5px;
     }
 
-    .cp-banner-footer-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 6px;
-      padding-top: 6px;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-    }
-
-    :host([data-theme="light"]) .cp-banner-footer-row,
-    .cp-light-theme .cp-banner-footer-row,
-    .theme-light .cp-banner-footer-row {
-      border-top-color: #f1f5f9;
-    }
-
-    .cp-banner-meta-pill {
-      font-size: 10px;
-      color: #717686;
-      font-weight: 500;
-    }
-
-    :host([data-theme="light"]) .cp-banner-meta-pill,
-    .cp-light-theme .cp-banner-meta-pill,
-    .theme-light .cp-banner-meta-pill {
-      color: #64748b;
-    }
-
-    .cp-banner-arrow-link {
-      font-size: 11px;
-      font-weight: 600;
-      color: #ffffff;
-      transition: transform 0.2s ease;
-    }
-
-    :host([data-theme="light"]) .cp-banner-arrow-link,
-    .cp-light-theme .cp-banner-arrow-link,
-    .theme-light .cp-banner-arrow-link {
-      color: #0f172a;
-    }
-
-    .cp-featured-banner-card:hover .cp-banner-arrow-link {
-      transform: translateX(2px);
+    :host([data-theme="dark"]) .cp-banner-subline,
+    .cp-dark-theme .cp-banner-subline,
+    .theme-dark .cp-banner-subline {
+      color: #94a3b8;
     }
 
     /* Sub-screen Header (e.g. Make a payment, media_1790861393761.png) */
@@ -4957,19 +4933,18 @@
         </div>
       </div>
 
-      <!-- 5. Featured Story: Meet Cai India Launch Card (media_1790918693375.png) -->
-      <div class="cp-featured-banner-card" id="cp-card-latest-blog" role="button" tabindex="0" title="Read Story: Meet Cai">
+      <!-- 5. Featured Story: Lightweight Card (media_1790922633144.png) -->
+      <div class="cp-featured-banner-card" id="cp-card-latest-blog" role="button" tabindex="0" title="Read Gandhi Jayanti Special Feature">
         <div class="cp-banner-img-box">
-          <img src="${baseUrl}/assets/blog/meet-cai-founder.png" id="cp-home-blog-img" class="cp-banner-cover-photo" alt="Meet Cai AI" onerror="this.onerror=null; this.src='assets/blog/meet-cai-founder.png';" />
-          <div class="cp-banner-badge-tag" id="cp-home-blog-tag">INDIA LAUNCH</div>
+          <img src="${baseUrl}/assets/blog/gandhi-jayanti-2026.png" id="cp-home-blog-img" class="cp-banner-cover-photo" alt="Gandhi Jayanti" onerror="this.onerror=null; this.src='assets/blog/gandhi-jayanti-2026.png';" />
         </div>
         <div class="cp-banner-body">
-          <div class="cp-banner-headline" id="cp-home-blog-title">Meet Cai: India's 1st Autonomous AI Helpdesk &amp; SDR Agent</div>
-          <div class="cp-banner-subline" id="cp-home-blog-desc">Autonomous lead capture, WhatsApp syncing &amp; 1-on-1 team bookings.</div>
-          <div class="cp-banner-footer-row">
-            <span class="cp-banner-meta-pill" id="cp-home-blog-date">Bengaluru, IN &bull; Available Now</span>
-            <span class="cp-banner-arrow-link">Read story &rarr;</span>
+          <div class="cp-banner-meta-row">
+            <span class="cp-banner-badge-tag" id="cp-home-blog-tag">SPECIAL EVENT</span>
+            <span class="cp-banner-date-label" id="cp-home-blog-date">Oct 02, 2026</span>
           </div>
+          <h4 class="cp-banner-headline" id="cp-home-blog-title">Gandhi Jayanti Special: Truth, Decentralized Technology &amp; The Spirit of Self-Reliance</h4>
+          <p class="cp-banner-subline" id="cp-home-blog-desc">On October 2nd, we honor Mahatma Gandhi's enduring ideals &mdash; Satya (Truth), Swavalamban (Self-Reliance), and Sarvodaya (Welfare of All). Here is how these principles guide the future of autonomous, grounded AI at CuboidPilot.</p>
         </div>
       </div>
     `;
@@ -4989,11 +4964,11 @@
       })
       .catch(() => {});
 
-    // India Launch Card click listener
+    // Gandhi Jayanti Card click listener
     const blogCard = shadow.getElementById('cp-card-latest-blog');
     if (blogCard) {
       blogCard.addEventListener('click', () => {
-        window.open(`${baseUrl}/blog.html?slug=meet-cai-autonomous-ai-agent`, '_blank');
+        window.open(`${baseUrl}/blog.html?slug=gandhi-jayanti-truth-technology-self-reliance`, '_blank');
       });
     }
 
