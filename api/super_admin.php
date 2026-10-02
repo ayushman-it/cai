@@ -308,6 +308,72 @@ try {
             echo json_encode(['success' => true, 'message' => 'New plan tier created successfully!', 'plan_id' => $pdo->lastInsertId()]);
             break;
 
+        case 'executive_linkedin':
+            // Fetch executive settings from widget_settings (default to CuboidSoft / company 3)
+            $ws = $pdo->query("SELECT linkedin_ayush, linkedin_cai, linkedin_cuboidsoft FROM widget_settings ORDER BY id ASC LIMIT 1")->fetch(PDO::FETCH_ASSOC);
+            
+            $members = $pdo->query("
+                SELECT id, name, email, role, job_title, department, avatar_url, linkedin_url 
+                FROM `users` 
+                ORDER BY FIELD(role, 'super_admin', 'owner', 'manager', 'sales_agent'), id ASC
+            ")->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'success' => true,
+                'executives' => [
+                    'linkedin_ayush'      => $ws['linkedin_ayush'] ?? 'https://linkedin.com/in/ayushman-varma',
+                    'linkedin_cai'        => $ws['linkedin_cai'] ?? 'https://linkedin.com/company/cuboidpilot',
+                    'linkedin_cuboidsoft' => $ws['linkedin_cuboidsoft'] ?? 'https://linkedin.com/company/cuboidsoft',
+                    'avatar_ayush'        => 'assets/avatar-ayush.png',
+                    'avatar_cai'          => 'assets/avatar-cai.png',
+                    'avatar_cuboidsoft'   => 'assets/avatar-cuboidsoft.png',
+                ],
+                'team_members' => $members
+            ]);
+            break;
+
+        case 'save_executive_linkedin':
+            $rawInput = file_get_contents('php://input');
+            $data = json_decode($rawInput, true) ?? $_POST;
+
+            $linkedInAyush      = trim($data['linkedin_ayush'] ?? '');
+            $linkedInCai        = trim($data['linkedin_cai'] ?? '');
+            $linkedInCuboidsoft = trim($data['linkedin_cuboidsoft'] ?? '');
+
+            // Update widget_settings table
+            $upWs = $pdo->prepare("
+                UPDATE `widget_settings` 
+                SET `linkedin_ayush` = ?, `linkedin_cai` = ?, `linkedin_cuboidsoft` = ?, `updated_at` = NOW()
+            ");
+            $upWs->execute([$linkedInAyush, $linkedInCai, $linkedInCuboidsoft]);
+
+            // Update Ayush user record
+            if (!empty($linkedInAyush)) {
+                $pdo->prepare("
+                    UPDATE `users` 
+                    SET `linkedin_url` = ? 
+                    WHERE `email` LIKE '%ayush%' OR `name` LIKE '%Ayush%' OR `role` = 'super_admin'
+                ")->execute([$linkedInAyush]);
+            }
+
+            // Update individual team members if provided
+            if (!empty($data['team_members']) && is_array($data['team_members'])) {
+                $uStmt = $pdo->prepare("UPDATE `users` SET `linkedin_url` = ? WHERE `id` = ?");
+                foreach ($data['team_members'] as $tm) {
+                    $tId = (int)($tm['id'] ?? 0);
+                    $tUrl = trim($tm['linkedin_url'] ?? '');
+                    if ($tId > 0) {
+                        $uStmt->execute([$tUrl, $tId]);
+                    }
+                }
+            }
+
+            echo json_encode([
+                'success' => true, 
+                'message' => 'Executive LinkedIn URLs and team profiles updated successfully!'
+            ]);
+            break;
+
         default:
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Unknown action']);

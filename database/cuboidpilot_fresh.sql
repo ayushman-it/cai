@@ -1,6 +1,6 @@
 -- ==========================================================================
 -- CUBOIDPILOT — COMPLETE FRESH PRODUCTION DATABASE DUMP
--- Generated: 2026-10-01 22:12:45
+-- Generated: 2026-10-02 07:55:03
 -- Target: MySQL 5.7+ / 8.0+ / MariaDB 10.3+
 -- Includes: Full schema, SuperAdmin user, default tenants, INR plans,
 --           Cai AI widget configuration, calendar, and launch SEO blog.
@@ -869,6 +869,7 @@ CREATE TABLE `users` (
   `is_appointment_enabled` tinyint(1) DEFAULT 1,
   `is_super_admin` tinyint(1) NOT NULL DEFAULT 0,
   `avatar_url` varchar(255) DEFAULT NULL,
+  `linkedin_url` varchar(255) DEFAULT NULL,
   `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `last_login_at` datetime DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
@@ -882,13 +883,13 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB AUTO_INCREMENT=57 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table `users`
-INSERT INTO `users` (`id`, `uuid`, `company_id`, `name`, `email`, `password_hash`, `phone`, `role`, `job_title`, `department`, `availability_status`, `is_instant_help_enabled`, `is_appointment_enabled`, `is_super_admin`, `avatar_url`, `is_active`, `last_login_at`, `created_at`, `updated_at`) VALUES
-(1, 'usr_superadmin_001', NULL, 'Ayush Varma (Super Admin)', 'admin@cuboidpolit.com', '$2y$10$KKr8xShLf0DSMyT9w0ytz.ztSauFSeqFp92hhrV0Fi5UxELEEZXJi', '+91 98110 99999', 'super_admin', 'Consultant', 'sales', 'AVAILABLE', 1, 1, 1, 'assets/uploads/avatars/avatar_3_346b124c04bb2a2f.jpeg', 1, '2026-10-01 02:32:33', '2026-09-26 13:54:42', '2026-10-01 02:32:33'),
-(6, 'usr_57760422a1ccbc36bdbf19df', 3, 'Ayush', 'founder@cuboidsoft.in', '$2y$10$0xQHUSa6DjrojUEExFI4WeHWFQ74g5MFvRQBDowbd9CZb3Gzqg88K', '+91 98765 43210', 'owner', 'Founder & AI Architect', 'technical', 'AVAILABLE', 1, 1, 0, 'assets/uploads/avatars/avatar_3_346b124c04bb2a2f.jpeg', 1, '2026-10-02 01:25:37', '2026-09-29 15:09:25', '2026-10-02 01:25:45'),
-(50, 'usr_owner_apex_02', 3, 'Rohan Mehta (Founder)', 'owner@apexedtech.in', '$2y$10$ktPJXMgwY4gPxTXmkY22N.R8eUeTwExhq.m6ZAKBz17jNysRbJoe2', NULL, 'owner', 'Customer Success Lead', 'support', 'AVAILABLE', 1, 1, 0, NULL, 1, NULL, '2026-10-01 19:34:55', '2026-10-02 01:25:45'),
-(51, 'usr_manager_apex_03', 3, 'Neha Singhania (Head of Sales)', 'neha@apexedtech.in', '$2y$10$ktPJXMgwY4gPxTXmkY22N.R8eUeTwExhq.m6ZAKBz17jNysRbJoe2', NULL, 'manager', 'Head of Growth & Sales', 'sales', 'AVAILABLE', 1, 1, 0, NULL, 1, NULL, '2026-10-01 19:34:55', '2026-10-02 01:25:45'),
-(52, 'usr_agent_apex_04', 3, 'Arjun Rao (Senior Closer)', 'arjun@apexedtech.in', '$2y$10$ktPJXMgwY4gPxTXmkY22N.R8eUeTwExhq.m6ZAKBz17jNysRbJoe2', NULL, 'sales_agent', 'Senior Account Executive', 'sales', 'AVAILABLE', 1, 1, 0, NULL, 1, NULL, '2026-10-01 19:34:55', '2026-10-02 01:25:45'),
-(56, '42f802acdc8eb9aae7107913423dec50', 3, 'Priya Sharma', 'priya@cuboidpilot.com', '$2y$10$iza3q0Qhggq.7gO/gWJrLeqrQU0JJZWU6GEsPToo/h4KvSa..LUga', NULL, '', 'AI Integration Engineer', 'technical', 'AVAILABLE', 1, 1, 0, NULL, 1, NULL, '2026-10-02 01:25:45', '2026-10-02 01:25:45');
+INSERT INTO `users` (`id`, `uuid`, `company_id`, `name`, `email`, `password_hash`, `phone`, `role`, `job_title`, `department`, `availability_status`, `is_instant_help_enabled`, `is_appointment_enabled`, `is_super_admin`, `avatar_url`, `linkedin_url`, `is_active`, `last_login_at`, `created_at`, `updated_at`) VALUES
+(1, 'usr_superadmin_001', NULL, 'Ayush Varma', 'admin@cuboidpolit.com', '$2y$10$KKr8xShLf0DSMyT9w0ytz.ztSauFSeqFp92hhrV0Fi5UxELEEZXJi', '+91 98110 99999', 'super_admin', 'Solutions Architect', 'technical', 'AVAILABLE', 1, 1, 1, 'assets/avatar-ayush.png', 'https://linkedin.com/in/ayushman-varma', 1, '2026-10-01 02:32:33', '2026-09-26 13:54:42', '2026-10-02 11:17:30'),
+(6, 'usr_57760422a1ccbc36bdbf19df', 3, 'Ayush', 'founder@cuboidsoft.in', '$2y$10$0xQHUSa6DjrojUEExFI4WeHWFQ74g5MFvRQBDowbd9CZb3Gzqg88K', '+91 98765 43210', 'owner', 'Founder & AI Architect', 'technical', 'AVAILABLE', 1, 1, 0, 'assets/avatar-ayush.png', 'https://linkedin.com/in/ayushman-varma', 1, '2026-10-02 01:25:37', '2026-09-29 15:09:25', '2026-10-02 11:17:30'),
+(50, 'usr_owner_apex_02', 3, 'Rohan Mehta', 'owner@apexedtech.in', '$2y$10$ktPJXMgwY4gPxTXmkY22N.R8eUeTwExhq.m6ZAKBz17jNysRbJoe2', NULL, 'owner', 'Customer Success Lead', 'support', 'AVAILABLE', 1, 1, 0, NULL, 'https://linkedin.com/in/rohan-mehta', 1, NULL, '2026-10-01 19:34:55', '2026-10-02 11:17:30'),
+(51, 'usr_manager_apex_03', 3, 'Neha Singhania', 'neha@apexedtech.in', '$2y$10$ktPJXMgwY4gPxTXmkY22N.R8eUeTwExhq.m6ZAKBz17jNysRbJoe2', NULL, 'manager', 'Head of Growth & Sales', 'sales', 'AVAILABLE', 1, 1, 0, NULL, 'https://linkedin.com/in/neha-singhania', 1, NULL, '2026-10-01 19:34:55', '2026-10-02 11:17:30'),
+(52, 'usr_agent_apex_04', 3, 'Arjun Rao', 'arjun@apexedtech.in', '$2y$10$ktPJXMgwY4gPxTXmkY22N.R8eUeTwExhq.m6ZAKBz17jNysRbJoe2', NULL, 'sales_agent', 'Senior Account Executive', 'sales', 'AVAILABLE', 1, 1, 0, NULL, 'https://linkedin.com/in/arjun-rao', 1, NULL, '2026-10-01 19:34:55', '2026-10-02 11:17:30'),
+(56, '42f802acdc8eb9aae7107913423dec50', 3, 'Priya Sharma', 'priya@cuboidpilot.com', '$2y$10$iza3q0Qhggq.7gO/gWJrLeqrQU0JJZWU6GEsPToo/h4KvSa..LUga', NULL, '', 'AI Integration Engineer', 'technical', 'AVAILABLE', 1, 1, 0, NULL, NULL, 1, NULL, '2026-10-02 01:25:45', '2026-10-02 01:25:45');
 
 -- ---------------------------------------------------------
 -- Table structure for `visitor_sessions`
@@ -1059,14 +1060,17 @@ CREATE TABLE `widget_settings` (
   `require_phone_for_pricing` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `linkedin_ayush` varchar(255) DEFAULT 'https://linkedin.com/in/ayushman-varma',
+  `linkedin_cai` varchar(255) DEFAULT 'https://linkedin.com/company/cuboidpilot',
+  `linkedin_cuboidsoft` varchar(255) DEFAULT 'https://linkedin.com/company/cuboidsoft',
   PRIMARY KEY (`id`),
   UNIQUE KEY `company_id` (`company_id`),
   CONSTRAINT `fk_ws_company` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Dumping data for table `widget_settings`
-INSERT INTO `widget_settings` (`id`, `company_id`, `brand_name`, `assistant_name`, `logo_url`, `logo_dark_url`, `logo_light_url`, `accent_color`, `theme_mode`, `greeting_heading`, `greeting_subheading`, `position`, `enable_whatsapp_continue`, `enable_appointments`, `calendar_working_days`, `calendar_start_time`, `calendar_end_time`, `calendar_slot_duration`, `calendar_buffer_minutes`, `calendar_advance_days`, `calendar_meet_url`, `calendar_provider`, `calendar_api_key`, `calendar_booking_url`, `calendar_webhook_url`, `calendar_sync_enabled`, `enable_human_help`, `enable_payments`, `razorpay_key_id`, `razorpay_key_secret`, `bank_name`, `bank_account_holder`, `bank_account_no`, `bank_ifsc`, `bank_upi_id`, `bank_qr_url`, `whatsapp_number`, `require_phone_for_pricing`, `created_at`, `updated_at`) VALUES
-(3, 3, 'Cai', 'Cai', 'assets/uploads/logos/logo_dark_comp_3_1790755745.png', 'assets/uploads/logos/logo_dark_comp_3_1790755745.png', 'assets/uploads/logos/logo_light_comp_3_1790755745.png', '#111111', 'light', 'Hi there 👋\r\n\r\nYou are now speaking with Cai. How can I help?', 'Powered By CuboidPilot', 'bottom_right', 1, 1, '1,2,3,4,5,6', '10:00', '18:00', 30, 0, 7, 'https://meet.google.com/cp-consult', 'calcom', 'cal_live_testkey12345678', 'https://cal.com/cuboidpilot/30min', 'https://httpbin.org/post', 1, 1, 1, NULL, NULL, 'HDFC Bank', 'CuboidSoft Technologies', 50200088991122, 'HDFC0001234', 'cuboidsoft@hdfcbank', NULL, '+91 99999 88888', 1, '2026-09-29 15:09:25', '2026-10-02 00:27:27'),
-(21, 27, 'Arjun Mehta\'s Team AI', 'Cai', NULL, NULL, NULL, '#111111', 'dark', 'Hi there 👋 Welcome to Arjun Mehta\'s Team! How can I help you today?', 'Instant AI answers • Powered by CuboidPilot', 'bottom_right', 1, 1, '1,2,3,4,5,6', '10:00', '18:00', 30, 0, 7, 'https://meet.google.com/cp-consult', 'native', NULL, NULL, NULL, 1, 1, 1, NULL, NULL, 'HDFC Bank', 'CuboidSoft Technologies', 50200088991122, 'HDFC0001234', 'cuboidsoft@hdfcbank', NULL, '+91 98201 12345', 1, '2026-10-01 04:00:12', '2026-10-01 04:02:42');
+INSERT INTO `widget_settings` (`id`, `company_id`, `brand_name`, `assistant_name`, `logo_url`, `logo_dark_url`, `logo_light_url`, `accent_color`, `theme_mode`, `greeting_heading`, `greeting_subheading`, `position`, `enable_whatsapp_continue`, `enable_appointments`, `calendar_working_days`, `calendar_start_time`, `calendar_end_time`, `calendar_slot_duration`, `calendar_buffer_minutes`, `calendar_advance_days`, `calendar_meet_url`, `calendar_provider`, `calendar_api_key`, `calendar_booking_url`, `calendar_webhook_url`, `calendar_sync_enabled`, `enable_human_help`, `enable_payments`, `razorpay_key_id`, `razorpay_key_secret`, `bank_name`, `bank_account_holder`, `bank_account_no`, `bank_ifsc`, `bank_upi_id`, `bank_qr_url`, `whatsapp_number`, `require_phone_for_pricing`, `created_at`, `updated_at`, `linkedin_ayush`, `linkedin_cai`, `linkedin_cuboidsoft`) VALUES
+(3, 3, 'Cai', 'Cai', 'assets/uploads/logos/logo_dark_comp_3_1790755745.png', 'assets/uploads/logos/logo_dark_comp_3_1790755745.png', 'assets/uploads/logos/logo_light_comp_3_1790755745.png', '#111111', 'light', 'Hi there 👋\r\n\r\nYou are now speaking with Cai. How can I help?', 'Powered By CuboidPilot', 'bottom_right', 1, 1, '1,2,3,4,5,6', '10:00', '18:00', 30, 0, 7, 'https://meet.google.com/cp-consult', 'calcom', 'cal_live_testkey12345678', 'https://cal.com/cuboidpilot/30min', 'https://httpbin.org/post', 1, 1, 1, NULL, NULL, 'HDFC Bank', 'CuboidSoft Technologies', 50200088991122, 'HDFC0001234', 'cuboidsoft@hdfcbank', NULL, '+91 99999 88888', 1, '2026-09-29 15:09:25', '2026-10-02 00:27:27', 'https://linkedin.com/in/ayushman-varma', 'https://linkedin.com/company/cuboidpilot', 'https://linkedin.com/company/cuboidsoft'),
+(21, 27, 'Arjun Mehta\'s Team AI', 'Cai', NULL, NULL, NULL, '#111111', 'dark', 'Hi there 👋 Welcome to Arjun Mehta\'s Team! How can I help you today?', 'Instant AI answers • Powered by CuboidPilot', 'bottom_right', 1, 1, '1,2,3,4,5,6', '10:00', '18:00', 30, 0, 7, 'https://meet.google.com/cp-consult', 'native', NULL, NULL, NULL, 1, 1, 1, NULL, NULL, 'HDFC Bank', 'CuboidSoft Technologies', 50200088991122, 'HDFC0001234', 'cuboidsoft@hdfcbank', NULL, '+91 98201 12345', 1, '2026-10-01 04:00:12', '2026-10-01 04:02:42', 'https://linkedin.com/in/ayushman-varma', 'https://linkedin.com/company/cuboidpilot', 'https://linkedin.com/company/cuboidsoft');
 
 SET FOREIGN_KEY_CHECKS = 1;

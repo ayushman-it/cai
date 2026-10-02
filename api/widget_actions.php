@@ -241,6 +241,9 @@ try {
                 'bank_upi_id'         => $widget['bank_upi_id'] ?? '',
                 'bank_qr_url'         => $widget['bank_qr_url'] ?? '',
                 'calendar_slot_duration' => (int)($widget['calendar_slot_duration'] ?? 30),
+                'linkedin_ayush'         => $widget['linkedin_ayush'] ?? 'https://linkedin.com/in/ayushman-varma',
+                'linkedin_cai'           => $widget['linkedin_cai'] ?? 'https://linkedin.com/company/cuboidpilot',
+                'linkedin_cuboidsoft'    => $widget['linkedin_cuboidsoft'] ?? 'https://linkedin.com/company/cuboidsoft',
             ],
             'active_human_chat' => $activeHumanChat
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
@@ -255,7 +258,7 @@ try {
         $department = strtolower($department);
 
         $sql = "
-            SELECT id, name, email, job_title, department, availability_status, avatar_url, is_instant_help_enabled, is_appointment_enabled
+            SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url, is_instant_help_enabled, is_appointment_enabled
             FROM `users`
             WHERE `company_id` = ? 
               AND (`is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)
@@ -293,6 +296,7 @@ try {
                 'department'              => $m['department'] ?: 'sales',
                 'availability_status'     => $m['availability_status'] ?: 'AVAILABLE',
                 'avatar_url'              => $avatar,
+                'linkedin_url'            => $m['linkedin_url'] ?: '',
                 'is_instant_help_enabled' => (bool)$m['is_instant_help_enabled'],
                 'is_appointment_enabled'  => (bool)$m['is_appointment_enabled'],
                 'next_available_slot'     => $nextSlotText
