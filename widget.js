@@ -3225,7 +3225,7 @@
 
           <div class="cp-header-title-box">
             <div class="cp-header-title" id="cp-header-assistant-name">Cai</div>
-            <div class="cp-header-subtitle" id="cp-header-subtitle">The team can also help</div>
+            <div class="cp-header-subtitle" id="cp-header-subtitle"></div>
           </div>
         </div>
 
@@ -4149,8 +4149,8 @@
     if (welcomeAuthor) welcomeAuthor.textContent = asstName;
 
     if (subtitleEl) {
-      let sub = widgetConfig.greeting_subheading || 'The team can also help';
-      if (sub.length > 30) sub = 'The team can also help';
+      let sub = widgetConfig.greeting_subheading || '';
+      if (sub === 'The team can also help' || sub === 'Cai AI & Team') sub = '';
       subtitleEl.textContent = sub;
     }
 
@@ -4732,7 +4732,11 @@
 
       const asstName = widgetConfig.assistant_name || 'Cai';
       if (assistantNameEl) assistantNameEl.textContent = asstName;
-      if (subtitleEl) subtitleEl.textContent = widgetConfig.greeting_subheading || 'The team can also help';
+      if (subtitleEl) {
+        let sub = widgetConfig.greeting_subheading || '';
+        if (sub === 'The team can also help' || sub === 'Cai AI & Team') sub = '';
+        subtitleEl.textContent = sub;
+      }
       if (brandLogo) updateWidgetLogo();
       if (inputField) inputField.placeholder = "Ask a question...";
       scrollToBottom();
@@ -4875,11 +4879,11 @@
         <div class="cp-hero-greeting-main">How can we help?</div>
       </div>
 
-      <!-- 1. Ask a question Card (media_1790884814897.png) -->
-      <div class="cp-ask-action-card" id="cp-card-ask" role="button" tabindex="0">
+      <!-- 1. Ask anything Card (media_1790884814897.png) -->
+      <div class="cp-ask-action-card" id="cp-card-ask" role="button" tabindex="0" title="Ask anything">
         <div class="cp-ask-card-content">
-          <div class="cp-ask-card-title">Ask a question</div>
-          <div class="cp-ask-card-desc">AI Agent and team can help</div>
+          <div class="cp-ask-card-title">Ask anything</div>
+          <div class="cp-ask-card-desc">Search answers or chat with Cai AI</div>
         </div>
         <div class="cp-ask-card-arrow">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
