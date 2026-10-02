@@ -7,7 +7,7 @@
   <meta name="description" content="Discover the 6 defining reasons high-growth companies choose Cai: natively integrated AI agent, unified WhatsApp handoff, in-widget Razorpay payments, and 5-minute deployment.">
   <link rel="icon" type="image/png" href="assets/logo-black.png">
 
-  <!-- Inter & Editorial Fonts -->
+  <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -56,45 +56,36 @@
       -webkit-font-smoothing: antialiased;
     }
     
-    /* Authentic Intercom floating widget image presentation */
+    /* Authentic Intercom compact mobile widget presentation (Never oversized) */
     .intercom-widget-img {
+      width: 100%;
+      max-width: 295px;
+      margin: 0 auto;
       border-radius: 28px;
-      box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.20), 0 10px 25px -8px rgba(0, 0, 0, 0.08);
-      border: 1px solid rgba(0, 0, 0, 0.07);
+      box-shadow: 0 25px 55px -12px rgba(0, 0, 0, 0.18), 0 8px 20px -6px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(0, 0, 0, 0.08);
       background-color: #ffffff;
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+      display: block;
     }
     .intercom-widget-img:hover {
       transform: translateY(-4px);
-      box-shadow: 0 38px 85px -18px rgba(0, 0, 0, 0.24);
+      box-shadow: 0 32px 70px -15px rgba(0, 0, 0, 0.22);
     }
     
-    /* Intercom wide landscape UI presentation */
-    .intercom-canvas-img {
-      border-radius: 18px;
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.14), 0 8px 20px -6px rgba(0, 0, 0, 0.06);
-      border: 1px solid rgba(0, 0, 0, 0.08);
+    /* Intercom desktop dashboard frame (For 1024x481 wide images) */
+    .intercom-dashboard-window {
+      border-radius: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      box-shadow: 0 24px 60px -15px rgba(0, 0, 0, 0.12), 0 8px 20px -6px rgba(0, 0, 0, 0.06);
       background-color: #ffffff;
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
     }
-    .intercom-canvas-img:hover {
+    .intercom-dashboard-window:hover {
       transform: translateY(-3px);
+      box-shadow: 0 30px 75px -18px rgba(0, 0, 0, 0.16);
     }
-
-    /* Intercom 4-corner dot decorators */
-    .dot-box {
-      position: relative;
-    }
-    .dot-box::before, .dot-box::after {
-      content: '';
-      position: absolute;
-      width: 7px;
-      height: 7px;
-      background-color: #111111;
-      opacity: 0.25;
-    }
-    .dot-box::before { top: -4px; left: -4px; }
-    .dot-box::after { top: -4px; right: -4px; }
 
     /* FAQ accordion */
     .faq-content {
@@ -119,7 +110,7 @@
     <div class="max-w-[1400px] mx-auto w-full flex items-center justify-between">
       <div class="flex items-center gap-2 text-stone-200">
         <span class="inline-block w-2 h-2 rounded-full bg-[#ff5600] animate-pulse"></span>
-        <span>Introducing <strong>Cai 2.0</strong>: Autonomous resolution rate now exceeding 78% with zero hallucinations.</span>
+        <span>Introducing <strong>Cai 2.0</strong>: Autonomous resolution rate exceeding 78% with zero hallucinations.</span>
       </div>
       <a href="index.html#hire-cai" class="hidden sm:inline-flex items-center gap-1 text-[13px] text-stone-300 hover:text-white underline font-medium">
         Experience live runtime &rarr;
@@ -127,11 +118,11 @@
     </div>
   </div>
 
-  <!-- Intercom Header Navigation -->
+  <!-- Header Navigation -->
   <header class="sticky top-0 z-50 w-full bg-[#f4f3ec]/90 backdrop-blur-md border-b border-black/10">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12 h-[76px] flex items-center justify-between">
       
-      <!-- Brand Logo & Navigation Links -->
+      <!-- Brand Logo & Nav -->
       <div class="flex items-center gap-10">
         <a href="index.html" class="flex items-center gap-2.5 group">
           <div class="w-7 h-7 flex items-center justify-center">
@@ -178,7 +169,7 @@
         <span class="text-[12px] font-bold uppercase tracking-widest text-black">Why choose Cai</span>
       </div>
 
-      <!-- Hero Master Headline (6 reasons Cai leads customer service) -->
+      <!-- Hero Master Headline -->
       <div class="max-w-[1200px]">
         <h1 class="text-[3.25rem] sm:text-[4.5rem] lg:text-[5.75rem] font-normal tracking-[-0.14rem] leading-[0.93] text-black">
           6 reasons Cai <span class="text-black/40">leads customer service</span>
@@ -243,23 +234,23 @@
           </ol>
         </div>
 
-        <!-- Right Column: Hero Visual — Direct Clean Floating Widget UI -->
-        <div class="lg:col-span-7 flex flex-col sm:flex-row items-center justify-center gap-8 lg:gap-10">
-          <div class="w-full sm:w-[340px] shrink-0 text-center">
+        <!-- Right Column: Clean Compact Mobile Widgets Side-by-Side (Never Stretched!) -->
+        <div class="lg:col-span-7 flex flex-col sm:flex-row items-center justify-center gap-6 lg:gap-8">
+          <div class="w-full sm:w-[290px] shrink-0 text-center">
             <img 
               src="assets/why-choose/cai-widget-home.png" 
               alt="Cai Widget Home Interface" 
-              class="intercom-widget-img w-full max-w-[340px] mx-auto block"
+              class="intercom-widget-img"
             >
-            <div class="text-[13px] text-black/60 font-medium mt-3.5">Cai Widget Home with Action Cards & Gandhi Jayanti News</div>
+            <div class="text-[12.5px] text-black/60 font-medium mt-3">Widget Home: Action Cards & Gandhi Jayanti Banner</div>
           </div>
-          <div class="w-full sm:w-[340px] shrink-0 text-center">
+          <div class="w-full sm:w-[290px] shrink-0 text-center">
             <img 
               src="assets/why-choose/cai-live-chat.png" 
               alt="Cai Live Multi-Modal Chat Conversation" 
-              class="intercom-widget-img w-full max-w-[340px] mx-auto block"
+              class="intercom-widget-img"
             >
-            <div class="text-[13px] text-black/60 font-medium mt-3.5">Active AI Conversation with Voice & File Attachments</div>
+            <div class="text-[12.5px] text-black/60 font-medium mt-3">Active Chat: Voice, Emoji & Attachment Input</div>
           </div>
         </div>
 
@@ -270,9 +261,10 @@
 
   <!-- ========================================================
        REASON 1: A NATIVE INTEGRATION WITH CAI AI AGENT
+       (Fixed: No giant stretched image! Showcases dashboard + compact mobile widget!)
        ======================================================== -->
   <section id="reason-1" class="py-24 lg:py-32 border-b border-black/10">
-    <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
+    <div class="max-w-[1400px] mx-auto px-6 lg:px-12 space-y-16">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         
@@ -307,23 +299,35 @@
           </div>
         </div>
 
-        <!-- Visual: Direct Full Screenshot of Production Runtime -->
-        <div class="lg:col-span-7">
-          <img 
-            src="assets/why-choose/cai-experience-runtime.png" 
-            alt="Cai Live Production Runtime" 
-            class="intercom-canvas-img w-full block"
-          >
-          <div class="text-[13px] text-black/60 font-medium mt-3 text-center">
-            Autonomous resolution, intent qualification & unified WhatsApp handoff in live production.
+        <!-- Visual: Two Compact Mobile Screens Side-by-Side at True Natural Size (NOT STRETCHED!) -->
+        <div class="lg:col-span-7 flex flex-col sm:flex-row items-center justify-center gap-6 lg:gap-8">
+          <div class="w-full sm:w-[290px] shrink-0 text-center">
+            <img 
+              src="assets/why-choose/cai-experience-runtime.png" 
+              alt="Experience Cai in Production" 
+              class="intercom-widget-img"
+            >
+            <div class="text-[12.5px] text-black/60 font-medium mt-3">
+              Production Runtime & Intent Prompt
+            </div>
+          </div>
+          <div class="w-full sm:w-[290px] shrink-0 text-center">
+            <img 
+              src="assets/why-choose/cai-live-chat.png" 
+              alt="Cai Live Multi-Modal Chat" 
+              class="intercom-widget-img"
+            >
+            <div class="text-[12.5px] text-black/60 font-medium mt-3">
+              Direct Contact Capture & Natural Chat
+            </div>
           </div>
         </div>
 
       </div>
 
       <!-- Signature Intercom Big Quote Banner -->
-      <div class="mt-24 pt-16 border-t border-black/10">
-        <div class="max-w-[1000px]">
+      <div class="pt-16 border-t border-black/10">
+        <div class="max-w-[1050px]">
           <p class="text-[1.75rem] sm:text-[2.25rem] lg:text-[2.75rem] font-normal leading-tight tracking-tight text-black">
             "In the first month of deploying Cai, we'd already saved <span class="bg-[#ff5600] text-white px-2 py-0.5">over 1,200 hours</span> of our customer support team's time."
           </p>
@@ -342,35 +346,14 @@
 
   <!-- ========================================================
        REASON 2: A FULLY-FEATURED HELPDESK
+       (Showcasing Real Enterprise Dashboard Windows!)
        ======================================================== -->
   <section id="reason-2" class="py-24 lg:py-32 border-b border-black/10">
-    <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
+    <div class="max-w-[1400px] mx-auto px-6 lg:px-12 space-y-16">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         
-        <!-- Images Column First on Desktop: Direct Display -->
-        <div class="lg:col-span-7 order-2 lg:order-1 space-y-8">
-          <div>
-            <img 
-              src="assets/journey/pipeline-overview.png" 
-              alt="Cai Complete Pipeline Architecture" 
-              class="intercom-canvas-img w-full block"
-            >
-            <div class="text-[13px] text-black/60 font-medium mt-3 text-center">End-to-end conversational pipeline from website visit to WhatsApp handoff</div>
-          </div>
-
-          <div>
-            <img 
-              src="assets/journey/step-04-lead-captured.png" 
-              alt="High-Intent Lead Captured" 
-              class="intercom-canvas-img w-full block"
-            >
-            <div class="text-[13px] text-black/60 font-medium mt-3 text-center">Automated commercial intent evaluation & CRM profile capture</div>
-          </div>
-        </div>
-
-        <!-- Text Column -->
-        <div class="lg:col-span-5 order-1 lg:order-2 space-y-7">
+        <div class="lg:col-span-5 space-y-7">
           <h2 class="text-[2.5rem] sm:text-[3.25rem] lg:text-[3.75rem] font-normal tracking-[-0.1rem] leading-[0.98] text-black">
             2. A fully-featured helpdesk
           </h2>
@@ -390,7 +373,7 @@
             </div>
 
             <div class="border-t border-black/10 pt-4">
-              <h3 class="text-[1.25rem] font-bold text-black tracking-tight">AI-Enhanced Ticketing & Qualification</h3>
+              <h3 class="text-[1.25rem] font-bold text-black tracking-tight">AI-Enhanced Ticketing & Lead Scoring</h3>
               <p class="text-[15px] text-black/70 mt-1 leading-relaxed">
                 Convert any conversation into a prioritized ticket with one click, automatically categorized, scored for buying intent, and routed to the right team with full background.
               </p>
@@ -405,6 +388,53 @@
           </div>
         </div>
 
+        <!-- Dashboard Image in Authentic Browser Window -->
+        <div class="lg:col-span-7 space-y-8">
+          
+          <!-- Dashboard Window 1: Pipeline Overview -->
+          <div class="intercom-dashboard-window">
+            <div class="h-10 bg-[#efeee9] border-b border-black/10 px-4 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+              </div>
+              <div class="text-[11.5px] font-mono text-black/50 tracking-tight">cuboidpilot.com/dashboard/pipeline</div>
+              <div class="w-8"></div>
+            </div>
+            <img 
+              src="assets/journey/pipeline-overview.png" 
+              alt="Cai Complete Pipeline Architecture Dashboard" 
+              class="w-full object-cover block"
+            >
+          </div>
+          <div class="text-[13px] text-black/60 font-medium text-center">
+            Complete Conversation Journey: Website Visitor &rarr; Intent Scoring &rarr; WhatsApp Handoff &rarr; Closed Revenue
+          </div>
+
+          <!-- Dashboard Window 2: Lead Intent Scored -->
+          <div class="intercom-dashboard-window">
+            <div class="h-10 bg-[#efeee9] border-b border-black/10 px-4 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+              </div>
+              <div class="text-[11.5px] font-mono text-black/50 tracking-tight">cuboidpilot.com/dashboard/leads</div>
+              <div class="w-8"></div>
+            </div>
+            <img 
+              src="assets/journey/step-04-lead-captured.png" 
+              alt="High-Intent Lead Captured Dashboard" 
+              class="w-full object-cover block"
+            >
+          </div>
+          <div class="text-[13px] text-black/60 font-medium text-center">
+            Automated commercial buyer intent scoring & verified customer data profile
+          </div>
+
+        </div>
+
       </div>
 
     </div>
@@ -412,6 +442,7 @@
 
   <!-- ========================================================
        REASON 3: A SEAMLESS, SELF-IMPROVING SYSTEM
+       (Grounded Reasoning Engine Dashboard Window)
        ======================================================== -->
   <section id="reason-3" class="py-24 lg:py-32 border-b border-black/10">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
@@ -445,13 +476,24 @@
           </div>
         </div>
 
-        <!-- Image Column: Direct Reasoning Diagram -->
+        <!-- Dashboard Image: Grounded Reasoning Architecture -->
         <div class="lg:col-span-7">
-          <img 
-            src="assets/journey/step-03-cai-reasoning.png" 
-            alt="Cai Multi-Step Grounded Reasoning Engine" 
-            class="intercom-canvas-img w-full block"
-          >
+          <div class="intercom-dashboard-window">
+            <div class="h-10 bg-[#efeee9] border-b border-black/10 px-4 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+              </div>
+              <div class="text-[11.5px] font-mono text-black/50 tracking-tight">cuboidpilot.com/engine/reasoning</div>
+              <div class="w-8"></div>
+            </div>
+            <img 
+              src="assets/journey/step-03-cai-reasoning.png" 
+              alt="Cai Multi-Step Grounded Reasoning Engine" 
+              class="w-full object-cover block"
+            >
+          </div>
           <div class="text-[13px] text-black/60 font-medium mt-3 text-center">
             Multi-step reasoning: Intent extraction &rarr; Business grounding &rarr; Policy check &rarr; Action execution
           </div>
@@ -464,35 +506,14 @@
 
   <!-- ========================================================
        REASON 4: SUPPORT ACROSS EVERY CHANNEL
+       (WhatsApp Dashboard + In-Widget Payment Screen)
        ======================================================== -->
   <section id="reason-4" class="py-24 lg:py-32 border-b border-black/10">
-    <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
+    <div class="max-w-[1400px] mx-auto px-6 lg:px-12 space-y-16">
       
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
         
-        <!-- Images Column First on Desktop: Direct Floating Screenshots -->
-        <div class="lg:col-span-7 order-2 lg:order-1 flex flex-col sm:flex-row items-center justify-center gap-8 lg:gap-10">
-          <div class="w-full sm:w-[340px] shrink-0 text-center">
-            <img 
-              src="assets/why-choose/cai-payment-options.png" 
-              alt="Make a payment inside Cai Widget" 
-              class="intercom-widget-img w-full max-w-[340px] mx-auto block"
-            >
-            <div class="text-[13px] text-black/60 font-medium mt-3.5">In-Widget Razorpay, UPI & Bank Transfer Checkout</div>
-          </div>
-
-          <div class="w-full sm:w-[340px] shrink-0 text-center">
-            <img 
-              src="assets/journey/step-05-whatsapp.png" 
-              alt="Continue on WhatsApp with full history" 
-              class="intercom-canvas-img w-full max-w-[340px] mx-auto block"
-            >
-            <div class="text-[13px] text-black/60 font-medium mt-3.5">Unified WhatsApp Handoff with Full Conversation Transcript</div>
-          </div>
-        </div>
-
-        <!-- Text Column -->
-        <div class="lg:col-span-5 order-1 lg:order-2 space-y-7">
+        <div class="lg:col-span-5 space-y-7">
           <h2 class="text-[2.5rem] sm:text-[3.25rem] lg:text-[3.75rem] font-normal tracking-[-0.1rem] leading-[0.98] text-black">
             4. Support across every channel
           </h2>
@@ -522,6 +543,44 @@
           </div>
         </div>
 
+        <!-- Visuals: WhatsApp Dashboard + Compact Payment Widget -->
+        <div class="lg:col-span-7 space-y-8">
+          
+          <!-- WhatsApp Dashboard Window -->
+          <div class="intercom-dashboard-window">
+            <div class="h-10 bg-[#efeee9] border-b border-black/10 px-4 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-black/20"></span>
+              </div>
+              <div class="text-[11.5px] font-mono text-black/50 tracking-tight">cuboidpilot.com/integrations/whatsapp</div>
+              <div class="w-8"></div>
+            </div>
+            <img 
+              src="assets/journey/step-05-whatsapp.png" 
+              alt="Continue on WhatsApp with full history" 
+              class="w-full object-cover block"
+            >
+          </div>
+          <div class="text-[13px] text-black/60 font-medium text-center">
+            Unified WhatsApp Handoff: Full chat transcript & buyer intent preserved
+          </div>
+
+          <!-- Compact Payment Screen (Natural size, never stretched!) -->
+          <div class="text-center pt-2">
+            <img 
+              src="assets/why-choose/cai-payment-options.png" 
+              alt="Make a payment inside Cai Widget" 
+              class="intercom-widget-img"
+            >
+            <div class="text-[12.5px] text-black/60 font-medium mt-3">
+              In-Widget Razorpay, UPI & Bank Transfer Checkout
+            </div>
+          </div>
+
+        </div>
+
       </div>
 
     </div>
@@ -529,6 +588,7 @@
 
   <!-- ========================================================
        REASON 5: OUTBOUND SUPPORT, BUILT IN
+       (Gandhi Jayanti Event Banner & Preferences Dropdown)
        ======================================================== -->
   <section id="reason-5" class="py-24 lg:py-32 border-b border-black/10">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
@@ -566,24 +626,24 @@
           </div>
         </div>
 
-        <!-- Images Column: Direct Floating Widget Mockups -->
-        <div class="lg:col-span-7 flex flex-col sm:flex-row items-center justify-center gap-8 lg:gap-10">
-          <div class="w-full sm:w-[340px] shrink-0 text-center">
+        <!-- Images: Two Compact Floating Widgets Side-by-Side (Natural dimensions) -->
+        <div class="lg:col-span-7 flex flex-col sm:flex-row items-center justify-center gap-6 lg:gap-8">
+          <div class="w-full sm:w-[290px] shrink-0 text-center">
             <img 
               src="assets/why-choose/cai-widget-home.png" 
               alt="Cai Widget Home Feed with Special Event Banner" 
-              class="intercom-widget-img w-full max-w-[340px] mx-auto block"
+              class="intercom-widget-img"
             >
-            <div class="text-[13px] text-black/60 font-medium mt-3.5">Widget Home: Action Cards & Gandhi Jayanti News Banner</div>
+            <div class="text-[12.5px] text-black/60 font-medium mt-3">Widget Home: Action Cards & Gandhi Jayanti News</div>
           </div>
 
-          <div class="w-full sm:w-[340px] shrink-0 text-center">
+          <div class="w-full sm:w-[290px] shrink-0 text-center">
             <img 
               src="assets/why-choose/cai-widget-menu.png" 
               alt="Cai Widget 3-Dot Preferences Dropdown" 
-              class="intercom-widget-img w-full max-w-[340px] mx-auto block"
+              class="intercom-widget-img"
             >
-            <div class="text-[13px] text-black/60 font-medium mt-3.5">3-Dot Menu: Dark Mode, Mute Sounds & WhatsApp Switch</div>
+            <div class="text-[12.5px] text-black/60 font-medium mt-3">3-Dot Menu: Dark Mode, Mute Sounds & WhatsApp</div>
           </div>
         </div>
 
@@ -685,7 +745,7 @@
   </section>
 
   <!-- ========================================================
-       FAQS SECTION (Authentic Intercom FAQ Accordion)
+       FAQS SECTION
        ======================================================== -->
   <section id="faqs" class="py-24 lg:py-32 border-b border-black/10">
     <div class="max-w-[960px] mx-auto px-6 lg:px-12 space-y-12">
@@ -745,7 +805,7 @@
   </section>
 
   <!-- ========================================================
-       BOTTOM CTA SECTION (Intercom "Get the best customer service today")
+       BOTTOM CTA SECTION
        ======================================================== -->
   <section class="py-24 lg:py-32 bg-[#111111] text-white text-center">
     <div class="max-w-[1400px] mx-auto px-6 lg:px-12">
