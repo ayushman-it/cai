@@ -1690,7 +1690,7 @@
 
     .cp-banner-img-box {
       width: 100%;
-      height: 120px;
+      height: 128px;
       position: relative;
       overflow: hidden;
       background: #111217;
@@ -1700,7 +1700,8 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center;
+      object-position: center 20%;
+      display: block;
       transition: transform 0.3s ease;
     }
 
@@ -4956,17 +4957,17 @@
         </div>
       </div>
 
-      <!-- 5. Latest Story / Featured Blog Card (At the bottom of Home screen) -->
-      <div class="cp-featured-banner-card" id="cp-card-latest-blog" role="button" tabindex="0" title="Read Latest Story">
+      <!-- 5. Featured Story: Meet Cai India Launch Card (media_1790918693375.png) -->
+      <div class="cp-featured-banner-card" id="cp-card-latest-blog" role="button" tabindex="0" title="Read Story: Meet Cai">
         <div class="cp-banner-img-box">
-          <img src="${baseUrl}/assets/blog/gandhi-jayanti-2026.png" id="cp-home-blog-img" class="cp-banner-cover-photo" alt="Latest Story" onerror="this.src='${baseUrl}/assets/blog/meet-cai-founder.png';" />
-          <div class="cp-banner-badge-tag" id="cp-home-blog-tag">SPECIAL EVENT</div>
+          <img src="${baseUrl}/assets/blog/meet-cai-founder.png" id="cp-home-blog-img" class="cp-banner-cover-photo" alt="Meet Cai AI" onerror="this.onerror=null; this.src='assets/blog/meet-cai-founder.png';" />
+          <div class="cp-banner-badge-tag" id="cp-home-blog-tag">INDIA LAUNCH</div>
         </div>
         <div class="cp-banner-body">
-          <div class="cp-banner-headline" id="cp-home-blog-title">Gandhi Jayanti Special: Truth, Decentralized Technology &amp; Self-Reliance</div>
-          <div class="cp-banner-subline" id="cp-home-blog-desc">On October 2nd, honoring Mahatma Gandhi's ideals of Satya, Swavalamban &amp; Sarvodaya in ethical technology.</div>
+          <div class="cp-banner-headline" id="cp-home-blog-title">Meet Cai: India's 1st Autonomous AI Helpdesk &amp; SDR Agent</div>
+          <div class="cp-banner-subline" id="cp-home-blog-desc">Autonomous lead capture, WhatsApp syncing &amp; 1-on-1 team bookings.</div>
           <div class="cp-banner-footer-row">
-            <span class="cp-banner-meta-pill" id="cp-home-blog-date">Oct 02, 2026 • 3 min read</span>
+            <span class="cp-banner-meta-pill" id="cp-home-blog-date">Bengaluru, IN &bull; Available Now</span>
             <span class="cp-banner-arrow-link">Read story &rarr;</span>
           </div>
         </div>
@@ -4988,37 +4989,13 @@
       })
       .catch(() => {});
 
-    // Latest blog click listener and dynamic fetch
-    let latestBlogSlug = 'gandhi-jayanti-truth-technology-self-reliance';
+    // India Launch Card click listener
     const blogCard = shadow.getElementById('cp-card-latest-blog');
     if (blogCard) {
       blogCard.addEventListener('click', () => {
-        window.open(`${baseUrl}/blog.html?slug=${encodeURIComponent(latestBlogSlug)}`, '_blank');
+        window.open(`${baseUrl}/blog.html?slug=meet-cai-autonomous-ai-agent`, '_blank');
       });
     }
-
-    // Fetch latest published blog post dynamically for the bottom card
-    fetch(`${baseUrl}/api/blogs.php?action=list&limit=1`)
-      .then(r => r.json())
-      .then(d => {
-        if (d && d.success && d.blogs && d.blogs.length > 0) {
-          const b = d.blogs[0];
-          latestBlogSlug = b.slug || latestBlogSlug;
-          const img = shadow.getElementById('cp-home-blog-img');
-          const tag = shadow.getElementById('cp-home-blog-tag');
-          const title = shadow.getElementById('cp-home-blog-title');
-          const desc = shadow.getElementById('cp-home-blog-desc');
-          const date = shadow.getElementById('cp-home-blog-date');
-          if (img && b.cover_image) {
-            img.src = b.cover_image.startsWith('http') ? b.cover_image : `${baseUrl}/${b.cover_image.replace(/^\.?\//, '')}`;
-          }
-          if (tag) tag.textContent = (b.category || 'LATEST STORY').toUpperCase();
-          if (title && b.title) title.textContent = b.title;
-          if (desc && b.excerpt) desc.textContent = b.excerpt;
-          if (date) date.textContent = `${b.formatted_date || 'Recent'} • ${b.read_time || '3 min read'}`;
-        }
-      })
-      .catch(() => {});
 
 
     const askCard = shadow.getElementById('cp-card-ask');
