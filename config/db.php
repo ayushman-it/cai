@@ -4,12 +4,12 @@
  * Automatically connects to MySQL and ensures tables and demo users exist.
  */
 
-// Database credentials
-define('DB_HOST', '127.0.0.1');
-define('DB_PORT', '3306');
-define('DB_USER', 'root');
-define('DB_PASS', '');
-define('DB_NAME', 'cuboidpolit_db');
+// Database credentials (supports dynamic environment variables in production)
+define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
+define('DB_PORT', getenv('DB_PORT') ?: '3306');
+define('DB_USER', getenv('DB_USER') ?: 'root');
+define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
+define('DB_NAME', getenv('DB_NAME') ?: 'cuboidpolit_db');
 
 // Groq AI Engine Key (Configure in environment or set here)
 define('GROQ_API_KEY', getenv('GROQ_API_KEY') ?: 'YOUR_GROQ_API_KEY_HERE');
@@ -86,9 +86,6 @@ function ensureExtendedSchema(PDO $pdo) {
             `trial_ends_at` = COALESCE(`trial_ends_at`, DATE_ADD(COALESCE(`created_at`, NOW()), INTERVAL 14 DAY))
         WHERE `trial_ends_at` IS NULL
     ");
-
-    // Ensure Company 1 key matches the website widget embed attribute (cp_live_apexedtech)
-    $pdo->exec("UPDATE `companies` SET `company_key` = 'cp_live_apexedtech' WHERE `id` = 1 AND `company_key` != 'cp_live_apexedtech'");
 
     // 2. Installments / EMI schedule table (Section 34, 37, 38)
     $pdo->exec("
@@ -867,8 +864,8 @@ function initDbSchemaAndUsers(PDO $pdo) {
     $firstCompId = (int)$pdo->query("SELECT id FROM `companies` ORDER BY id ASC LIMIT 1")->fetchColumn();
     if (!$firstCompId) $firstCompId = null;
 
-    // Ensure standard demo users have known password hash for 'password123'
-    $demoUsers = [
+    // Ensure production administration accounts exist with verified credentials
+    $productionUsers = [
         [
             'uuid'           => 'usr_root_superadmin_01',
             'company_id'     => null,
@@ -879,29 +876,11 @@ function initDbSchemaAndUsers(PDO $pdo) {
             'is_active'      => 1
         ],
         [
-            'uuid'           => 'usr_owner_apex_02',
+            'uuid'           => 'usr_owner_cuboidsoft_01',
             'company_id'     => $firstCompId,
-            'name'           => 'Rohan Mehta (Founder)',
-            'email'          => 'owner@apexedtech.in',
+            'name'           => 'Ayush (CuboidSoft)',
+            'email'          => 'founder@cuboidsoft.in',
             'role'           => 'owner',
-            'is_super_admin' => 0,
-            'is_active'      => 1
-        ],
-        [
-            'uuid'           => 'usr_manager_apex_03',
-            'company_id'     => $firstCompId,
-            'name'           => 'Neha Singhania (Head of Sales)',
-            'email'          => 'neha@apexedtech.in',
-            'role'           => 'manager',
-            'is_super_admin' => 0,
-            'is_active'      => 1
-        ],
-        [
-            'uuid'           => 'usr_agent_apex_04',
-            'company_id'     => $firstCompId,
-            'name'           => 'Arjun Rao (Senior Closer)',
-            'email'          => 'arjun@apexedtech.in',
-            'role'           => 'sales_agent',
             'is_super_admin' => 0,
             'is_active'      => 1
         ]
@@ -909,7 +888,7 @@ function initDbSchemaAndUsers(PDO $pdo) {
 
     $hash = password_hash('password123', PASSWORD_BCRYPT);
 
-    foreach ($demoUsers as $u) {
+    foreach ($productionUsers as $u) {
         $checkStmt = $pdo->prepare("SELECT id, password_hash FROM `users` WHERE `email` = ?");
         $checkStmt->execute([$u['email']]);
         $existing = $checkStmt->fetch();
@@ -921,7 +900,7 @@ function initDbSchemaAndUsers(PDO $pdo) {
                 $upd->execute([$hash, $existing['id']]);
             }
         } else {
-            // Insert demo user
+            // Insert production user
             $ins = $pdo->prepare("
                 INSERT INTO `users` (`uuid`, `company_id`, `name`, `email`, `password_hash`, `role`, `is_super_admin`, `is_active`)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)

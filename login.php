@@ -378,45 +378,6 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
 
         </div>
 
-        <!-- Quick Demo Credentials Pill Bar (Compact 1-row, 1-click test logins) -->
-        <div class="mt-2 py-1 px-2.5 bg-stone-50 border border-[#e7e5de] rounded-[4px] flex items-center justify-between text-xs">
-          <span class="text-[11px] font-medium text-stone-500 flex items-center gap-1">
-            <i data-lucide="key" class="w-3 h-3 text-stone-400"></i> Demo:
-          </span>
-            <button 
-              type="button" 
-              onclick="fillDemo('founder@cuboidsoft.in', 'password123')" 
-              class="px-2 py-0.5 bg-white border border-stone-200 hover:border-stone-900 rounded-[3px] text-[11px] font-medium text-stone-800 transition-colors"
-              title="Login as CuboidSoft Founder"
-            >
-              CuboidSoft
-            </button>
-            <button 
-              type="button" 
-              onclick="fillDemo('owner@apexedtech.in', 'password123')" 
-              class="px-2 py-0.5 bg-white border border-stone-200 hover:border-stone-900 rounded-[3px] text-[11px] font-medium text-stone-800 transition-colors"
-              title="Login as Company Owner"
-            >
-              Owner
-            </button>
-            <button 
-              type="button" 
-              onclick="fillDemo('admin@cuboidpolit.com', 'password123')" 
-              class="px-2 py-0.5 bg-white border border-stone-200 hover:border-stone-900 rounded-[3px] text-[11px] font-medium text-stone-800 transition-colors"
-              title="Login as Super Admin"
-            >
-              Super Admin
-            </button>
-            <button 
-              type="button" 
-              onclick="fillDemo('neha@apexedtech.in', 'password123')" 
-              class="px-2 py-0.5 bg-white border border-stone-200 hover:border-stone-900 rounded-[3px] text-[11px] font-medium text-stone-800 transition-colors"
-              title="Login as Sales Agent"
-            >
-              Agent
-            </button>
-          </div>
-
       </div>
 
       <!-- Right Column: Latest Blog & Editorial Feature Story -->
@@ -567,36 +528,17 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
       }, 400);
     });
 
-    // Fill Demo Credentials and Auto Submit
-    function fillDemo(email, password) {
-      document.getElementById('email').value = email;
-      document.getElementById('password').value = password;
-      
-      // Auto verify captcha
-      captchaSpinner.classList.add('hidden');
-      captchaCheck.classList.remove('hidden');
-      captchaBox.classList.add('border-emerald-600', 'bg-emerald-50');
-      captchaChecked = true;
-
-      // Submit form
-      document.getElementById('continue-btn').click();
-    }
-
     // Google Login Handler
     function handleGoogleLogin() {
-      // Fast demo auth for Google OAuth
-      fillDemo('owner@apexedtech.in', 'password123');
+      alert('Google Workspace Single Sign-On is active. Please enter your work email and password above to sign in.');
     }
 
     function handleForgotPassword() {
-      alert('Password reset instructions will be dispatched to your work email.');
+      alert('Password reset instructions will be dispatched to your registered email.');
     }
 
     function handleSamlLogin() {
-      const domain = prompt('Enter your corporate enterprise domain (e.g. acme.com):', 'apexedtech.in');
-      if (domain) {
-        fillDemo('owner@apexedtech.in', 'password123');
-      }
+      alert('SAML 2.0 Enterprise Single Sign-On is enabled for your domain. Please log in with your credentials.');
     }
   </script>
 </body>
