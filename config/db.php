@@ -31,12 +31,31 @@
     }
 })();
 
-// Database credentials (supports dynamic environment variables in production)
-define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
-define('DB_PORT', getenv('DB_PORT') ?: '3306');
-define('DB_USER', getenv('DB_USER') ?: 'u325640649_cai');
-define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : 'AyushmanIndia@2026');
-define('DB_NAME', getenv('DB_NAME') ?: 'u325640649_cai');
+// Detect environment (Local XAMPP vs Hostinger Production)
+$httpHost = $_SERVER['HTTP_HOST'] ?? '';
+$isLocal = in_array(strtolower(explode(':', $httpHost)[0]), ['localhost', '127.0.0.1'])
+    || (php_sapi_name() === 'cli' && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
+
+$envUser = getenv('DB_USER');
+$envPass = getenv('DB_PASS');
+$envName = getenv('DB_NAME');
+$envHost = getenv('DB_HOST');
+$envPort = getenv('DB_PORT');
+
+// If running in production (Hostinger/Live Domain) or if DB_USER is still 'root' on server
+if (!$isLocal || (!empty($httpHost) && !in_array(strtolower(explode(':', $httpHost)[0]), ['localhost', '127.0.0.1']))) {
+    define('DB_HOST', (!empty($envHost) && $envHost !== '127.0.0.1') ? $envHost : 'localhost');
+    define('DB_PORT', $envPort ?: '3306');
+    define('DB_USER', (!empty($envUser) && $envUser !== 'root') ? $envUser : 'u325640649_cai');
+    define('DB_PASS', (!empty($envPass)) ? $envPass : 'AyushmanIndia@2026');
+    define('DB_NAME', (!empty($envName) && $envName !== 'cuboidpolit_db') ? $envName : 'u325640649_cai');
+} else {
+    define('DB_HOST', $envHost ?: '127.0.0.1');
+    define('DB_PORT', $envPort ?: '3306');
+    define('DB_USER', $envUser ?: 'root');
+    define('DB_PASS', $envPass !== false ? $envPass : '');
+    define('DB_NAME', $envName ?: 'cuboidpolit_db');
+}
 
 // Groq AI Engine Key (Configure in .env)
 define('GROQ_API_KEY', getenv('GROQ_API_KEY') ?: '');
