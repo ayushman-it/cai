@@ -232,6 +232,147 @@
 
     // Initial render
     updatePrices();
+    initOutcomeTriggers();
+  }
+
+  function ensureOutcomeModal() {
+    let modal = document.getElementById('cp-outcome-modal');
+    if (modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = 'cp-outcome-modal';
+    modal.className = 'fixed inset-0 flex items-center justify-center p-4 transition-opacity duration-200';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999999;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    modal.setAttribute('aria-labelledby', 'cp-outcome-modal-title');
+
+    modal.innerHTML = `
+      <div class="bg-white border border-[#dcdad0] rounded-[6px] shadow-2xl max-w-md w-full p-6 sm:p-7 relative text-left text-[#111111] animate-in fade-in zoom-in-95 duration-150" style="background:#ffffff;border:1px solid #dcdad0;box-shadow:0 25px 50px -12px rgba(0,0,0,0.25);">
+        <button type="button" id="cp-close-outcome-modal" class="absolute top-4 right-4 p-1.5 rounded-[4px] text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer" aria-label="Close dialog" style="position:absolute;top:16px;right:16px;cursor:pointer;background:transparent;border:none;">
+          <svg class="w-4 h-4" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="flex items-center gap-2 mb-1.5" style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0" style="width:24px;height:24px;border-radius:9999px;background:#ecfdf5;color:#047857;display:flex;align-items:center;justify-content:center;">
+            <svg class="w-3.5 h-3.5" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </span>
+          <h3 id="cp-outcome-modal-title" class="text-base sm:text-lg font-semibold text-[#111111] tracking-tight" style="margin:0;font-size:16px;font-weight:600;color:#111111;">
+            How Cai Outcome Pricing Works
+          </h3>
+        </div>
+        <p class="text-xs text-stone-500 mb-4 leading-relaxed" style="font-size:12px;color:#78716c;margin-bottom:16px;line-height:1.5;">
+          Pay only when Cai delivers measurable customer resolution. No charges for simple greetings or human escalations.
+        </p>
+
+        <div class="p-3.5 bg-[#fcfbfa] border border-[#e7e5de] rounded-[4px] mb-4" style="background:#fcfbfa;border:1px solid #e7e5de;border-radius:4px;padding:14px;margin-bottom:16px;">
+          <div class="text-[11px] font-mono uppercase text-stone-500 mb-0.5" style="font-size:11px;font-family:monospace;color:#78716c;">Current Outcome Rate</div>
+          <div class="text-2xl font-bold font-mono text-[#111111] flex items-baseline gap-1.5" style="display:flex;align-items:baseline;gap:6px;font-size:24px;font-weight:700;font-family:monospace;">
+            <span class="cp-modal-outcome-rate text-emerald-800" style="color:#065f46;">₹1</span>
+            <span class="text-xs font-normal text-stone-500 font-sans" style="font-size:12px;font-weight:400;font-family:sans-serif;color:#78716c;">per successful resolution</span>
+          </div>
+        </div>
+
+        <div class="space-y-3.5 text-xs text-stone-700" style="font-size:12px;color:#44403c;">
+          <div style="margin-bottom:12px;">
+            <div class="font-semibold text-stone-900 mb-1.5 flex items-center gap-1.5" style="font-weight:600;color:#1c1917;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold" style="width:16px;height:16px;border-radius:9999px;background:#d1fae5;color:#065f46;display:inline-flex;align-items:center;justify-content:center;font-size:10px;">✓</span>
+              <span>What counts as an outcome?</span>
+            </div>
+            <ul class="space-y-1 text-stone-600 pl-5 list-disc list-outside" style="padding-left:20px;margin:0;color:#57534e;">
+              <li style="margin-bottom:4px;">Cai resolves a customer query from verified documentation without human agent intervention</li>
+              <li style="margin-bottom:4px;">Cai captures a qualified lead with complete contact details (name, email/phone, intent)</li>
+              <li>Cai schedules a confirmed team demo, appointment, or consultation</li>
+            </ul>
+          </div>
+
+          <div class="pt-3 border-t border-[#f0eee9]" style="border-top:1px solid #f0eee9;padding-top:12px;margin-bottom:12px;">
+            <div class="font-semibold text-stone-900 mb-1.5 flex items-center gap-1.5" style="font-weight:600;color:#1c1917;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <span class="w-4 h-4 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center text-[10px] font-bold" style="width:16px;height:16px;border-radius:9999px;background:#f5f5f4;color:#78716c;display:inline-flex;align-items:center;justify-content:center;font-size:10px;">✕</span>
+              <span>What is always 100% Free (₹0)?</span>
+            </div>
+            <ul class="space-y-1 text-stone-600 pl-5 list-disc list-outside" style="padding-left:20px;margin:0;color:#57534e;">
+              <li style="margin-bottom:4px;">Greetings, pleasantries, and basic navigation queries</li>
+              <li style="margin-bottom:4px;">Clarifying questions asked before arriving at a resolution</li>
+              <li style="margin-bottom:4px;">Any conversation escalated to or answered by a human specialist</li>
+              <li>Spam, test pings, or unresolvable inquiries</li>
+            </ul>
+          </div>
+
+          <div class="pt-3 border-t border-[#f0eee9] text-[11.5px] text-stone-600 leading-relaxed bg-[#fbfaf6] p-3 rounded-[4px] border border-[#eceae4]" style="background:#fbfaf6;border:1px solid #eceae4;border-radius:4px;padding:12px;font-size:11.5px;color:#57534e;line-height:1.5;">
+            <strong class="text-stone-900" style="color:#1c1917;">Budget Guardrails:</strong> Set custom monthly outcome limits directly in your dashboard (e.g. ₹500 or ₹2,000) so your bill never exceeds your planned budget.
+          </div>
+        </div>
+
+        <div class="mt-5" style="margin-top:20px;">
+          <button type="button" id="cp-confirm-outcome-modal" class="w-full py-2.5 px-4 rounded-[3px] bg-[#111111] hover:bg-black text-white text-xs font-semibold text-center transition-colors shadow-2xs cursor-pointer" style="width:100%;padding:10px 16px;border-radius:3px;background:#111111;color:#ffffff;font-size:12px;font-weight:600;border:none;cursor:pointer;">
+            Got it, thanks
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    const closeBtn = modal.querySelector('#cp-close-outcome-modal');
+    const confirmBtn = modal.querySelector('#cp-confirm-outcome-modal');
+
+    const closeModal = () => {
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    };
+
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (confirmBtn) confirmBtn.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.style.display === 'flex') {
+        closeModal();
+      }
+    });
+
+    return modal;
+  }
+
+  function openOutcomeModal() {
+    const modal = ensureOutcomeModal();
+    const curr = CURRENCIES[currentCurrency] || CURRENCIES.INR;
+    const rateEl = modal.querySelector('.cp-modal-outcome-rate');
+    if (rateEl) {
+      rateEl.textContent = curr.caiOutcome;
+    }
+    modal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function initOutcomeTriggers() {
+    ensureOutcomeModal();
+
+    document.addEventListener('click', function (e) {
+      // 1. Explicit trigger button or question mark click
+      const trigger = e.target.closest('.cp-outcome-info-trigger, [data-action="outcome-info"], .cp-outcome-btn, [data-lucide="help-circle"], [data-lucide="circle-help"], svg.lucide-circle-help, svg.lucide-help-circle');
+      if (trigger) {
+        if (trigger.closest('.cp-outcome-info-trigger, [data-action="outcome-info"], .cp-outcome-btn') || trigger.classList.contains('cp-outcome-info-trigger')) {
+          e.preventDefault();
+          e.stopPropagation();
+          openOutcomeModal();
+          return;
+        }
+
+        const parentBlock = trigger.closest('.cp-cai-outcome-rate, .cp-hero-outcome-price, [title*="outcome"], [title*="Outcome"]') || trigger.parentElement;
+        const text = (parentBlock ? parentBlock.textContent : '').toLowerCase();
+        const title = (trigger.getAttribute('title') || '').toLowerCase();
+        if (text.includes('outcome') || title.includes('outcome')) {
+          e.preventDefault();
+          e.stopPropagation();
+          openOutcomeModal();
+        }
+      }
+    }, true);
   }
 
   if (document.readyState === 'loading') {
@@ -248,7 +389,10 @@
         updatePrices();
       }
     },
-    updatePrices: updatePrices
+    updatePrices: updatePrices,
+    openOutcomeModal: openOutcomeModal
   };
+
+  window.openOutcomeModal = openOutcomeModal;
 
 })();

@@ -278,6 +278,47 @@ try {
         $teamStmt->execute($params);
         $teamMembers = $teamStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        if (empty($teamMembers)) {
+            $fallbackStmt = $pdo->prepare("
+                SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url, 1 as is_instant_help_enabled, 1 as is_appointment_enabled
+                FROM `users`
+                WHERE `company_id` = ?
+                ORDER BY id ASC LIMIT 5
+            ");
+            $fallbackStmt->execute([$companyId]);
+            $teamMembers = $fallbackStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        if (empty($teamMembers)) {
+            $companyName = !empty($company['name']) ? $company['name'] : 'Support';
+            $teamMembers = [
+                [
+                    'id'                      => 1,
+                    'name'                    => $companyName . ' Specialist',
+                    'email'                   => 'consultant@cuboidpilot.com',
+                    'job_title'               => 'Senior Advisor',
+                    'department'              => 'sales',
+                    'availability_status'     => 'AVAILABLE',
+                    'avatar_url'              => 'assets/uploads/avatars/avatar_default.svg',
+                    'linkedin_url'            => '',
+                    'is_instant_help_enabled' => 1,
+                    'is_appointment_enabled'  => 1
+                ],
+                [
+                    'id'                      => 2,
+                    'name'                    => $companyName . ' Tech Desk',
+                    'email'                   => 'tech@cuboidpilot.com',
+                    'job_title'               => 'Product Consultant',
+                    'department'              => 'technical',
+                    'availability_status'     => 'AVAILABLE',
+                    'avatar_url'              => 'assets/uploads/avatars/avatar_default.svg',
+                    'linkedin_url'            => '',
+                    'is_instant_help_enabled' => 1,
+                    'is_appointment_enabled'  => 1
+                ]
+            ];
+        }
+
         $enrichedTeam = [];
         foreach ($teamMembers as $m) {
             $nextSlotText = 'Today, 4:30 PM';
@@ -512,6 +553,17 @@ try {
         ]);
         $appointmentId = (int)$pdo->lastInsertId();
 
+        // Sync with Google Calendar v3 API if configured
+        try {
+            require_once __DIR__ . '/google_calendar.php';
+            $gcalRes = syncAppointmentToGoogleCalendar($pdo, $companyId, $appointmentId);
+            if (!empty($gcalRes['meet_link'])) {
+                $meetLink = $gcalRes['meet_link'];
+            }
+        } catch (Exception $gcalEx) {
+            error_log('[Google Calendar Hook Note] ' . $gcalEx->getMessage());
+        }
+
         if ($conversationId) {
             $msgText = "📅 **Appointment Confirmed!**\nWith **{$agent['name']}** ({$agent['job_title']})\nDate & Time: **" . date('l, F j, Y \a\t g:i A', strtotime($slotDatetime)) . "**\nGoogle Meet: {$meetLink}";
             $pdo->prepare("
@@ -554,6 +606,21 @@ try {
             $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status FROM `users` WHERE company_id = ? AND availability_status = 'AVAILABLE' LIMIT 1");
             $agentStmt->execute([$companyId]);
             $agent = $agentStmt->fetch(PDO::FETCH_ASSOC);
+            if (!$agent) {
+                $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status FROM `users` WHERE company_id = ? ORDER BY id ASC LIMIT 1");
+                $agentStmt->execute([$companyId]);
+                $agent = $agentStmt->fetch(PDO::FETCH_ASSOC);
+            }
+            if (!$agent) {
+                $agent = [
+                    'id' => 0,
+                    'name' => 'Consultant',
+                    'job_title' => 'Advisor',
+                    'department' => 'sales',
+                    'avatar_url' => 'assets/uploads/avatars/avatar_default.svg',
+                    'availability_status' => 'AVAILABLE'
+                ];
+            }
             $userId = (int)($agent['id'] ?? 0);
         }
 
@@ -563,40 +630,43 @@ try {
         if (!$conversationId) {
             $insConv = $pdo->prepare("
                 INSERT INTO `conversations` 
-                (`company_id`, `customer_id`, `channel`, `status`, `ownership`, `assigned_user_id`, `last_message_preview`, `last_message_at`, `created_at`)
-                VALUES (?, ?, 'widget', 'human_handling', 'human', ?, 'Transferred to human consultant', NOW(), NOW())
+                (`company_id`, `customer_id`, `channel`, `status`, `ownership`, `assigned_user_id`, `unread_human`, `last_message_preview`, `last_message_at`, `created_at`)
+                VALUES (?, ?, 'widget', 'human_requested', 'human', ?, 1, 'Visitor requested human assistance', NOW(), NOW())
             ");
-            $insConv->execute([$companyId, $customerId, $userId]);
+            $insConv->execute([$companyId, $customerId, $userId ?: null]);
             $conversationId = (int)$pdo->lastInsertId();
         } else {
             $pdo->prepare("
                 UPDATE `conversations`
-                SET `status` = 'human_handling',
+                SET `status` = 'human_requested',
                     `ownership` = 'human',
                     `assigned_user_id` = ?,
                     `unread_human` = unread_human + 1,
-                    `last_message_preview` = 'Connected with human consultant',
+                    `last_message_preview` = 'Visitor requested human assistance',
                     `last_message_at` = NOW()
                 WHERE id = ? AND company_id = ?
-            ")->execute([$userId, $conversationId, $companyId]);
+            ")->execute([$userId ?: null, $conversationId, $companyId]);
         }
 
-        $systemNotice = "Connected with **{$agent['name']}** ({$agent['job_title']}). " . 
-            ($agent['availability_status'] === 'AVAILABLE' ? "They are online and will reply in a moment." : "They are currently {$agent['availability_status']}. You can leave your message below.");
+        // Dispatch alert notification to counselor / company
+        try {
+            require_once __DIR__ . '/alerts.php';
+            $leadStmt = $pdo->prepare("SELECT id FROM `leads` WHERE `conversation_id` = ? OR `customer_id` = ? ORDER BY id DESC LIMIT 1");
+            $leadStmt->execute([$conversationId, $customerId]);
+            $leadId = $leadStmt->fetchColumn();
+            if ($leadId) {
+                sendSalespersonAssignmentAlert($pdo, $companyId, (int)$leadId, $agent, 'HUMAN_REQUIRED');
+            }
+        } catch (Exception $aEx) {
+            error_log('[Human Chat Alert Note] ' . $aEx->getMessage());
+        }
 
-        $pdo->prepare("
-            INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `metadata_json`, `created_at`)
-            VALUES (?, ?, 'ai', ?, ?, NOW())
-        ")->execute([
-            $companyId,
-            $conversationId,
-            $systemNotice,
-            json_encode(['type' => 'human_connected', 'agent_id' => $userId, 'agent_name' => $agent['name']])
-        ]);
+        $systemNotice = "Connecting with {$agent['name']} ({$agent['job_title']}).";
 
         echo json_encode([
             'success'         => true,
             'conversation_id' => $conversationId,
+            'status'          => 'human_requested',
             'agent'           => [
                 'id'                  => $userId,
                 'name'                => $agent['name'],
@@ -616,6 +686,7 @@ try {
     if ($action === 'poll_messages') {
         $conversationId = (int)($_GET['conversation_id'] ?? $data['conversation_id'] ?? 0);
         $afterId        = (int)($_GET['after_id'] ?? $data['after_id'] ?? 0);
+        $sessionToken   = trim($_GET['session_token'] ?? $data['session_token'] ?? '');
 
         if (!$conversationId) {
             echo json_encode(['success' => true, 'messages' => []]);
@@ -631,6 +702,33 @@ try {
         ");
         $convStmt->execute([$conversationId, $companyId]);
         $conv = $convStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$conv) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Conversation not found']);
+            exit;
+        }
+
+        // Authorize: Must be authenticated dashboard user or matching visitor session
+        $isDashboardUser = !empty($_SESSION['company_id']) && (int)$_SESSION['company_id'] === $companyId;
+        $isVisitorOwner = false;
+        if (!empty($sessionToken)) {
+            $vCheck = $pdo->prepare("
+                SELECT 1 FROM `visitor_sessions` vs
+                WHERE vs.session_token = ? AND vs.company_id = ? AND vs.customer_id = ?
+                LIMIT 1
+            ");
+            $vCheck->execute([$sessionToken, $companyId, $conv['customer_id']]);
+            if ($vCheck->fetch()) {
+                $isVisitorOwner = true;
+            }
+        }
+
+        if (!$isDashboardUser && !$isVisitorOwner) {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Unauthorized conversation access']);
+            exit;
+        }
 
         $mStmt = $pdo->prepare("
             SELECT id, sender_type, message_text, metadata_json, created_at
@@ -691,9 +789,75 @@ try {
             UPDATE `conversations`
             SET `last_message_preview` = ?,
                 `last_message_at` = NOW(),
+                `status` = 'human_requested',
+                `ownership` = 'human',
                 `unread_human` = unread_human + 1
             WHERE id = ? AND company_id = ?
         ")->execute([substr($messageText, 0, 150), $conversationId, $companyId]);
+
+        // Dispatch alert to Counselor WhatsApp (Meta Cloud API wiring)
+        try {
+            $waStmt = $pdo->prepare("
+                SELECT u.phone as agent_phone, u.name as agent_name, 
+                       c.name as cust_name, c.phone as cust_phone,
+                       w.phone_number_id, w.whatsapp_access_token
+                FROM `conversations` conv
+                LEFT JOIN `users` u ON u.id = conv.assigned_user_id
+                LEFT JOIN `customers` c ON c.id = conv.customer_id
+                LEFT JOIN `whatsapp_accounts` w ON w.company_id = conv.company_id AND w.status = 'connected'
+                WHERE conv.id = ? AND conv.company_id = ?
+                LIMIT 1
+            ");
+            $waStmt->execute([$conversationId, $companyId]);
+            $waInfo = $waStmt->fetch(PDO::FETCH_ASSOC);
+
+            $targetPhone = !empty($waInfo['agent_phone']) ? $waInfo['agent_phone'] : '';
+            if (empty($targetPhone)) {
+                $uStmt = $pdo->prepare("SELECT phone FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND `phone` IS NOT NULL AND `phone` != '' LIMIT 1");
+                $uStmt->execute([$companyId]);
+                $targetPhone = $uStmt->fetchColumn() ?: '';
+            }
+
+            // If Meta WhatsApp Cloud API credentials exist, dispatch direct WhatsApp message
+            if (!empty($targetPhone) && !empty($waInfo['phone_number_id']) && !empty($waInfo['whatsapp_access_token'])) {
+                $cleanRecipient = preg_replace('/[^0-9]/', '', $targetPhone);
+                $dashHost = $_SERVER['HTTP_HOST'] ?? 'cai.cuboidsoft.in';
+                $dashBase = ($dashHost === 'localhost' || $dashHost === '127.0.0.1') ? 'http://localhost/cuboidpilot' : 'https://cai.cuboidsoft.in';
+                $replyUrl = "{$dashBase}/app/conversations.html?id={$conversationId}";
+                $waText = "💬 *New Message from {$custLabel}* (Live Chat)\n\n"
+                    . "\"{$messageText}\"\n\n"
+                    . "👉 Reply in Dashboard: {$replyUrl}";
+
+                $endpoint = "https://graph.facebook.com/v20.0/{$waInfo['phone_number_id']}/messages";
+                $payload = [
+                    'messaging_product' => 'whatsapp',
+                    'to'                => $cleanRecipient,
+                    'type'              => 'text',
+                    'text'              => ['body' => $waText]
+                ];
+                $ch = curl_init($endpoint);
+                curl_setopt_array($ch, [
+                    CURLOPT_POST           => true,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_HTTPHEADER     => [
+                        'Authorization: Bearer ' . $waInfo['whatsapp_access_token'],
+                        'Content-Type: application/json'
+                    ],
+                    CURLOPT_POSTFIELDS     => json_encode($payload),
+                    CURLOPT_TIMEOUT        => 4
+                ]);
+                @curl_exec($ch);
+                curl_close($ch);
+            }
+
+            // Always log alert into alert_logs for audit
+            $pdo->prepare("
+                INSERT INTO `alert_logs` (`company_id`, `alert_type`, `recipient`, `channel`, `content_preview`, `sent_at`)
+                VALUES (?, 'HUMAN_MESSAGE_RECEIVED', ?, 'whatsapp', ?, NOW())
+            ")->execute([$companyId, $targetPhone ?: 'dashboard_inbox', substr($messageText, 0, 200)]);
+        } catch (Exception $waEx) {
+            error_log('[WhatsApp Alert Note] ' . $waEx->getMessage());
+        }
 
         echo json_encode([
             'success'    => true,

@@ -172,15 +172,147 @@ window.CuboidShell = {
     const breadcrumbRootEl = document.getElementById('shell-breadcrumb-company');
     if (breadcrumbRootEl) breadcrumbRootEl.textContent = this.company.name;
 
-    // 4. Feature locks on sidebar (Section 20)
-    const isPremium = this.entitlements && this.entitlements.is_premium;
-    const waUpgradeBadge = document.getElementById('sidebar-wa-badge');
-    if (waUpgradeBadge) {
-      if (isPremium) {
-        waUpgradeBadge.textContent = 'Active';
-        waUpgradeBadge.className = 'ml-auto text-[10px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded-[3px]';
+    // 4. Trial Duration Indicator & Expiry Banner in Topbar & Content Area
+    const trialIndicator = document.getElementById('shell-trial-indicator');
+    if (trialIndicator && this.entitlements) {
+      if (this.entitlements.is_trial_expired) {
+        trialIndicator.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-50 text-rose-800 border border-rose-300 rounded-[4px] text-[11px] font-medium shrink-0';
+        trialIndicator.innerHTML = `
+          <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+          <span>Trial Expired</span>
+          <a href="billing.html" class="ml-1 text-[10px] px-1.5 py-0.5 bg-rose-700 hover:bg-black text-white rounded-[3px] font-semibold no-underline transition-colors">Renew</a>
+        `;
+      } else if (this.entitlements.is_trial && !this.entitlements.is_premium) {
+        const days = this.entitlements.trial_days_remaining;
+        trialIndicator.className = 'inline-flex items-center gap-1.5 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-amber-50 text-amber-900 border border-amber-300 rounded-[4px] text-[11px] font-medium shrink-0';
+        trialIndicator.innerHTML = `
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+          <span>Trial: <strong>${days}d left</strong></span>
+          <a href="billing.html" class="ml-1 text-[10px] px-1.5 py-0.5 bg-stone-900 hover:bg-black text-white rounded-[3px] font-medium no-underline transition-colors">Renew</a>
+        `;
       } else {
-        waUpgradeBadge.textContent = 'Upgrade';
+        trialIndicator.className = 'hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-[4px] text-[11px] font-medium shrink-0';
+        trialIndicator.innerHTML = `
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+          <span>${(this.entitlements.effective_tier || 'PRO').toUpperCase()}</span>
+        `;
+      }
+    }
+
+    // Dynamic Expiry Banner & Strict 14-Day Free Trial Workspace Lock
+    if (this.entitlements) {
+      const isExpired = Boolean(this.entitlements.is_trial_expired || this.entitlements.status === 'EXPIRED' || this.entitlements.status === 'SUSPENDED');
+      const isBillingPage = window.location.pathname.includes('billing.html') || activePage === 'billing';
+      const isSuperAdmin = window.location.pathname.includes('super-admin');
+
+      // 1. Strict Full-Screen Workspace Lock (Active on all pages except Billing so user can renew)
+      if (isExpired && !isBillingPage && !isSuperAdmin) {
+        let lockOverlay = document.getElementById('shell-workspace-lock-overlay');
+        if (!lockOverlay) {
+          lockOverlay = document.createElement('div');
+          lockOverlay.id = 'shell-workspace-lock-overlay';
+          lockOverlay.className = 'fixed inset-0 z-[99999] bg-stone-950/85 backdrop-blur-md flex items-center justify-center p-4';
+          lockOverlay.innerHTML = `
+            <div class="bg-white border border-stone-200 rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl text-center space-y-5 animate-in fade-in zoom-in-95 duration-200">
+              <div class="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 text-amber-700 flex items-center justify-center mx-auto shadow-sm">
+                <i data-lucide="lock" class="w-7 h-7"></i>
+              </div>
+              
+              <div class="space-y-1.5">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-rose-50 text-rose-700 border border-rose-200 rounded-full text-xs font-semibold">
+                  <span class="w-2 h-2 rounded-full bg-rose-600 animate-pulse"></span>
+                  <span>14-Day Free Trial Ended</span>
+                </div>
+                <h2 class="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">Workspace Locked</h2>
+                <p class="text-xs sm:text-sm text-stone-500 leading-relaxed max-w-sm mx-auto">
+                  Your 14-day evaluation period for <strong class="text-stone-800">${this.company ? this.escapeHtml(this.company.name) : 'your organization'}</strong> has concluded. All your leads, chat histories, and settings are preserved safely.
+                </p>
+              </div>
+
+              <div class="p-3.5 bg-stone-50 rounded-xl border border-stone-200/80 text-left text-xs space-y-2">
+                <div class="flex items-center justify-between text-stone-600">
+                  <span class="font-medium">Trial Ended On:</span>
+                  <span class="font-mono font-semibold text-stone-900">${this.entitlements.formatted_trial_end || '14 Days Ago'}</span>
+                </div>
+                <div class="flex items-center justify-between text-stone-600">
+                  <span class="font-medium">CRM Leads & Data:</span>
+                  <span class="font-mono text-emerald-700 font-semibold">100% Intact</span>
+                </div>
+                <div class="flex items-center justify-between text-stone-600">
+                  <span class="font-medium">To Resume:</span>
+                  <span class="text-amber-800 font-semibold">Activate Subscription</span>
+                </div>
+              </div>
+
+              <div class="flex flex-col gap-2.5 pt-1">
+                <a href="billing.html" class="w-full py-3 bg-stone-900 hover:bg-black text-white text-xs sm:text-sm font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all no-underline">
+                  <i data-lucide="sparkles" class="w-4 h-4 text-amber-400"></i>
+                  <span>Renew Subscription / Choose Plan</span>
+                  <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+                
+                <div class="flex items-center justify-center gap-4 text-xs text-stone-400 pt-1">
+                  <a href="https://api.whatsapp.com/send?phone=919876543210&text=Hi%20CuboidPilot%20Team,%20please%20help%20resume%20my%20workspace%20${encodeURIComponent(this.company ? this.company.company_key : '')}" target="_blank" class="text-stone-600 hover:text-black hover:underline flex items-center gap-1">
+                    <i data-lucide="message-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span>Contact Support</span>
+                  </a>
+                  <span>•</span>
+                  <a href="../logout.php" class="text-stone-500 hover:text-rose-600 hover:underline">
+                    Sign Out
+                  </a>
+                </div>
+              </div>
+            </div>
+          `;
+          document.body.appendChild(lockOverlay);
+          if (window.lucide) lucide.createIcons();
+        }
+      } else {
+        const lockOverlay = document.getElementById('shell-workspace-lock-overlay');
+        if (lockOverlay) lockOverlay.remove();
+      }
+
+      // 2. In-Page Top Banner
+      let banner = document.getElementById('shell-trial-expiry-banner');
+      const contentScroll = document.querySelector('.app-content-scroll') || document.querySelector('.app-main');
+      if (contentScroll) {
+        if (isExpired) {
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'shell-trial-expiry-banner';
+            contentScroll.prepend(banner);
+          }
+          banner.className = 'mb-4 p-3 bg-red-50 border border-red-300 rounded-[6px] text-red-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs';
+          banner.innerHTML = `
+            <div class="flex items-center gap-2">
+              <i data-lucide="alert-octagon" class="w-4 h-4 text-red-600 shrink-0"></i>
+              <span><strong>14-Day Free Trial Expired:</strong> Your workspace trial has ended. Renew your plan to restore full access to WhatsApp, team seats, and autonomous AI automation.</span>
+            </div>
+            <a href="billing.html" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-[4px] no-underline shrink-0 text-center">
+              Renew Plan Now &rarr;
+            </a>
+          `;
+          if (window.lucide) lucide.createIcons();
+        } else if (this.entitlements.is_trial && this.entitlements.trial_days_remaining <= 3) {
+          if (!banner) {
+            banner = document.createElement('div');
+            banner.id = 'shell-trial-expiry-banner';
+            contentScroll.prepend(banner);
+          }
+          banner.className = 'mb-4 p-3 bg-amber-50 border border-amber-300 rounded-[6px] text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs';
+          banner.innerHTML = `
+            <div class="flex items-center gap-2">
+              <i data-lucide="clock" class="w-4 h-4 text-amber-600 shrink-0"></i>
+              <span><strong>Trial Ending Soon:</strong> You have <strong>${this.entitlements.trial_days_remaining} days remaining</strong> on your free trial (Ends ${this.entitlements.formatted_trial_end || 'soon'}). Setup renewal to keep all capabilities active.</span>
+            </div>
+            <a href="billing.html" class="px-3 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-[4px] no-underline shrink-0 text-center">
+              Renew / Upgrade &rarr;
+            </a>
+          `;
+          if (window.lucide) lucide.createIcons();
+        } else if (banner) {
+          banner.remove();
+        }
       }
     }
 
@@ -258,7 +390,10 @@ window.CuboidShell = {
     const officialSnippetEl = document.getElementById('official-widget-snippet');
     const popoverCodeEl = document.getElementById('rail-popover-code');
     if (this.company && this.company.company_key) {
-      const scriptUrl = 'https://cai.cuboidsoft.in/widget.js';
+      const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+      const scriptUrl = isLocal 
+        ? `${window.location.origin}/cuboidpilot/widget.js?v=6.2`
+        : 'https://cai.cuboidsoft.in/widget.js?v=6.2';
       const theme = (this.company.theme_mode === 'light') ? 'light' : 'dark';
       const snippetCode = `<script src="${scriptUrl}" data-company="${this.company.company_key}" data-theme="${theme}" async><\/script>`;
       if (officialSnippetEl) {
@@ -346,6 +481,13 @@ window.CuboidShell = {
                 <span class="text-[11px] text-stone-400 font-mono">4</span>
                 <i data-lucide="chevron-right" class="w-3 h-3 text-stone-400"></i>
               </div>
+            </a>
+          </div>
+          <div class="pt-3 pb-1 border-t border-[#f0ede6] mt-2">
+            <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pb-1">Integrations</div>
+            <a href="channels.html" class="sub-nav-item text-stone-600 hover:text-stone-900 transition-colors">
+              <span class="flex items-center gap-2"><i data-lucide="layers" class="w-3.5 h-3.5 text-stone-500"></i> Channels &amp; Integrations</span>
+              <span class="text-[9.5px] font-mono px-1 py-0.2 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 ml-auto">11 APPS</span>
             </a>
           </div>
         </div>
@@ -463,7 +605,7 @@ window.CuboidShell = {
             <span id="convo-count-ai" class="text-[11px] text-indigo-600 font-mono font-medium">0</span>
           </a>
           <a href="javascript:void(0)" onclick="CuboidDashboard.setConversationFilter('human')" data-convo-filter="human" class="sub-nav-item text-stone-600">
-            <span class="flex items-center gap-2"><i data-lucide="user-check" class="w-3.5 h-3.5 text-amber-600"></i> Human Attention</span>
+            <span class="flex items-center gap-2"><i data-lucide="user-check" class="w-3.5 h-3.5 text-amber-600"></i> Human Action</span>
             <span id="convo-count-human" class="text-[11px] text-amber-600 font-mono font-medium">0</span>
           </a>
           <a href="javascript:void(0)" onclick="CuboidDashboard.setConversationFilter('high_intent')" data-convo-filter="high_intent" class="sub-nav-item text-stone-600">
@@ -506,6 +648,53 @@ window.CuboidShell = {
           </div>
         </div>
       `;
+    } else if (active === 'channels') {
+      // 4. Dedicated Channels & Integrations Contextual Pane
+      subNavHtml = `
+        <div class="sub-sidebar-header flex items-center justify-between">
+          <span class="font-semibold text-xs text-stone-900 tracking-tight">Channels &amp; Integrations</span>
+          <button type="button" class="shell-mobile-close lg:hidden p-1 text-stone-400 hover:text-stone-900 rounded transition-colors" title="Close menu"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <div class="sub-sidebar-nav flex-1 overflow-y-auto space-y-0.5">
+          <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pt-1 pb-1">Filter Apps</div>
+          <a href="javascript:void(0)" onclick="window.filterCategory ? window.filterCategory('all', this) : null" class="cat-pill sub-nav-item active font-medium">
+            <span class="flex items-center gap-2"><i data-lucide="layout-grid" class="w-3.5 h-3.5 text-stone-900"></i> All Channels</span>
+            <span class="text-[11px] text-stone-600 font-mono font-medium ml-auto">11</span>
+          </a>
+          <a href="javascript:void(0)" onclick="window.filterCategory ? window.filterCategory('messaging', this) : null" class="cat-pill sub-nav-item text-stone-600">
+            <span class="flex items-center gap-2"><i data-lucide="message-square" class="w-3.5 h-3.5 text-[#25D366]"></i> Messaging</span>
+            <span class="text-[11px] text-stone-400 font-mono ml-auto">3</span>
+          </a>
+          <a href="javascript:void(0)" onclick="window.filterCategory ? window.filterCategory('scheduling', this) : null" class="cat-pill sub-nav-item text-stone-600">
+            <span class="flex items-center gap-2"><i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-500"></i> Scheduling</span>
+            <span class="text-[11px] text-stone-400 font-mono ml-auto">2</span>
+          </a>
+          <a href="javascript:void(0)" onclick="window.filterCategory ? window.filterCategory('crm', this) : null" class="cat-pill sub-nav-item text-stone-600">
+            <span class="flex items-center gap-2"><i data-lucide="database" class="w-3.5 h-3.5 text-amber-600"></i> CRM &amp; Pipeline</span>
+            <span class="text-[11px] text-stone-400 font-mono ml-auto">4</span>
+          </a>
+          <a href="javascript:void(0)" onclick="window.filterCategory ? window.filterCategory('automation', this) : null" class="cat-pill sub-nav-item text-stone-600">
+            <span class="flex items-center gap-2"><i data-lucide="zap" class="w-3.5 h-3.5 text-purple-600"></i> Automation &amp; Webhooks</span>
+            <span class="text-[11px] text-stone-400 font-mono ml-auto">2</span>
+          </a>
+
+          <div class="pt-3 pb-1 border-t border-[#f0ede6] mt-2">
+            <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pb-1">Quick Links</div>
+            <a href="whatsapp.html" class="sub-nav-item text-stone-600 hover:text-stone-900">
+              <span class="flex items-center gap-2"><i data-lucide="phone-forwarded" class="w-3.5 h-3.5 text-stone-400"></i> WhatsApp Outbound</span>
+            </a>
+            <a href="settings.html" class="sub-nav-item text-stone-600 hover:text-stone-900">
+              <span class="flex items-center gap-2"><i data-lucide="sliders" class="w-3.5 h-3.5 text-stone-400"></i> All Workspace Settings</span>
+            </a>
+          </div>
+        </div>
+        <div class="p-3 border-t border-[#e7e5de] bg-[#fbfaf8]">
+          <div class="flex items-center justify-between text-xs text-stone-500">
+            <span id="shell-company-name" class="font-medium text-stone-800">${this.company ? this.escapeHtml(this.company.name) : 'CuboidSoft'}</span>
+            <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono font-medium">11 Apps</span>
+          </div>
+        </div>
+      `;
     } else {
       // 4. Default / Settings Contextual Pane
       subNavHtml = `
@@ -522,6 +711,10 @@ window.CuboidShell = {
           </a>
           <a href="knowledge.html" class="sub-nav-item ${active === 'knowledge' ? 'active' : ''}">
             <span class="flex items-center gap-2"><i data-lucide="book-marked" class="w-3.5 h-3.5 text-stone-600"></i> Knowledge Grounding</span>
+          </a>
+          <a href="channels.html" class="sub-nav-item ${active === 'channels' ? 'active font-medium' : ''}">
+            <span class="flex items-center gap-2"><i data-lucide="layers" class="w-3.5 h-3.5 text-stone-600"></i> Channels &amp; Integrations</span>
+            <span class="text-[9px] font-mono px-1 py-0.2 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 ml-auto">NEW</span>
           </a>
           <a href="whatsapp.html" class="sub-nav-item ${active === 'whatsapp' ? 'active' : ''}">
             <span class="flex items-center gap-2"><i data-lucide="phone-forwarded" class="w-3.5 h-3.5 text-stone-600"></i> WhatsApp Channel</span>
@@ -577,6 +770,9 @@ window.CuboidShell = {
               </a>
               <a href="pipeline.html" class="rail-item ${active === 'leads' || active === 'pipeline' ? 'active' : ''}" title="Pipeline Kanban & Contacts">
                 <i data-lucide="kanban" class="w-5 h-5"></i>
+              </a>
+              <a href="channels.html" class="rail-item ${active === 'channels' ? 'active' : ''}" title="Channels &amp; Integrations">
+                <i data-lucide="layers" class="w-5 h-5"></i>
               </a>
               <a href="overview.html" class="rail-item ${active === 'analytics' ? 'active' : ''}" title="Reports">
                 <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
@@ -667,8 +863,8 @@ window.CuboidShell = {
             <span class="hidden sm:inline">Test AI</span>
           </button>
 
-          <!-- Status Indicator -->
-          <div class="hidden md:flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-[4px] text-[11px] font-medium shrink-0">
+          <!-- Trial Countdown & Renewal Badge / Status Indicator -->
+          <div id="shell-trial-indicator" class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-[4px] text-[11px] font-medium shrink-0">
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
             <span>AI Live</span>
           </div>
@@ -845,21 +1041,25 @@ window.CuboidShell = {
     }
     const s = document.createElement('script');
     s.id = 'cuboidpilot-widget-script';
-    s.src = '../widget.js';
+    s.src = '../widget.js?v=6.2.' + Date.now();
     s.setAttribute('data-company', companyKey);
     s.async = true;
     document.body.appendChild(s);
   },
 
   // Open the bottom-right floating widget (matching website visitor experience, no sidebar)
-  openBottomWidget: function() {
+  openBottomWidget: function(screen = 'home') {
     this.ensureBottomWidget();
-    const tryOpen = (retries = 12) => {
+    const targetScreen = (screen && typeof screen === 'string') ? screen : 'home';
+    const tryOpen = (retries = 15) => {
       const w = window.CuboidPilotWidget || window.CuboidPilot;
       if (w && typeof w.open === 'function') {
-        w.open();
+        w.open(targetScreen);
+        if (typeof w.navigateTo === 'function') {
+          w.navigateTo(targetScreen);
+        }
       } else if (retries > 0) {
-        setTimeout(() => tryOpen(retries - 1), 150);
+        setTimeout(() => tryOpen(retries - 1), 120);
       }
     };
     tryOpen();
@@ -871,7 +1071,10 @@ window.CuboidShell = {
       e.preventDefault();
       e.stopPropagation();
     }
-    const scriptUrl = 'https://cai.cuboidsoft.in/widget.js';
+    const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const scriptUrl = isLocal 
+      ? `${window.location.origin}/cuboidpilot/widget.js?v=6.2` 
+      : 'https://cai.cuboidsoft.in/widget.js?v=6.2';
     const compKey = (this.company && this.company.company_key) ? this.company.company_key : 'cp_live_cuboidsoft';
     const snippet = `<script src="${scriptUrl}" data-company="${compKey}" data-theme="dark" async><\/script>`;
 
@@ -1325,17 +1528,20 @@ window.CuboidShell = {
         </div>
       </div>
       <div class="space-y-1 text-xs text-stone-700">
+        <a href="channels.html" class="flex items-center gap-2 p-1.5 hover:bg-stone-100 rounded transition-colors no-underline text-stone-700">
+          <i data-lucide="layers" class="w-3.5 h-3.5 text-stone-400"></i> Channels &amp; Integrations Hub
+        </a>
         <a href="team.html" class="flex items-center gap-2 p-1.5 hover:bg-stone-100 rounded transition-colors no-underline text-stone-700">
           <i data-lucide="camera" class="w-3.5 h-3.5 text-stone-400"></i> Change Profile Photo
         </a>
         <a href="settings.html" class="flex items-center gap-2 p-1.5 hover:bg-stone-100 rounded transition-colors no-underline text-stone-700">
-          <i data-lucide="settings" class="w-3.5 h-3.5 text-stone-400"></i> Settings & Branding
+          <i data-lucide="settings" class="w-3.5 h-3.5 text-stone-400"></i> Settings &amp; Branding
         </a>
         <a href="team.html" class="flex items-center gap-2 p-1.5 hover:bg-stone-100 rounded transition-colors no-underline text-stone-700">
           <i data-lucide="users" class="w-3.5 h-3.5 text-stone-400"></i> Team Members
         </a>
         <a href="billing.html" class="flex items-center gap-2 p-1.5 hover:bg-stone-100 rounded transition-colors no-underline text-stone-700">
-          <i data-lucide="credit-card" class="w-3.5 h-3.5 text-stone-400"></i> Subscription & Invoices
+          <i data-lucide="credit-card" class="w-3.5 h-3.5 text-stone-400"></i> Subscription &amp; Invoices
         </a>
       </div>
       <div class="pt-2 mt-2 border-t border-[#e7e5de]">
@@ -1356,6 +1562,131 @@ window.CuboidShell = {
       };
       document.addEventListener('click', dismiss);
     }, 10);
+  },
+
+  openOutcomeModal: function() {
+    let modal = document.getElementById('cp-outcome-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'cp-outcome-modal';
+      modal.className = 'fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs transition-opacity duration-200';
+      modal.setAttribute('role', 'dialog');
+      modal.setAttribute('aria-modal', 'true');
+      modal.innerHTML = `
+        <div class="bg-white border border-[#dcdad0] rounded-[6px] shadow-2xl max-w-md w-full p-6 sm:p-7 relative text-left text-[#111111] animate-in fade-in zoom-in-95 duration-150">
+          <button type="button" id="cp-close-outcome-modal" class="absolute top-4 right-4 p-1.5 rounded-[4px] text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer" aria-label="Close dialog">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+
+          <div class="flex items-center gap-2 mb-1.5">
+            <span class="w-6 h-6 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </span>
+            <h3 class="text-base sm:text-lg font-semibold text-[#111111] tracking-tight">
+              How Cai Outcome Pricing Works
+            </h3>
+          </div>
+          <p class="text-xs text-stone-500 mb-4 leading-relaxed">
+            Pay only when Cai delivers measurable customer resolution. No charges for simple greetings or human escalations.
+          </p>
+
+          <div class="p-3.5 bg-[#fcfbfa] border border-[#e7e5de] rounded-[4px] mb-4">
+            <div class="text-[11px] font-mono uppercase text-stone-500 mb-0.5">Current Outcome Rate</div>
+            <div class="text-2xl font-bold font-mono text-[#111111] flex items-baseline gap-1.5">
+              <span class="text-emerald-800">₹1</span>
+              <span class="text-xs font-normal text-stone-500 font-sans">per successful resolution</span>
+            </div>
+          </div>
+
+          <div class="space-y-3.5 text-xs text-stone-700">
+            <div>
+              <div class="font-semibold text-stone-900 mb-1.5 flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center text-[10px] font-bold">✓</span>
+                <span>What counts as an outcome?</span>
+              </div>
+              <ul class="space-y-1 text-stone-600 pl-5 list-disc list-outside">
+                <li>Cai resolves a customer query from verified documentation without human agent intervention</li>
+                <li>Cai captures a qualified lead with complete contact details (name, email/phone, intent)</li>
+                <li>Cai schedules a confirmed team demo, appointment, or consultation</li>
+              </ul>
+            </div>
+
+            <div class="pt-3 border-t border-[#f0eee9]">
+              <div class="font-semibold text-stone-900 mb-1.5 flex items-center gap-1.5">
+                <span class="w-4 h-4 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center text-[10px] font-bold">✕</span>
+                <span>What is always 100% Free (₹0)?</span>
+              </div>
+              <ul class="space-y-1 text-stone-600 pl-5 list-disc list-outside">
+                <li>Greetings, pleasantries, and basic navigation queries</li>
+                <li>Clarifying questions asked before arriving at a resolution</li>
+                <li>Any conversation escalated to or answered by a human specialist</li>
+                <li>Spam, test pings, or unresolvable inquiries</li>
+              </ul>
+            </div>
+
+            <div class="pt-3 border-t border-[#f0eee9] text-[11.5px] text-stone-600 leading-relaxed bg-[#fbfaf6] p-3 rounded-[4px] border border-[#eceae4]">
+              <strong class="text-stone-900">Budget Guardrails:</strong> Set custom monthly outcome limits directly in your dashboard (e.g. ₹500 or ₹2,000) so your bill never exceeds your planned budget.
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <button type="button" id="cp-confirm-outcome-modal" class="w-full py-2.5 px-4 rounded-[3px] bg-[#111111] hover:bg-black text-white text-xs font-semibold text-center transition-colors shadow-2xs cursor-pointer">
+              Got it, thanks
+            </button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      const closeModal = () => {
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+      };
+
+      modal.querySelector('#cp-close-outcome-modal').addEventListener('click', closeModal);
+      modal.querySelector('#cp-confirm-outcome-modal').addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal();
+      });
+    }
+
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
   }
 };
+
+// Global click delegation for outcome question marks
+document.addEventListener('click', function(e) {
+  const trigger = e.target.closest('.cp-outcome-info-trigger, [data-action="outcome-info"], .cp-outcome-btn');
+  if (trigger) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (window.CP_Pricing && typeof window.CP_Pricing.openOutcomeModal === 'function') {
+      window.CP_Pricing.openOutcomeModal();
+    } else if (window.CuboidShell && typeof window.CuboidShell.openOutcomeModal === 'function') {
+      window.CuboidShell.openOutcomeModal();
+    }
+    return;
+  }
+
+  const helpIcon = e.target.closest('[data-lucide="help-circle"], svg.lucide-help-circle, i[data-lucide="help-circle"]');
+  if (helpIcon) {
+    const parentBlock = helpIcon.closest('.cp-cai-outcome-rate, .cp-hero-outcome-price, [title*="outcome"], [title*="Outcome"]') || helpIcon.parentElement;
+    const text = (parentBlock ? parentBlock.textContent : '').toLowerCase();
+    const title = (helpIcon.getAttribute('title') || '').toLowerCase();
+    if (text.includes('outcome') || title.includes('outcome')) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (window.CP_Pricing && typeof window.CP_Pricing.openOutcomeModal === 'function') {
+        window.CP_Pricing.openOutcomeModal();
+      } else if (window.CuboidShell && typeof window.CuboidShell.openOutcomeModal === 'function') {
+        window.CuboidShell.openOutcomeModal();
+      }
+    }
+  }
+});
+
 

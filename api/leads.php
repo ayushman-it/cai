@@ -15,14 +15,40 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 $pdo = getDbConnection();
 
-if (empty($_SESSION['user_id']) || empty($_SESSION['company_id'])) {
+if (empty($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Authentication required']);
     exit;
 }
 
-$companyId = (int)$_SESSION['company_id'];
 $userId = (int)$_SESSION['user_id'];
+$companyId = (int)($_SESSION['company_id'] ?? 0);
+
+if ($companyId === 0) {
+    $uStmt = $pdo->prepare("SELECT company_id, is_super_admin FROM users WHERE id = ? LIMIT 1");
+    $uStmt->execute([$userId]);
+    $u = $uStmt->fetch();
+    if (!empty($u['company_id'])) {
+        $companyId = (int)$u['company_id'];
+        $_SESSION['company_id'] = $companyId;
+    } elseif (!empty($u['is_super_admin'])) {
+        $firstComp = $pdo->query("SELECT id FROM companies ORDER BY id ASC LIMIT 1")->fetchColumn();
+        if ($firstComp) {
+            $companyId = (int)$firstComp;
+            $_SESSION['company_id'] = $companyId;
+        }
+    }
+}
+
+if ($companyId === 0) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Workspace context not found']);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    session_write_close();
+}
 
 try {
     $entitlements = getCompanyEntitlements($pdo, $companyId);
@@ -256,6 +282,12 @@ try {
             INSERT INTO `lead_events` (`company_id`, `lead_id`, `event_type`, `description`, `created_at`)
             VALUES (?, ?, 'LEAD_WON', ?, NOW())
         ")->execute([$companyId, $leadId, "Lead updated: {$stageName} ({$priority})"]);
+
+        // Alert assigned salesperson if escalated to HIGH/URGENT or QUALIFIED/WON stage
+        if ($priority === 'HIGH' || $priority === 'URGENT' || in_array($stageName, ['QUALIFIED', 'PROPOSAL', 'WON', 'HIGH_INTENT'])) {
+            require_once __DIR__ . '/alerts.php';
+            sendSalespersonAssignmentAlert($pdo, $companyId, $leadId, null, 'HIGH_INTENT_DETECTED');
+        }
 
         echo json_encode(['success' => true]);
         exit;

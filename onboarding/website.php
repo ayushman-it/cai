@@ -59,7 +59,7 @@ $companyKey = $company['company_key'] ?? ('cp_live_' . bin2hex(random_bytes(16))
 
           <div class="relative bg-stone-900 text-stone-100 p-3.5 rounded-[4px] font-mono text-xs leading-relaxed overflow-x-auto border border-stone-800">
             &lt;!-- Cai by CuboidSoft AI Agent Widget --&gt;<br>
-            &lt;script src="https://cai.cuboidsoft.in/widget.js"<br>
+            &lt;script src="https://cai.cuboidsoft.in/widget.js?v=5.6"<br>
             &nbsp;&nbsp;data-company="<span class="text-emerald-400 font-bold"><?= htmlspecialchars($companyKey) ?></span>"<br>
             &nbsp;&nbsp;data-theme="dark"<br>
             &nbsp;&nbsp;async&gt;&lt;/script&gt;
@@ -153,7 +153,7 @@ $companyKey = $company['company_key'] ?? ('cp_live_' . bin2hex(random_bytes(16))
     if (window.lucide) lucide.createIcons();
 
     function copySnippet() {
-      const code = `<script src="https://cai.cuboidsoft.in/widget.js" data-company="<?= htmlspecialchars($companyKey) ?>" data-theme="dark" async><\/script>`;
+      const code = `<script src="https://cai.cuboidsoft.in/widget.js?v=5.6" data-company="<?= htmlspecialchars($companyKey) ?>" data-theme="dark" async><\/script>`;
       navigator.clipboard.writeText(code).then(() => {
         document.getElementById('copy-text').innerText = 'Copied to Clipboard!';
         document.getElementById('copy-btn').classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-300');

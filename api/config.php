@@ -63,7 +63,7 @@ try {
     $assistantName = !empty($widget['assistant_name']) ? $widget['assistant_name'] : 'Cai';
     $greetingHeading = !empty($widget['greeting_heading']) 
         ? $widget['greeting_heading'] 
-        : "Hi there \u{1F44B}\n\nYou are now speaking with {$assistantName}. How can I help?";
+        : "Hi there \u{1F44B} Welcome to {$brandName}!\n\nPlease share your Name and WhatsApp / Phone Number to get started:";
     $greetingSubheading = !empty($widget['greeting_subheading']) ? $widget['greeting_subheading'] : "The team can also help";
     if (strlen($greetingSubheading) > 28) {
         $greetingSubheading = "The team can also help";
@@ -95,8 +95,10 @@ try {
             'logo_dark_url'  => $logoDark ?: $defaultLogo,
             'logo_light_url' => $logoLight ?: $defaultLogo,
             'company_key'    => $company['company_key'],
-            'industry'       => $company['industry'] ?? 'General Business',
-            'is_premium'     => (bool)$entitlements['is_premium'],
+            'is_premium'     => (bool)($entitlements['is_premium'] || ($entitlements['is_trial'] && !$entitlements['is_trial_expired'])),
+            'is_trial'       => (bool)($entitlements['is_trial'] ?? false),
+            'is_full_access' => (bool)($entitlements['is_full_access'] ?? false),
+            'trial_days_remaining' => (int)($entitlements['trial_days_remaining'] ?? 0),
         ],
         'widget' => [
             'brand_name'         => $brandName,
@@ -111,22 +113,26 @@ try {
             'position'           => $position,
             'whatsapp_enabled'   => $whatsappEnabled,
             'whatsapp_number'    => $whatsappNumber,
+            'is_premium'         => (bool)($entitlements['is_premium'] || ($entitlements['is_trial'] && !$entitlements['is_trial_expired'])),
+            'can_use_whatsapp_continuation' => (bool)($entitlements['capabilities']['can_use_whatsapp_continuation'] ?? false),
+            'enable_inactivity_chips' => (bool)($widget['enable_inactivity_chips'] ?? 1),
             'require_phone'      => (bool)($widget['require_phone_for_pricing'] ?? 1),
             'enable_appointments'=> (bool)($widget['enable_appointments'] ?? 1),
             'enable_human_help'  => (bool)($widget['enable_human_help'] ?? 1),
             'enable_payments'    => (bool)($widget['enable_payments'] ?? 1),
             'razorpay_key_id'    => $widget['razorpay_key_id'] ?? '',
-            'bank_name'          => $widget['bank_name'] ?? 'HDFC Bank',
-            'bank_account_no'    => $widget['bank_account_no'] ?? '50200088991122',
-            'bank_ifsc'          => $widget['bank_ifsc'] ?? 'HDFC0001234',
-            'bank_upi_id'        => $widget['bank_upi_id'] ?? 'cuboidsoft@hdfcbank',
+            'bank_name'          => $widget['bank_name'] ?? '',
+            'bank_account_no'    => $widget['bank_account_no'] ?? '',
+            'bank_ifsc'          => $widget['bank_ifsc'] ?? '',
+            'bank_upi_id'        => $widget['bank_upi_id'] ?? '',
         ],
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
+    error_log("api/config.php error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode([
         'success' => false,
-        'error'   => 'Internal server error: ' . $e->getMessage()
+        'error'   => 'Internal server error'
     ]);
 }

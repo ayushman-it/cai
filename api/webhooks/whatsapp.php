@@ -20,10 +20,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $hubChallenge   = $_GET['hub_challenge'] ?? $_GET['hub.challenge'] ?? '';
     $hubVerifyToken = $_GET['hub_verify_token'] ?? $_GET['hub.verify_token'] ?? '';
 
-    // Verify token can be matched to any tenant or global secret
+    // Verify token matches configured tenant or global secret
     if ($hubMode === 'subscribe' && !empty($hubChallenge)) {
-        header("Content-Type: text/plain");
-        echo $hubChallenge;
+        $chk = $pdo->prepare("SELECT 1 FROM `whatsapp_accounts` WHERE `webhook_verify_token` = ? AND `webhook_verify_token` IS NOT NULL AND `webhook_verify_token` != '' LIMIT 1");
+        $chk->execute([$hubVerifyToken]);
+        $matched = (bool)$chk->fetch();
+
+        if (!$matched && !empty(getenv('META_VERIFY_TOKEN')) && hash_equals(getenv('META_VERIFY_TOKEN'), (string)$hubVerifyToken)) {
+            $matched = true;
+        }
+
+        if ($matched) {
+            header("Content-Type: text/plain");
+            echo $hubChallenge;
+            exit;
+        }
+
+        http_response_code(403);
+        echo "Verification token mismatch";
         exit;
     }
 

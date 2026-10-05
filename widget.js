@@ -36,26 +36,29 @@
       const urlObj = new URL(scriptSrc, window.location.href);
       if (urlObj.hostname === 'cai.cuboidsoft.in' || urlObj.hostname.includes('cuboidsoft.in')) {
         baseUrl = 'https://cai.cuboidsoft.in';
+      } else if (urlObj.hostname === 'localhost' || urlObj.hostname === '127.0.0.1') {
+        baseUrl = urlObj.origin + (urlObj.pathname.includes('/cuboidpilot') ? '/cuboidpilot' : urlObj.pathname.substring(0, urlObj.pathname.lastIndexOf('/')));
       } else {
         baseUrl = urlObj.origin + urlObj.pathname.substring(0, urlObj.pathname.lastIndexOf('/'));
       }
     } catch (e) {
-      baseUrl = window.location.hostname.includes('cuboidsoft.in') 
-        ? 'https://cai.cuboidsoft.in' 
-        : window.location.origin + '/cuboidpilot';
+      baseUrl = '';
     }
   }
 
-  // Fallback if loaded directly as file or root
-  if (!baseUrl || baseUrl === 'null') {
-    baseUrl = window.location.hostname.includes('cuboidsoft.in')
-      ? 'https://cai.cuboidsoft.in'
-      : window.location.origin + '/cuboidpilot';
+  // Fallback if loaded directly as file or root or external client domain
+  const isLocalHost = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const isCuboidDomain = window.location.hostname.includes('cuboidsoft.in');
+
+  if (!baseUrl || baseUrl === 'null' || (!isLocalHost && !isCuboidDomain && baseUrl === window.location.origin)) {
+    baseUrl = isLocalHost ? (window.location.origin + '/cuboidpilot') : 'https://cai.cuboidsoft.in';
   } else if (baseUrl === window.location.origin) {
-    if (window.location.hostname === 'cai.cuboidsoft.in') {
+    if (isCuboidDomain) {
       baseUrl = 'https://cai.cuboidsoft.in';
-    } else {
+    } else if (isLocalHost) {
       baseUrl = window.location.origin + '/cuboidpilot';
+    } else {
+      baseUrl = 'https://cai.cuboidsoft.in';
     }
   }
 
@@ -64,16 +67,37 @@
                      'cp_live_cuboidsoft';
 
   // 2. Storage Session Helpers (Sections 7, 8 & 9)
+  try {
+    const prevKey = sessionStorage.getItem('cp_active_tenant_key');
+    if (prevKey && prevKey !== companyKey) {
+      sessionStorage.removeItem('cp_chat_history');
+      sessionStorage.removeItem('cp_conversation_id');
+      sessionStorage.removeItem('cp_lead_id');
+      sessionStorage.removeItem('cp_visitor_name');
+      sessionStorage.removeItem('cp_is_identified');
+    }
+    sessionStorage.setItem('cp_active_tenant_key', companyKey);
+
+    // Wipe legacy un-scoped key if it contains another company's name
+    const legacyHistory = sessionStorage.getItem('cp_chat_history');
+    if (legacyHistory) {
+      if (companyKey === 'cp_live_cuboidsoft' && legacyHistory.includes('The Code Munk')) {
+        sessionStorage.removeItem('cp_chat_history');
+        sessionStorage.removeItem('cp_conversation_id');
+      }
+    }
+  } catch (e) {}
+
   const STORAGE_KEYS = {
-    SESSION_ID: 'cp_session_id',
-    CONVO_ID: 'cp_conversation_id',
-    LEAD_ID: 'cp_lead_id',
-    CUSTOMER_ID: 'cp_customer_id',
-    VISITOR_NAME: 'cp_visitor_name',
-    IS_IDENTIFIED: 'cp_is_identified',
-    LEAD_STEP: 'cp_lead_step',
-    MESSAGES: 'cp_chat_history',
-    STATE: 'cp_widget_open'
+    SESSION_ID: 'cp_session_id_' + companyKey,
+    CONVO_ID: 'cp_conversation_id_' + companyKey,
+    LEAD_ID: 'cp_lead_id_' + companyKey,
+    CUSTOMER_ID: 'cp_customer_id_' + companyKey,
+    VISITOR_NAME: 'cp_visitor_name_' + companyKey,
+    IS_IDENTIFIED: 'cp_is_identified_' + companyKey,
+    LEAD_STEP: 'cp_lead_step_' + companyKey,
+    MESSAGES: 'cp_chat_history_' + companyKey,
+    STATE: 'cp_widget_open_' + companyKey
   };
 
   let sessionId = sessionStorage.getItem(STORAGE_KEYS.SESSION_ID);
@@ -84,10 +108,13 @@
 
   let conversationId = sessionStorage.getItem(STORAGE_KEYS.CONVO_ID) ? parseInt(sessionStorage.getItem(STORAGE_KEYS.CONVO_ID), 10) : null;
   let leadId = sessionStorage.getItem(STORAGE_KEYS.LEAD_ID) ? parseInt(sessionStorage.getItem(STORAGE_KEYS.LEAD_ID), 10) : null;
-  let customerId = sessionStorage.getItem(STORAGE_KEYS.CUSTOMER_ID) ? parseInt(sessionStorage.getItem(STORAGE_KEYS.CUSTOMER_ID), 10) : null;
   let visitorName = sessionStorage.getItem(STORAGE_KEYS.VISITOR_NAME) || '';
+  if (/^(hello|hi|hey|namaste|test|null|undefined|courses?|fee|fees|pricing|syllabus|python|java)$/i.test(visitorName.trim())) {
+    visitorName = '';
+    sessionStorage.removeItem(STORAGE_KEYS.VISITOR_NAME);
+  }
   let isIdentified = sessionStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) === '1';
-  let leadStep = isIdentified ? 0 : parseInt(sessionStorage.getItem(STORAGE_KEYS.LEAD_STEP) || '1', 10);
+  let leadStep = 0;
 
   // 3. Create Host and Shadow DOM
   const isEmbedded = (currentScript && (currentScript.getAttribute('data-embedded') === 'true' || currentScript.getAttribute('data-mode') === 'embedded')) || !!window.__CUBOIDPILOT_EMBEDDED__;
@@ -116,7 +143,16 @@
       mountEmbeddedHost();
     }
   } else {
-    document.body.appendChild(hostElement);
+    const mountFloatingHost = () => {
+      if (document.body && !document.body.contains(hostElement)) {
+        document.body.appendChild(hostElement);
+      }
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mountFloatingHost);
+    } else {
+      mountFloatingHost();
+    }
   }
 
   const shadow = hostElement.attachShadow({ mode: 'open' });
@@ -131,6 +167,15 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    button, [role="button"], .cp-action-card, .cp-pill, .cp-date-chip, .cp-slot-pill, .cp-amount-chip, .cp-option-item {
+      touch-action: manipulation;
+    }
+
+    .cp-stream, .cp-news-list, .cp-date-chips, .cp-slots-grid {
+      -webkit-overflow-scrolling: touch;
     }
 
     :host {
@@ -178,11 +223,25 @@
       --cp-send-btn-hover-bg: #f3f4f6;
       z-index: 2147483647;
       position: fixed;
+      pointer-events: none;
     }
 
-    /* Light Theme (Intercom Clean Light Aesthetic) */
+    :host(.cp-embedded) {
+      pointer-events: auto !important;
+    }
+
+    .cp-launcher, 
+    .cp-teaser, 
+    .cp-window.open, 
+    .cp-options-menu.show {
+      pointer-events: auto;
+    }
+
+    /* Light Theme (Intercom Clean Light Aesthetic) - WebKit / Safari iOS Compatible */
     :host([data-theme="light"]), 
-    :host-context([data-theme="light"]),
+    :host(.cp-theme-light),
+    .cp-root-container.theme-light,
+    .cp-root-container.cp-light-theme,
     .cp-light-theme,
     .theme-light,
     .cp-window.theme-light,
@@ -342,6 +401,51 @@
     .cp-window.cp-light-theme .cp-send-btn.active:hover {
       background: #000000 !important;
       transform: scale(1.05);
+    }
+
+    /* Dark Theme Send Button (Crisp, sharp, non-blurry, high-contrast) */
+    :host([data-theme="dark"]) .cp-send-btn,
+    .cp-dark-theme .cp-send-btn,
+    .theme-dark .cp-send-btn,
+    .cp-window.theme-dark .cp-send-btn,
+    .cp-window.cp-dark-theme .cp-send-btn {
+      background: #252836 !important;
+      border: 1px solid #3c4052 !important;
+      color: #7e8499 !important;
+      box-shadow: none !important;
+      opacity: 0.85;
+      transform: none !important;
+    }
+
+    :host([data-theme="dark"]) .cp-send-btn.active,
+    .cp-dark-theme .cp-send-btn.active,
+    .theme-dark .cp-send-btn.active,
+    .cp-window.theme-dark .cp-send-btn.active,
+    .cp-window.cp-dark-theme .cp-send-btn.active {
+      background: #ffffff !important;
+      border: 1px solid #ffffff !important;
+      color: #0f172a !important;
+      cursor: pointer !important;
+      opacity: 1 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35) !important;
+      transform: none !important;
+    }
+
+    :host([data-theme="dark"]) .cp-send-btn.active svg,
+    .cp-dark-theme .cp-send-btn.active svg,
+    .theme-dark .cp-send-btn.active svg,
+    .cp-window.theme-dark .cp-send-btn.active svg,
+    .cp-window.cp-dark-theme .cp-send-btn.active svg {
+      stroke: #0f172a !important;
+    }
+
+    :host([data-theme="dark"]) .cp-send-btn.active:hover,
+    .cp-dark-theme .cp-send-btn.active:hover,
+    .theme-dark .cp-send-btn.active:hover,
+    .cp-window.theme-dark .cp-send-btn.active:hover,
+    .cp-window.cp-dark-theme .cp-send-btn.active:hover {
+      background: #e2e8f0 !important;
+      transform: none !important;
     }
 
     /* Floating Launcher Button */
@@ -555,9 +659,15 @@
     }
 
     @media (max-width: 480px) {
+      .cp-launcher {
+        right: 16px;
+        bottom: 16px;
+        width: 44px;
+        height: 44px;
+      }
       .cp-teaser {
         right: 16px;
-        bottom: 76px;
+        bottom: 72px;
         width: calc(100vw - 32px);
         max-width: 100vw;
       }
@@ -653,18 +763,21 @@
     .cp-header {
       background-color: var(--cp-bg-surface);
       border-bottom: 1px solid var(--cp-border-header);
-      padding: 14px 16px;
+      padding: 12px 16px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       user-select: none;
       flex-shrink: 0;
+      height: 56px;
+      box-sizing: border-box;
     }
 
     .cp-header-left {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
+      min-width: 0;
     }
 
     .cp-back-btn {
@@ -675,13 +788,28 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2px;
-      margin-right: 2px;
-      transition: color 0.15s;
+      width: 28px;
+      height: 28px;
+      min-width: 28px !important;
+      min-height: 28px !important;
+      max-width: 28px;
+      max-height: 28px;
+      padding: 0 !important;
+      margin: 0 !important;
+      border-radius: 6px;
+      transition: background-color 0.15s, color 0.15s;
+      flex-shrink: 0;
     }
 
     .cp-back-btn:hover {
+      background: rgba(0, 0, 0, 0.05);
       color: var(--cp-text-title);
+    }
+
+    :host([data-theme="dark"]) .cp-back-btn:hover,
+    .cp-dark-theme .cp-back-btn:hover,
+    .theme-dark .cp-back-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
     }
 
     /* Cai Brand Logo (media_1790705726663.png) */
@@ -692,7 +820,8 @@
       object-fit: contain;
       flex-shrink: 0;
       display: block;
-      margin-right: 2px;
+      margin: 0;
+      padding: 0;
     }
 
     .cp-launcher-logo {
@@ -707,7 +836,10 @@
     .cp-header-title-box {
       display: flex;
       flex-direction: column;
-      margin-left: 2px;
+      margin: 0;
+      padding: 0;
+      justify-content: center;
+      min-width: 0;
     }
 
     .cp-header-title {
@@ -1129,11 +1261,92 @@
       50%, 100% { opacity: 0; }
     }
 
+    /* Intercom-style Minimalist Waiting / Status Pill (No bulky card, no hardcoded paragraphs) */
+    .cp-waiting-pill {
+      margin: 12px auto;
+      padding: 6px 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7.5px;
+      background: var(--cp-surface);
+      border: 1px solid var(--cp-border);
+      border-radius: 999px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--cp-text-secondary);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+      animation: cpFadeIn 0.25s ease;
+      align-self: center;
+      transition: all 0.3s ease;
+    }
+
+    .cp-waiting-pill.connected {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: #047857;
+    }
+
+    .cp-waiting-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #f59e0b;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .cp-waiting-dot::after {
+      content: '';
+      position: absolute;
+      top: -3px;
+      left: -3px;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: rgba(245, 158, 11, 0.35);
+      animation: cpPulseRing 1.5s infinite ease-out;
+    }
+
+    .cp-waiting-pill.connected .cp-waiting-dot {
+      background: #10b981;
+    }
+
+    .cp-waiting-pill.connected .cp-waiting-dot::after {
+      display: none;
+    }
+
+    @keyframes cpPulseRing {
+      0% { transform: scale(0.6); opacity: 0.9; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .cp-waiting-text {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--cp-text-primary);
+    }
+
+    .cp-waiting-timer {
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--cp-text-secondary);
+      background: rgba(120, 120, 120, 0.12);
+      padding: 1px 6px;
+      border-radius: 999px;
+    }
+
+    .cp-waiting-pill.connected .cp-waiting-timer {
+      display: none;
+    }
+
     /* Composer Section (Strict Intercom Fin match) */
     .cp-composer-section {
       padding: 0 16px 14px 16px;
       background: var(--cp-bg-canvas);
       flex-shrink: 0;
+      position: relative;
     }
 
     .cp-composer-capsule {
@@ -1150,6 +1363,135 @@
     .cp-composer-capsule:focus-within {
       border-color: var(--cp-composer-focus-border);
       box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+
+    /* Attachment Preview Bar inside Composer */
+    .cp-attach-preview-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--cp-border-input);
+      border-radius: 8px;
+    }
+
+    .cp-attach-thumb {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.25);
+      font-size: 16px;
+      flex-shrink: 0;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .cp-attach-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .cp-attach-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cp-attach-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--cp-text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cp-attach-size {
+      font-size: 10.5px;
+      color: var(--cp-text-muted);
+    }
+
+    .cp-attach-remove {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--cp-text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 11px;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .cp-attach-remove:hover {
+      background: rgba(239, 68, 68, 0.2);
+      color: #ef4444;
+    }
+
+    /* Voice / Speech Recognition Indicator */
+    .cp-voice-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 6px 10px;
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.25);
+      border-radius: 8px;
+      color: #f87171;
+      font-size: 11.5px;
+      font-weight: 500;
+    }
+
+    .cp-voice-pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      animation: cp-voice-dot 1s infinite alternate;
+      display: inline-block;
+    }
+
+    @keyframes cp-voice-dot {
+      from { opacity: 0.3; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1.3); }
+    }
+
+    .cp-voice-stop-btn {
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      font-size: 10.5px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .cp-voice-stop-btn:hover {
+      background: rgba(239, 68, 68, 0.35);
+      color: #ffffff;
+    }
+
+    .cp-tool-btn.recording {
+      color: #ef4444 !important;
+      background: rgba(239, 68, 68, 0.18) !important;
+      animation: cp-pulse-recording 1.2s infinite ease-in-out;
+    }
+
+    @keyframes cp-pulse-recording {
+      0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      50% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+      100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
     }
 
     .cp-input-field {
@@ -1218,6 +1560,293 @@
       border-color: #8e929f;
     }
 
+    /* Floating Popovers (Emoji & GIF) */
+    .cp-popover {
+      position: absolute;
+      bottom: calc(100% - 4px);
+      left: 16px;
+      right: 16px;
+      background: var(--cp-bg-surface);
+      border: 1px solid var(--cp-border-input);
+      border-radius: 14px;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+      z-index: 100;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      animation: cp-popover-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes cp-popover-in {
+      from { opacity: 0; transform: translateY(8px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .cp-popover-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--cp-toolbar-border);
+      padding-bottom: 8px;
+    }
+
+    .cp-popover-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--cp-text-primary);
+    }
+
+    .cp-popover-close {
+      background: transparent;
+      border: none;
+      color: var(--cp-text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .cp-popover-close:hover {
+      color: var(--cp-text-primary);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Emoji Picker Styling */
+    .cp-emoji-tabs {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--cp-toolbar-border);
+      padding-bottom: 6px;
+    }
+
+    .cp-emoji-tab {
+      background: transparent;
+      border: none;
+      color: var(--cp-text-muted);
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .cp-emoji-tab.active, .cp-emoji-tab:hover {
+      color: var(--cp-text-primary);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .cp-emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 4px;
+      max-height: 170px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .cp-emoji-btn {
+      background: transparent;
+      border: none;
+      font-size: 17px;
+      padding: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .cp-emoji-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: scale(1.2);
+    }
+
+    /* GIF Picker Styling */
+    .cp-gif-search-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--cp-bg-input);
+      border: 1px solid var(--cp-border-input);
+      border-radius: 8px;
+      padding: 6px 10px;
+    }
+
+    .cp-gif-search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--cp-text-primary);
+      font-size: 12px;
+      width: 100%;
+    }
+
+    .cp-gif-search-box svg {
+      color: var(--cp-text-muted);
+      flex-shrink: 0;
+    }
+
+    .cp-gif-tags {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+
+    .cp-gif-tags::-webkit-scrollbar {
+      display: none;
+    }
+
+    .cp-gif-tag {
+      flex-shrink: 0;
+      background: var(--cp-bg-input);
+      border: 1px solid var(--cp-border-input);
+      color: var(--cp-text-secondary);
+      font-size: 10.5px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .cp-gif-tag:hover, .cp-gif-tag.active {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--cp-text-secondary);
+    }
+
+    .cp-gif-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      max-height: 180px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .cp-gif-card {
+      position: relative;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 16/9;
+      background: var(--cp-bg-input);
+      cursor: pointer;
+      border: 1px solid var(--cp-border-input);
+      transition: transform 0.15s, border-color 0.15s;
+    }
+
+    .cp-gif-card:hover {
+      transform: scale(1.02);
+      border-color: #3b82f6;
+    }
+
+    .cp-gif-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cp-gif-label {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 3px 6px;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.85));
+      color: #ffffff;
+      font-size: 9.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Message Bubble Attachments (Image, File, GIF) */
+    .cp-bubble-attachment-img {
+      margin-top: 6px;
+      max-width: 230px;
+      border-radius: 10px;
+      overflow: hidden;
+      cursor: pointer;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cp-bubble-attachment-img img {
+      width: 100%;
+      height: auto;
+      display: block;
+      transition: transform 0.2s;
+    }
+
+    .cp-bubble-attachment-img img:hover {
+      transform: scale(1.02);
+    }
+
+    .cp-bubble-attachment-gif {
+      margin-top: 6px;
+      max-width: 220px;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cp-bubble-attachment-gif img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .cp-bubble-attachment-file {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 6px;
+      padding: 8px 12px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: var(--cp-text-primary);
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+
+    .cp-bubble-attachment-file:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .cp-bubble-file-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .cp-bubble-file-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cp-bubble-file-name {
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: var(--cp-text-title);
+    }
+
+    .cp-bubble-file-meta {
+      font-size: 10.5px;
+      color: var(--cp-text-muted);
+    }
+
     /* Up-Arrow Send Button */
     .cp-send-btn {
       width: 28px;
@@ -1234,8 +1863,8 @@
     }
 
     .cp-send-btn.active {
-      background: var(--cp-accent-custom, var(--cp-send-btn-active-bg, #ffffff));
-      border: 1px solid var(--cp-accent-custom, var(--cp-send-btn-active-border, #ffffff));
+      background: var(--cp-send-btn-active-bg, #ffffff);
+      border: 1px solid var(--cp-send-btn-active-border, #ffffff);
       color: var(--cp-send-btn-active-color, #111111);
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -1309,16 +1938,32 @@
         padding-right: max(16px, env(safe-area-inset-right)) !important;
       }
 
-      .cp-input-field {
+      .cp-input-field,
+      .cp-form-input,
+      .cp-composer-textarea,
+      input, textarea, select {
         font-size: 16px !important; /* Prevents auto zoom in iOS Safari */
       }
 
-      .cp-icon-btn, .cp-back-btn {
+      .cp-bottom-nav {
+        padding-bottom: max(10px, env(safe-area-inset-bottom)) !important;
+      }
+
+      .cp-icon-btn {
         min-width: 44px;
         min-height: 44px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
+      }
+
+      .cp-back-btn {
+        min-width: 28px !important;
+        min-height: 28px !important;
+        width: 28px !important;
+        height: 28px !important;
+        padding: 0 !important;
+        margin: 0 !important;
       }
 
       .cp-launcher {
@@ -1430,11 +2075,27 @@
     .cp-screens-view {
       flex: 1;
       overflow-y: auto;
-      padding: 12px 14px 8px 14px;
+      padding: 14px 16px 12px 16px;
       display: flex;
       flex-direction: column;
       gap: 8px;
       scroll-behavior: smooth;
+      animation: cpFadeSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cp-messages {
+      animation: cpFadeSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes cpFadeSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .cp-screens-view::-webkit-scrollbar {
@@ -1446,20 +2107,33 @@
       border-radius: 10px;
     }
 
-    /* Header Avatar Stack on Home Screen (media_1790884814897.png) */
-    /* Header Avatar Stack on Home Screen (media_1790919508920.png) */
+    /* Header Title Box — always visible on all screens with company identity */
+    .cp-header-title-box {
+      display: flex !important;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    /* Team Avatar Stack — hidden to preserve tenant isolation on client widgets */
     .cp-team-avatar-stack {
-      display: none;
+      display: none !important;
       align-items: center;
       margin-right: 8px;
     }
 
-    .cp-window.screen-home .cp-team-avatar-stack {
-      display: flex;
+    .cp-convo-status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+      flex-shrink: 0;
     }
 
-    .cp-window.screen-home .cp-header-title-box {
-      display: none;
+    .cp-active-convo-card {
+      border-color: rgba(16, 185, 129, 0.25) !important;
     }
 
     .cp-stack-avatar-link {
@@ -1581,6 +2255,8 @@
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
       user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .cp-ask-action-card:hover {
@@ -1666,6 +2342,8 @@
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
       user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       flex-shrink: 0;
     }
 
@@ -1817,6 +2495,8 @@
       text-decoration: none;
       position: relative;
       user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
@@ -1922,6 +2602,179 @@
       border: 1px solid rgba(245, 158, 11, 0.35);
       margin-left: 6px;
       line-height: 1;
+    }
+
+    /* Intercom-Style Workspace Copilot Action Card & Quick Chips */
+    .cp-action-card-copilot {
+      margin-bottom: 2px;
+      border: 1px solid var(--cp-border-input, #e2e8f0);
+      background: var(--cp-options-bg, #ffffff);
+    }
+    .cp-action-card-copilot:hover {
+      background: var(--cp-options-hover, #f8fafc);
+      border-color: var(--cp-border-bubble, #cbd5e1);
+      transform: translateY(-1px);
+    }
+    .cp-action-icon-copilot {
+      background: #0f172a !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+    }
+    .cp-copilot-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 1.5px 5.5px;
+      border-radius: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      background: rgba(15, 23, 42, 0.06);
+      color: var(--cp-text-secondary, #64748b);
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      margin-left: 6px;
+      line-height: 1;
+    }
+    :host([data-theme="dark"]) .cp-action-icon-copilot,
+    .cp-window:not(.cp-light-theme) .cp-action-icon-copilot {
+      background: #1e293b !important;
+      color: #f8fafc !important;
+      border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    }
+    :host([data-theme="dark"]) .cp-copilot-tag,
+    .cp-window:not(.cp-light-theme) .cp-copilot-tag {
+      background: rgba(255, 255, 255, 0.08);
+      color: #cbd5e1;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    .cp-copilot-chips-wrap {
+      margin: 10px 0 14px 0;
+      padding: 0 2px;
+      animation: cpFadeIn 0.25s ease-out;
+    }
+    .cp-copilot-chips-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--cp-text-muted, #94a3b8);
+      margin-bottom: 8px;
+      letter-spacing: 0.01em;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .cp-copilot-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+    .cp-copilot-chip {
+      background: var(--cp-options-bg, #ffffff);
+      border: 1px solid var(--cp-border-input, #e2e8f0);
+      border-radius: 20px;
+      padding: 4px 10px 4px 4px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--cp-text-primary, #1e293b);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6.5px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+      transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cp-copilot-chip:hover {
+      background: var(--cp-options-hover, #f8fafc);
+      border-color: var(--cp-border-bubble, #cbd5e1);
+      transform: translateY(-1.5px);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+    }
+    .cp-copilot-chip:hover .cp-chip-arrow {
+      opacity: 0.85;
+      transform: translateX(2px);
+    }
+    .cp-copilot-chip:active {
+      transform: translateY(0);
+    }
+    .cp-copilot-chip-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .cp-copilot-chip-icon svg {
+      width: 12px;
+      height: 12px;
+    }
+    .cp-chip-blue {
+      background: rgba(14, 165, 233, 0.12);
+      color: #0284c7;
+    }
+    .cp-chip-purple {
+      background: rgba(139, 92, 246, 0.12);
+      color: #7c3aed;
+    }
+    .cp-chip-emerald {
+      background: rgba(16, 185, 129, 0.12);
+      color: #059669;
+    }
+    .cp-chip-amber {
+      background: rgba(245, 158, 11, 0.12);
+      color: #d97706;
+    }
+    .cp-chip-rose {
+      background: rgba(244, 63, 94, 0.12);
+      color: #e11d48;
+    }
+    .cp-chip-arrow {
+      width: 9px;
+      height: 9px;
+      color: var(--cp-text-muted, #94a3b8);
+      opacity: 0.35;
+      transition: all 0.15s ease;
+      margin-left: 1px;
+    }
+    :host([data-theme="dark"]) .cp-copilot-chip,
+    .cp-window:not(.cp-light-theme) .cp-copilot-chip {
+      background: #181920;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      color: #f1f5f9;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    }
+    :host([data-theme="dark"]) .cp-copilot-chip:hover,
+    .cp-window:not(.cp-light-theme) .cp-copilot-chip:hover {
+      background: #232530;
+      border-color: rgba(255, 255, 255, 0.18);
+    }
+    :host([data-theme="dark"]) .cp-chip-blue,
+    .cp-window:not(.cp-light-theme) .cp-chip-blue {
+      background: rgba(56, 189, 248, 0.18);
+      color: #38bdf8;
+    }
+    :host([data-theme="dark"]) .cp-chip-purple,
+    .cp-window:not(.cp-light-theme) .cp-chip-purple {
+      background: rgba(167, 139, 250, 0.18);
+      color: #a78bfa;
+    }
+    :host([data-theme="dark"]) .cp-chip-emerald,
+    .cp-window:not(.cp-light-theme) .cp-chip-emerald {
+      background: rgba(52, 211, 153, 0.18);
+      color: #34d399;
+    }
+    :host([data-theme="dark"]) .cp-chip-amber,
+    .cp-window:not(.cp-light-theme) .cp-chip-amber {
+      background: rgba(251, 191, 36, 0.18);
+      color: #fbbf24;
+    }
+    :host([data-theme="dark"]) .cp-chip-rose,
+    .cp-window:not(.cp-light-theme) .cp-chip-rose {
+      background: rgba(251, 113, 133, 0.18);
+      color: #fb7185;
     }
 
     .cp-action-card-desc {
@@ -2605,7 +3458,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 7px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      border-bottom: 1px solid var(--cp-border-input, rgba(255, 255, 255, 0.08));
       font-size: 12px;
     }
 
@@ -2643,7 +3496,7 @@
     }
 
     .cp-copy-btn:hover {
-      color: #ffffff;
+      color: var(--cp-text-title, #ffffff);
     }
 
     .cp-amount-chips {
@@ -2738,24 +3591,10 @@
       border-top: 1px solid #e5e7eb;
     }
 
-    /* Hide bottom menu in message / chat flow (media_1790870603887.png) */
-    #cp-chat-window.screen-chat #cp-bottom-nav,
-    #cp-chat-window.screen-human-chat #cp-bottom-nav,
-    .cp-window.screen-chat #cp-bottom-nav,
-    .cp-window.screen-human-chat #cp-bottom-nav,
-    #cp-chat-window.screen-chat .cp-bottom-nav,
-    #cp-chat-window.screen-human-chat .cp-bottom-nav,
-    .cp-window.screen-chat .cp-bottom-nav,
-    .cp-window.screen-human-chat .cp-bottom-nav {
-      display: none !important;
-      visibility: hidden !important;
-      height: 0 !important;
-      min-height: 0 !important;
-      max-height: 0 !important;
-      overflow: hidden !important;
-      padding: 0 !important;
-      margin: 0 !important;
-      border: none !important;
+    /* Persistent Intercom Bottom Navigation across all screens & flows */
+    .cp-bottom-nav {
+      display: flex !important;
+      visibility: visible !important;
     }
 
     .cp-nav-item {
@@ -3127,7 +3966,6 @@
       visibility: hidden !important;
     }
 
-    /* Back Button strictly visible on Chat & inner screens */
     .cp-window.screen-chat .cp-back-btn,
     #cp-chat-window.screen-chat #cp-back-btn,
     .cp-window.screen-human-chat .cp-back-btn,
@@ -3135,6 +3973,600 @@
       display: inline-flex !important;
       visibility: visible !important;
       opacity: 1 !important;
+    }
+
+    /* Markdown Tables Support */
+    .cp-table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      background: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      -webkit-overflow-scrolling: touch;
+    }
+    :host([data-theme="dark"]) .cp-table-responsive,
+    .cp-dark-theme .cp-table-responsive,
+    .theme-dark .cp-table-responsive {
+      background: #18181b;
+      border-color: #27272a;
+      box-shadow: none;
+    }
+    .cp-table {
+      width: 100%;
+      min-width: 280px;
+      border-collapse: collapse;
+      font-size: 12px;
+      line-height: 1.45;
+      text-align: left;
+      table-layout: auto;
+      word-break: normal;
+    }
+    .cp-table th {
+      background: #f8fafc;
+      color: #334155;
+      font-weight: 600;
+      padding: 8px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      white-space: nowrap;
+      font-family: inherit;
+    }
+    :host([data-theme="dark"]) .cp-table th,
+    .cp-dark-theme .cp-table th,
+    .theme-dark .cp-table th {
+      background: #27272a;
+      color: #e4e4e7;
+      border-bottom-color: #3f3f46;
+    }
+    .cp-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+      vertical-align: middle;
+      word-break: normal;
+      overflow-wrap: break-word;
+    }
+    :host([data-theme="dark"]) .cp-table td,
+    .cp-dark-theme .cp-table td,
+    .theme-dark .cp-table td {
+      border-bottom-color: #27272a;
+      color: #d4d4d8;
+    }
+    .cp-table tr:last-child td {
+      border-bottom: none;
+    }
+    .cp-table tr:nth-child(even) td {
+      background: rgba(248, 250, 252, 0.6);
+    }
+    :host([data-theme="dark"]) .cp-table tr:nth-child(even) td,
+    .cp-dark-theme .cp-table tr:nth-child(even) td,
+    .theme-dark .cp-table tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* 10-Second Inactivity Chips (Premium Only) */
+    .cp-inactivity-chips-container {
+      margin: 12px 0 6px 0;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: cpSlideUpFade 0.28s ease-out;
+    }
+    :host([data-theme="dark"]) .cp-inactivity-chips-container,
+    .cp-dark-theme .cp-inactivity-chips-container,
+    .theme-dark .cp-inactivity-chips-container {
+      background: #18181b;
+      border-color: #27272a;
+    }
+    @keyframes cpSlideUpFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .cp-inactivity-chips-title {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    :host([data-theme="dark"]) .cp-inactivity-chips-title,
+    .cp-dark-theme .cp-inactivity-chips-title,
+    .theme-dark .cp-inactivity-chips-title {
+      color: #a1a1aa;
+    }
+    .cp-inactivity-chips-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .cp-inactivity-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.18s ease;
+      font-family: inherit;
+    }
+    .cp-chip-wa {
+      background: #ecfdf5;
+      color: #047857;
+      border-color: #a7f3d0;
+    }
+    .cp-chip-wa:hover {
+      background: #10b981;
+      color: #ffffff;
+      border-color: #10b981;
+    }
+    :host([data-theme="dark"]) .cp-chip-wa,
+    .cp-dark-theme .cp-chip-wa,
+    .theme-dark .cp-chip-wa {
+      background: rgba(16, 185, 129, 0.12);
+      color: #34d399;
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+    :host([data-theme="dark"]) .cp-chip-wa:hover,
+    .cp-dark-theme .cp-chip-wa:hover,
+    .theme-dark .cp-chip-wa:hover {
+      background: #10b981;
+      color: #ffffff;
+      border-color: #10b981;
+    }
+    .cp-chip-end {
+      background: #f1f5f9;
+      color: #475569;
+      border-color: #cbd5e1;
+    }
+    .cp-chip-end:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+    :host([data-theme="dark"]) .cp-chip-end,
+    .cp-dark-theme .cp-chip-end,
+    .theme-dark .cp-chip-end {
+      background: #27272a;
+      color: #d4d4d8;
+      border-color: #3f3f46;
+    }
+    :host([data-theme="dark"]) .cp-chip-end:hover,
+    .cp-dark-theme .cp-chip-end:hover,
+    .theme-dark .cp-chip-end:hover {
+      background: #3f3f46;
+      color: #ffffff;
+      border-color: #52525b;
+    }
+
+    /* Visitor Intake Card (Section 1: Intercom / Fin Minimalist Design) */
+    .cp-visitor-intake-card {
+      background: var(--cp-bg-bubble, #202228);
+      border: 1px solid var(--cp-border-bubble, #2d2f38);
+      border-radius: 12px;
+      padding: 14px 16px;
+      margin-top: 6px;
+      max-width: 90%;
+    }
+    :host([data-theme="light"]) .cp-visitor-intake-card,
+    .cp-window.cp-light-theme .cp-visitor-intake-card,
+    .cp-window.theme-light .cp-visitor-intake-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .cp-intake-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--cp-text-title, #ffffff);
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+    :host([data-theme="light"]) .cp-intake-title,
+    .cp-window.cp-light-theme .cp-intake-title,
+    .cp-window.theme-light .cp-intake-title {
+      color: #0f172a;
+    }
+    .cp-intake-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cp-intake-field {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .cp-intake-field label {
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--cp-text-muted, #737885);
+    }
+    :host([data-theme="light"]) .cp-intake-field label,
+    .cp-window.cp-light-theme .cp-intake-field label,
+    .cp-window.theme-light .cp-intake-field label {
+      color: #475569;
+    }
+    .cp-intake-field label .req {
+      color: #ef4444;
+    }
+    .cp-intake-field label .opt {
+      font-size: 10.5px;
+      color: var(--cp-text-muted, #737885);
+      opacity: 0.7;
+    }
+    .cp-intake-field input {
+      background: var(--cp-bg-input, #1a1b20);
+      border: 1px solid var(--cp-border-input, #282931);
+      color: var(--cp-text-primary, #ffffff);
+      font-size: 13px;
+      padding: 8px 11px;
+      border-radius: 6px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    :host([data-theme="light"]) .cp-intake-field input,
+    .cp-window.cp-light-theme .cp-intake-field input,
+    .cp-window.theme-light .cp-intake-field input {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+    }
+    .cp-intake-field input:focus {
+      border-color: var(--cp-composer-focus-border, #3e414f);
+    }
+    :host([data-theme="light"]) .cp-intake-field input:focus,
+    .cp-window.cp-light-theme .cp-intake-field input:focus,
+    .cp-window.theme-light .cp-intake-field input:focus {
+      border-color: #0f172a;
+    }
+    .cp-intake-submit-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      background: #111111;
+      color: #ffffff;
+      border: 1px solid #111111;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      transition: all 0.15s ease;
+    }
+    .cp-intake-submit-btn:hover {
+      background: #000000;
+      border-color: #000000;
+      transform: translateY(-1px);
+    }
+    .cp-intake-submit-btn:active {
+      transform: translateY(0);
+    }
+    .cp-intake-submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Light Theme Button: High-Contrast Solid Black (#0f172a) with Crisp White Text */
+    :host([data-theme="light"]) .cp-intake-submit-btn,
+    .cp-window.cp-light-theme .cp-intake-submit-btn,
+    .cp-window.theme-light .cp-intake-submit-btn,
+    .theme-light .cp-intake-submit-btn {
+      background: #0f172a !important;
+      border-color: #0f172a !important;
+      color: #ffffff !important;
+    }
+    :host([data-theme="light"]) .cp-intake-submit-btn:hover,
+    .cp-window.cp-light-theme .cp-intake-submit-btn:hover,
+    .cp-window.theme-light .cp-intake-submit-btn:hover,
+    .theme-light .cp-intake-submit-btn:hover {
+      background: #000000 !important;
+      border-color: #000000 !important;
+    }
+
+    /* Dark Theme Button: Solid Pure White with Jet-Black text (Matching Intercom Fin primary action) */
+    :host([data-theme="dark"]) .cp-intake-submit-btn,
+    .cp-window:not(.cp-light-theme) .cp-intake-submit-btn {
+      background: #ffffff !important;
+      border-color: #ffffff !important;
+      color: #0f172a !important;
+    }
+    :host([data-theme="dark"]) .cp-intake-submit-btn:hover,
+    .cp-window:not(.cp-light-theme) .cp-intake-submit-btn:hover {
+      background: #f1f5f9 !important;
+      border-color: #f1f5f9 !important;
+    }
+
+    /* System Confirmation Minimal Badge (Intercom Fin Reference) */
+    .cp-system-confirmation-row {
+      display: flex;
+      justify-content: center;
+      margin: 14px auto;
+      width: 100%;
+    }
+    .cp-system-confirmation-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: var(--cp-bg-surface, #1e2028);
+      border: 1px solid var(--cp-border-subtle, rgba(255, 255, 255, 0.08));
+      color: var(--cp-text-secondary, #94a3b8);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 11.5px;
+      font-weight: 500;
+      line-height: 1.4;
+      max-width: 92%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      animation: cpFadeSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .cp-light-theme .cp-system-confirmation-badge,
+    .theme-light .cp-system-confirmation-badge {
+      background: #f4f4f6 !important;
+      border: 1px solid #e4e4e7 !important;
+      color: #52525b !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    }
+    .cp-system-confirmation-badge svg {
+      flex-shrink: 0;
+      color: #10b981;
+    }
+    .cp-sys-conf-content {
+      color: inherit;
+      white-space: pre-line;
+    }
+    .cp-sys-conf-content strong {
+      color: var(--cp-text-primary, #ffffff);
+      font-weight: 600;
+    }
+    .cp-light-theme .cp-sys-conf-content strong,
+    .theme-light .cp-sys-conf-content strong {
+      color: #18181b !important;
+    }
+
+    /* Appointment Slot Chips (Section 8, 9, 10, 11) */
+    .cp-appointment-slots-box {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .cp-slots-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      font-weight: 500;
+      color: var(--cp-text-muted);
+    }
+    .cp-slots-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .cp-slot-pill {
+      background: var(--cp-bg-surface, #15161b);
+      border: 1px solid var(--cp-border-input, #282931);
+      color: var(--cp-text-primary, #ffffff);
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: 500;
+    }
+    :host([data-theme="light"]) .cp-slot-pill,
+    .cp-window.cp-light-theme .cp-slot-pill,
+    .cp-window.theme-light .cp-slot-pill {
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      color: #0f172a;
+    }
+    .cp-slot-pill:hover {
+      border-color: var(--cp-text-primary, #ffffff);
+      background: var(--cp-bg-bubble, #202228);
+      color: var(--cp-text-primary, #ffffff);
+      transform: translateY(-1px);
+    }
+    :host([data-theme="light"]) .cp-slot-pill:hover,
+    .cp-window.cp-light-theme .cp-slot-pill:hover,
+    .cp-window.theme-light .cp-slot-pill:hover {
+      border-color: #0f172a;
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    /* Instagram Action Card (Section 4 & 5) */
+    .cp-instagram-card {
+      background: rgba(225, 48, 108, 0.06);
+      border: 1px solid rgba(225, 48, 108, 0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .cp-ig-text {
+      font-size: 12px;
+      color: var(--cp-text);
+      line-height: 1.45;
+      font-weight: 400;
+    }
+    .cp-ig-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+      color: #ffffff;
+      border: none;
+      font-size: 12.5px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .cp-ig-btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    .cp-ig-btn svg {
+      width: 15px;
+      height: 15px;
+      color: #ffffff;
+    }
+
+    /* Digital Shared Asset Card (Syllabus, Brochure, Fee Chart, PDF) */
+    .cp-shared-asset-card {
+      background: var(--cp-bg-surface, #15161b);
+      border: 1px solid var(--cp-border-input, #282931);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      text-align: left;
+    }
+    :host([data-theme="light"]) .cp-shared-asset-card,
+    .cp-window.cp-light-theme .cp-shared-asset-card,
+    .cp-window.theme-light .cp-shared-asset-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .cp-asset-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .cp-asset-icon-box {
+      width: 34px;
+      height: 34px;
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.06);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cp-text-primary, #ffffff);
+      flex-shrink: 0;
+    }
+    :host([data-theme="light"]) .cp-asset-icon-box,
+    .cp-window.cp-light-theme .cp-asset-icon-box,
+    .cp-window.theme-light .cp-asset-icon-box {
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+    }
+    .cp-asset-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .cp-asset-category {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #10b981;
+      margin-bottom: 2px;
+    }
+    .cp-asset-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--cp-text-primary, #ffffff);
+      line-height: 1.35;
+      word-break: break-word;
+    }
+    :host([data-theme="light"]) .cp-asset-title,
+    .cp-window.cp-light-theme .cp-asset-title,
+    .cp-window.theme-light .cp-asset-title {
+      color: #0f172a;
+    }
+    .cp-asset-meta {
+      font-size: 10.5px;
+      color: var(--cp-text-muted, #94a3b8);
+      margin-top: 2px;
+    }
+    .cp-asset-desc {
+      font-size: 11.5px;
+      color: var(--cp-text-secondary, #cbd5e1);
+      line-height: 1.4;
+    }
+    :host([data-theme="light"]) .cp-asset-desc,
+    .cp-window.cp-light-theme .cp-asset-desc,
+    .cp-window.theme-light .cp-asset-desc {
+      color: #475569;
+    }
+    .cp-asset-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .cp-asset-download-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #0f172a;
+      color: #ffffff !important;
+      border: 1px solid #1e293b;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+    .cp-asset-download-btn:hover {
+      background: #1e293b;
+      transform: translateY(-1px);
+    }
+    .cp-asset-email-badge {
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px;
+      border-radius: 4px;
+      line-height: 1.3;
+    }
+    .cp-asset-email-badge.success {
+      background: rgba(16, 185, 129, 0.1);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .cp-asset-email-badge.pending {
+      background: rgba(59, 130, 246, 0.1);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+    }
+    .cp-asset-email-badge.prompt {
+      background: rgba(148, 163, 184, 0.1);
+      color: var(--cp-text-muted, #94a3b8);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    :host([data-theme="light"]) .cp-asset-email-badge.prompt,
+    .cp-window.cp-light-theme .cp-asset-email-badge.prompt,
+    .cp-window.theme-light .cp-asset-email-badge.prompt {
+      color: #64748b;
     }
   `;
 
@@ -3146,9 +4578,9 @@
   widgetContainer.innerHTML = `
     <!-- Floating Launcher Button -->
     <button class="cp-launcher" id="cp-launcher-btn" aria-label="Open AI Assistant">
-      <!-- Dark Launcher: White Cai logo -->
+      <!-- Launcher: Cai logo -->
       <div class="cp-launcher-icon">
-        <img src="${baseUrl}/assets/logo-white.png" class="cp-launcher-logo" alt="Cai" />
+        <img src="${baseUrl}/assets/logo-black.png" class="cp-launcher-logo" alt="Cai" />
       </div>
       <!-- Open State: Crisp Dark Down-Chevron (media_1790678123351.png) -->
       <div class="cp-launcher-chevron">
@@ -3171,7 +4603,7 @@
 
       <div class="cp-teaser-content">
         <div class="cp-teaser-logo-box">
-          <img src="${baseUrl}/assets/logo-white.png" class="cp-teaser-logo" alt="Cai" />
+          <img src="${baseUrl}/assets/logo-black.png" class="cp-teaser-logo" alt="Cai" />
         </div>
         <div class="cp-teaser-body">
           <div class="cp-teaser-header">
@@ -3189,7 +4621,7 @@
       </div>
     </div>
 
-    <!-- Main Chat Window (Intercom Cai dark UI) -->
+    <!-- Main Chat Window (Intercom Cai UI) -->
     <div class="cp-window screen-home" id="cp-chat-window" role="dialog" aria-modal="true" aria-label="Chat with Cai">
       
       <!-- Top Header -->
@@ -3201,8 +4633,8 @@
             </svg>
           </button>
           
-          <!-- Cai Brand Logo (media_1790705223450.png) -->
-          <img src="${baseUrl}/assets/logo-white.png" class="cp-brand-logo" alt="Cai" />
+          <!-- Cai Brand Logo -->
+          <img src="${baseUrl}/assets/logo-black.png" class="cp-brand-logo" alt="Cai" />
 
           <div class="cp-header-title-box">
             <div class="cp-header-title" id="cp-header-assistant-name">Cai</div>
@@ -3283,10 +4715,10 @@
 
       <!-- Message History Container (Clean minimal Intercom Cai style) -->
             <!-- Customer Action Screens View Container (w-up: Premium Customer Actions) -->
-      <div class="cp-screens-view" id="cp-screens-view" style="display: none;"></div>
+      <div class="cp-screens-view" id="cp-screens-view" style="display: flex;"></div>
 
       <!-- Message History Container (Clean minimal Intercom Cai style) -->
-      <main class="cp-messages" id="cp-messages-container">
+      <main class="cp-messages" id="cp-messages-container" style="display: none;">
         
         <!-- Welcome Message Bubble (media_1790678123351.png) -->
         <div class="cp-msg-row ai">
@@ -3323,20 +4755,80 @@
       </main>
 
       <!-- Bottom Composer Container (Exact Intercom Fin design) -->
-      <footer class="cp-composer-section">
+      <footer class="cp-composer-section" style="display: none;">
+        <!-- Hidden file input for native attachment picking -->
+        <input type="file" id="cp-file-input" style="display:none;" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf,.doc,.docx,.txt,.csv" />
+
+        <!-- Floating Emoji Picker Popover -->
+        <div class="cp-popover cp-emoji-popover" id="cp-emoji-popover" style="display:none;">
+          <div class="cp-popover-header">
+            <span class="cp-popover-title">Insert Emoji</span>
+            <button type="button" class="cp-popover-close" id="cp-emoji-close" aria-label="Close emoji picker">✕</button>
+          </div>
+          <div class="cp-emoji-tabs">
+            <button type="button" class="cp-emoji-tab active" data-group="popular">Top</button>
+            <button type="button" class="cp-emoji-tab" data-group="smileys">Smileys</button>
+            <button type="button" class="cp-emoji-tab" data-group="gestures">Hands</button>
+            <button type="button" class="cp-emoji-tab" data-group="business">Work</button>
+          </div>
+          <div class="cp-emoji-grid" id="cp-emoji-grid"></div>
+        </div>
+
+        <!-- Floating GIF Picker Popover -->
+        <div class="cp-popover cp-gif-popover" id="cp-gif-popover" style="display:none;">
+          <div class="cp-popover-header">
+            <span class="cp-popover-title">Choose a GIF</span>
+            <button type="button" class="cp-popover-close" id="cp-gif-close" aria-label="Close GIF picker">✕</button>
+          </div>
+          <div class="cp-gif-search-box">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="cp-gif-search" placeholder="Search reaction GIFs..." autocomplete="off" />
+          </div>
+          <div class="cp-gif-tags" id="cp-gif-tags">
+            <button type="button" class="cp-gif-tag active" data-tag="all">All</button>
+            <button type="button" class="cp-gif-tag" data-tag="thumbs up">👍 Thumbs Up</button>
+            <button type="button" class="cp-gif-tag" data-tag="hello">👋 Hello</button>
+            <button type="button" class="cp-gif-tag" data-tag="party">🎉 Party</button>
+            <button type="button" class="cp-gif-tag" data-tag="thinking">🤔 Thinking</button>
+            <button type="button" class="cp-gif-tag" data-tag="thanks">🙏 Thanks</button>
+            <button type="button" class="cp-gif-tag" data-tag="applause">👏 Clap</button>
+            <button type="button" class="cp-gif-tag" data-tag="deal">🤝 Deal</button>
+          </div>
+          <div class="cp-gif-grid" id="cp-gif-grid"></div>
+        </div>
+
         <div class="cp-composer-capsule">
+          <!-- Voice Recording Status Pill -->
+          <div class="cp-voice-indicator" id="cp-voice-indicator" style="display:none;">
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="cp-voice-pulse"></span>
+              <span id="cp-voice-status-text">Listening... Speak now</span>
+            </div>
+            <button type="button" class="cp-voice-stop-btn" id="cp-voice-stop-btn">Done</button>
+          </div>
+
+          <!-- Attachment Preview Bar -->
+          <div class="cp-attach-preview-bar" id="cp-attach-preview-bar" style="display:none;">
+            <div class="cp-attach-thumb" id="cp-attach-thumb"></div>
+            <div class="cp-attach-info">
+              <div class="cp-attach-name" id="cp-attach-name"></div>
+              <div class="cp-attach-size" id="cp-attach-size"></div>
+            </div>
+            <button type="button" class="cp-attach-remove" id="cp-attach-remove" title="Remove attachment">✕</button>
+          </div>
+
           <textarea 
             class="cp-input-field" 
             id="cp-input-field" 
-            placeholder="Ask a question..." 
+            placeholder="Enter your Name & WhatsApp Number..." 
             rows="1"
-            aria-label="Ask Fin a question"
+            aria-label="Enter your Name & WhatsApp Number"
           ></textarea>
 
           <div class="cp-composer-toolbar">
             <div class="cp-toolbar-actions">
               <!-- Attachment button -->
-              <button class="cp-tool-btn" id="cp-tool-attach" title="Attach file" aria-label="Attach file">
+              <button class="cp-tool-btn" id="cp-tool-attach" title="Attach file or image" aria-label="Attach file or image">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
                 </svg>
@@ -3353,12 +4845,12 @@
               </button>
 
               <!-- GIF button -->
-              <button class="cp-tool-btn" id="cp-tool-gif" title="Search GIF" aria-label="Search GIF">
+              <button class="cp-tool-btn" id="cp-tool-gif" title="Choose a GIF reaction" aria-label="Choose a GIF reaction">
                 <span class="cp-gif-badge">GIF</span>
               </button>
 
               <!-- Mic / Voice button -->
-              <button class="cp-tool-btn" id="cp-tool-mic" title="Voice input" aria-label="Voice input">
+              <button class="cp-tool-btn" id="cp-tool-mic" title="Voice input (Speech to text)" aria-label="Voice input">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                   <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
@@ -3476,6 +4968,59 @@
   let humanPollingInterval = null;
   let lastPolledMessageId = 0;
   let isHumanChatActive = false;
+  let humanCountdownTimer = null;
+  let humanAttemptNumber = 1;
+  let humanSecondsRemaining = 30;
+  let isCopilotActive = false;
+
+  function bindTap(el, fn) {
+    if (!el) return;
+    let startX = 0;
+    let startY = 0;
+    let touchMoved = false;
+    let lastTapTime = 0;
+
+    el.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches[0]) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+      }
+      touchMoved = false;
+    }, { passive: true });
+
+    el.addEventListener('touchmove', (e) => {
+      if (e.touches && e.touches[0]) {
+        const dx = e.touches[0].clientX - startX;
+        const dy = e.touches[0].clientY - startY;
+        if (Math.hypot(dx, dy) > 10) {
+          touchMoved = true;
+        }
+      }
+    }, { passive: true });
+
+    el.addEventListener('touchend', (e) => {
+      if (!touchMoved) {
+        lastTapTime = Date.now();
+        if (e.cancelable) e.preventDefault();
+        fn(e);
+      }
+      touchMoved = false;
+    });
+
+    el.addEventListener('click', (e) => {
+      if (Date.now() - lastTapTime < 450) {
+        return; // Suppress duplicate synthesized click event following touchend
+      }
+      fn(e);
+    });
+  }
+
+  function stopHumanCountdown() {
+    if (humanCountdownTimer) {
+      clearInterval(humanCountdownTimer);
+      humanCountdownTimer = null;
+    }
+  }
 
   const bottomNav = shadow.getElementById('cp-bottom-nav');
   const navHomeBtn = shadow.getElementById('cp-nav-home');
@@ -3501,16 +5046,28 @@
     }
   }
 
-  if (navHomeBtn) navHomeBtn.addEventListener('click', () => navigateTo('home'));
-  if (navMessagesBtn) navMessagesBtn.addEventListener('click', () => navigateTo('chat'));
-  if (navHelpBtn) navHelpBtn.addEventListener('click', () => navigateTo('human-team'));
-  if (navNewsBtn) navNewsBtn.addEventListener('click', () => navigateTo('news'));
+  if (navHomeBtn) {
+    bindTap(navHomeBtn, () => navigateTo('home'));
+    navHomeBtn.addEventListener('click', () => navigateTo('home'));
+  }
+  if (navMessagesBtn) {
+    bindTap(navMessagesBtn, () => navigateTo('chat'));
+    navMessagesBtn.addEventListener('click', () => navigateTo('chat'));
+  }
+  if (navHelpBtn) {
+    bindTap(navHelpBtn, () => navigateTo('help'));
+    navHelpBtn.addEventListener('click', () => navigateTo('help'));
+  }
+  if (navNewsBtn) {
+    bindTap(navNewsBtn, () => navigateTo('news'));
+    navNewsBtn.addEventListener('click', () => navigateTo('news'));
+  }
 
   let widgetConfig = {
     brand_name: 'Cai',
     assistant_name: 'Cai',
-    greeting_heading: 'Hi there 👋\n\nYou are now speaking with Cai. How can I help?',
-    greeting_subheading: 'The team can also help',
+    greeting_heading: 'Hi there 👋 Welcome to CuboidPilot!\n\nI am Cai, your AI assistant. How can I help your business today?',
+    greeting_subheading: 'Powered By CuboidPilot',
     whatsapp_enabled: true,
     whatsapp_number: '+91 98765 43210',
     theme_mode: 'dark',
@@ -3522,7 +5079,9 @@
   let isSending = false;
 
   // 6.4. Theme Engine (Dynamic Light & Dark Modes)
-  let currentTheme = (currentScript && currentScript.getAttribute('data-theme')) || 'dark';
+  let currentTheme = localStorage.getItem('cp_user_theme') || 
+                     (currentScript && currentScript.getAttribute('data-theme')) || 
+                     'dark';
 
   function getActiveLogoUrl() {
     let rawLogo = '';
@@ -3565,20 +5124,39 @@
   function applyTheme(theme) {
     currentTheme = (theme === 'light') ? 'light' : 'dark';
     hostElement.setAttribute('data-theme', currentTheme);
+    hostElement.classList.toggle('cp-theme-light', currentTheme === 'light');
+    hostElement.classList.toggle('cp-theme-dark', currentTheme !== 'light');
     const isLight = (currentTheme === 'light');
 
+    if (widgetContainer) {
+      widgetContainer.setAttribute('data-theme', currentTheme);
+      widgetContainer.classList.toggle('theme-light', isLight);
+      widgetContainer.classList.toggle('cp-light-theme', isLight);
+      widgetContainer.classList.toggle('theme-dark', !isLight);
+      widgetContainer.classList.toggle('cp-dark-theme', !isLight);
+    }
     if (chatWindow) {
       chatWindow.classList.toggle('cp-light-theme', isLight);
       chatWindow.classList.toggle('theme-light', isLight);
+      chatWindow.classList.toggle('cp-dark-theme', !isLight);
+      chatWindow.classList.toggle('theme-dark', !isLight);
     }
     if (teaserBubble) {
       teaserBubble.classList.toggle('cp-light-theme', isLight);
       teaserBubble.classList.toggle('theme-light', isLight);
+      teaserBubble.classList.toggle('cp-dark-theme', !isLight);
+      teaserBubble.classList.toggle('theme-dark', !isLight);
     }
     if (launcherBtn) {
       launcherBtn.classList.toggle('cp-light-theme', isLight);
       launcherBtn.classList.toggle('theme-light', isLight);
+      launcherBtn.classList.toggle('cp-dark-theme', !isLight);
+      launcherBtn.classList.toggle('theme-dark', !isLight);
     }
+
+    try {
+      localStorage.setItem('cp_user_theme', currentTheme);
+    } catch(e) {}
 
     updateWidgetLogo();
 
@@ -3607,7 +5185,10 @@
   }
 
   function toggleTheme() {
-    try { sessionStorage.setItem('cp_theme_user_manual', '1'); } catch(e) {}
+    try {
+      sessionStorage.setItem('cp_theme_user_manual', '1');
+      localStorage.setItem('cp_theme_user_manual', '1');
+    } catch(e) {}
     applyTheme(currentTheme === 'light' ? 'dark' : 'light');
   }
 
@@ -3885,38 +5466,15 @@
   }
 
   function initTeaserNotification() {
-    // If chat is open or teaser was already dismissed in this session, skip
-    if (chatWindow.classList.contains('open')) return;
-    if (sessionStorage.getItem('cp_teaser_dismissed') === '1') return;
-    if (sessionStorage.getItem(STORAGE_KEYS.STATE) === '1') return;
-
-    // Display teaser bubble after smooth 1.8s delay
-    setTimeout(() => {
-      if (chatWindow.classList.contains('open')) return;
-      if (sessionStorage.getItem('cp_teaser_dismissed') === '1') return;
-      if (sessionStorage.getItem(STORAGE_KEYS.STATE) === '1') return;
-
-      if (teaserBubble) {
-        teaserBubble.classList.add('show');
-      }
-      if (launcherBadge) {
+    // Kept calm and clean: never auto-open or play unprompted sound chimes.
+    // Subtle indicator on launcher button only if unread messages exist.
+    if (chatWindow && chatWindow.classList.contains('open')) return;
+    try {
+      const history = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
+      if (history.length > 0 && launcherBadge) {
         launcherBadge.style.display = 'flex';
       }
-      playNotificationChime();
-
-      // Ensure audio plays upon very first user touch or scroll if browser suspended audio
-      const resumeChime = () => {
-        if (!hasChimed && teaserBubble && teaserBubble.classList.contains('show')) {
-          playNotificationChime();
-        }
-        window.removeEventListener('click', resumeChime);
-        window.removeEventListener('touchstart', resumeChime);
-        window.removeEventListener('scroll', resumeChime);
-      };
-      window.addEventListener('click', resumeChime, { once: true });
-      window.addEventListener('touchstart', resumeChime, { once: true });
-      window.addEventListener('scroll', resumeChime, { once: true });
-    }, 1800);
+    } catch(e) {}
   }
 
   // 7. Toggle Open/Close
@@ -3938,10 +5496,20 @@
         document.body.style.overflow = 'hidden';
       }
       dismissTeaser(false);
-      if (!isMobile) {
-        setTimeout(() => inputField.focus(), 150);
+      if (currentScreen === 'home') {
+        if (screensView) screensView.style.display = 'flex';
+        if (messagesContainer) messagesContainer.style.display = 'none';
+        if (composerSection) composerSection.style.display = 'none';
+        renderActionHome();
+      } else if ((currentScreen === 'chat' || currentScreen === 'human-chat') && !isMobile) {
+        setTimeout(() => inputField && inputField.focus(), 150);
+        scrollToBottom();
       }
-      scrollToBottom();
+
+      // Trigger dynamic data load on home screen if opening for first time
+      if (currentScreen === 'home' && typeof loadHomeDynamicData === 'function') {
+        loadHomeDynamicData();
+      }
 
       // Play ChatGPT wake sound and trigger screen wave when opening
       if (!wasOpen) {
@@ -3960,12 +5528,12 @@
     sessionStorage.setItem(STORAGE_KEYS.STATE, isOpen ? '1' : '0');
   }
 
-  launcherBtn.addEventListener('click', () => toggleWidget());
-  backBtn.addEventListener('click', (e) => { e.stopPropagation(); handleBackNavigation(); });
-  closeBtn.addEventListener('click', () => toggleWidget(false));
+  bindTap(launcherBtn, () => toggleWidget());
+  bindTap(backBtn, (e) => { e.stopPropagation(); handleBackNavigation(); });
+  bindTap(closeBtn, (e) => { e.stopPropagation(); toggleWidget(false); });
 
   if (teaserBubble) {
-    teaserBubble.addEventListener('click', (e) => {
+    bindTap(teaserBubble, (e) => {
       if (e.target.closest('#cp-teaser-close')) return;
       dismissTeaser(false);
       toggleWidget(true);
@@ -3973,23 +5541,31 @@
   }
 
   if (teaserCloseBtn) {
-    teaserCloseBtn.addEventListener('click', (e) => {
+    bindTap(teaserCloseBtn, (e) => {
       e.stopPropagation();
       dismissTeaser(true);
     });
   }
 
-  optionsBtn.addEventListener('click', (e) => {
+  bindTap(optionsBtn, (e) => {
     e.stopPropagation();
     optionsMenu.classList.toggle('show');
   });
 
-  document.addEventListener('click', () => {
+  const dismissOptionsMenu = (e) => {
+    try {
+      const path = (e.composedPath && e.composedPath()) || [];
+      if (path.includes(optionsBtn) || path.includes(optionsMenu)) {
+        return;
+      }
+    } catch(err) {}
     optionsMenu.classList.remove('show');
-  });
+  };
+  document.addEventListener('click', dismissOptionsMenu);
+  document.addEventListener('touchend', dismissOptionsMenu, { passive: true });
 
   if (menuSound) {
-    menuSound.addEventListener('click', (e) => {
+    bindTap(menuSound, (e) => {
       e.stopPropagation();
       toggleSound();
       optionsMenu.classList.remove('show');
@@ -3997,7 +5573,7 @@
   }
 
   if (menuTheme) {
-    menuTheme.addEventListener('click', (e) => {
+    bindTap(menuTheme, (e) => {
       e.stopPropagation();
       toggleTheme();
       optionsMenu.classList.remove('show');
@@ -4021,7 +5597,7 @@
     leadStep = 1;
     initVisitorState();
     if (inputField) {
-      inputField.placeholder = "Ask a question...";
+      inputField.placeholder = "Enter your Name & WhatsApp Number...";
       inputField.value = '';
     }
   }
@@ -4046,16 +5622,81 @@
     openWhatsAppChannel('Hello, I was speaking with Cai on your website and would like assistance.');
   });
 
-  // 8. Auto-Expand Input Field & Button State
+  // =========================================================================
+  // 8. RICH COMPOSER TOOLS: ATTACHMENT, EMOJI, GIF & VOICE RECOGNITION
+  // =========================================================================
+
+  const CURATED_GIFS = [
+    { title: 'Thumbs Up', tag: 'thumbs up', url: 'https://media.giphy.com/media/111ebonMs90YLu/giphy.gif' },
+    { title: 'Great Job', tag: 'thumbs up', url: 'https://media.giphy.com/media/l41lI4bYmcsPJX9Go/giphy.gif' },
+    { title: 'Hello Wave', tag: 'hello', url: 'https://media.giphy.com/media/Nx0rz3jtxt96LMqYTx/giphy.gif' },
+    { title: 'Hi There', tag: 'hello', url: 'https://media.giphy.com/media/3o7TKOCXul7ZH5q05W/giphy.gif' },
+    { title: 'Celebration', tag: 'party', url: 'https://media.giphy.com/media/artj92V8o75VPL7AeQ/giphy.gif' },
+    { title: 'Party Dance', tag: 'party', url: 'https://media.giphy.com/media/26tPplGWjN0xLybiU/giphy.gif' },
+    { title: 'Thinking', tag: 'thinking', url: 'https://media.giphy.com/media/3o7bu3XilJ5BOiSGic/giphy.gif' },
+    { title: 'Smart Thinking', tag: 'thinking', url: 'https://media.giphy.com/media/d3mlE7uhX8KFgEmY/giphy.gif' },
+    { title: 'Thank You', tag: 'thanks', url: 'https://media.giphy.com/media/osAcIG4MrQnlK/giphy.gif' },
+    { title: 'Grateful', tag: 'thanks', url: 'https://media.giphy.com/media/RipfZWzjUDH253nqRl/giphy.gif' },
+    { title: 'Applause', tag: 'applause', url: 'https://media.giphy.com/media/l3q2XhfQ8oCkm1Ts4/giphy.gif' },
+    { title: 'Bravo Clap', tag: 'applause', url: 'https://media.giphy.com/media/Swx36wwSsU49HAnIhC/giphy.gif' },
+    { title: 'Deal Handshake', tag: 'deal', url: 'https://media.giphy.com/media/BPJmthQ3YRwD6QqcVD/giphy.gif' },
+    { title: 'Partnership', tag: 'deal', url: 'https://media.giphy.com/media/xT8qB3utUzMWqmpH20/giphy.gif' },
+    { title: 'Mind Blown', tag: 'wow', url: 'https://media.giphy.com/media/26ufdipQqU2lhNA4g/giphy.gif' },
+    { title: 'Rocket Launch', tag: 'rocket', url: 'https://media.giphy.com/media/mi6DsSSNKDbUY/giphy.gif' }
+  ];
+
+  const EMOJI_GROUPS = {
+    popular: ['😊', '😂', '🤣', '😍', '🥰', '🙏', '👍', '🔥', '🎉', '🚀', '❤️', '👏', '💡', '💯', '🤔', '🤩', '😎', '🤝', '✨', '🎯', '⚡', '💬', '📞', '👌'],
+    smileys: ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '🙂', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😋', '😜', '🤪', '😎', '🤓', '🥳', '🤗', '🤔'],
+    gestures: ['👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '👋', '🤝', '🙏', '✍️', '👏', '🙌', '💪'],
+    business: ['💼', '🏢', '📈', '📊', '💳', '🛒', '📦', '📅', '⏰', '📍', '🔗', '🛡️', '💎', '🏆', '🌟', '💡', '🎯', '🚀', '🔥', '⚡', '❓', '❗', '✅', '❌']
+  };
+
+  let pendingAttachment = null;
+  let speechRecognition = null;
+  let isVoiceListening = false;
+
+  const fileInput = shadow.getElementById('cp-file-input');
+  const attachBar = shadow.getElementById('cp-attach-preview-bar');
+  const attachThumb = shadow.getElementById('cp-attach-thumb');
+  const attachName = shadow.getElementById('cp-attach-name');
+  const attachSize = shadow.getElementById('cp-attach-size');
+  const attachRemove = shadow.getElementById('cp-attach-remove');
+
+  const emojiPopover = shadow.getElementById('cp-emoji-popover');
+  const emojiGrid = shadow.getElementById('cp-emoji-grid');
+  const emojiClose = shadow.getElementById('cp-emoji-close');
+
+  const gifPopover = shadow.getElementById('cp-gif-popover');
+  const gifGrid = shadow.getElementById('cp-gif-grid');
+  const gifSearch = shadow.getElementById('cp-gif-search');
+  const gifClose = shadow.getElementById('cp-gif-close');
+
+  const micBtn = shadow.getElementById('cp-tool-mic');
+  const voiceIndicator = shadow.getElementById('cp-voice-indicator');
+  const voiceStatusText = shadow.getElementById('cp-voice-status-text');
+  const voiceStopBtn = shadow.getElementById('cp-voice-stop-btn');
+
+  function hideAllPopovers() {
+    if (emojiPopover) emojiPopover.style.display = 'none';
+    if (gifPopover) gifPopover.style.display = 'none';
+  }
+
+  // 1. Auto-Expand Input Field & Button State
   inputField.addEventListener('input', () => {
+    clearInactivityChips();
     inputField.style.height = 'auto';
     inputField.style.height = Math.min(inputField.scrollHeight, 100) + 'px';
     const hasText = inputField.value.trim().length > 0;
-    if (hasText) {
+    if (hasText || pendingAttachment) {
       sendBtn.classList.add('active');
     } else {
       sendBtn.classList.remove('active');
     }
+  });
+
+  inputField.addEventListener('focus', () => {
+    clearInactivityChips();
   });
 
   inputField.addEventListener('keydown', (e) => {
@@ -4067,40 +5708,373 @@
 
   sendBtn.addEventListener('click', handleSend);
 
-  // Composer tools
-  shadow.getElementById('cp-tool-emoji').addEventListener('click', () => {
-    inputField.value += ' 😊 ';
-    inputField.dispatchEvent(new Event('input'));
-    inputField.focus();
+  // 2. ATTACHMENT HANDLER (Paperclip 📎)
+  function clearPendingAttachmentUI() {
+    pendingAttachment = null;
+    if (fileInput) fileInput.value = '';
+    if (attachBar) attachBar.style.display = 'none';
+    if (attachThumb) attachThumb.innerHTML = '';
+    if (attachName) attachName.textContent = '';
+    if (attachSize) attachSize.textContent = '';
+    if (!inputField.value.trim()) {
+      sendBtn.classList.remove('active');
+    }
+  }
+
+  shadow.getElementById('cp-tool-attach').addEventListener('click', (e) => {
+    e.stopPropagation();
+    hideAllPopovers();
+    if (fileInput) fileInput.click();
   });
 
-  shadow.getElementById('cp-tool-attach').addEventListener('click', () => {
-    alert('File attachment is enabled for verified company inquiries. You can also paste document links directly.');
-  });
+  if (fileInput) {
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
 
-  shadow.getElementById('cp-tool-gif').addEventListener('click', () => {
-    inputField.value += ' [GIF] ';
-    inputField.dispatchEvent(new Event('input'));
-    inputField.focus();
-  });
+      if (file.size > 15 * 1024 * 1024) {
+        alert('File size exceeds the 15MB limit.');
+        fileInput.value = '';
+        return;
+      }
 
-  shadow.getElementById('cp-tool-mic').addEventListener('click', () => {
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'en-US';
-      recognition.start();
-      inputField.placeholder = 'Listening... Speak now';
-      recognition.onresult = function(event) {
-        inputField.value = event.results[0][0].transcript;
-        inputField.placeholder = 'Ask a question...';
-        inputField.dispatchEvent(new Event('input'));
+      const isImg = file.type.startsWith('image/');
+      pendingAttachment = {
+        file: file,
+        name: file.name,
+        size: file.size,
+        size_formatted: formatBytes(file.size),
+        type: file.type,
+        is_image: isImg,
+        dataUrl: null
       };
-      recognition.onerror = function() {
-        inputField.placeholder = 'Ask a question...';
+
+      if (attachName) attachName.textContent = file.name;
+      if (attachSize) attachSize.textContent = formatBytes(file.size);
+
+      if (isImg) {
+        const reader = new FileReader();
+        reader.onload = (re) => {
+          pendingAttachment.dataUrl = re.target.result;
+          if (attachThumb) attachThumb.innerHTML = `<img src="${re.target.result}" alt="thumb" />`;
+        };
+        reader.readAsDataURL(file);
+      } else {
+        if (attachThumb) attachThumb.innerHTML = `📄`;
+      }
+
+      if (attachBar) attachBar.style.display = 'flex';
+      sendBtn.classList.add('active');
+      inputField.focus();
+    });
+  }
+
+  if (attachRemove) {
+    attachRemove.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearPendingAttachmentUI();
+    });
+  }
+
+  // 3. EMOJI PICKER HANDLER (🙂 Smiley)
+  function renderEmojis(group = 'popular') {
+    if (!emojiGrid) return;
+    const list = EMOJI_GROUPS[group] || EMOJI_GROUPS.popular;
+    emojiGrid.innerHTML = list.map(em => `
+      <button type="button" class="cp-emoji-btn" data-emoji="${em}" title="${em}">${em}</button>
+    `).join('');
+
+    emojiGrid.querySelectorAll('.cp-emoji-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const em = btn.getAttribute('data-emoji');
+        insertEmoji(em);
+      });
+    });
+  }
+
+  function insertEmoji(em) {
+    const val = inputField.value;
+    const start = inputField.selectionStart !== undefined ? inputField.selectionStart : val.length;
+    const end = inputField.selectionEnd !== undefined ? inputField.selectionEnd : val.length;
+    inputField.value = val.substring(0, start) + em + val.substring(end);
+    inputField.selectionStart = inputField.selectionEnd = start + em.length;
+    inputField.style.height = 'auto';
+    inputField.style.height = Math.min(inputField.scrollHeight, 100) + 'px';
+    sendBtn.classList.add('active');
+    inputField.focus();
+  }
+
+  shadow.getElementById('cp-tool-emoji').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isVisible = emojiPopover && emojiPopover.style.display === 'flex';
+    hideAllPopovers();
+    if (!isVisible && emojiPopover) {
+      renderEmojis('popular');
+      emojiPopover.style.display = 'flex';
+    }
+  });
+
+  if (emojiClose) {
+    emojiClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (emojiPopover) emojiPopover.style.display = 'none';
+    });
+  }
+
+  shadow.querySelectorAll('.cp-emoji-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      e.stopPropagation();
+      shadow.querySelectorAll('.cp-emoji-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      renderEmojis(tab.getAttribute('data-group'));
+    });
+  });
+
+  // 4. GIF REACTION PICKER HANDLER (GIF Badge)
+  function renderGifs(query = '', tag = 'all') {
+    if (!gifGrid) return;
+    const q = query.toLowerCase().trim();
+    const filtered = CURATED_GIFS.filter(g => {
+      const matchTag = (tag === 'all') || (g.tag === tag);
+      const matchQuery = !q || g.title.toLowerCase().includes(q) || g.tag.toLowerCase().includes(q);
+      return matchTag && matchQuery;
+    });
+
+    if (filtered.length === 0) {
+      gifGrid.innerHTML = `<div style="grid-column: span 2; text-align: center; color: var(--cp-text-muted); font-size: 11px; padding: 24px 0;">No matching GIFs found. Try 'thumbs up', 'hello', or 'party'!</div>`;
+      return;
+    }
+
+    gifGrid.innerHTML = filtered.map(g => `
+      <div class="cp-gif-card" data-url="${escapeHtml(g.url)}" data-title="${escapeHtml(g.title)}">
+        <img src="${escapeHtml(g.url)}" alt="${escapeHtml(g.title)}" loading="lazy" />
+        <div class="cp-gif-label">${escapeHtml(g.title)}</div>
+      </div>
+    `).join('');
+
+    gifGrid.querySelectorAll('.cp-gif-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const url = card.getAttribute('data-url');
+        const title = card.getAttribute('data-title');
+        sendDirectGif(url, title);
+      });
+    });
+  }
+
+  shadow.getElementById('cp-tool-gif').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isVisible = gifPopover && gifPopover.style.display === 'flex';
+    hideAllPopovers();
+    if (!isVisible && gifPopover) {
+      gifPopover.style.display = 'flex';
+      renderGifs('', 'all');
+      if (gifSearch) {
+        gifSearch.value = '';
+        setTimeout(() => gifSearch.focus(), 60);
+      }
+    }
+  });
+
+  if (gifClose) {
+    gifClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (gifPopover) gifPopover.style.display = 'none';
+    });
+  }
+
+  if (gifSearch) {
+    gifSearch.addEventListener('input', () => {
+      const activeTag = shadow.querySelector('.cp-gif-tag.active')?.getAttribute('data-tag') || 'all';
+      renderGifs(gifSearch.value, activeTag);
+    });
+  }
+
+  shadow.querySelectorAll('.cp-gif-tag').forEach(tagBtn => {
+    tagBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      shadow.querySelectorAll('.cp-gif-tag').forEach(t => t.classList.remove('active'));
+      tagBtn.classList.add('active');
+      const tag = tagBtn.getAttribute('data-tag');
+      renderGifs(gifSearch ? gifSearch.value : '', tag);
+    });
+  });
+
+  // Direct GIF sender
+  async function sendDirectGif(url, title) {
+    if (isSending) return;
+    hideAllPopovers();
+    if (isVoiceListening) stopVoiceRecording();
+
+    const attachment = {
+      type: 'gif',
+      url: url,
+      name: title,
+      is_image: true
+    };
+    appendUserMessage('', attachment);
+
+    const gifMessage = `[Shared a reaction GIF: "${title}"]`;
+
+    // HUMAN LIVE CHAT MODE
+    if (isHumanChatActive || currentScreen === 'human-chat') {
+      try {
+        await fetch(`${baseUrl}/api/widget_actions.php?action=send_human_message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
+          body: JSON.stringify({
+            company_key: companyKey,
+            conversation_id: conversationId,
+            session_token: sessionId,
+            message: gifMessage
+          })
+        });
+      } catch (e) {}
+      return;
+    }
+
+    isSending = true;
+    showTyping('Cai is thinking...');
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 18000);
+    try {
+      const res = await fetch(`${baseUrl}/api/chat.php`, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Company-Key': companyKey
+        },
+        body: JSON.stringify({
+          company_key: companyKey,
+          message: gifMessage,
+          session_id: sessionId,
+          conversation_id: conversationId,
+          lead_id: leadId,
+          visitor_name: visitorName,
+          mode: isCopilotActive ? 'workspace_copilot' : 'visitor'
+        })
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (data.conversation_id) {
+        conversationId = data.conversation_id;
+        sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+      }
+      if (data.lead_id) {
+        leadId = data.lead_id;
+        sessionStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
+      }
+      hideTyping();
+      appendAIMessage(data);
+    } catch (e) {
+      clearTimeout(timeoutId);
+      hideTyping();
+      appendAIMessage({
+        reply: "Nice reaction! 😊 How can I help you today?",
+        timestamp: "Just now"
+      });
+    } finally {
+      isSending = false;
+    }
+  }
+
+  // 5. VOICE INPUT / SPEECH RECOGNITION (🎙️ Mic)
+  function stopVoiceRecording() {
+    if (speechRecognition && isVoiceListening) {
+      try { speechRecognition.stop(); } catch (e) {}
+    }
+    isVoiceListening = false;
+    if (micBtn) micBtn.classList.remove('recording');
+    if (voiceIndicator) voiceIndicator.style.display = 'none';
+    inputField.placeholder = "Ask a question...";
+  }
+
+  function startVoiceRecording() {
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRec) {
+      alert('Speech recognition is supported in Chrome, Edge, and modern browsers over HTTPS.');
+      return;
+    }
+
+    try {
+      if (!speechRecognition) {
+        speechRecognition = new SpeechRec();
+      }
+      speechRecognition.continuous = false;
+      speechRecognition.interimResults = true;
+      speechRecognition.lang = (navigator.language && (navigator.language.startsWith('hi') || navigator.language === 'en-IN')) ? 'en-IN' : 'en-US';
+
+      let baseText = inputField.value;
+      if (baseText && !baseText.endsWith(' ')) baseText += ' ';
+
+      speechRecognition.onstart = () => {
+        isVoiceListening = true;
+        if (micBtn) micBtn.classList.add('recording');
+        if (voiceIndicator) {
+          voiceIndicator.style.display = 'flex';
+          if (voiceStatusText) voiceStatusText.textContent = 'Listening... Speak in Hindi or English';
+        }
+        inputField.placeholder = '🎙️ Listening... Speak now';
       };
+
+      speechRecognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        inputField.value = baseText + transcript;
+        inputField.style.height = 'auto';
+        inputField.style.height = Math.min(inputField.scrollHeight, 100) + 'px';
+        sendBtn.classList.add('active');
+      };
+
+      speechRecognition.onerror = (event) => {
+        console.warn('Speech recognition status:', event.error);
+        stopVoiceRecording();
+      };
+
+      speechRecognition.onend = () => {
+        stopVoiceRecording();
+      };
+
+      speechRecognition.start();
+    } catch (err) {
+      console.warn('Speech recognition start failed:', err);
+      stopVoiceRecording();
+    }
+  }
+
+  micBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    hideAllPopovers();
+    if (isVoiceListening) {
+      stopVoiceRecording();
     } else {
-      alert('Speech recognition is not supported in this browser version.');
+      startVoiceRecording();
+    }
+  });
+
+  if (voiceStopBtn) {
+    voiceStopBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      stopVoiceRecording();
+    });
+  }
+
+  // Dismiss popovers on outside click
+  shadow.addEventListener('click', (e) => {
+    const path = e.composedPath ? e.composedPath() : [];
+    const isPopoverClick = path.some(el => 
+      el.id === 'cp-emoji-popover' || 
+      el.id === 'cp-tool-emoji' || 
+      el.id === 'cp-gif-popover' || 
+      el.id === 'cp-tool-gif'
+    );
+    if (!isPopoverClick) {
+      hideAllPopovers();
     }
   });
 
@@ -4123,16 +6097,22 @@
     if (cfg.bank_qr_url) widgetConfig.bank_qr_url = cfg.bank_qr_url;
 
     const asstName = widgetConfig.assistant_name || 'Cai';
-    if (assistantNameEl) assistantNameEl.textContent = asstName;
+    const brandName = widgetConfig.brand_name || asstName;
     if (teaserAuthor) teaserAuthor.textContent = asstName;
     if (teaserMsg) teaserMsg.textContent = `You are now speaking with ${asstName}. How can I help?`;
     const welcomeAuthor = shadow.getElementById('cp-welcome-author');
     if (welcomeAuthor) welcomeAuthor.textContent = asstName;
 
-    if (subtitleEl) {
-      let sub = widgetConfig.greeting_subheading || '';
-      if (sub === 'The team can also help' || sub === 'Cai AI & Team') sub = '';
-      subtitleEl.textContent = sub;
+    if (currentScreen === 'home') {
+      if (assistantNameEl) assistantNameEl.textContent = brandName;
+      if (subtitleEl) subtitleEl.textContent = 'We are online';
+    } else if (currentScreen === 'chat') {
+      if (assistantNameEl) assistantNameEl.textContent = asstName;
+      if (subtitleEl) {
+        let sub = widgetConfig.greeting_subheading || '';
+        if (sub === 'The team can also help' || sub === 'Cai AI & Team') sub = '';
+        subtitleEl.textContent = sub;
+      }
     }
 
     if (welcomeTextEl && widgetConfig.greeting_heading) {
@@ -4143,20 +6123,43 @@
       hostElement.style.setProperty('--cp-accent-custom', widgetConfig.accent_color);
     }
 
-    if (widgetConfig.theme_mode) {
-      applyTheme(widgetConfig.theme_mode);
-    } else {
-      updateWidgetLogo();
+    // Dynamic Cloud Theme Sync:
+    // If the user has manually selected a theme, respect user's manual choice!
+    const userManual = sessionStorage.getItem('cp_theme_user_manual') === '1' || localStorage.getItem('cp_theme_user_manual') === '1';
+    if (!userManual) {
+      if (widgetConfig.theme_mode && (widgetConfig.theme_mode === 'dark' || widgetConfig.theme_mode === 'light')) {
+        applyTheme(widgetConfig.theme_mode);
+      } else if (currentScript && currentScript.getAttribute('data-theme')) {
+        applyTheme(currentScript.getAttribute('data-theme'));
+      }
+    }
+
+    if (currentScreen === 'home' && typeof renderActionHome === 'function') {
+      renderActionHome();
     }
   }
 
   async function loadConfig() {
+    // 1. Check local session cache for instant startup without waiting for network
+    try {
+      const cached = sessionStorage.getItem('cp_cached_cfg_' + companyKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && parsed.widget) {
+          if (parsed.company) widgetConfig.company = parsed.company;
+          applyWidgetConfig(parsed.widget);
+        }
+      }
+    } catch(e) {}
+
     try {
       const url = `${baseUrl}/api/config.php?company_key=${encodeURIComponent(companyKey)}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Config failed');
       const data = await res.json();
       if (data && data.success && data.widget) {
+        try { sessionStorage.setItem('cp_cached_cfg_' + companyKey, JSON.stringify(data)); } catch(e) {}
+        if (data.company) widgetConfig.company = data.company;
         applyWidgetConfig(data.widget);
       }
     } catch (e) {
@@ -4171,43 +6174,220 @@
     }, 40);
   }
 
-  function appendUserMessage(text) {
+  function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  }
+
+  function appendUserMessage(text, attachment = null, skipSave = false) {
     const row = document.createElement('div');
     row.className = 'cp-msg-row user';
+
+    let contentHtml = '';
+    if (attachment) {
+      if (attachment.type === 'gif') {
+        contentHtml += `
+          <div class="cp-bubble-attachment-gif">
+            <img src="${escapeHtml(attachment.url)}" alt="${escapeHtml(attachment.name || 'GIF')}" loading="lazy" />
+          </div>
+        `;
+      } else if (attachment.is_image) {
+        const imgSrc = attachment.display_url || attachment.url;
+        contentHtml += `
+          <div class="cp-bubble-attachment-img" onclick="window.open('${escapeHtml(attachment.url)}', '_blank')">
+            <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(attachment.name || 'Image')}" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';" />
+            <span class="cp-bubble-attachment-fallback" style="display:none; align-items:center; gap:6px; font-size:12px; color:inherit; text-decoration:underline; cursor:pointer;">🖼️ ${escapeHtml(attachment.name || 'Image')}</span>
+          </div>
+        `;
+      } else {
+        contentHtml += `
+          <a class="cp-bubble-attachment-file" href="${escapeHtml(attachment.url)}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(attachment.name || 'file')}">
+            <span class="cp-bubble-file-icon">📄</span>
+            <div class="cp-bubble-file-info">
+              <div class="cp-bubble-file-name">${escapeHtml(attachment.name || 'Attached File')}</div>
+              <div class="cp-bubble-file-meta">${escapeHtml(attachment.size_formatted || 'Document')} • Click to view</div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </a>
+        `;
+      }
+    }
+
+    if (text) {
+      contentHtml += `${contentHtml ? '<div style="margin-top:6px;">' : ''}${escapeHtml(text)}${contentHtml ? '</div>' : ''}`;
+    }
+
     row.innerHTML = `
-      <div class="cp-bubble">${escapeHtml(text)}</div>
+      <div class="cp-bubble">${contentHtml}</div>
       <div class="cp-meta-line">
         <span>You</span>
         <span>•</span>
-        <span>Just now</span>
+        <span>${skipSave ? 'Recent' : 'Just now'}</span>
       </div>
     `;
     chatStream.appendChild(row);
     scrollToBottom();
-    saveHistory('user', text);
-    playSentSound();
+    if (!skipSave) {
+      saveHistory('user', text, null, false, attachment);
+      playSentSound();
+    }
   }
 
-  // Visitor Lead Capture State Initialization (Section 7)
+  // Visitor Lead Capture State Initialization & Identification (Section 1)
+  function renderVisitorIdentificationPrompt() {
+    if (isIdentified || sessionStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) === '1') return;
+    if (chatStream.querySelector('.cp-visitor-intake-card')) return;
+
+    const card = document.createElement('div');
+    card.className = 'cp-msg-row ai cp-visitor-intake-row';
+    card.innerHTML = `
+      <div class="cp-bubble cp-visitor-intake-card">
+        <div class="cp-intake-title">👋 Welcome! Please introduce yourself to get started:</div>
+        <form class="cp-intake-form" id="cp-visitor-intake-form">
+          <div class="cp-intake-field">
+            <label>Your Name <span class="req">*</span></label>
+            <input type="text" id="cp-intake-name" placeholder="e.g. Rahul Sharma" required autocomplete="name" />
+          </div>
+          <div class="cp-intake-field">
+            <label>Phone Number <span class="req">*</span></label>
+            <input type="tel" id="cp-intake-phone" placeholder="e.g. 9876543210" required autocomplete="tel" />
+          </div>
+          <div class="cp-intake-field">
+            <label>Email Address <span class="opt">(Optional)</span></label>
+            <input type="email" id="cp-intake-email" placeholder="e.g. rahul@example.com" autocomplete="email" />
+          </div>
+          <div class="cp-intake-err" id="cp-intake-error" style="display:none; color:#ef4444; font-size:12px; margin-top:2px;"></div>
+          <button type="submit" class="cp-intake-submit-btn" id="cp-intake-submit">
+            <span>Start Conversation</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </form>
+      </div>
+    `;
+
+    chatStream.appendChild(card);
+    scrollToBottom();
+
+    const form = card.querySelector('#cp-visitor-intake-form');
+    const errEl = card.querySelector('#cp-intake-error');
+    const submitBtn = card.querySelector('#cp-intake-submit');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.style.display = 'none';
+
+      const name = card.querySelector('#cp-intake-name').value.trim();
+      const phone = card.querySelector('#cp-intake-phone').value.trim();
+      const email = card.querySelector('#cp-intake-email').value.trim();
+
+      if (!name) {
+        errEl.textContent = 'Please enter your name.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (!phone || phone.replace(/[^0-9]/g, '').length < 7) {
+        errEl.textContent = 'Please enter a valid phone number.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Connecting...</span>`;
+
+      try {
+        const res = await fetch(`${baseUrl}/api/visitor.php`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Company-Key': companyKey
+          },
+          body: JSON.stringify({
+            company_key: companyKey,
+            name: name,
+            phone: phone,
+            email: email,
+            channel: 'web'
+          })
+        });
+
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.error || 'Failed to initialize session');
+        }
+
+        // Store session and visitor info
+        sessionId = data.session_id;
+        sessionStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+        if (data.conversation_id) {
+          conversationId = data.conversation_id;
+          sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+        }
+        if (data.lead_id) {
+          leadId = data.lead_id;
+          sessionStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
+        }
+        visitorName = name;
+        sessionStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
+        isIdentified = true;
+        sessionStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
+
+        // Remove the intake card
+        card.remove();
+
+        // Render Minimal System Confirmation (Section 1 - Intercom Fin Style)
+        renderSystemConfirmation(data.system_confirmation || data.system_message || "Session created successfully\nYou can now continue your conversation.");
+
+        if (data.reply) {
+          appendAIMessage({
+            reply: data.reply,
+            timestamp: 'Just now'
+          });
+        }
+
+        if (inputField) {
+          inputField.placeholder = "Ask a question...";
+          inputField.focus();
+        }
+
+      } catch (err) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>Start Conversation</span>`;
+        errEl.textContent = err.message || 'Connection error. Please try again.';
+        errEl.style.display = 'block';
+      }
+    });
+  }
+
+  function renderSystemConfirmation(msgText) {
+    const row = document.createElement('div');
+    row.className = 'cp-system-confirmation-row';
+    const cleanText = (msgText || '')
+      .replace(/^[\s✓✔\u2713\u2714\u2705\-•]+/i, '')
+      .trim();
+    row.innerHTML = `
+      <div class="cp-system-confirmation-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="20 6 9 17 4 12"></polyline>
+        </svg>
+        <div class="cp-sys-conf-content">${formatMarkdown(cleanText || 'Session created successfully')}</div>
+      </div>
+    `;
+    chatStream.appendChild(row);
+    scrollToBottom();
+  }
+
   function initVisitorState() {
-    if (!isIdentified) {
-      if (leadStep === 1) {
-        if (welcomeTextEl) {
-          welcomeTextEl.innerHTML = "Hi 👋 Before we start, what's your name?";
-        }
-        if (inputField) inputField.placeholder = "Enter your name...";
-      } else if (leadStep === 2) {
-        if (welcomeTextEl) {
-          welcomeTextEl.innerHTML = `Hi ${escapeHtml(visitorName || 'there')}! How can we reach you if needed? Please share your Phone Number or Email Address:`;
-        }
-        if (inputField) inputField.placeholder = "Phone number or email...";
-      }
-    } else {
-      if (welcomeTextEl) {
-        const brand = widgetConfig.brand_name || 'CuboidPilot';
-        welcomeTextEl.innerHTML = `Hi ${escapeHtml(visitorName || 'there')} 👋 Welcome back to ${escapeHtml(brand)}. How can I help you today?`;
-      }
-      if (inputField) inputField.placeholder = "Ask a question...";
+    if (welcomeTextEl && widgetConfig.greeting_heading) {
+      welcomeTextEl.innerHTML = formatMarkdown(widgetConfig.greeting_heading);
+    }
+    if (inputField) {
+      inputField.placeholder = isIdentified ? "Ask a question..." : "Enter your details above to begin...";
+    }
+    if (!isIdentified && sessionStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) !== '1') {
+      renderVisitorIdentificationPrompt();
     }
   }
 
@@ -4372,6 +6552,101 @@
         bubble.appendChild(waCard);
       }
 
+      // Contextual Instagram continuation:
+      if (data.instagram_cta && data.instagram_cta.show && data.instagram_cta.url && !data.chat_ended) {
+        const igCard = document.createElement('div');
+        igCard.className = 'cp-instagram-card';
+        igCard.innerHTML = `
+          <div class="cp-ig-text">Prefer chatting on Instagram? Continue seamlessly:</div>
+          <a class="cp-ig-btn" href="${escapeHtml(data.instagram_cta.url)}" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+            <span>Continue on Instagram</span>
+          </a>
+        `;
+        bubble.appendChild(igCard);
+      }
+
+      // Interactive Appointment Slots (Sections 8, 9, 10, 11)
+      if (data.appointment_slots && Array.isArray(data.appointment_slots) && data.appointment_slots.length > 0) {
+        const slotsBox = document.createElement('div');
+        slotsBox.className = 'cp-appointment-slots-box';
+        slotsBox.innerHTML = `
+          <div class="cp-slots-header">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>Select a time for your consultation / demo:</span>
+          </div>
+          <div class="cp-slots-grid"></div>
+        `;
+        const grid = slotsBox.querySelector('.cp-slots-grid');
+        data.appointment_slots.forEach(slot => {
+          const pill = document.createElement('button');
+          pill.type = 'button';
+          pill.className = 'cp-slot-pill';
+          pill.innerHTML = `<span>${escapeHtml(slot.label || slot.slot_datetime)}</span>`;
+          pill.addEventListener('click', async () => {
+            slotsBox.querySelectorAll('.cp-slot-pill').forEach(b => {
+              b.disabled = true;
+              b.style.opacity = '0.5';
+            });
+            pill.style.opacity = '1';
+            pill.innerHTML = `<span>Confirming...</span>`;
+            appendUserMessage(`Selected slot: ${slot.label || slot.slot_datetime}`);
+            await confirmSlotBooking(slot.slot_datetime);
+          });
+          grid.appendChild(pill);
+        });
+        bubble.appendChild(slotsBox);
+      }
+
+      // Interactive Shared Digital Asset Card (Syllabus, Brochure, Fee Chart, PDF)
+      if (data.shared_asset && data.shared_asset.title) {
+        const asset = data.shared_asset;
+        const assetCard = document.createElement('div');
+        assetCard.className = 'cp-shared-asset-card';
+        
+        let catLabel = 'Document';
+        if (asset.category === 'syllabus') catLabel = 'Course Syllabus';
+        else if (asset.category === 'brochure') catLabel = 'Official Brochure';
+        else if (asset.category === 'fee_chart') catLabel = 'Fee Schedule';
+        else if (asset.category === 'curriculum') catLabel = 'Curriculum';
+        else if (asset.category === 'guide') catLabel = 'Guide';
+
+        let sizeFormatted = '';
+        if (asset.file_size > 0) {
+          sizeFormatted = asset.file_size > 1048576 
+            ? (asset.file_size / 1048576).toFixed(1) + ' MB' 
+            : (asset.file_size / 1024).toFixed(0) + ' KB';
+        }
+
+        const emailBadgeHtml = asset.email_dispatched
+          ? `<div class="cp-asset-email-badge success"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Emailed to ${escapeHtml(asset.recipient_email || 'your inbox')}</div>`
+          : (asset.recipient_email 
+              ? `<div class="cp-asset-email-badge pending"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> Email copy sent to ${escapeHtml(asset.recipient_email)}</div>` 
+              : `<div class="cp-asset-email-badge prompt"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> Reply with your email to receive a copy</div>`);
+
+        assetCard.innerHTML = `
+          <div class="cp-asset-header">
+            <div class="cp-asset-icon-box">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </div>
+            <div class="cp-asset-info">
+              <div class="cp-asset-category">${escapeHtml(catLabel)}</div>
+              <div class="cp-asset-title">${escapeHtml(asset.title)}</div>
+              <div class="cp-asset-meta">${escapeHtml(asset.file_name || 'Document')}${sizeFormatted ? ' • ' + sizeFormatted : ''}</div>
+            </div>
+          </div>
+          ${asset.description ? `<div class="cp-asset-desc">${escapeHtml(asset.description)}</div>` : ''}
+          <div class="cp-asset-actions">
+            <a class="cp-asset-download-btn" href="${escapeHtml(asset.download_url)}" target="_blank" rel="noopener noreferrer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span>Download Document</span>
+            </a>
+          </div>
+          ${emailBadgeHtml}
+        `;
+        bubble.appendChild(assetCard);
+      }
+
       row.appendChild(metaLine);
 
       // If chat has ended, display concluding wrap-up card at the end
@@ -4384,6 +6659,11 @@
       if (!data.skipSound) {
         playReceivedSound();
       }
+
+      // 10-Second Inactivity Action Chips (STRICTLY PREMIUM ONLY)
+      if (!data.chat_ended) {
+        startInactivityCountdown();
+      }
     }
 
     if (isLive && fullText.length > 0) {
@@ -4394,136 +6674,10 @@
     }
   }
 
-  function openWhatsAppChannel(customText) {
-    const cleanNumber = (widgetConfig.whatsapp_number || '919876543210').replace(/[^0-9]/g, '');
-    const url = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(customText || 'Hi, I need assistance with Cai.')}`;
-    window.open(url, '_blank');
-  }
-
-  // 11. Send Message to Backend (Sections 7, 8, 9 & 10)
-  async function handleSend() {
-    if (isSending) return;
-    const text = inputField.value.trim();
-    if (!text) return;
-
-    inputField.value = '';
-    inputField.style.height = 'auto';
-    sendBtn.classList.remove('active');
-
-    appendUserMessage(text);
-
-    // LEAD CAPTURE STEP 1: Capture Name
-    if (!isIdentified && leadStep === 1) {
-      visitorName = text;
-      sessionStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
-      leadStep = 2;
-      sessionStorage.setItem(STORAGE_KEYS.LEAD_STEP, '2');
-      
-      showTyping('Cai is processing...');
-      setTimeout(() => {
-        hideTyping();
-        appendAIMessage({
-          reply: `Nice to meet you, ${visitorName}! 👋 How can we reach you if needed? Please share your Phone Number or Email Address:`,
-          timestamp: 'Just now'
-        });
-        inputField.placeholder = 'Phone number or email...';
-        inputField.focus();
-      }, 850);
-      return;
-    }
-
-    // LEAD CAPTURE STEP 2: Capture Contact & Provision Visitor + Lead in DB
-    if (!isIdentified && leadStep === 2) {
-      isSending = true;
-      showTyping('Saving details & connecting...');
-      const startTime = Date.now();
-
-      let isEmail = text.includes('@');
-      let phone = isEmail ? '' : text;
-      let email = isEmail ? text : '';
-
-      try {
-        const url = `${baseUrl}/api/visitor.php`;
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Company-Key': companyKey
-          },
-          body: JSON.stringify({
-            company_key: companyKey,
-            name: visitorName,
-            phone: phone,
-            email: email,
-            session_id: sessionId
-          })
-        });
-
-        const data = await res.json();
-        const elapsed = Date.now() - startTime;
-        const wait = Math.max(0, 900 - elapsed);
-
-        setTimeout(() => {
-          hideTyping();
-          isSending = false;
-
-          if (data.success) {
-            isIdentified = true;
-            leadStep = 0;
-            conversationId = data.conversation_id;
-            leadId = data.lead_id;
-            customerId = data.customer_id;
-            sessionStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
-            sessionStorage.setItem(STORAGE_KEYS.LEAD_STEP, '0');
-            sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
-            sessionStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
-            sessionStorage.setItem(STORAGE_KEYS.CUSTOMER_ID, customerId);
-
-            appendAIMessage({
-              reply: data.reply || `Thanks ${visitorName}! You're all set. What can I help you with today?`,
-              timestamp: 'Just now'
-            });
-            inputField.placeholder = 'Ask a question...';
-            inputField.focus();
-          } else {
-            let errorMsg = data.error || 'Please provide a valid phone number or email address so our team can assist you.';
-            if (
-              errorMsg.toLowerCase().includes('workspace') || 
-              errorMsg.includes('SQLSTATE') || 
-              errorMsg.includes('Duplicate') || 
-              errorMsg.includes('Integrity') || 
-              errorMsg.includes('constraint') || 
-              errorMsg.toLowerCase().includes('error:')
-            ) {
-              errorMsg = 'Please provide a valid phone number or email address so our team can assist you.';
-            }
-            appendAIMessage({
-              reply: errorMsg,
-              timestamp: 'Just now'
-            });
-            inputField.placeholder = 'Phone number or email...';
-            inputField.focus();
-          }
-        }, wait);
-      } catch (err) {
-        hideTyping();
-        isSending = false;
-        appendAIMessage({
-          reply: 'There was a connection issue saving your details. Please try once more.',
-          timestamp: 'Just now'
-        });
-      }
-      return;
-    }
-
-    // STANDARD AI CONVERSATION (Identified)
-    isSending = true;
-    showTyping('Cai is thinking...');
-    const startTime = Date.now();
-
+  async function confirmSlotBooking(slotDatetime) {
+    showTyping('Confirming your appointment...');
     try {
-      const url = `${baseUrl}/api/chat.php`;
-      const res = await fetch(url, {
+      const res = await fetch(`${baseUrl}/api/chat.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -4531,16 +6685,277 @@
         },
         body: JSON.stringify({
           company_key: companyKey,
-          message: text,
+          action: 'confirm_slot',
+          slot_datetime: slotDatetime,
           session_id: sessionId,
           conversation_id: conversationId,
           lead_id: leadId,
           visitor_name: visitorName
         })
       });
-
-      if (!res.ok) throw new Error('Network error ' + res.status);
+      hideTyping();
       const data = await res.json();
+      if (data.session_id) {
+        sessionId = data.session_id;
+        sessionStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+      }
+      appendAIMessage(data);
+    } catch (e) {
+      hideTyping();
+      appendAIMessage({
+        reply: "Your appointment request has been received. Our team will verify and connect with you shortly!",
+        timestamp: "Just now"
+      });
+    }
+  }
+
+  // Inactivity Action Chips State & Logic (10-Second Timer, Premium Exclusive)
+  let inactivityChipsTimer = null;
+
+  function clearInactivityChips() {
+    if (inactivityChipsTimer) {
+      clearTimeout(inactivityChipsTimer);
+      inactivityChipsTimer = null;
+    }
+    const existing = shadow.getElementById('cp-inactivity-chips');
+    if (existing) {
+      existing.remove();
+    }
+  }
+
+  function startInactivityCountdown() {
+    clearInactivityChips();
+
+    // STRICT CHECK: Action chips are ONLY shown for Premium subscriptions
+    const hasPremium = Boolean(
+      widgetConfig && (
+        widgetConfig.is_premium ||
+        (widgetConfig.company && widgetConfig.company.is_premium) ||
+        widgetConfig.can_use_whatsapp_continuation
+      )
+    );
+
+    const isEnabled = widgetConfig && widgetConfig.enable_inactivity_chips !== false;
+    const hasWhatsApp = Boolean(widgetConfig && (widgetConfig.whatsapp_number || (widgetConfig.company && widgetConfig.company.whatsapp_number)));
+
+    if (!hasPremium || !isEnabled || isHumanChatActive || currentScreen !== 'chat') {
+      return;
+    }
+
+    inactivityChipsTimer = setTimeout(() => {
+      // Re-verify that user has not typed or changed screen
+      if (inputField && inputField.value.trim().length > 0) return;
+      if (currentScreen !== 'chat' || isHumanChatActive) return;
+
+      renderInactivityChips();
+    }, 10000);
+  }
+
+  function renderInactivityChips() {
+    if (shadow.getElementById('cp-inactivity-chips')) return;
+
+    const chipsRow = document.createElement('div');
+    chipsRow.id = 'cp-inactivity-chips';
+    chipsRow.className = 'cp-inactivity-chips-container';
+
+    chipsRow.innerHTML = `
+      <div class="cp-inactivity-chips-title">Need help or want to save this chat?</div>
+      <div class="cp-inactivity-chips-pills">
+        <button type="button" class="cp-inactivity-chip cp-chip-wa" id="cp-btn-inactivity-wa">
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.46 0 .1 5.36.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.27-1.64a11.9 11.9 0 0 0 5.77 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.47-8.42z"/></svg>
+          <span>Continue on WhatsApp</span>
+        </button>
+        <button type="button" class="cp-inactivity-chip cp-chip-end" id="cp-btn-inactivity-end">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          <span>End chat</span>
+        </button>
+      </div>
+    `;
+
+    chatStream.appendChild(chipsRow);
+    scrollToBottom();
+
+    const waBtn = chipsRow.querySelector('#cp-btn-inactivity-wa');
+    if (waBtn) {
+      waBtn.addEventListener('click', () => {
+        openWhatsAppChannel('Hi, I was chatting with Cai on your website and would like to continue on WhatsApp.');
+        chipsRow.remove();
+      });
+    }
+
+    const endBtn = chipsRow.querySelector('#cp-btn-inactivity-end');
+    if (endBtn) {
+      endBtn.addEventListener('click', () => {
+        chipsRow.remove();
+        renderChatConcludedCard();
+      });
+    }
+  }
+
+  function openWhatsAppChannel(customText) {
+    const cleanNumber = (widgetConfig.whatsapp_number || '919876543210').replace(/[^0-9]/g, '');
+    const msg = encodeURIComponent(customText || 'Hi, I need assistance with Cai.');
+    const url = `https://api.whatsapp.com/send?phone=${cleanNumber}&text=${msg}`;
+    try {
+      const win = window.open(url, '_blank');
+      if (!win || win.closed || typeof win.closed === 'undefined') {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => a.remove(), 100);
+      }
+    } catch(e) {
+      window.location.href = url;
+    }
+  }
+
+  // 11. Send Message to Backend (Sections 7, 8, 9 & 10)
+  async function handleSend() {
+    clearInactivityChips();
+    if (isSending) return;
+    const text = inputField.value.trim();
+    if (!text && !pendingAttachment) return;
+
+    inputField.value = '';
+    inputField.style.height = 'auto';
+    sendBtn.classList.remove('active');
+    hideAllPopovers();
+    if (isVoiceListening) stopVoiceRecording();
+
+    // Process file attachment if any
+    let uploadedAttachment = null;
+    if (pendingAttachment) {
+      const pAtt = pendingAttachment;
+      clearPendingAttachmentUI();
+
+      try {
+        const formData = new FormData();
+        formData.append('file', pAtt.file);
+        formData.append('company_key', companyKey);
+
+        const upRes = await fetch(`${baseUrl}/api/upload.php`, {
+          method: 'POST',
+          headers: { 'X-Company-Key': companyKey },
+          body: formData
+        });
+        const upData = await upRes.json();
+        if (upData && upData.success) {
+          const rawUrl = upData.file_url || '';
+          const fullUrl = (rawUrl.startsWith('http://') || rawUrl.startsWith('https://'))
+            ? rawUrl
+            : `${baseUrl}/${rawUrl.replace(/^\/+/, '')}`;
+          uploadedAttachment = {
+            url: fullUrl,
+            display_url: pAtt.dataUrl || fullUrl,
+            name: upData.file_name,
+            size: upData.file_size,
+            size_formatted: formatBytes(upData.file_size),
+            is_image: upData.is_image
+          };
+        } else {
+          uploadedAttachment = {
+            url: pAtt.dataUrl || '',
+            display_url: pAtt.dataUrl || '',
+            name: pAtt.name,
+            size: pAtt.size,
+            size_formatted: pAtt.size_formatted,
+            is_image: pAtt.is_image
+          };
+        }
+      } catch (err) {
+        console.warn('Attachment upload error:', err);
+        uploadedAttachment = {
+          url: pAtt.dataUrl || '',
+          display_url: pAtt.dataUrl || '',
+          name: pAtt.name,
+          size: pAtt.size,
+          size_formatted: pAtt.size_formatted,
+          is_image: pAtt.is_image
+        };
+      }
+    }
+
+    appendUserMessage(text, uploadedAttachment);
+
+    let payloadText = text;
+    if (uploadedAttachment) {
+      const attTag = `[Attached ${uploadedAttachment.is_image ? 'Image' : 'Document'}: ${uploadedAttachment.name}] (${uploadedAttachment.url})`;
+      payloadText = text ? `${text}\n${attTag}` : attTag;
+    }
+
+    // HUMAN LIVE CHAT MODE (Visitor message delivered to consultant & WhatsApp dispatch)
+    if (isHumanChatActive || currentScreen === 'human-chat') {
+      isSending = true;
+      try {
+        const res = await fetch(`${baseUrl}/api/widget_actions.php?action=send_human_message`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
+          body: JSON.stringify({
+            company_key: companyKey,
+            conversation_id: conversationId,
+            session_token: sessionId,
+            message: payloadText
+          })
+        });
+        const data = await res.json();
+        if (data && data.conversation_id) {
+          conversationId = data.conversation_id;
+          sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+        }
+      } catch (e) {
+        console.warn('Send human message error:', e);
+      } finally {
+        isSending = false;
+      }
+      return;
+    }
+
+    // DIRECT CONVERSATIONAL AI FLOW (Grounded in Knowledge Base & Groq)
+    isSending = true;
+    showTyping('Cai is thinking...');
+    const startTime = Date.now();
+
+    const postChatMessage = async (attempt = 1) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 18000);
+      try {
+        const url = `${baseUrl}/api/chat.php`;
+        const res = await fetch(url, {
+          method: 'POST',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Company-Key': companyKey
+          },
+          body: JSON.stringify({
+            company_key: companyKey,
+            message: payloadText,
+            session_id: sessionId,
+            conversation_id: conversationId,
+            lead_id: leadId,
+            visitor_name: visitorName,
+            mode: isCopilotActive ? 'workspace_copilot' : 'visitor'
+          })
+        });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return await res.json();
+      } catch (e) {
+        clearTimeout(timeoutId);
+        if (attempt <= 1) {
+          await new Promise(r => setTimeout(r, 600));
+          return await postChatMessage(attempt + 1);
+        }
+        throw e;
+      }
+    };
+
+    try {
+      const data = await postChatMessage();
 
       if (data.conversation_id) {
         conversationId = data.conversation_id;
@@ -4549,6 +6964,20 @@
       if (data.lead_id) {
         leadId = data.lead_id;
         sessionStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
+      }
+      if (data.lead_artifact && data.lead_artifact.customer_name) {
+        const cName = data.lead_artifact.customer_name;
+        if (!/^(website visitor|prospect|hello|hi|hey|namaste|courses?|fee|fees|pricing|syllabus|python|java|test|null|undefined)/i.test(cName.trim())) {
+          visitorName = cName;
+          sessionStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
+          if (inputField) {
+            inputField.placeholder = "Ask a question...";
+          }
+        }
+      }
+      if (data.lead_captured) {
+        isIdentified = true;
+        sessionStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
       }
 
       // Realistic thinking pacing: 850ms - 1150ms natural pause
@@ -4561,7 +6990,7 @@
         if (data.success) {
           appendAIMessage(data);
         } else {
-          let chatError = data.error || "I apologize, but I could not reach the server right now. Please try again in a moment.";
+          let chatError = data.error || "Main aapki query process kar raha hoon. Kripya apna sawal ek baar dobara poochein!";
           if (chatError.toLowerCase().includes('workspace')) {
             chatError = "How else can I help you today? Please feel free to ask about our services, pricing, or solutions.";
           }
@@ -4574,40 +7003,48 @@
       }, remainingWait);
 
     } catch (err) {
-      console.error('[CuboidPilot Widget Error]', err);
+      console.warn('[CuboidPilot Widget Alert] Network pause, offering human assistance:', err);
       setTimeout(() => {
         hideTyping();
         appendAIMessage({
-          reply: "I am having trouble connecting to the server. Please ensure your network is connected.",
+          reply: "Maaf kijiye, server se connect hone me thoda waqt lag raha hai. Aap apna sawal dobara bhej sakte hain, ya turant connect karne ke liye niche WhatsApp choose kar sakte hain!",
+          whatsapp_cta: {
+            show: true,
+            url: widgetConfig.whatsapp_number ? `https://wa.me/${widgetConfig.whatsapp_number.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hello, I was chatting on your website and would like assistance.')}` : '',
+            label: 'Instant WhatsApp Support'
+          },
           timestamp: "Just now"
         });
         isSending = false;
-      }, 500);
+      }, 400);
     }
   }
 
   // 12. Local Storage Persistence
-  function saveHistory(sender, text, whatsappCta, chatEnded) {
+  function saveHistory(sender, text, whatsappCta, chatEnded, attachment = null) {
     try {
       const history = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
-      history.push({ sender, text, whatsappCta, chatEnded, timestamp: 'Just now' });
+      history.push({ sender, text, whatsappCta, chatEnded, attachment, timestamp: 'Just now' });
       sessionStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(history.slice(-30)));
     } catch (e) {}
   }
 
   function restoreHistory() {
     try {
-      const history = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
+      const raw = sessionStorage.getItem(STORAGE_KEYS.MESSAGES);
+      if (!raw) return;
+
+      // Cross-tenant history protection: if visiting CuboidSoft, do not restore The Code Munk messages
+      if (companyKey === 'cp_live_cuboidsoft' && raw.includes('The Code Munk')) {
+        sessionStorage.removeItem(STORAGE_KEYS.MESSAGES);
+        return;
+      }
+
+      const history = JSON.parse(raw || '[]');
       if (Array.isArray(history) && history.length > 0) {
         history.forEach(item => {
           if (item.sender === 'user') {
-            const row = document.createElement('div');
-            row.className = 'cp-msg-row user';
-            row.innerHTML = `
-              <div class="cp-bubble">${escapeHtml(item.text)}</div>
-              <div class="cp-meta-line"><span>You</span><span>•</span><span>Recent</span></div>
-            `;
-            chatStream.appendChild(row);
+            appendUserMessage(item.text, item.attachment, true);
           } else {
             appendAIMessage({
               reply: item.text,
@@ -4632,15 +7069,94 @@
               .replace(/'/g, '&#039;');
   }
 
+  function parseMarkdownTables(text) {
+    if (!text || text.indexOf('|') === -1) return text;
+    const lines = text.split('\n');
+    let inTable = false;
+    let headers = [];
+    let rows = [];
+    let output = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      const isTableRow = /^\|(.+)\|$/.test(line);
+      const isSeparator = /^\|(\s*:?-+:?\s*\|)+$/.test(line);
+
+      if (isTableRow && !isSeparator) {
+        const cells = line.slice(1, -1).split('|').map(c => c.trim());
+        if (!inTable) {
+          const nextLine = (lines[i + 1] || '').trim();
+          if (/^\|(\s*:?-+:?\s*\|)+$/.test(nextLine)) {
+            inTable = true;
+            headers = cells;
+            rows = [];
+            i++; // skip separator
+            continue;
+          }
+        } else {
+          rows.push(cells);
+          continue;
+        }
+      }
+
+      if (inTable) {
+        output.push(renderHtmlTable(headers, rows));
+        inTable = false;
+        headers = [];
+        rows = [];
+      }
+      output.push(lines[i]);
+    }
+
+    if (inTable) {
+      output.push(renderHtmlTable(headers, rows));
+    }
+
+    return output.join('\n');
+  }
+
+  function renderHtmlTable(headers, rows) {
+    if (!headers.length && !rows.length) return '';
+    let html = '<div class="cp-table-responsive"><table class="cp-table">';
+    if (headers.length > 0) {
+      html += '<thead><tr>';
+      headers.forEach(h => {
+        html += `<th>${h}</th>`;
+      });
+      html += '</tr></thead>';
+    }
+    if (rows.length > 0) {
+      html += '<tbody>';
+      rows.forEach(r => {
+        html += '<tr>';
+        r.forEach((c) => {
+          const isNumeric = /^[₹$€£]?\s*[\d,]+(\.\d+)?%?$/.test(c.trim());
+          html += `<td${isNumeric ? ' style="text-align:right; font-weight:600;"' : ''}>${c}</td>`;
+        });
+        html += '</tr>';
+      });
+      html += '</tbody>';
+    }
+    html += '</table></div>';
+    return html;
+  }
+
   function formatMarkdown(text) {
     if (!text) return '';
     let esc = escapeHtml(text);
+    esc = parseMarkdownTables(esc);
     esc = esc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     esc = esc.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    esc = esc.replace(/`([^`]+)`/g, '<code style="background:rgba(100,116,139,0.15); padding:2px 6px; border-radius:4px; font-size:11px; font-family:monospace;">$1</code>');
     esc = esc.replace(/(?:^|\n)[•\-\*]\s+(.*)/g, '<br/>• $1');
     esc = esc.replace(/(?:^|\n)(\d+)\.\s+(.*)/g, '<br/><strong>$1.</strong> $2');
     esc = esc.replace(/\n/g, '<br/>');
-    esc = esc.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">$1</a>');
+    esc = esc.replace(/<br\s*\/?>\s*(<div class="cp-table-responsive">)/g, '$1');
+    esc = esc.replace(/(<\/div>)\s*<br\s*\/?>/g, '$1');
+    // Parse markdown links [Title](https://...)
+    esc = esc.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)<]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:3px; color:#38bdf8; text-decoration:underline; font-weight:600;">$1 ↗</a>');
+    // Standalone URLs not inside href
+    esc = esc.replace(/(?<!href=")(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">$1</a>');
     return esc;
   }
 
@@ -4651,13 +7167,22 @@
 
   function navigateTo(screen, data = {}) {
     currentScreen = screen;
+    if (screen === 'home') {
+      isCopilotActive = false;
+    }
     if (screenStack[screenStack.length - 1] !== screen) {
       screenStack.push(screen);
     }
 
-    if (screen !== 'human-chat' && humanPollingInterval) {
-      clearInterval(humanPollingInterval);
-      humanPollingInterval = null;
+    if (screen !== 'human-chat') {
+      isHumanChatActive = false;
+      if (humanPollingInterval) {
+        clearInterval(humanPollingInterval);
+        humanPollingInterval = null;
+      }
+      stopHumanCountdown();
+      const stalePill = shadow.getElementById('cp-waiting-pill');
+      if (stalePill) stalePill.remove();
     }
 
     // Toggle screen classes and back button display
@@ -4674,8 +7199,8 @@
 
     const bottomNav = shadow.getElementById('cp-bottom-nav');
     if (bottomNav) {
-      bottomNav.style.display = isChatFlow ? 'none' : 'flex';
-      bottomNav.style.visibility = isChatFlow ? 'hidden' : 'visible';
+      bottomNav.style.display = 'flex';
+      bottomNav.style.visibility = 'visible';
     }
 
     // Update Bottom Navigation active tab
@@ -4685,7 +7210,7 @@
       if (
         (screen === 'home' && target === 'home') ||
         ((screen === 'chat' || screen === 'human-chat') && target === 'chat') ||
-        ((screen === 'human-team' || screen === 'book-team') && target === 'help') ||
+        ((screen === 'help' || screen === 'human-team' || screen === 'book-team' || screen === 'book-slots' || screen === 'book-confirmed') && target === 'help') ||
         (screen === 'news' && target === 'news')
       ) {
         item.classList.add('active');
@@ -4702,24 +7227,29 @@
       if (screensView) screensView.style.display = 'none';
       if (messagesContainer) messagesContainer.style.display = 'flex';
       if (composerSection) composerSection.style.display = 'block';
-      if (bottomNav) {
-        bottomNav.style.display = 'none';
-        bottomNav.style.visibility = 'hidden';
-      }
       if (backBtn) {
         backBtn.style.display = 'inline-flex';
         backBtn.style.visibility = 'visible';
       }
 
-      const asstName = widgetConfig.assistant_name || 'Cai';
-      if (assistantNameEl) assistantNameEl.textContent = asstName;
-      if (subtitleEl) {
-        let sub = widgetConfig.greeting_subheading || '';
-        if (sub === 'The team can also help' || sub === 'Cai AI & Team') sub = '';
-        subtitleEl.textContent = sub;
+      if (isCopilotActive) {
+        if (assistantNameEl) assistantNameEl.textContent = 'Workspace Copilot';
+        if (subtitleEl) subtitleEl.textContent = '● Live Telemetry';
+        if (inputField) inputField.placeholder = "Poochiye: Kitni lead aayi, revenue, reminder...";
+      } else {
+        const asstName = widgetConfig.assistant_name || 'Cai';
+        if (assistantNameEl) assistantNameEl.textContent = asstName;
+        if (subtitleEl) {
+          let sub = widgetConfig.greeting_subheading || '';
+          if (sub === 'The team can also help' || sub === 'Cai AI & Team') sub = '';
+          subtitleEl.textContent = sub;
+        }
+        if (inputField) inputField.placeholder = "Ask a question...";
       }
       if (brandLogo) updateWidgetLogo();
-      if (inputField) inputField.placeholder = "Ask a question...";
+      if (!isIdentified && sessionStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) !== '1') {
+        renderVisitorIdentificationPrompt();
+      }
       scrollToBottom();
       return;
     }
@@ -4728,10 +7258,6 @@
       if (screensView) screensView.style.display = 'none';
       if (messagesContainer) messagesContainer.style.display = 'flex';
       if (composerSection) composerSection.style.display = 'block';
-      if (bottomNav) {
-        bottomNav.style.display = 'none';
-        bottomNav.style.visibility = 'hidden';
-      }
       if (backBtn) {
         backBtn.style.display = 'inline-flex';
         backBtn.style.visibility = 'visible';
@@ -4739,7 +7265,7 @@
 
       const agent = data.agent || selectedAgent || { name: 'Advisor', job_title: 'Consultant' };
       if (assistantNameEl) assistantNameEl.textContent = agent.name;
-      if (subtitleEl) subtitleEl.textContent = '● Online';
+      if (subtitleEl) subtitleEl.textContent = '● Connecting...';
       if (inputField) inputField.placeholder = `Message ${agent.name}...`;
 
       startHumanPolling();
@@ -4805,8 +7331,10 @@
       if (subtitleEl) subtitleEl.textContent = 'Pay any amount';
       renderPayCustom();
     } else if (screen === 'help') {
-      navigateTo('human-team');
-      return;
+      if (composerSection) composerSection.style.display = 'none';
+      if (assistantNameEl) assistantNameEl.textContent = 'Help Center';
+      if (subtitleEl) subtitleEl.textContent = 'Support & FAQs';
+      renderHelp();
     } else if (screen === 'news') {
       if (composerSection) composerSection.style.display = 'none';
       if (assistantNameEl) assistantNameEl.textContent = 'News & Updates';
@@ -4816,65 +7344,62 @@
   }
 
   function handleBackNavigation() {
-    if (currentScreen === 'chat' || currentScreen === 'human-chat' || currentScreen === 'human-team' || currentScreen === 'news') {
-      navigateTo('home');
-    } else if (currentScreen === 'home') {
+    stopHumanCountdown();
+    isHumanChatActive = false;
+    const stalePill = shadow.getElementById('cp-waiting-pill');
+    if (stalePill) stalePill.remove();
+    if (currentScreen === 'home') {
       return;
-    } else {
-      if (screenStack.length > 1) {
-        screenStack.pop();
-        const prev = screenStack.pop();
-        navigateTo(prev || 'home');
-      } else {
-        navigateTo('home');
-      }
     }
+    if (currentScreen === 'book-slots') {
+      navigateTo('book-team');
+      return;
+    }
+    if (currentScreen === 'book-confirmed') {
+      navigateTo('home');
+      return;
+    }
+    if (currentScreen === 'bank-transfer' || currentScreen === 'pay-online' || currentScreen === 'pay-invoice' || currentScreen === 'pay-custom') {
+      navigateTo('payment-options');
+      return;
+    }
+    navigateTo('home');
   }
 
   // -------------------------------------------------------------
-  // SCREEN 2: ACTION HOME (Exact match: media_1790857558494.png)
+  // SCREEN 10: HELP CENTER & FAQS
   // -------------------------------------------------------------
-  function renderActionHome() {
+  function renderHelp() {
     if (!screensView) return;
 
-    let lastSnippet = 'How can I help you?';
-    try {
-      const history = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
-      if (history.length > 0) {
-        const last = history[history.length - 1];
-        lastSnippet = last.text.replace(/<[^>]+>/g, '').replace(/[*_#`~]/g, '').substring(0, 48) + '...';
-      }
-    } catch(e) {}
-
-    const logoUrl = getActiveLogoUrl();
-    const fallbackLogo = (currentTheme === 'light') ? `${baseUrl}/assets/logo-black.png` : `${baseUrl}/assets/logo-white.png`;
-
-    const isPlatformDemo = (!companyKey || companyKey === 'cp_live_cuboidsoft' || companyKey === 'cp_live_cuboidpilot' || companyKey === 'cuboidsoft' || companyKey === 'cuboidpilot');
-    const hasPremium = isPlatformDemo || Boolean(widgetConfig && widgetConfig.company && widgetConfig.company.is_premium);
-    const proBadge = !hasPremium ? '<span class="cp-pro-badge">PRO</span>' : '';
-
     screensView.innerHTML = `
-      <!-- Moody Hero Greeting (Classic Intercom Aesthetic) -->
-      <div class="cp-hero-section">
-        <div class="cp-hero-greeting-sub">Hello there.</div>
-        <div class="cp-hero-greeting-main">How can we help?</div>
+      <div class="cp-sub-screen-header">
+        <div class="cp-sub-screen-title">Help Center</div>
+        <div class="cp-sub-screen-desc">Find instant answers or connect directly with our team</div>
       </div>
 
-      <!-- 1. Ask anything Card (media_1790884814897.png) -->
-      <div class="cp-ask-action-card" id="cp-card-ask" role="button" tabindex="0" title="Ask anything">
-        <div class="cp-ask-card-content">
-          <div class="cp-ask-card-title">Ask anything</div>
-          <div class="cp-ask-card-desc">Search answers or chat with Cai AI</div>
+      <!-- 1. Instant Human Help -->
+      <div class="cp-action-card" id="cp-help-card-human" role="button" tabindex="0">
+        <div class="cp-action-card-left">
+          <div class="cp-action-icon-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <div class="cp-action-text-box">
+            <div class="cp-action-card-title">Instant human help</div>
+            <div class="cp-action-card-desc">Talk live with an available specialist</div>
+          </div>
         </div>
-        <div class="cp-ask-card-arrow">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+        <div class="cp-action-card-right">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
           </svg>
         </div>
       </div>
 
-      <!-- 2. Book an appointment -->
-      <div class="cp-action-card" id="cp-card-book" role="button" tabindex="0">
+      <!-- 2. Book an Appointment -->
+      <div class="cp-action-card" id="cp-help-card-book" role="button" tabindex="0">
         <div class="cp-action-card-left">
           <div class="cp-action-icon-box">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -4885,8 +7410,8 @@
             </svg>
           </div>
           <div class="cp-action-text-box">
-            <div class="cp-action-card-title">Book an appointment ${proBadge}</div>
-            <div class="cp-action-card-desc">Request a meeting with the team</div>
+            <div class="cp-action-card-title">Schedule a Consultation</div>
+            <div class="cp-action-card-desc">Book a dedicated 1-on-1 meeting</div>
           </div>
         </div>
         <div class="cp-action-card-right">
@@ -4896,17 +7421,19 @@
         </div>
       </div>
 
-      <!-- 3. Instant human help -->
-      <div class="cp-action-card" id="cp-card-human" role="button" tabindex="0">
+      <!-- 3. Ask AI -->
+      <div class="cp-action-card" id="cp-help-card-chat" role="button" tabindex="0">
         <div class="cp-action-card-left">
           <div class="cp-action-icon-box">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
             </svg>
           </div>
           <div class="cp-action-text-box">
-            <div class="cp-action-card-title">Instant human help ${proBadge}</div>
-            <div class="cp-action-card-desc">Speak with an available team member</div>
+            <div class="cp-action-card-title">Ask AI Assistant</div>
+            <div class="cp-action-card-desc">Grounded instant answers 24/7</div>
           </div>
         </div>
         <div class="cp-action-card-right">
@@ -4916,46 +7443,246 @@
         </div>
       </div>
 
-      <!-- 4. Make a payment -->
-      <div class="cp-action-card" id="cp-card-payment" role="button" tabindex="0">
-        <div class="cp-action-card-left">
-          <div class="cp-action-icon-box">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-              <line x1="1" y1="10" x2="23" y2="10"></line>
-            </svg>
-          </div>
-          <div class="cp-action-text-box">
-            <div class="cp-action-card-title">Make a payment ${proBadge}</div>
-            <div class="cp-action-card-desc">Pay online, bank transfer, or invoice</div>
-          </div>
-        </div>
-        <div class="cp-action-card-right">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </div>
+      <!-- 4. Frequently Asked Questions (Interactive Expandable Accordion) -->
+      <div class="cp-section-title" style="margin-top:14px;display:flex;align-items:center;justify-content:space-between;">
+        <span>Frequently Asked Questions</span>
+        <span style="font-size:10px;font-weight:500;color:var(--cp-text-muted);text-transform:uppercase;letter-spacing:0.5px;">Tap to expand</span>
       </div>
-
-      <!-- 5. Featured Story: Lightweight Latest Blog Card (media_1790923294302.png) -->
-      <div class="cp-featured-banner-card" id="cp-card-latest-blog" role="button" tabindex="0" title="Read Latest Story">
-        <div class="cp-banner-img-box">
-          <img src="${baseUrl}/assets/blog/gandhi-jayanti-2026.png" 
-               id="cp-home-blog-img" 
-               class="cp-banner-cover-photo" 
-               alt="Gandhi Jayanti Special" 
-               onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/gandhi-jayanti-2026.png';" />
-        </div>
-        <div class="cp-banner-body">
-          <div class="cp-banner-meta-row">
-            <span class="cp-banner-badge-tag" id="cp-home-blog-tag">SPECIAL EVENT</span>
-            <span class="cp-banner-date-label" id="cp-home-blog-date">Oct 02, 2026</span>
+      <div class="cp-faq-list" style="display:flex;flex-direction:column;gap:8px;">
+        <div class="cp-faq-card active" data-faq="1" style="background:var(--cp-options-bg);border:1px solid var(--cp-border-input, #282931);border-radius:10px;overflow:hidden;transition:all 0.2s ease;">
+          <div class="cp-faq-header" role="button" tabindex="0" style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:10px;">
+            <div style="font-size:12.5px;font-weight:600;color:var(--cp-text-primary);line-height:1.35;">How do I get started with CuboidPilot?</div>
+            <div class="cp-faq-chevron" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--cp-text-muted);transition:transform 0.2s ease;transform:rotate(180deg);shrink:0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
           </div>
-          <h4 class="cp-banner-headline" id="cp-home-blog-title">Gandhi Jayanti Special: Truth, Decentralized Technology &amp; The Spirit of Self-Reliance</h4>
-          <p class="cp-banner-subline" id="cp-home-blog-desc">On October 2nd, we honor Mahatma Gandhi's enduring ideals &mdash; Satya (Truth), Swavalamban (Self-Reliance), and Sarvodaya (Welfare of All). Here is how these principles guide the future of autonomous, grounded AI at CuboidPilot.</p>
+          <div class="cp-faq-body" style="padding:0 14px 12px 14px;font-size:11.5px;color:var(--cp-text-secondary);line-height:1.5;border-top:1px solid rgba(255,255,255,0.04);margin-top:2px;padding-top:8px;">
+            <div>Paste our one-line script tag before the closing &lt;/body&gt; tag on your website or dashboard to activate AI reasoning, lead capture, and appointment scheduling.</div>
+            <button type="button" class="cp-faq-ask-ai" data-q="How do I get started with CuboidPilot on my website?" style="margin-top:8px;display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid var(--cp-border-input, #282931);border-radius:4px;color:var(--cp-text-primary);font-size:10.5px;font-weight:500;cursor:pointer;transition:background 0.15s;">
+              <span>Ask Cai about this</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="cp-faq-card" data-faq="2" style="background:var(--cp-options-bg);border:1px solid var(--cp-border-input, #282931);border-radius:10px;overflow:hidden;transition:all 0.2s ease;">
+          <div class="cp-faq-header" role="button" tabindex="0" style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:10px;">
+            <div style="font-size:12.5px;font-weight:600;color:var(--cp-text-primary);line-height:1.35;">Can I speak with a real human advisor?</div>
+            <div class="cp-faq-chevron" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--cp-text-muted);transition:transform 0.2s ease;shrink:0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+          <div class="cp-faq-body" style="display:none;padding:0 14px 12px 14px;font-size:11.5px;color:var(--cp-text-secondary);line-height:1.5;border-top:1px solid rgba(255,255,255,0.04);margin-top:2px;padding-top:8px;">
+            <div>Yes! Click "Instant human help" to connect live with available specialists, or schedule a calendar meeting via Google Meet.</div>
+            <button type="button" class="cp-faq-ask-ai" data-q="Can I speak with a human advisor?" style="margin-top:8px;display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid var(--cp-border-input, #282931);border-radius:4px;color:var(--cp-text-primary);font-size:10.5px;font-weight:500;cursor:pointer;transition:background 0.15s;">
+              <span>Ask Cai about this</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="cp-faq-card" data-faq="3" style="background:var(--cp-options-bg);border:1px solid var(--cp-border-input, #282931);border-radius:10px;overflow:hidden;transition:all 0.2s ease;">
+          <div class="cp-faq-header" role="button" tabindex="0" style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:10px;">
+            <div style="font-size:12.5px;font-weight:600;color:var(--cp-text-primary);line-height:1.35;">Are payments and customer data secure?</div>
+            <div class="cp-faq-chevron" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--cp-text-muted);transition:transform 0.2s ease;shrink:0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+          <div class="cp-faq-body" style="display:none;padding:0 14px 12px 14px;font-size:11.5px;color:var(--cp-text-secondary);line-height:1.5;border-top:1px solid rgba(255,255,255,0.04);margin-top:2px;padding-top:8px;">
+            <div>All payments are encrypted and verified directly via Razorpay and official Indian banking protocols (NEFT/IMPS/UPI) with instant digital receipts. Conversations are tenant-isolated and encrypted with TLS 1.3.</div>
+            <button type="button" class="cp-faq-ask-ai" data-q="Are payments and data secure on CuboidPilot?" style="margin-top:8px;display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid var(--cp-border-input, #282931);border-radius:4px;color:var(--cp-text-primary);font-size:10.5px;font-weight:500;cursor:pointer;transition:background 0.15s;">
+              <span>Ask Cai about this</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="cp-faq-card" data-faq="4" style="background:var(--cp-options-bg);border:1px solid var(--cp-border-input, #282931);border-radius:10px;overflow:hidden;transition:all 0.2s ease;">
+          <div class="cp-faq-header" role="button" tabindex="0" style="padding:12px 14px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;gap:10px;">
+            <div style="font-size:12.5px;font-weight:600;color:var(--cp-text-primary);line-height:1.35;">How does WhatsApp continuity work?</div>
+            <div class="cp-faq-chevron" style="width:16px;height:16px;display:flex;align-items:center;justify-content:center;color:var(--cp-text-muted);transition:transform 0.2s ease;shrink:0;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+          <div class="cp-faq-body" style="display:none;padding:0 14px 12px 14px;font-size:11.5px;color:var(--cp-text-secondary);line-height:1.5;border-top:1px solid rgba(255,255,255,0.04);margin-top:2px;padding-top:8px;">
+            <div>Whenever you leave the page or tap "Continue on WhatsApp", Cai transfers the full transcript to your WhatsApp account seamlessly with zero lost context.</div>
+            <button type="button" class="cp-faq-ask-ai" data-q="How does WhatsApp continuity work?" style="margin-top:8px;display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(255,255,255,0.06);border:1px solid var(--cp-border-input, #282931);border-radius:4px;color:var(--cp-text-primary);font-size:10.5px;font-weight:500;cursor:pointer;transition:background 0.15s;">
+              <span>Ask Cai about this</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
         </div>
       </div>
     `;
+
+    const hHuman = shadow.getElementById('cp-help-card-human');
+    if (hHuman) bindTap(hHuman, () => navigateTo('human-team'));
+    const hBook = shadow.getElementById('cp-help-card-book');
+    if (hBook) bindTap(hBook, () => navigateTo('book-team'));
+    const hChat = shadow.getElementById('cp-help-card-chat');
+    if (hChat) bindTap(hChat, () => navigateTo('chat'));
+
+    // Bind Expandable FAQ Accordion Taps & Keyboard Accessibility
+    shadow.querySelectorAll('.cp-faq-header').forEach(header => {
+      const toggleFn = () => {
+        const card = header.closest('.cp-faq-card');
+        if (!card) return;
+        const body = card.querySelector('.cp-faq-body');
+        const chevron = card.querySelector('.cp-faq-chevron');
+        const isOpen = card.classList.contains('active');
+
+        // Close all other FAQ cards in widget
+        shadow.querySelectorAll('.cp-faq-card').forEach(c => {
+          c.classList.remove('active');
+          const b = c.querySelector('.cp-faq-body');
+          const ch = c.querySelector('.cp-faq-chevron');
+          if (b) b.style.display = 'none';
+          if (ch) ch.style.transform = 'rotate(0deg)';
+        });
+
+        if (!isOpen) {
+          card.classList.add('active');
+          if (body) body.style.display = 'block';
+          if (chevron) chevron.style.transform = 'rotate(180deg)';
+        }
+      };
+
+      bindTap(header, toggleFn);
+      header.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleFn();
+        }
+      });
+    });
+
+    // Bind Ask Cai button inside FAQs
+    shadow.querySelectorAll('.cp-faq-ask-ai').forEach(btn => {
+      bindTap(btn, (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        const query = btn.getAttribute('data-q') || '';
+        if (query) {
+          navigateTo('chat');
+          setTimeout(() => {
+            if (inputField) inputField.value = query;
+            handleUserSend(query);
+          }, 150);
+        }
+      });
+    });
+  }
+
+  // -------------------------------------------------------------
+  // SCREEN 2: ACTION HOME (Exact match: media_1790857558494.png)
+  // -------------------------------------------------------------
+  function startWorkspaceCopilotSession() {
+    isCopilotActive = true;
+    navigateTo('chat');
+
+    const asstName = widgetConfig.assistant_name || 'Cai';
+    if (assistantNameEl) assistantNameEl.textContent = `${asstName} Copilot`;
+    if (subtitleEl) subtitleEl.textContent = '● Live Workspace Telemetry';
+
+    // 1. Inject Clean Markdown Welcome message
+    const welcomeMarkdown = `👋 **Namaste! Main aapka Workspace Copilot hoon.**\n\nAap mujhse apne workspace ki live details aur CRM stats pooch sakte hain:\n• Kitni leads aayi hain aur kisko gayi hain?\n• Kitni convert hui hain aur total revenue kitna hai?\n• Upcoming appointments aur schedule status\n• Reminder setup karne ke liye direct bol sakte hain!`;
+
+    appendAIMessage({
+      reply: welcomeMarkdown,
+      timestamp: 'Just now'
+    });
+
+    // 2. Render Interactive Suggestion Chips directly to DOM (No raw HTML string in message)
+    const chipsContainer = document.createElement('div');
+    chipsContainer.className = 'cp-copilot-chips-wrap';
+    chipsContainer.innerHTML = `
+      <div class="cp-copilot-chips-label">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="16" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>
+        <span>Suggested workspace queries:</span>
+      </div>
+      <div class="cp-copilot-chips">
+        <button type="button" class="cp-copilot-chip" data-q="Kitni lead aayi hain?">
+          <span class="cp-copilot-chip-icon cp-chip-blue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 20V10M12 20V4M6 20v-6"></path>
+            </svg>
+          </span>
+          <span>Kitni lead aayi?</span>
+          <svg class="cp-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        <button type="button" class="cp-copilot-chip" data-q="Leads kisko gayi hain?">
+          <span class="cp-copilot-chip-icon cp-chip-purple">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </span>
+          <span>Leads kisko gayi?</span>
+          <svg class="cp-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        <button type="button" class="cp-copilot-chip" data-q="Kitni convert hui aur kya revenue hai?">
+          <span class="cp-copilot-chip-icon cp-chip-emerald">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="1" x2="12" y2="23"></line>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+          </span>
+          <span>Revenue &amp; conversion?</span>
+          <svg class="cp-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        <button type="button" class="cp-copilot-chip" data-q="Upcoming appointments aur reminders kya hain?">
+          <span class="cp-copilot-chip-icon cp-chip-amber">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </span>
+          <span>Appointments &amp; schedule</span>
+          <svg class="cp-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+        <button type="button" class="cp-copilot-chip" data-q="Fees aur plan status kya hai?">
+          <span class="cp-copilot-chip-icon cp-chip-rose">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </span>
+          <span>Subscription status</span>
+          <svg class="cp-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+    `;
+    chatStream.appendChild(chipsContainer);
+    scrollToBottom();
+
+    chipsContainer.querySelectorAll('.cp-copilot-chip').forEach(chip => {
+      bindTap(chip, () => {
+        const q = chip.getAttribute('data-q');
+        if (q && inputField) {
+          inputField.value = q;
+          handleSend();
+        }
+      });
+    });
+
+    setTimeout(() => {
+      if (inputField) {
+        inputField.placeholder = "Poochiye: Kitni lead aayi, revenue, reminder...";
+        inputField.focus();
+      }
+    }, 120);
+  }
+
+  let homeDataLoaded = false;
+  function loadHomeDynamicData() {
+    if (homeDataLoaded) return;
+    homeDataLoaded = true;
 
     // Fetch dynamic executive LinkedIn profiles for header avatars
     fetch(`${baseUrl}/api/widget_actions.php?action=get_actions&company_key=${encodeURIComponent(companyKey)}`)
@@ -4972,21 +7699,12 @@
       })
       .catch(() => {});
 
-    // Dynamic Latest Blog Card fetch & click listener (media_1790923294302.png)
-    let currentBlogSlug = 'gandhi-jayanti-truth-technology-self-reliance';
-    const blogCard = shadow.getElementById('cp-card-latest-blog');
-    if (blogCard) {
-      blogCard.addEventListener('click', () => {
-        window.open(`${baseUrl}/blog.html?slug=${encodeURIComponent(currentBlogSlug)}`, '_blank');
-      });
-    }
-
+    // Dynamic Latest Blog Card fetch
     fetch(`${baseUrl}/api/blogs.php?action=list&limit=1`)
       .then(r => r.json())
       .then(d => {
         if (d && d.success && d.blogs && d.blogs.length > 0) {
           const b = d.blogs[0];
-          if (b.slug) currentBlogSlug = b.slug;
           const blogImg = shadow.getElementById('cp-home-blog-img');
           const blogTag = shadow.getElementById('cp-home-blog-tag');
           const blogDate = shadow.getElementById('cp-home-blog-date');
@@ -5024,11 +7742,223 @@
         }
       })
       .catch(() => {});
+  }
 
+  function renderActionHome() {
+    if (!screensView) return;
+
+    let lastSnippet = 'Search answers or chat with our AI assistant';
+    let hasRecentMessages = false;
+    try {
+      const history = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
+      if (history.length > 0) {
+        hasRecentMessages = true;
+        const last = history[history.length - 1];
+        lastSnippet = (last.text || '').replace(/<[^>]+>/g, '').replace(/[*_#`~]/g, '').trim().substring(0, 52);
+        if (lastSnippet.length >= 52) lastSnippet += '...';
+      }
+    } catch(e) {}
+
+    const logoUrl = getActiveLogoUrl();
+    const fallbackLogo = (currentTheme === 'light') ? `${baseUrl}/assets/logo-black.png` : `${baseUrl}/assets/logo-white.png`;
+
+    const isPlatformDemo = (!companyKey || companyKey === 'cp_live_cuboidsoft' || companyKey === 'cp_live_cuboidpilot' || companyKey === 'cuboidsoft' || companyKey === 'cuboidpilot');
+    const hasPremium = isPlatformDemo || Boolean(
+      widgetConfig && (
+        widgetConfig.is_premium || 
+        widgetConfig.is_full_access || 
+        widgetConfig.enable_appointments ||
+        widgetConfig.enable_human_help ||
+        widgetConfig.enable_payments ||
+        (widgetConfig.company && (widgetConfig.company.is_premium || widgetConfig.company.is_trial || widgetConfig.company.is_full_access))
+      )
+    );
+    const proBadge = !hasPremium ? '<span class="cp-pro-badge">PRO</span>' : '';
+
+    const isDashboardEnv = Boolean(
+      (typeof window !== 'undefined' && window.location && (window.location.pathname.includes('/app/') || window.location.pathname.includes('/admin/'))) ||
+      (typeof window !== 'undefined' && (window.__CUBOID_COMPANY__ || window.CuboidShell || document.getElementById('sidebar-container')))
+    );
+
+    screensView.innerHTML = `
+      <!-- Moody Hero Greeting (Classic Intercom Aesthetic) -->
+      <div class="cp-hero-section">
+        <div class="cp-hero-greeting-sub">Hello there.</div>
+        <div class="cp-hero-greeting-main">How can we help?</div>
+      </div>
+
+      ${isDashboardEnv ? `
+      <!-- 0. Know your workspace Card (Intercom-Style Copilot) -->
+      <div class="cp-action-card cp-action-card-copilot" id="cp-card-workspace-copilot" role="button" tabindex="0" title="Know your workspace">
+        <div class="cp-action-card-left">
+          <div class="cp-action-icon-box cp-action-icon-copilot">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+          </div>
+          <div class="cp-action-text-box">
+            <div class="cp-action-card-title">
+              <span>Know your workspace</span>
+              <span class="cp-copilot-tag">Copilot</span>
+            </div>
+            <div class="cp-action-card-desc">Ask live leads, team assignments, revenue &amp; reminders</div>
+          </div>
+        </div>
+        <div class="cp-action-card-right">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </div>
+      ` : ''}
+
+      <!-- 1. Ask / Continue Conversation Card -->
+      <div class="cp-ask-action-card ${hasRecentMessages ? 'cp-active-convo-card' : ''}" id="cp-card-ask" role="button" tabindex="0" title="${hasRecentMessages ? 'Continue conversation' : 'Send us a message'}">
+        <div class="cp-ask-card-content">
+          <div class="cp-ask-card-title" style="display:flex;align-items:center;gap:6px;">
+            ${hasRecentMessages ? '<span class="cp-convo-status-dot"></span>' : ''}
+            <span>${hasRecentMessages ? 'Continue conversation' : 'Send us a message'}</span>
+          </div>
+          <div class="cp-ask-card-desc">${hasRecentMessages ? escapeHtml(lastSnippet) : 'Search answers or chat with our AI assistant'}</div>
+        </div>
+        <div class="cp-ask-card-arrow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 2. Book an appointment -->
+      <div class="cp-action-card" id="cp-card-book" role="button" tabindex="0">
+        <div class="cp-action-card-left">
+          <div class="cp-action-icon-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
+          <div class="cp-action-text-box">
+            <div class="cp-action-card-title">Book an appointment</div>
+            <div class="cp-action-card-desc">Request a meeting with the team</div>
+          </div>
+        </div>
+        <div class="cp-action-card-right">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 3. Instant human help -->
+      <div class="cp-action-card" id="cp-card-human" role="button" tabindex="0">
+        <div class="cp-action-card-left">
+          <div class="cp-action-icon-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+          </div>
+          <div class="cp-action-text-box">
+            <div class="cp-action-card-title">Instant human help</div>
+            <div class="cp-action-card-desc">Speak with an available team member</div>
+          </div>
+        </div>
+        <div class="cp-action-card-right">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 4. Make a payment -->
+      <div class="cp-action-card" id="cp-card-payment" role="button" tabindex="0">
+        <div class="cp-action-card-left">
+          <div class="cp-action-icon-box">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+              <line x1="1" y1="10" x2="23" y2="10"></line>
+            </svg>
+          </div>
+          <div class="cp-action-text-box">
+            <div class="cp-action-card-title">Make a payment</div>
+            <div class="cp-action-card-desc">Pay online, bank transfer, or invoice</div>
+          </div>
+        </div>
+        <div class="cp-action-card-right">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <!-- 5. News & Updates -->
+      <div class="cp-action-card" id="cp-card-news-home" role="button" tabindex="0">
+        <div class="cp-action-card-left">
+          <div class="cp-action-icon-box" style="color:#8b5cf6;background:rgba(139,92,246,0.08);border-color:rgba(139,92,246,0.18);">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 11v3a1 1 0 0 0 1 1h3l5 4V5L7 9H4a1 1 0 0 0-1 1z"></path>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+            </svg>
+          </div>
+          <div class="cp-action-text-box">
+            <div class="cp-action-card-title">News &amp; Updates</div>
+            <div class="cp-action-card-desc">Latest product announcements &amp; guides</div>
+          </div>
+        </div>
+        <div class="cp-action-card-right">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      ${isPlatformDemo ? `
+      <!-- 6. Featured Story: Lightweight Latest Blog Card (media_1790923294302.png) -->
+      <div class="cp-featured-banner-card" id="cp-card-latest-blog" role="button" tabindex="0" title="Read Latest Story">
+        <div class="cp-banner-img-box">
+          <img src="${baseUrl}/assets/blog/gandhi-jayanti-2026.png" 
+               id="cp-home-blog-img" 
+               class="cp-banner-cover-photo" 
+               alt="Gandhi Jayanti Special" 
+               onerror="this.onerror=null; this.src='https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/gandhi-jayanti-2026.png';" />
+        </div>
+        <div class="cp-banner-body">
+          <div class="cp-banner-meta-row">
+            <span class="cp-banner-badge-tag" id="cp-home-blog-tag">SPECIAL EVENT</span>
+            <span class="cp-banner-date-label" id="cp-home-blog-date">Oct 02, 2026</span>
+          </div>
+          <h4 class="cp-banner-headline" id="cp-home-blog-title">Gandhi Jayanti Special: Truth, Decentralized Technology &amp; The Spirit of Self-Reliance</h4>
+          <p class="cp-banner-subline" id="cp-home-blog-desc">On October 2nd, we honor Mahatma Gandhi's enduring ideals &mdash; Satya (Truth), Swavalamban (Self-Reliance), and Sarvodaya (Welfare of All). Here is how these principles guide the future of autonomous, grounded AI at CuboidPilot.</p>
+        </div>
+      </div>
+      ` : ''}
+    `;
+
+    let currentBlogSlug = 'gandhi-jayanti-truth-technology-self-reliance';
+    const blogCard = shadow.getElementById('cp-card-latest-blog');
+    if (blogCard) {
+      bindTap(blogCard, () => {
+        window.open(`${baseUrl}/blog.html?slug=${encodeURIComponent(currentBlogSlug)}`, '_blank');
+      });
+    }
+
+    if (isEmbedded || (chatWindow && chatWindow.classList.contains('open'))) {
+      loadHomeDynamicData();
+    }
+
+    const copilotCard = shadow.getElementById('cp-card-workspace-copilot');
+    if (copilotCard) {
+      bindTap(copilotCard, () => {
+        startWorkspaceCopilotSession();
+      });
+    }
 
     const askCard = shadow.getElementById('cp-card-ask');
     if (askCard) {
-      askCard.addEventListener('click', () => {
+      bindTap(askCard, () => {
         navigateTo('chat');
         setTimeout(() => {
           if (inputField) inputField.focus();
@@ -5036,33 +7966,37 @@
       });
     }
     
-    shadow.getElementById('cp-card-book').addEventListener('click', () => {
-      if (!hasPremium) {
-        renderLockedScreen('1-on-1 Appointment Booking');
-        return;
-      }
-      navigateTo('book-team');
-    });
+    const bookCard = shadow.getElementById('cp-card-book');
+    if (bookCard) {
+      bindTap(bookCard, () => {
+        navigateTo('book-team');
+      });
+    }
 
-    shadow.getElementById('cp-card-human').addEventListener('click', () => {
-      if (!hasPremium) {
-        renderLockedScreen('Instant Human Escalation');
-        return;
-      }
-      navigateTo('human-team');
-    });
+    const humanCard = shadow.getElementById('cp-card-human');
+    if (humanCard) {
+      bindTap(humanCard, () => {
+        navigateTo('human-team');
+      });
+    }
 
-    shadow.getElementById('cp-card-payment').addEventListener('click', () => {
-      if (!hasPremium) {
-        renderLockedScreen('In-Widget Direct Payments');
-        return;
-      }
-      navigateTo('payment-options');
-    });
+    const paymentCard = shadow.getElementById('cp-card-payment');
+    if (paymentCard) {
+      bindTap(paymentCard, () => {
+        navigateTo('payment-options');
+      });
+    }
+
+    const newsHomeCard = shadow.getElementById('cp-card-news-home');
+    if (newsHomeCard) {
+      bindTap(newsHomeCard, () => {
+        navigateTo('news');
+      });
+    }
 
     const askPill = shadow.getElementById('cp-ask-question-pill');
     if (askPill) {
-      askPill.addEventListener('click', () => {
+      bindTap(askPill, () => {
         navigateTo('chat');
         setTimeout(() => {
           if (inputField) inputField.focus();
@@ -5126,7 +8060,7 @@
           const imgSrc = b.cover_image ? (b.cover_image.startsWith('http') ? b.cover_image : `${baseUrl}/${b.cover_image.replace(/^\.?\//, '')}`) : '';
           return `
             <div class="cp-news-card" data-slug="${escapeHtml(b.slug)}" role="button" tabindex="0">
-              ${imgSrc ? `<img src="${imgSrc}" class="cp-news-img" alt="${escapeHtml(b.title)}" onerror="this.style.display='none'">` : ''}
+              ${imgSrc ? `<img src="${imgSrc}" class="cp-news-img" alt="${escapeHtml(b.title)}" onerror="this.onerror=null; if(this.src.indexOf('raw.github')===-1 && (b.cover_image||'').includes('gandhi')){this.src='https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/gandhi-jayanti-2026.png';} else if(this.src.indexOf('raw.github')===-1 && (b.cover_image||'').includes('meet-cai')){this.src='https://raw.githubusercontent.com/ayushman-it/cai/master/assets/blog/meet-cai-founder.png';} else {this.style.display='none';}">` : ''}
               <div class="cp-news-card-top">
                 <span class="cp-news-badge ${idx === 0 ? 'new' : ''}">${escapeHtml(b.category || 'Update')}</span>
                 <span class="cp-news-date">${escapeHtml(b.formatted_date || 'Recent')}</span>
@@ -5281,19 +8215,44 @@
   }
 
   // -------------------------------------------------------------
-  // SCREEN 4: HUMAN CHAT INITIALIZATION & REAL-TIME POLLING
+  // SCREEN 4: INSTANT HUMAN CHAT & ACTIVE 30s COUNTDOWN (3 ATTEMPTS)
   // -------------------------------------------------------------
-  async function startHumanChatWithAgent(agent) {
-    selectedAgent = agent;
+  // -------------------------------------------------------------
+  // SCREEN 4: INSTANT HUMAN CHAT & SLEEK INTERCOM-STYLE WAITING PILL (3 ATTEMPTS)
+  // -------------------------------------------------------------
+  async function startInstantHumanHelpSession(agent) {
+    stopHumanCountdown();
+    humanAttemptNumber = 1;
+    humanSecondsRemaining = 30;
     isHumanChatActive = true;
+    if (agent) selectedAgent = agent;
 
+    navigateTo('human-chat', { agent: selectedAgent });
+
+    // Clean up any stale waiting pills
+    const existingPill = chatStream ? chatStream.querySelector('.cp-waiting-pill') : null;
+    if (existingPill) existingPill.remove();
+
+    // Sleek Intercom-style waiting pill (No bulky card, no hardcoded paragraphs)
+    const pill = document.createElement('div');
+    pill.className = 'cp-waiting-pill';
+    pill.id = 'cp-waiting-pill';
+    pill.innerHTML = `
+      <span class="cp-waiting-dot"></span>
+      <span class="cp-waiting-text" id="cp-waiting-text">Connecting to team...</span>
+      <span class="cp-waiting-timer" id="cp-waiting-timer">30s</span>
+    `;
+    chatStream.appendChild(pill);
+    scrollToBottom();
+
+    // Trigger backend human request & consultant notification
     try {
       const res = await fetch(`${baseUrl}/api/widget_actions.php?action=start_human_chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
         body: JSON.stringify({
           company_key: companyKey,
-          user_id: agent.id,
+          user_id: selectedAgent ? selectedAgent.id : 0,
           session_token: sessionId,
           conversation_id: conversationId,
           name: visitorName
@@ -5305,19 +8264,77 @@
           conversationId = data.conversation_id;
           sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
         }
-
-        if (data.notice) {
-          appendAIMessage({
-            reply: data.notice,
-            timestamp: 'Just now'
-          });
+        if (data.agent) {
+          selectedAgent = data.agent;
+          if (assistantNameEl) assistantNameEl.textContent = data.agent.name;
         }
       }
     } catch (e) {
-      console.warn('Human chat init note:', e);
+      console.warn('Start human help error:', e);
     }
 
-    navigateTo('human-chat', { agent });
+    startHumanPolling();
+
+    // Start 30s countdown with 3 attempts
+    humanCountdownTimer = setInterval(() => {
+      humanSecondsRemaining--;
+
+      const timerEl = shadow.getElementById('cp-waiting-timer');
+      const textEl = shadow.getElementById('cp-waiting-text');
+
+      if (timerEl) {
+        timerEl.textContent = `${humanSecondsRemaining}s`;
+      }
+      if (subtitleEl) {
+        subtitleEl.textContent = `Connecting to team (${humanSecondsRemaining}s)...`;
+      }
+
+      if (humanSecondsRemaining <= 0) {
+        if (humanAttemptNumber < 3) {
+          humanAttemptNumber++;
+          humanSecondsRemaining = 30;
+          if (textEl) textEl.textContent = `Attempt ${humanAttemptNumber}: Re-notifying team...`;
+          if (timerEl) timerEl.textContent = `30s`;
+          if (subtitleEl) subtitleEl.textContent = `Attempt ${humanAttemptNumber} (30s)...`;
+
+          // Re-trigger alert notification ping
+          try {
+            fetch(`${baseUrl}/api/widget_actions.php?action=start_human_chat`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
+              body: JSON.stringify({
+                company_key: companyKey,
+                user_id: selectedAgent ? selectedAgent.id : 0,
+                session_token: sessionId,
+                conversation_id: conversationId,
+                name: visitorName
+              })
+            }).catch(() => {});
+          } catch(e) {}
+        } else {
+          // All 3 attempts elapsed without connection -> AI Fallback
+          stopHumanCountdown();
+          const activePill = shadow.getElementById('cp-waiting-pill');
+          if (activePill) activePill.remove();
+
+          isHumanChatActive = false;
+          const brandName = widgetConfig.brand_name || 'Cai';
+          if (assistantNameEl) assistantNameEl.textContent = brandName;
+          if (subtitleEl) subtitleEl.textContent = '● Online (AI Assistant)';
+          if (inputField) inputField.placeholder = 'Ask Cai a question...';
+
+          appendAIMessage({
+            reply: "Our team is currently busy assisting other clients. I'm Cai, your AI assistant! How can I help you right now? You can share your query here, and our team will follow up with you on WhatsApp shortly!",
+            timestamp: 'Just now'
+          });
+          playReceivedSound();
+        }
+      }
+    }, 1000);
+  }
+
+  function startHumanChatWithAgent(agent) {
+    return startInstantHumanHelpSession(agent);
   }
 
   function startHumanPolling() {
@@ -5332,20 +8349,39 @@
         if (!res.ok) return;
         const data = await res.json();
 
-        if (data.success && Array.isArray(data.messages)) {
-          data.messages.forEach(msg => {
-            if (msg.id > lastPolledMessageId) {
-              lastPolledMessageId = msg.id;
-              if (msg.sender === 'human_agent') {
-                appendAIMessage({
-                  reply: msg.text,
-                  timestamp: msg.timestamp || 'Just now',
-                  agent_name: (data.agent && data.agent.name) || selectedAgent?.name || 'Advisor'
-                });
-                playReceivedSound();
+        if (data.success) {
+          let agentReplied = false;
+          if (Array.isArray(data.messages)) {
+            data.messages.forEach(msg => {
+              if (msg.id > lastPolledMessageId) {
+                lastPolledMessageId = msg.id;
+                if (msg.sender === 'human_agent') {
+                  agentReplied = true;
+                  appendAIMessage({
+                    reply: msg.text,
+                    timestamp: msg.timestamp || 'Just now',
+                    agent_name: (data.agent && data.agent.name) || selectedAgent?.name || 'Advisor'
+                  });
+                  playReceivedSound();
+                }
               }
+            });
+          }
+
+          if (agentReplied || data.status === 'human_active') {
+            stopHumanCountdown();
+            const activePill = shadow.getElementById('cp-waiting-pill');
+            if (activePill && !activePill.classList.contains('connected')) {
+              activePill.classList.add('connected');
+              const textEl = shadow.getElementById('cp-waiting-text');
+              const agentName = (data.agent && data.agent.name) || selectedAgent?.name || 'Consultant';
+              if (textEl) textEl.textContent = `Connected with ${agentName}`;
+              if (subtitleEl) subtitleEl.textContent = `● Online (${agentName})`;
+              setTimeout(() => {
+                if (activePill) activePill.remove();
+              }, 3000);
             }
-          });
+          }
         }
       } catch (e) {}
     }, 2500);
@@ -6209,24 +9245,58 @@
   }
 
   // 14. Initialize
+  applyTheme(currentTheme);
   loadConfig();
   initVisitorState();
   restoreHistory();
   updateSoundUi();
-  navigateTo('home');
+  const scriptInitialScreen = (currentScript && (currentScript.getAttribute('data-screen') || currentScript.getAttribute('data-initial-screen'))) || '';
+  if (scriptInitialScreen === 'chat') {
+    navigateTo('chat');
+  } else {
+    navigateTo('home');
+  }
 
   if (isEmbedded) {
     toggleWidget(true);
-  } else if (sessionStorage.getItem(STORAGE_KEYS.STATE) === '1') {
-    toggleWidget(true);
   } else {
+    // Keep floating widget docked and closed by default until explicitly clicked
     initTeaserNotification();
   }
 
+  // Mobile drawer collision protector: automatically hide floating widget if a full-screen drawer or modal is open
+  if (!isEmbedded && hostElement) {
+    const syncDrawerVisibility = () => {
+      try {
+        const isDrawerOpen = !!(
+          document.body.classList.contains('menu-open') || 
+          document.body.classList.contains('drawer-open') ||
+          document.querySelector('#mobile-drawer.open') ||
+          document.querySelector('.mobile-menu.open') ||
+          document.querySelector('[data-mobile-drawer].open')
+        );
+        hostElement.style.visibility = isDrawerOpen ? 'hidden' : '';
+        hostElement.style.pointerEvents = isDrawerOpen ? 'none' : '';
+      } catch (err) {}
+    };
+
+    try {
+      const drawerObserver = new MutationObserver(syncDrawerVisibility);
+      drawerObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'], subtree: true });
+      window.addEventListener('resize', syncDrawerVisibility, { passive: true });
+    } catch (e) {}
+  }
+
   window.CuboidPilot = {
-    open: () => toggleWidget(true),
+    open: (screen = 'home') => {
+      toggleWidget(true);
+      const targetScreen = (screen && typeof screen === 'string') ? screen : 'home';
+      navigateTo(targetScreen);
+    },
     close: () => toggleWidget(false),
     toggle: () => toggleWidget(),
+    navigateTo: (screen, data) => navigateTo(screen, data),
+    getScreen: () => currentScreen,
     setTheme: (t) => applyTheme(t),
     getTheme: () => currentTheme,
     updateConfig: (cfg) => applyWidgetConfig(cfg),

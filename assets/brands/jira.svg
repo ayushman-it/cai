@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="jiraGradTop" spreadMethod="pad" gradientUnits="userSpaceOnUse" y2="44.67" x2="54.39" y1="57.47" x1="41.59" gradientTransform="matrix(1.57,0,0,1.57,-0.005,-0.002)">
+      <stop offset="0" stop-color="#0052cc" />
+      <stop offset="1" stop-color="#2684ff" />
+    </linearGradient>
+    <linearGradient id="jiraGradBottom" spreadMethod="pad" gradientUnits="userSpaceOnUse" y2="30.98" x2="19" y1="18.16" x1="31.82" gradientTransform="matrix(1.57,0,0,1.57,-0.005,-0.002)">
+      <stop offset="0" stop-color="#0052cc" />
+      <stop offset="1" stop-color="#2684ff" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(256, 256) scale(3.6) translate(-57.5, -59.5)">
+    <!-- Base blue wing -->
+    <path fill="#2684ff" d="M 113.64745,56.1338 62.46995,4.9563 57.50995,0 1.37625,56.1338 c -1.835,1.84 -1.835,4.8187 0,6.655 l 35.1962,35.195 20.9375,20.9425 56.1375,-56.1375 c 1.8363,-1.8363 1.8363,-4.815 0,-6.655 z M 57.50995,77.0413 39.93125,59.4638 57.50995,41.88 75.09245,59.4638 57.50995,77.0413 Z" />
+    <!-- Gradient shape 1 -->
+    <path fill="url(#jiraGradBottom)" d="M 57.50995,41.88 C 46.00125,30.3663 45.94245,11.7188 57.38745,0.1375 L 18.91125,38.5988 39.85375,59.5413 57.50995,41.88 Z" />
+    <!-- Gradient shape 2 -->
+    <path fill="url(#jiraGradTop)" d="m 75.14125,59.4138 -17.6313,17.6275 c 5.5563,5.5512 8.6813,13.0862 8.6813,20.9425 0,7.8562 -3.125,15.3862 -8.6813,20.9425 l 38.5688,-38.57 -20.9375,-20.9425 z" />
+  </g>
+</svg>

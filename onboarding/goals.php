@@ -64,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <?php renderOnboardingHeader(2); ?>
 
-  <main class="flex-1 flex items-center justify-center p-6">
-    <div class="w-full max-w-[560px] bg-white border border-[#e7e5de] rounded-[6px] p-8 shadow-sm">
+  <main class="flex-1 flex items-center justify-center p-4 sm:p-6 min-h-0">
+    <div class="w-full max-w-[560px] bg-white border border-[#e7e5de] rounded-[6px] p-5 sm:p-8 shadow-sm my-auto">
       
       <div class="mb-6">
         <span class="text-[11px] font-semibold uppercase tracking-wider text-stone-400 block mb-1">Step 2 of 6 • Conversational Persona</span>

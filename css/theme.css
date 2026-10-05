@@ -81,10 +81,10 @@ body {
 }
 
 .section-headline {
-  font-size: clamp(26px, 2.4vw, 38px);
-  line-height: 1.16;
+  font-size: clamp(30px, 3.2vw, 42px);
+  line-height: 1.15;
   letter-spacing: -0.025em;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--text-primary);
 }
 

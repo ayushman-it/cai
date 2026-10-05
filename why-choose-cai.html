@@ -3,9 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>6 reasons Cai leads customer service | CuboidPilot</title>
+  <title>6 Reasons Why Cai Leads Customer Service | CuboidPilot</title>
   <meta name="description" content="Discover the 6 defining reasons high-growth companies choose Cai: natively integrated AI agent, unified WhatsApp handoff, in-widget Razorpay payments, and 5-minute deployment.">
+  <meta name="keywords" content="why choose Cai, AI customer service, Intercom alternative, Zendesk alternative, autonomous AI agent, WhatsApp AI support">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://cai.cuboidsoft.in/why-choose-cai.html">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111111">
   <link rel="icon" type="image/png" href="assets/logo-black.png">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CuboidPilot">
+  <meta property="og:title" content="6 Reasons Why Cai Leads Customer Service | CuboidPilot">
+  <meta property="og:description" content="Discover why forward-thinking companies are replacing legacy helpdesks with Cai — the autonomous AI agent delivering 70% instant resolution and seamless human-in-the-loop handoff.">
+  <meta property="og:url" content="https://cai.cuboidsoft.in/why-choose-cai.html">
+  <meta property="og:image" content="https://cai.cuboidsoft.in/assets/login-blog-banner.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@cuboidpilot">
+  <meta name="twitter:title" content="6 Reasons Why Cai Leads Customer Service | CuboidPilot">
+  <meta name="twitter:description" content="Discover why forward-thinking companies are replacing legacy helpdesks with Cai — the autonomous AI agent delivering 70% instant resolution.">
+  <meta name="twitter:image" content="https://cai.cuboidsoft.in/assets/login-blog-banner.png">
 
   <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -108,6 +130,23 @@
       transform: rotate(180deg);
     }
   </style>
+  <script>
+    window.toggleFaq = function(button) {
+      if (!button) return;
+      const now = Date.now();
+      if (button._lastToggle && (now - button._lastToggle) < 250) return;
+      button._lastToggle = now;
+
+      const item = button.closest('.faq-item');
+      if (!item) return;
+      const allItems = document.querySelectorAll('.faq-item');
+      const wasActive = item.classList.contains('active');
+      allItems.forEach(i => i.classList.remove('active'));
+      if (!wasActive) {
+        item.classList.add('active');
+      }
+    };
+  </script>
 </head>
 <body class="bg-white selection:bg-black selection:text-white">
 
@@ -115,8 +154,8 @@
   <div class="w-full bg-[#111111] text-white text-[13px] py-2.5 px-6 flex items-center justify-between">
     <div class="max-w-[1400px] mx-auto w-full flex items-center justify-between">
       <div class="flex items-center gap-2 text-stone-200">
-        <span class="inline-block w-2 h-2 rounded-full bg-[#ff5600] animate-pulse"></span>
-        <span>Introducing <strong>Cai 2.0</strong>: Autonomous resolution rate exceeding 78% with zero hallucinations.</span>
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>Introducing <strong>Cai by CuboidPilot</strong>: AI Customer Agent with Human Action — <em>AI when it works. Humans when they matter.</em></span>
       </div>
       <a href="index.html#hire-cai" class="hidden sm:inline-flex items-center gap-1 text-[13px] text-stone-300 hover:text-white underline font-medium">
         Experience live runtime &rarr;
@@ -214,7 +253,7 @@
                     <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600"></i>
                   </div>
                   <div>
-                    <div class="text-[14px] font-semibold text-black">Zero Hallucinations Guarantee</div>
+                    <div class="text-[14px] font-semibold text-black">Strict Knowledge Grounding</div>
                     <div class="text-[12.5px] text-gray-500 mt-0.5 leading-snug">Strict context grounding in verified business documentation.</div>
                   </div>
                 </a>
@@ -430,14 +469,14 @@
               CuboidPilot is the only helpdesk engineered with a natively integrated AI conversation agent.
             </p>
             <p>
-              Cai is the highest-performing conversational AI agent in the ecosystem, with an average autonomous resolution rate of <strong>76%</strong>, and many high-growth teams seeing <strong>85% or higher</strong>. It is grounded strictly in your enterprise documentation, eliminating hallucinations.
+              Cai is built specifically for businesses where customer conversations drive revenue. It is grounded strictly in your enterprise documentation, ensuring reliable answers while escalating critical commercial moments to your team through Human Action.
             </p>
           </div>
 
           <div class="pt-4 border-t border-gray-100 space-y-3">
             <div class="text-[15px] font-semibold text-black flex items-center gap-2.5">
               <span class="w-1.5 h-1.5 bg-[#0007cb] inline-block rounded-full"></span>
-              <span>Zero hallucinations guaranteed via verified context retrieval</span>
+              <span>Strict context grounding via verified document retrieval</span>
             </div>
             <div class="text-[15px] font-semibold text-black flex items-center gap-2.5">
               <span class="w-1.5 h-1.5 bg-[#0007cb] inline-block rounded-full"></span>
@@ -811,13 +850,13 @@
               <td class="py-5 px-8 text-gray-500">Redirects customers out of chat to external portals</td>
             </tr>
             <tr>
-              <td class="py-5 px-8 font-semibold text-black">Hallucination Prevention</td>
+              <td class="py-5 px-8 font-semibold text-black">Knowledge Grounding</td>
               <td class="py-5 px-8 font-semibold text-black bg-blue-50/20 border-x border-gray-200">
                 <span class="inline-flex items-center gap-2 text-[#0007cb]">
                   <i data-lucide="check" class="w-4 h-4"></i> Strict verified business context grounding
                 </span>
               </td>
-              <td class="py-5 px-8 text-gray-500">High risk of hallucinated policies and pricing</td>
+              <td class="py-5 px-8 text-gray-500">Generic LLM responses without verified grounding</td>
             </tr>
             <tr>
               <td class="py-5 px-8 font-semibold text-black">Lead Qualification</td>
@@ -971,6 +1010,7 @@
           <div class="text-[13px] font-bold uppercase tracking-wider text-black mb-4">Company</div>
           <ul class="space-y-3 text-[14.5px] text-gray-600">
             <li><a href="blog.html?slug=meet-cai-the-ai-worker" class="hover:text-black transition-colors">About Cai</a></li>
+            <li><a href="mailto:support@cai.cuboidsoft.in" class="hover:text-black transition-colors">Contact Support</a></li>
             <li><a href="https://linkedin.com" target="_blank" rel="noopener" class="hover:text-black transition-colors">LinkedIn</a></li>
             <li><a href="https://x.com" target="_blank" rel="noopener" class="hover:text-black transition-colors">X (Twitter)</a></li>
             <li><a href="login.php" class="hover:text-black transition-colors">Admin Login</a></li>
@@ -982,9 +1022,9 @@
       <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[13px] text-gray-400">
         <div>Designed following the official Intercom design system and typography standards.</div>
         <div class="flex items-center gap-6">
-          <a href="index.html#trust" class="hover:text-black transition-colors">Privacy Policy</a>
-          <a href="index.html#trust" class="hover:text-black transition-colors">Terms of Service</a>
-          <a href="index.html#trust" class="hover:text-black transition-colors">Security</a>
+          <a href="privacy.html" class="hover:text-black transition-colors">Privacy Policy</a>
+          <a href="terms.html" class="hover:text-black transition-colors">Terms of Service</a>
+          <a href="security.html" class="hover:text-black transition-colors">Security</a>
         </div>
       </div>
     </div>
@@ -995,22 +1035,10 @@
     if (window.lucide) {
       lucide.createIcons();
     }
-
-    function toggleFaq(button) {
-      const item = button.closest('.faq-item');
-      const allItems = document.querySelectorAll('.faq-item');
-      
-      const isOpen = item.classList.contains('active');
-      allItems.forEach(i => i.classList.remove('active'));
-      
-      if (!isOpen) {
-        item.classList.add('active');
-      }
-    }
   </script>
 
   <!-- Live CuboidPilot Chat Widget Integration -->
-  <script src="widget.js?v=2.7" data-company="cp_live_cuboidsoft" async></script>
+  <script src="widget.js?v=7.0" data-company="cp_live_cuboidsoft" async></script>
 
 </body>
 </html>

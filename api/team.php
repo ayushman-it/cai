@@ -8,6 +8,7 @@
 header("Content-Type: application/json; charset=UTF-8");
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/mailer.php';
 require_once __DIR__ . '/entitlements.php';
 
 if (session_status() === PHP_SESSION_NONE) {
@@ -60,6 +61,20 @@ function saveAvatarFile($avatarInput, $companyId) {
         return $avatarInput;
     }
     return null;
+}
+
+// Role Check: Verify caller is owner or admin for mutating actions
+$callerStmt = $pdo->prepare("SELECT role, is_super_admin FROM `users` WHERE id = ? AND company_id = ? LIMIT 1");
+$callerStmt->execute([$userId, $companyId]);
+$caller = $callerStmt->fetch();
+$callerRole = $caller['role'] ?? ($_SESSION['user_role'] ?? 'sales_agent');
+$isOwnerOrAdmin = in_array($callerRole, ['owner', 'admin']) || !empty($caller['is_super_admin']);
+
+$mutatingActions = ['add', 'invite', 'send_invitation', 'revoke_invitation', 'update_role', 'edit', 'delete'];
+if (in_array($action, $mutatingActions) && !$isOwnerOrAdmin) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Permission denied. Only workspace Owners and Admins can manage team members.']);
+    exit;
 }
 
 try {
@@ -162,10 +177,177 @@ try {
             $newId = (int)$pdo->lastInsertId();
             echo json_encode([
                 'success' => true,
-                'message' => 'Team member invited successfully',
+                'message' => 'Team member added successfully',
                 'user_id' => $newId,
                 'avatar_url' => $avatarUrl
             ]);
+            break;
+
+        case 'invite':
+        case 'send_invitation':
+            $email = strtolower(trim($data['email'] ?? ''));
+            $role  = strtolower(trim($data['role'] ?? 'sales_agent'));
+
+            if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Please provide a valid work email address.']);
+                exit;
+            }
+
+            $allowedRoles = ['owner', 'admin', 'manager', 'sales_agent'];
+            if (!in_array($role, $allowedRoles)) {
+                $role = 'sales_agent';
+            }
+
+            // Check if user is already a member of this company
+            $chkUser = $pdo->prepare("SELECT id, name FROM `users` WHERE `email` = ? AND `company_id` = ? AND `is_active` = 1 LIMIT 1");
+            $chkUser->execute([$email, $companyId]);
+            if ($chkUser->fetch()) {
+                http_response_code(409);
+                echo json_encode(['success' => false, 'error' => 'A team member with this email address already belongs to your workspace.']);
+                exit;
+            }
+
+            // Verify that this company has configured an email sending account
+            $emailCfg = CompanyMailer::getCompanyConfig($pdo, $companyId);
+            if (!$emailCfg || empty($emailCfg['smtp_host']) || empty($emailCfg['smtp_username'])) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'error'   => 'Your company email account is not configured. Please set up your company SMTP credentials in Settings -> Integrations -> Email before inviting members.'
+                ]);
+                exit;
+            }
+
+            // Fetch company details
+            $compStmt = $pdo->prepare("SELECT name FROM `companies` WHERE `id` = ? LIMIT 1");
+            $compStmt->execute([$companyId]);
+            $comp = $compStmt->fetch();
+            $companyName = $comp ? $comp['name'] : 'CuboidPilot Workspace';
+
+            // Generate secure random single-use token (32 bytes = 64 hex chars)
+            $inviteToken = bin2hex(random_bytes(32));
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+7 days'));
+
+            // Store invitation in database
+            $insInv = $pdo->prepare("
+                INSERT INTO `team_invitations`
+                (`company_id`, `invited_by_user_id`, `email`, `role`, `invitation_token`, `status`, `expires_at`, `created_at`, `updated_at`)
+                VALUES (?, ?, ?, ?, ?, 'pending', ?, NOW(), NOW())
+            ");
+            $insInv->execute([$companyId, $userId, $email, $role, $inviteToken, $expiresAt]);
+            $invId = (int)$pdo->lastInsertId();
+
+            // Construct secure invitation link
+            $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $basePath = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/\\');
+            $inviteUrl = "{$scheme}://{$host}{$basePath}/accept_invite.php?token={$inviteToken}";
+
+            $roleTitle = ucwords(str_replace('_', ' ', $role));
+            $subject = "You have been invited to join {$companyName} on CuboidPilot";
+
+            $htmlBody = <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Invitation to join {$companyName}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f7f6f2; color: #1c1917; margin: 0; padding: 40px 20px;">
+  <div style="max-width: 540px; margin: 0 auto; background: #ffffff; border: 1px solid #e7e5de; border-radius: 8px; padding: 36px; box-shadow: 0 4px 12px rgba(0,0,0,0.04);">
+    <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #e7e5de;">
+      <h2 style="margin: 0; font-size: 18px; color: #1c1917; font-weight: 600;">CuboidPilot Workspace Invitation</h2>
+    </div>
+    <p style="font-size: 14px; line-height: 1.6; color: #44403c;">Hello,</p>
+    <p style="font-size: 14px; line-height: 1.6; color: #44403c;">
+      You have been invited to join <strong>{$companyName}</strong> on CuboidPilot with the assigned role of <strong>{$roleTitle}</strong>.
+    </p>
+    <div style="margin: 28px 0; text-align: center;">
+      <a href="{$inviteUrl}" style="background-color: #1c1917; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block;">
+        Accept Invitation
+      </a>
+    </div>
+    <p style="font-size: 12px; color: #78716c; line-height: 1.5;">
+      Or copy and paste this link into your browser:<br>
+      <a href="{$inviteUrl}" style="color: #0284c7; word-break: break-all;">{$inviteUrl}</a>
+    </p>
+    <p style="font-size: 11px; color: #a8a29e; margin-top: 32px; border-top: 1px solid #f5f5f4; padding-top: 16px;">
+      This invitation was sent via {$companyName}'s official email server and will expire on {$expiresAt}. If you were not expecting this invitation, you can safely ignore this email.
+    </p>
+  </div>
+</body>
+</html>
+HTML;
+
+            $textBody = "You have been invited to join {$companyName} on CuboidPilot as {$roleTitle}.\n\n"
+                      . "Click the link below or paste it into your browser to accept the invitation:\n"
+                      . "{$inviteUrl}\n\n"
+                      . "This invitation will expire on {$expiresAt}.";
+
+            // Send invitation email using THAT company's configured email account
+            $sendRes = CompanyMailer::send($pdo, $companyId, $email, $subject, $htmlBody, $textBody);
+
+            if (!$sendRes['success']) {
+                // If email invitation fails: Do not show "Invitation Sent". Remove pending invite or fail.
+                $pdo->prepare("DELETE FROM `team_invitations` WHERE `id` = ?")->execute([$invId]);
+                http_response_code(502);
+                echo json_encode([
+                    'success' => false,
+                    'error'   => 'Could not send invitation email: ' . $sendRes['error'] . '. Please verify your company email settings in Settings -> Integrations -> Email.'
+                ]);
+                exit;
+            }
+
+            echo json_encode([
+                'success'          => true,
+                'message'          => "Invitation sent successfully to {$email} via {$companyName}'s email account.",
+                'invitation_id'    => $invId,
+                'invitation_token' => $inviteToken,
+                'invite_url'       => $inviteUrl,
+                'expires_at'       => $expiresAt
+            ]);
+            break;
+
+        case 'list_invitations':
+            $stmt = $pdo->prepare("
+                SELECT i.*, u.name as invited_by_name
+                FROM `team_invitations` i
+                LEFT JOIN `users` u ON u.id = i.invited_by_user_id
+                WHERE i.company_id = ? AND i.status = 'pending' AND i.expires_at > NOW()
+                ORDER BY i.id DESC
+            ");
+            $stmt->execute([$companyId]);
+            $invites = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'success'     => true,
+                'invitations' => array_map(function($inv) {
+                    return [
+                        'id'              => (int)$inv['id'],
+                        'email'           => $inv['email'],
+                        'role'            => $inv['role'],
+                        'role_label'      => ucwords(str_replace('_', ' ', $inv['role'])),
+                        'invited_by_name' => $inv['invited_by_name'] ?? 'Admin',
+                        'expires_at'      => date('M j, Y H:i', strtotime($inv['expires_at'])),
+                        'created_at'      => date('M j, Y H:i', strtotime($inv['created_at']))
+                    ];
+                }, $invites)
+            ]);
+            break;
+
+        case 'revoke_invitation':
+            $invId = (int)($data['invitation_id'] ?? 0);
+            if (!$invId) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Invitation ID is required']);
+                exit;
+            }
+
+            $pdo->prepare("UPDATE `team_invitations` SET `status` = 'revoked', `updated_at` = NOW() WHERE `id` = ? AND `company_id` = ?")
+                ->execute([$invId, $companyId]);
+
+            echo json_encode(['success' => true, 'message' => 'Invitation revoked successfully']);
             break;
 
         case 'update_avatar':

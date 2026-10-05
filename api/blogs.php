@@ -4,6 +4,15 @@
  * Handles public blog listing, SEO single-post retrieval, and SuperAdmin CRUD operations.
  */
 
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
+
 header("Content-Type: application/json; charset=UTF-8");
 header("Cache-Control: no-cache, no-store, must-revalidate");
 
@@ -144,10 +153,10 @@ try {
         $uStmt = $pdo->prepare("SELECT is_super_admin, role FROM `users` WHERE id = ? LIMIT 1");
         $uStmt->execute([$userId]);
         $uRow = $uStmt->fetch();
-        if ($uRow && (!empty($uRow['is_super_admin']) || $uRow['role'] === 'owner' || $uRow['role'] === 'super_admin' || $userId === 1)) {
+        if ($uRow && (!empty($uRow['is_super_admin']) && (int)$uRow['is_super_admin'] === 1)) {
             $isAdmin = true;
         }
-    } elseif (!empty($_SESSION['is_super_admin']) || !empty($_SESSION['super_admin'])) {
+    } elseif (!empty($_SESSION['is_super_admin']) && (int)$_SESSION['is_super_admin'] === 1) {
         $isAdmin = true;
     }
 

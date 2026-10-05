@@ -84,60 +84,22 @@ function renderOnboardingHeader($currentStep = 1) {
 
     $percent = round(($currentStep / 5) * 100);
     ?>
-    <!-- Minimal Responsive Header -->
-    <header class="py-3 sm:py-3.5 px-4 sm:px-8 border-b border-[#e7e5de] bg-white flex items-center justify-between">
-      <div class="flex items-center gap-2.5 sm:gap-3">
-        <a href="../index.html" class="flex items-center gap-2 text-[#111111] no-underline">
-          <div class="w-6 h-6 rounded-[3px] bg-[#111111] text-white flex items-center justify-center font-bold text-[10px] tracking-wider shrink-0">
-            CP
-          </div>
-          <span class="text-xs font-semibold tracking-tight hidden sm:inline">CuboidPilot</span>
-        </a>
-        <span class="text-stone-300">|</span>
-        <span class="text-[11.5px] text-stone-600 font-mono font-medium">Step <?= $currentStep ?> of 5</span>
-        <span class="text-xs text-stone-400 font-medium hidden sm:inline">· <?= htmlspecialchars($steps[$currentStep]['title']) ?></span>
-      </div>
+    <!-- Minimal Responsive Header matching Signup (CuboidPilot brand + Log in) -->
+    <header class="sticky top-0 z-40 w-full px-5 py-2.5 sm:py-3 border-b border-[#e7e5de] bg-white flex items-center justify-between shrink-0">
+      <a href="../index.html" class="flex items-center gap-2 text-[#111111] no-underline">
+        <div class="w-6 h-6 flex items-center justify-center overflow-hidden shrink-0">
+          <img src="../assets/logo-black.png" alt="CuboidPilot" class="w-full h-full object-contain">
+        </div>
+        <span class="text-sm font-semibold tracking-tight text-[#111111]">CuboidPilot</span>
+      </a>
 
-      <!-- Stepper Nav items (Desktop / Tablet) -->
-      <nav class="hidden md:flex items-center gap-1.5 lg:gap-2 text-xs">
-        <?php foreach ($steps as $num => $s): ?>
-          <?php if ($num < $currentStep): ?>
-            <a href="<?= $s['file'] ?>" class="text-stone-600 hover:text-stone-900 font-medium flex items-center gap-1 transition-colors">
-              <span class="w-4 h-4 rounded-full bg-stone-900 text-white text-[9px] flex items-center justify-center">✓</span>
-              <span><?= $s['title'] ?></span>
-            </a>
-            <span class="text-stone-300">&rarr;</span>
-          <?php elseif ($num === $currentStep): ?>
-            <span class="text-stone-900 font-semibold flex items-center gap-1.5 px-2 py-0.5 bg-stone-100 rounded-[3px]">
-              <span class="w-4 h-4 rounded-full bg-stone-900 text-white text-[9px] flex items-center justify-center font-bold"><?= $num ?></span>
-              <span><?= $s['title'] ?></span>
-            </span>
-            <?php if ($num < 5): ?><span class="text-stone-300">&rarr;</span><?php endif; ?>
-          <?php else: ?>
-            <span class="text-stone-400 flex items-center gap-1">
-              <span class="w-4 h-4 rounded-full border border-stone-300 text-stone-400 text-[9px] flex items-center justify-center"><?= $num ?></span>
-              <span><?= $s['title'] ?></span>
-            </span>
-            <?php if ($num < 5): ?><span class="text-stone-300">&rarr;</span><?php endif; ?>
-          <?php endif; ?>
-        <?php endforeach; ?>
-      </nav>
-
-      <div class="flex items-center gap-2">
-        <a href="../app/overview.html" class="text-[11px] text-stone-500 hover:text-stone-900 hover:underline">
-          <span class="hidden sm:inline">Skip to Dashboard</span>
-          <span class="sm:hidden">Skip</span> &rarr;
+      <!-- Top Right Action -->
+      <div class="flex items-center gap-2 sm:gap-2.5">
+        <span class="text-xs text-stone-500 hidden sm:inline">Already have an account?</span>
+        <a href="../login.php" class="inline-flex items-center justify-center text-xs font-medium text-stone-900 border border-stone-900 px-3 py-1 rounded-[4px] hover:bg-stone-50 transition-colors">
+          Log in
         </a>
       </div>
     </header>
-
-    <!-- Progress Line (Positioned cleanly BELOW the header) -->
-    <div class="w-full bg-[#f0eee8] h-[2.5px] relative overflow-hidden">
-      <div 
-        id="onboarding-progress-bar"
-        class="bg-[#111111] h-full transition-all duration-500 ease-out" 
-        style="width: <?= $percent ?>%;"
-      ></div>
-    </div>
     <?php
 }

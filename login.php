@@ -6,6 +6,7 @@
  */
 
 require_once __DIR__ . '/config/db.php';
+require_once __DIR__ . '/config/google_oauth.php';
 
 session_start();
 
@@ -37,7 +38,7 @@ try {
 
 if (!$latestBlog) {
     $latestBlog = [
-        'title' => "Meet Cai: Why We Built the World’s First Autonomous AI Helpdesk & SDR Agent",
+        'title' => "Meet Cai: Why We Built an Autonomous AI Customer Agent with Instant Human Action",
         'slug' => "meet-cai-autonomous-ai-agent",
         'cover_image' => "assets/blog/meet-cai-founder.png",
         'category' => "Engineering & AI",
@@ -70,9 +71,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $user = $stmt->fetch();
 
             if ($user && $user['is_active']) {
-                $passwordValid = password_verify($password, $user['password_hash']) || ($password === 'password123') || ($password === 'admin123');
+                $passwordValid = password_verify($password, $user['password_hash']);
 
                 if ($passwordValid) {
+                    // Regenerate session ID to prevent session fixation attacks
+                    session_regenerate_id(true);
+
                     // Update last login
                     $updateStmt = $pdo->prepare("UPDATE `users` SET `last_login_at` = NOW() WHERE `id` = ?");
                     $updateStmt->execute([$user['id']]);
@@ -96,9 +100,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     }
 
-                    // Optional remember cookie (30 days)
+                    // Optional remember cookie (30 days) with secure flags
                     if ($remember) {
-                        setcookie('cp_user_email', $user['email'], time() + (86400 * 30), '/');
+                        $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
+                        setcookie('cp_user_email', $user['email'], [
+                            'expires'  => time() + (86400 * 30),
+                            'path'     => '/',
+                            'secure'   => $isSecure,
+                            'httponly' => true,
+                            'samesite' => 'Lax'
+                        ]);
                     }
 
                     // Determine destination
@@ -115,13 +126,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header("Location: " . $redirectUrl);
                     exit;
                 } else {
-                    $error = 'Incorrect password. Check your credentials or click a demo account below.';
+                    $error = 'Incorrect email or password. Please try again.';
                 }
             } else {
                 $error = 'No active account found for that email address.';
             }
         } catch (Exception $e) {
-            $error = 'Database connection error: ' . $e->getMessage();
+            $error = 'Sign-in failed. Please try again later.';
         }
     }
 
@@ -459,11 +470,11 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
 
     <!-- Bottom Right: Enterprise Links & System Health -->
     <div class="flex items-center gap-3 sm:gap-4 text-stone-500">
-      <a href="#" class="hover:text-stone-800 transition-colors">Privacy Policy</a>
+      <a href="privacy.html" class="hover:text-stone-800 transition-colors">Privacy Policy</a>
       <span class="text-stone-300">•</span>
-      <a href="#" class="hover:text-stone-800 transition-colors">Terms of Service</a>
+      <a href="terms.html" class="hover:text-stone-800 transition-colors">Terms of Service</a>
       <span class="text-stone-300">•</span>
-      <a href="#" class="hover:text-stone-800 transition-colors">Security</a>
+      <a href="security.html" class="hover:text-stone-800 transition-colors">Security</a>
       <span class="text-stone-300 hidden md:inline">•</span>
       <span class="hidden md:inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200/80 font-medium text-[10.5px]">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -475,7 +486,7 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
   </footer>
 
   <!-- Real Live CuboidPilot Fin AI Widget Embed (Matches media_1790706216898.png launcher) -->
-  <script src="widget.js" data-company="cp_live_cuboidsoft" async></script>
+  <script src="widget.js?v=7.0" data-company="cp_live_cuboidsoft" async></script>
 
   <!-- Scripts -->
   <script>
@@ -530,7 +541,7 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
 
     // Google Login Handler
     function handleGoogleLogin() {
-      alert('Google Workspace Single Sign-On is active. Please enter your work email and password above to sign in.');
+      window.location.href = '<?= getGoogleAuthUrl("login") ?>';
     }
 
     function handleForgotPassword() {

@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../css/theme.css">
-  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=4.2">
 </head>
 <body class="app-body">
 
@@ -34,7 +34,7 @@
             </div>
             
             <div class="flex items-center gap-2">
-              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="alert('Exporting CSV directory')">
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CuboidDashboard.exportCompaniesCsv()">
                 <i data-lucide="download" class="w-3.5 h-3.5 mr-1.5"></i>
                 Export CSV
               </button>
@@ -53,7 +53,7 @@
                 <input type="text" id="company-search-input" placeholder="Search company, domain, or owner..." class="app-input pl-8 text-xs w-full">
               </div>
 
-              <select class="app-input text-xs w-36 bg-white hidden md:block">
+              <select id="company-plan-filter" onchange="CuboidDashboard.loadSuperAdminCompanies()" class="app-input text-xs w-36 bg-white hidden md:block">
                 <option value="all">All Plans</option>
                 <option value="growth">Growth ($149)</option>
                 <option value="scale">Scale Pro ($399)</option>
@@ -61,7 +61,7 @@
                 <option value="enterprise">Enterprise</option>
               </select>
 
-              <select class="app-input text-xs w-36 bg-white hidden md:block">
+              <select id="company-status-filter" onchange="CuboidDashboard.loadSuperAdminCompanies()" class="app-input text-xs w-36 bg-white hidden md:block">
                 <option value="all">All Statuses</option>
                 <option value="active">Active</option>
                 <option value="trial">Trial (14d)</option>
@@ -378,8 +378,44 @@
     </div>
   </div>
 
-  <script src="../js/components.js"></script>
-  <script src="../js/dashboard.js"></script>
+  <!-- Delete Company Confirmation Modal -->
+  <div id="delete-company-modal" class="app-modal-overlay">
+    <div class="app-modal max-w-md">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de]">
+        <div class="flex items-center gap-2 text-red-600">
+          <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+          <h3 class="text-sm font-semibold text-stone-900">Delete Organization</h3>
+        </div>
+        <button onclick="closeModal('delete-company-modal')" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="py-4 space-y-3 text-xs text-stone-600">
+        <p>Are you sure you want to permanently delete <strong id="delete-company-name-label" class="text-stone-900 font-semibold"></strong>?</p>
+        <div class="p-3 bg-red-50 border border-red-200 rounded-[4px] text-red-800 space-y-1">
+          <div class="font-medium text-[11.5px]">This action cannot be undone:</div>
+          <ul class="list-disc list-inside text-[11px] space-y-0.5 text-red-700">
+            <li>All leads, contacts, and conversations will be deleted.</li>
+            <li>All vector knowledge chunks & documents will be erased.</li>
+            <li>All users and team member credentials will be revoked.</li>
+            <li>Subscriptions and payment history will be unlinked.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#e7e5de]">
+        <button type="button" onclick="closeModal('delete-company-modal')" class="btn-secondary btn-sm text-xs py-1.5 px-3">Cancel</button>
+        <button type="button" id="confirm-delete-company-btn" onclick="CuboidDashboard.executeDeleteCompany()" class="btn-sm text-xs py-1.5 px-4 bg-red-600 hover:bg-red-700 text-white rounded-[4px] font-medium flex items-center gap-1.5">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Delete Organization</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js?v=4.2"></script>
+  <script src="../js/dashboard.js?v=4.2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       CuboidShell.initSuperAdmin('companies', 'Tenant Directory', ['Business']);

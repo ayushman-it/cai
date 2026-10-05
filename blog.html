@@ -474,14 +474,21 @@
 
     /* Search Bar Inline Form (Intercom style) */
     .c-search-bar-inline {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.25s ease, opacity 0.25s ease;
-      opacity: 0;
+      display: none;
+      transition: all 0.2s ease;
     }
     .c-search-bar-inline.open {
-      max-height: 70px;
-      opacity: 1;
+      display: block;
+    }
+
+    /* Desktop Dropdown Touch & Hover Support */
+    .nav-item.open .nav-dropdown,
+    .nav-item:hover .nav-dropdown,
+    .nav-item:focus-within .nav-dropdown {
+      opacity: 1 !important;
+      visibility: visible !important;
+      pointer-events: auto !important;
+      transform: translateX(-50%) translateY(2px) !important;
     }
   </style>
 </head>
@@ -492,15 +499,15 @@
 
   <!-- Intercom Site Header (c-site-header) -->
   <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-intercom-border transition-all duration-200">
-    <div class="max-w-[1360px] mx-auto px-6 lg:px-10 h-[72px] flex items-center justify-between">
+    <div class="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-10 h-[64px] sm:h-[72px] flex items-center justify-between gap-2">
       
       <!-- Brand Logo / Wordmark -->
-      <div class="flex items-center gap-6">
-        <a href="index.html" class="flex items-center gap-2.5 text-black group" aria-label="CuboidPilot Home">
-          <div class="w-8 h-8 flex items-center justify-center transition-transform duration-200 group-hover:scale-95">
+      <div class="flex items-center gap-4 sm:gap-6 min-w-0">
+        <a href="index.html" class="flex items-center gap-2 sm:gap-2.5 text-black group shrink-0" aria-label="CuboidPilot Home">
+          <div class="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-transform duration-200 group-hover:scale-95">
             <img src="assets/logo-black.png" alt="CuboidPilot" class="w-full h-full object-contain">
           </div>
-          <span class="text-[20px] font-bold tracking-tight text-black">CuboidPilot</span>
+          <span class="text-[18px] sm:text-[20px] font-bold tracking-tight text-black">CuboidPilot</span>
         </a>
 
         <span class="hidden sm:inline-block h-4 w-px bg-stone-300"></span>
@@ -511,7 +518,7 @@
         </a>
 
         <!-- Desktop Navigation with Sleek Dropdowns -->
-        <nav class="hidden xl:flex items-center gap-2 text-[14px] font-medium text-stone-700 ml-4">
+        <nav class="hidden lg:flex items-center gap-2 text-[14px] font-medium text-stone-700 ml-4">
           
           <!-- Product Dropdown -->
           <div class="relative nav-item py-4">
@@ -645,12 +652,15 @@
       </div>
 
       <!-- Header Actions Right (Search, Log in, Demo, Free Trial) -->
-      <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <!-- Intercom Language Switcher Container -->
+        <div id="cp-blog-header-lang" class="hidden sm:inline-block"></div>
+
         <!-- Search Trigger Button (Intercom Style) -->
         <button 
           id="header-search-toggle" 
           aria-label="Toggle search" 
-          class="flex items-center gap-2 px-3 py-1.5 rounded-full text-stone-600 hover:text-black hover:bg-stone-100 transition-colors text-[13.5px] font-medium"
+          class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-stone-600 hover:text-black hover:bg-stone-100 transition-colors text-[13px] font-medium"
         >
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="11" cy="11" r="8"></circle>
@@ -665,13 +675,13 @@
           View demo
         </a>
 
-        <a href="signup.html" class="px-4 py-2 bg-black hover:bg-stone-800 text-white text-[13.5px] font-semibold rounded-full transition-all shadow-sm">
+        <a href="signup.php" class="hidden sm:inline-flex items-center px-4 py-2 bg-black hover:bg-stone-800 text-white text-[13.5px] font-semibold rounded-full transition-all shadow-sm whitespace-nowrap">
           Start free trial
         </a>
 
         <!-- Mobile Hamburger Button -->
-        <button id="mobile-menu-btn" aria-label="Toggle mobile menu" class="lg:hidden p-2 text-black hover:bg-stone-100 rounded-lg transition-colors ml-1">
-          <i data-lucide="menu" class="w-5 h-5"></i>
+        <button id="mobile-menu-btn" aria-label="Toggle mobile menu" class="lg:hidden p-1.5 sm:p-2 text-black hover:bg-stone-100 rounded-lg transition-colors">
+          <i data-lucide="menu" class="w-5 h-5 sm:w-6 sm:h-6"></i>
         </button>
       </div>
     </div>
@@ -694,34 +704,107 @@
     </div>
   </header>
 
-  <!-- Mobile Drawer -->
-  <div id="mobile-drawer" class="fixed inset-0 bg-white z-50 p-6 flex flex-col justify-between hidden lg:hidden">
+  <!-- Mobile Drawer (Full Navigation & No Widget Collision) -->
+  <div id="mobile-drawer" class="fixed inset-0 bg-white z-[2147483647] p-5 sm:p-6 flex flex-col justify-between hidden lg:hidden overflow-y-auto">
     <div>
-      <div class="flex items-center justify-between pb-6 border-b border-intercom-border">
-        <div class="flex items-center gap-2.5">
+      <div class="flex items-center justify-between pb-4 border-b border-intercom-border">
+        <a href="index.html" class="flex items-center gap-2.5">
           <img src="assets/logo-black.png" alt="CuboidPilot" class="w-7 h-7 object-contain">
           <span class="text-[19px] font-bold tracking-tight text-black">CuboidPilot</span>
-        </div>
+        </a>
         <button id="close-mobile-menu" aria-label="Close navigation" class="p-2 text-black hover:bg-stone-100 rounded-lg">
           <i data-lucide="x" class="w-6 h-6"></i>
         </button>
       </div>
-      <div class="py-6 flex flex-col gap-4 text-base font-medium text-black">
-        <a href="why-choose-cai.html" class="font-semibold text-black hover:text-stone-600 transition-colors">Why Choose Cai</a>
-        <a href="index.html#hire-cai" class="hover:text-stone-600 transition-colors">Meet Cai (AI Agent)</a>
-        <a href="index.html#product-journey" class="hover:text-stone-600 transition-colors">Platform</a>
-        <a href="pricing.html" class="hover:text-stone-600 transition-colors">Pricing & Plans</a>
-        <a href="blog.html" class="font-bold text-black flex items-center justify-between">
-          <span>The Cai Blog</span>
-          <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">Active</span>
-        </a>
-        <a href="docs.html" class="hover:text-stone-600 transition-colors">Documentation</a>
+
+      <div class="py-5 space-y-6 text-sm">
+        <!-- Section 1: AI Agent & Platform -->
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2.5">Product & Platform</div>
+          <div class="flex flex-col gap-2 font-medium text-black">
+            <a href="index.html#hire-cai" class="flex items-center gap-2 hover:text-blue-600 transition-colors py-1">
+              <i data-lucide="bot" class="w-4 h-4 text-stone-500"></i>
+              <span>Meet Cai (AI Agent)</span>
+            </a>
+            <a href="why-choose-cai.html" class="flex items-center gap-2 hover:text-blue-600 transition-colors py-1">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+              <span>Why Choose Cai</span>
+            </a>
+            <a href="index.html#product-journey" class="flex items-center gap-2 hover:text-blue-600 transition-colors py-1">
+              <i data-lucide="git-branch" class="w-4 h-4 text-stone-500"></i>
+              <span>Customer Journey &amp; Pipeline</span>
+            </a>
+            <a href="pricing.html" class="flex items-center gap-2 hover:text-blue-600 transition-colors py-1">
+              <i data-lucide="tag" class="w-4 h-4 text-stone-500"></i>
+              <span>Pricing &amp; Plans</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Section 2: Solutions by Industry -->
+        <div class="pt-4 border-t border-stone-100">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2.5">Solutions by Industry</div>
+          <div class="grid grid-cols-2 gap-2 text-xs font-medium text-stone-700">
+            <a href="index.html#industries" class="hover:text-black py-1">Education &amp; Academies</a>
+            <a href="index.html#industries" class="hover:text-black py-1">Healthcare &amp; Clinics</a>
+            <a href="index.html#industries" class="hover:text-black py-1">SaaS &amp; Software</a>
+            <a href="index.html#industries" class="hover:text-black py-1">Real Estate</a>
+            <a href="index.html#industries" class="hover:text-black py-1">E-commerce</a>
+            <a href="index.html#industries" class="hover:text-black py-1">Professional Services</a>
+          </div>
+        </div>
+
+        <!-- Section 3: Resources & Docs -->
+        <div class="pt-4 border-t border-stone-100">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2.5">Resources &amp; Learn</div>
+          <div class="flex flex-col gap-2 font-medium text-black">
+            <a href="blog.html" class="flex items-center justify-between text-black font-semibold py-1">
+              <span class="flex items-center gap-2">
+                <i data-lucide="newspaper" class="w-4 h-4 text-blue-600"></i>
+                <span>The Cai Blog</span>
+              </span>
+              <span class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Active</span>
+            </a>
+            <a href="docs.html" class="flex items-center justify-between hover:text-blue-600 py-1">
+              <span class="flex items-center gap-2">
+                <i data-lucide="book-open" class="w-4 h-4 text-stone-500"></i>
+                <span>Documentation</span>
+              </span>
+              <span class="text-[10px] font-mono bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded border border-stone-200">Docs</span>
+            </a>
+            <a href="docs.html#js-sdk-api" class="flex items-center gap-2 hover:text-blue-600 py-1">
+              <i data-lucide="code" class="w-4 h-4 text-stone-500"></i>
+              <span>JavaScript SDK &amp; API</span>
+            </a>
+            <a href="index.html#faq" class="flex items-center gap-2 hover:text-blue-600 py-1">
+              <i data-lucide="help-circle" class="w-4 h-4 text-stone-500"></i>
+              <span>Frequently Asked Questions</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="pt-6 border-t border-intercom-border flex flex-col gap-3">
-      <a href="signup.html" class="w-full py-3 bg-black text-white text-center font-semibold rounded-full">Start free trial</a>
-      <a href="login.php" class="w-full py-3 border border-stone-300 text-center font-medium rounded-full">Sign in</a>
-      <div class="text-center text-xs text-stone-400 mt-2">© 2026 CuboidPilot Technologies</div>
+
+    <!-- Language Selector in Mobile Drawer -->
+    <div class="py-3 px-1 border-t border-intercom-border flex items-center justify-between">
+      <span class="text-xs font-semibold uppercase text-stone-500 tracking-wider">Region &amp; Language</span>
+      <div id="cp-blog-mobile-lang"></div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="pt-5 border-t border-intercom-border flex flex-col gap-2.5 shrink-0">
+      <a href="signup.php" class="w-full py-3 bg-black hover:bg-stone-800 text-white text-center font-semibold rounded-full text-xs shadow-sm no-underline">
+        Start 14-Day Free Trial ($0)
+      </a>
+      <div class="grid grid-cols-2 gap-2">
+        <a href="login.php" class="w-full py-2.5 border border-stone-300 hover:border-black text-center font-medium rounded-full text-xs no-underline text-stone-800">
+          Sign In
+        </a>
+        <a href="index.html#hero-demo" class="w-full py-2.5 border border-stone-300 hover:border-black text-center font-medium rounded-full text-xs no-underline text-stone-800">
+          View Demo
+        </a>
+      </div>
+      <div class="text-center text-[11px] text-stone-400 mt-1">© 2026 CuboidPilot Technologies Inc.</div>
     </div>
   </div>
 
@@ -845,14 +928,20 @@
           </button>
 
           <!-- Quick Share Buttons -->
-          <div class="flex items-center gap-2">
-            <button onclick="shareArticle('twitter')" title="Share on X" class="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 hover:text-black">
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <button onclick="shareArticle('whatsapp')" title="Share on WhatsApp" class="p-1.5 rounded-full hover:bg-emerald-50 text-stone-600 hover:text-emerald-600 transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+            </button>
+            <button onclick="shareArticle('twitter')" title="Share on X" class="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 hover:text-black transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
             </button>
-            <button onclick="shareArticle('linkedin')" title="Share on LinkedIn" class="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 hover:text-black">
+            <button onclick="shareArticle('linkedin')" title="Share on LinkedIn" class="p-1.5 rounded-full hover:bg-blue-50 text-stone-600 hover:text-blue-700 transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
             </button>
-            <button onclick="shareArticle('copy')" title="Copy link" class="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 hover:text-black">
+            <button onclick="shareArticle('native')" title="Share via Mobile Sheet" class="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 hover:text-black transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+            </button>
+            <button onclick="shareArticle('copy')" title="Copy link" class="p-1.5 rounded-full hover:bg-stone-100 text-stone-600 hover:text-black transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
             </button>
           </div>
@@ -999,7 +1088,10 @@
       </div>
 
       <div class="pt-8 border-t border-intercom-border flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-stone-400">
-        <div>© 2026 CuboidPilot Technologies Inc. All rights reserved.</div>
+        <div class="flex items-center gap-4">
+          <span>© 2026 CuboidPilot Technologies Inc. All rights reserved.</span>
+          <div id="cp-blog-footer-lang"></div>
+        </div>
         <div class="flex items-center gap-6">
           <a href="index.html" class="hover:text-black transition-colors">Home</a>
           <a href="pricing.html" class="hover:text-black transition-colors">Pricing</a>
@@ -1011,7 +1103,7 @@
   </footer>
 
   <!-- CuboidPilot Cai AI Floating Widget -->
-  <script src="widget.js?v=2.7" data-company="cp_live_cuboidsoft" async></script>
+  <script src="widget.js?v=7.0" data-company="cp_live_cuboidsoft" async></script>
 
   <!-- Application Logic -->
   <script>
@@ -1034,18 +1126,55 @@
         mobileDrawer.classList.add('hidden');
       });
     }
+    // Close mobile drawer when clicking any link inside it
+    if (mobileDrawer) {
+      mobileDrawer.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileDrawer.classList.add('hidden');
+        });
+      });
+    }
 
-    // Intercom Search Bar Toggle
+    // Desktop Nav Dropdowns (Click / Touch toggle for tablets & laptops)
+    document.querySelectorAll('.nav-item > button').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const parent = btn.closest('.nav-item');
+        const isOpen = parent.classList.contains('open');
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('open'));
+        if (!isOpen) {
+          parent.classList.add('open');
+        }
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.nav-item')) {
+        document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('open'));
+      }
+    });
+
+    // Intercom Search Bar Toggle & Reader Auto-Switch
     const searchToggleBtn = document.getElementById('header-search-toggle');
     const inlineSearchBar = document.getElementById('inline-search-bar');
     const closeSearchBtn = document.getElementById('close-search-btn');
     const searchInput = document.getElementById('blog-search-input');
 
     if (searchToggleBtn && inlineSearchBar) {
-      searchToggleBtn.addEventListener('click', () => {
+      searchToggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
         inlineSearchBar.classList.toggle('open');
-        if (inlineSearchBar.classList.contains('open') && searchInput) {
-          searchInput.focus();
+        if (inlineSearchBar.classList.contains('open')) {
+          if (searchInput) {
+            searchInput.focus();
+            if (searchInput.value.trim()) {
+              const readerView = document.getElementById('blog-reader-view');
+              if (readerView && !readerView.classList.contains('hidden')) {
+                showIndexView(false);
+              }
+            }
+          }
         }
       });
     }
@@ -1068,19 +1197,40 @@
         if (heading) {
           heading.textContent = (currentCategory === 'all') ? 'All Articles' : link.textContent;
         }
+        // Auto return to index view if in reader mode
+        const readerView = document.getElementById('blog-reader-view');
+        if (readerView && !readerView.classList.contains('hidden')) {
+          showIndexView(false);
+        }
         filterAndRenderBlogs();
       });
     });
 
-    // Search Input with Debounce
+    // Search Input with Debounce & Reader View Auto-Switch
     if (searchInput) {
       let debounceTimer;
       searchInput.addEventListener('input', (e) => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
           searchQuery = e.target.value.trim().toLowerCase();
+          // If searching from reader view, auto return to index view to see results
+          const readerView = document.getElementById('blog-reader-view');
+          if (readerView && !readerView.classList.contains('hidden') && searchQuery) {
+            showIndexView(false);
+          }
           filterAndRenderBlogs();
-        }, 200);
+        }, 150);
+      });
+
+      searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const readerView = document.getElementById('blog-reader-view');
+          if (readerView && !readerView.classList.contains('hidden')) {
+            showIndexView(false);
+          }
+          filterAndRenderBlogs();
+        }
       });
     }
 
@@ -1323,8 +1473,9 @@
 
     // Navigate to Single Article (Reader Mode)
     async function navigateToArticle(slug, pushHistory = true) {
+      window.currentArticleSlug = slug;
       if (pushHistory) {
-        history.pushState({ slug }, '', `blog.html?slug=${encodeURIComponent(slug)}`);
+        history.pushState({ slug }, '', `blog.php?slug=${encodeURIComponent(slug)}`);
       }
 
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1445,8 +1596,9 @@
 
     // Switch back to Directory View
     function showIndexView(pushHistory = true) {
+      window.currentArticleSlug = '';
       if (pushHistory) {
-        history.pushState({}, '', 'blog.html');
+        history.pushState({}, '', 'blog.php');
       }
       document.getElementById('page-title').textContent = 'The Cai Blog — Autonomous AI, Product & Customer Service';
       document.getElementById('blog-reader-view').classList.add('hidden');
@@ -1454,23 +1606,47 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // Social Sharing
+    // Social Sharing with dynamic cover image card URLs
     function shareArticle(network) {
-      const rawUrl = window.location.href;
-      const url = encodeURIComponent(rawUrl);
-      const rawTitle = document.getElementById('reader-title').textContent || document.title;
-      const title = encodeURIComponent(rawTitle);
+      const urlParams = new URLSearchParams(window.location.search);
+      const slug = window.currentArticleSlug || urlParams.get('slug') || '';
+      
+      // Construct canonical absolute article URL pointing to blog.php
+      const origin = window.location.origin;
+      const pathname = window.location.pathname.replace(/\/[^/]*$/, '');
+      const shareUrl = slug 
+        ? `${origin}${pathname}/blog.php?slug=${encodeURIComponent(slug)}` 
+        : `${origin}${pathname}/blog.php`;
+
+      const rawTitle = (document.getElementById('reader-title') ? document.getElementById('reader-title').textContent.trim() : '') || document.title;
+      const rawExcerpt = document.getElementById('reader-excerpt') ? document.getElementById('reader-excerpt').textContent.trim() : '';
+
+      if (network === 'native') {
+        if (navigator.share) {
+          navigator.share({
+            title: rawTitle,
+            text: rawExcerpt || rawTitle,
+            url: shareUrl
+          }).catch(() => {});
+          return;
+        } else {
+          network = 'copy';
+        }
+      }
 
       if (network === 'whatsapp') {
-        const text = encodeURIComponent(`${rawTitle}\n\nRead full story here:\n${rawUrl}`);
+        const text = encodeURIComponent(`*${rawTitle}*\n\n${rawExcerpt ? rawExcerpt + '\n\n' : ''}Read full story:\n${shareUrl}`);
         window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
       } else if (network === 'twitter') {
-        window.open(`https://twitter.com/intent/tweet?url=${url}&text=${title}`, '_blank', 'width=600,height=400');
+        const text = encodeURIComponent(rawTitle);
+        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${text}`, '_blank', 'width=600,height=400');
       } else if (network === 'linkedin') {
-        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, '_blank', 'width=600,height=400');
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`, '_blank', 'width=600,height=400');
+      } else if (network === 'facebook') {
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank', 'width=600,height=400');
       } else if (network === 'copy') {
-        navigator.clipboard.writeText(rawUrl).then(() => {
-          showToast('Link copied to clipboard!');
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showToast('Article link copied to clipboard!');
         }).catch(() => {
           showToast('Could not copy link', true);
         });
@@ -1561,6 +1737,18 @@
         if (matchingLink) {
           matchingLink.click();
         }
+      }
+    });
+  </script>
+
+  <!-- Multilingual Language Switcher -->
+  <script src="js/lang-switcher.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.createLanguageDropdown) {
+        window.createLanguageDropdown('cp-blog-header-lang');
+        window.createLanguageDropdown('cp-blog-mobile-lang');
+        window.createLanguageDropdown('cp-blog-footer-lang', { isFooter: true });
       }
     });
   </script>

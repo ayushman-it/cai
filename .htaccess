@@ -1,0 +1,43 @@
+# CuboidPilot Apache Web Server Security Hardening
+
+# 1. Disable directory browsing
+Options -Indexes
+
+# 2. Block direct access to sensitive extensions and config files
+<FilesMatch "(^\.|\.(sql|env|lock|txt|bak|git|md|yml|yaml|ini|log|sh|bat)$)">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Specifically deny database dumps and prompt files
+<Files "cuboidpilot_fresh.sql">
+    Order allow,deny
+    Deny from all
+</Files>
+<Files "last_user_prompt.txt">
+    Order allow,deny
+    Deny from all
+</Files>
+<Files ".env">
+    Order allow,deny
+    Deny from all
+</Files>
+<Files ".env.example">
+    Order allow,deny
+    Deny from all
+</Files>
+
+# 3. Production Security Headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# 4. Protect PHP Session cookies
+<IfModule mod_php.c>
+    php_value session.cookie_httponly 1
+    php_value session.use_only_cookies 1
+    php_value session.cookie_samesite "Lax"
+</IfModule>

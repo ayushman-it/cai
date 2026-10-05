@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../css/theme.css">
-  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=4.2">
 </head>
 <body class="app-body">
 
@@ -44,28 +44,28 @@
           <!-- Plans Grid (Clean, flat cards, no shadow bloat) -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <!-- Starter Plan -->
+            <!-- Essential Plan -->
             <div class="app-panel space-y-4">
               <div class="flex items-start justify-between">
                 <div>
-                  <h2 class="text-base font-semibold text-stone-900">Starter</h2>
-                  <div class="text-xs text-stone-500">For small clinics, solo consultants</div>
+                  <h2 class="text-base font-semibold text-stone-900">Essential</h2>
+                  <div class="text-xs text-stone-500">For startups, small businesses & solo operators</div>
                 </div>
                 <span class="badge-signal-blue text-[10px]">24 Tenants</span>
               </div>
 
               <div class="pt-2 border-t border-stone-100">
                 <div class="flex items-baseline gap-1">
-                  <span class="text-3xl font-semibold text-stone-900">$49</span>
-                  <span class="text-xs text-stone-500">/ month</span>
+                  <span class="text-3xl font-semibold text-stone-900 font-mono">₹79</span>
+                  <span class="text-xs text-stone-500">/ seat/mo</span>
                 </div>
-                <div class="text-[11px] text-stone-400 mt-0.5">or $490 billed annually</div>
+                <div class="text-[11px] text-stone-400 mt-0.5">billed annually (or ₹99 monthly) • $29 USD</div>
               </div>
 
               <div class="space-y-2 text-xs text-stone-600 pt-2 border-t border-stone-100">
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
-                  <span><strong>500</strong> AI Conversations / mo</span>
+                  <span><strong>₹1</strong> per Cai AI resolved outcome</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
@@ -73,25 +73,25 @@
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
-                  <span>5 Knowledge Base Documents</span>
+                  <span>1 Connected Website Domain</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
-                  <span>Standard WhatsApp Webhook</span>
+                  <span>Shared Inbox & Ticketing System</span>
                 </div>
-                <div class="flex items-center gap-2 text-stone-400">
-                  <i data-lucide="minus" class="w-3.5 h-3.5"></i>
-                  <span>Closing Radar & AI Scoring</span>
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
+                  <span>Public Help Center & Basic Automation</span>
                 </div>
               </div>
 
               <div class="pt-4 border-t border-stone-100 flex items-center justify-between text-xs">
-                <span class="font-mono text-stone-400 text-[10px]">price_1StkStarter</span>
+                <span class="font-mono text-stone-400 text-[10px]">price_1Essential</span>
                 <button class="btn-secondary btn-sm text-xs py-1 px-3">Edit Limits</button>
               </div>
             </div>
 
-            <!-- Growth Plan (Primary) -->
+            <!-- Advanced Plan (Flagship) -->
             <div class="app-panel border-stone-900 space-y-4 relative bg-[#fcfbfa]">
               <div class="absolute -top-2.5 right-4 bg-stone-900 text-white text-[10px] font-semibold px-2 py-0.5 rounded-[3px] uppercase tracking-wider">
                 Flagship Tier (53% Fleet)
@@ -99,92 +99,92 @@
 
               <div class="flex items-start justify-between">
                 <div>
-                  <h2 class="text-base font-semibold text-stone-900">Growth</h2>
-                  <div class="text-xs text-stone-500">For scaling institutes & mid-size businesses</div>
+                  <h2 class="text-base font-semibold text-stone-900">Advanced</h2>
+                  <div class="text-xs text-stone-500">For scaling businesses & growing support teams</div>
                 </div>
                 <span class="badge-signal-green text-[10px]">76 Tenants</span>
               </div>
 
               <div class="pt-2 border-t border-stone-100">
                 <div class="flex items-baseline gap-1">
-                  <span class="text-3xl font-semibold text-stone-900">$149</span>
-                  <span class="text-xs text-stone-500">/ month</span>
+                  <span class="text-3xl font-semibold text-stone-900 font-mono">₹159</span>
+                  <span class="text-xs text-stone-500">/ seat/mo</span>
                 </div>
-                <div class="text-[11px] text-stone-400 mt-0.5">or $1,490 billed annually</div>
+                <div class="text-[11px] text-stone-400 mt-0.5">billed annually (or ₹199 monthly) • $85 USD</div>
               </div>
 
               <div class="space-y-2 text-xs text-stone-700 pt-2 border-t border-stone-100">
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
-                  <span><strong>1,500</strong> AI Conversations / mo</span>
+                  <span><strong>₹1</strong> per Cai AI resolved outcome</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
-                  <span><strong>5</strong> Team Agent Seats</span>
+                  <span><strong>5</strong> Team Seats + <strong>20 Free Lite Seats</strong></span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
-                  <span>25 Knowledge Base Docs + 1 Site Crawl</span>
+                  <span>Workflow Automation Builder</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
-                  <span>Full WhatsApp Cloud API Automation</span>
+                  <span>Multiple Team Inboxes & Round Robin</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-900"></i>
-                  <span>Real-time Closing Radar & Deal Scoring</span>
+                  <span>Private & Multilingual Help Center</span>
                 </div>
               </div>
 
               <div class="pt-4 border-t border-stone-100 flex items-center justify-between text-xs">
-                <span class="font-mono text-stone-400 text-[10px]">price_1StkGrowth</span>
+                <span class="font-mono text-stone-400 text-[10px]">price_1Advanced</span>
                 <button class="btn-primary btn-sm text-xs py-1 px-3">Edit Limits</button>
               </div>
             </div>
 
-            <!-- Scale Pro Plan -->
+            <!-- Expert Plan -->
             <div class="app-panel space-y-4">
               <div class="flex items-start justify-between">
                 <div>
-                  <h2 class="text-base font-semibold text-stone-900">Scale Pro</h2>
-                  <div class="text-xs text-stone-500">For multi-location & high volume organizations</div>
+                  <h2 class="text-base font-semibold text-stone-900">Expert</h2>
+                  <div class="text-xs text-stone-500">For large support teams, HIPAA & enterprise security</div>
                 </div>
                 <span class="badge-signal-purple text-[10px]">38 Tenants</span>
               </div>
 
               <div class="pt-2 border-t border-stone-100">
                 <div class="flex items-baseline gap-1">
-                  <span class="text-3xl font-semibold text-stone-900">$349</span>
-                  <span class="text-xs text-stone-500">/ month</span>
+                  <span class="text-3xl font-semibold text-stone-900 font-mono">₹279</span>
+                  <span class="text-xs text-stone-500">/ seat/mo</span>
                 </div>
-                <div class="text-[11px] text-stone-400 mt-0.5">or $3,490 billed annually</div>
+                <div class="text-[11px] text-stone-400 mt-0.5">billed annually (or ₹349 monthly) • $349 USD</div>
               </div>
 
               <div class="space-y-2 text-xs text-stone-600 pt-2 border-t border-stone-100">
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
-                  <span><strong>5,000</strong> AI Conversations / mo</span>
+                  <span><strong>₹1</strong> per Cai AI resolved outcome</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
-                  <span><strong>15</strong> Team Agent Seats</span>
+                  <span><strong>10</strong> Team Seats + <strong>50 Free Lite Seats</strong></span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
-                  <span>Unlimited Docs + Auto Re-indexing</span>
+                  <span>SAML SSO, HIPAA & SOC2 Support</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
-                  <span>High-Throughput WhatsApp Queue</span>
+                  <span>Service Level Agreements (SLAs)</span>
                 </div>
                 <div class="flex items-center gap-2">
                   <i data-lucide="check" class="w-3.5 h-3.5 text-stone-800"></i>
-                  <span>Dedicated Webhook Endpoints & SLA</span>
+                  <span>24/7 Dedicated Concierge Support</span>
                 </div>
               </div>
 
               <div class="pt-4 border-t border-stone-100 flex items-center justify-between text-xs">
-                <span class="font-mono text-stone-400 text-[10px]">price_1StkScale</span>
+                <span class="font-mono text-stone-400 text-[10px]">price_1Expert</span>
                 <button class="btn-secondary btn-sm text-xs py-1 px-3">Edit Limits</button>
               </div>
             </div>
@@ -200,47 +200,47 @@
               <thead>
                 <tr>
                   <th>Capability</th>
-                  <th>Starter ($49)</th>
-                  <th>Growth ($149)</th>
-                  <th>Scale Pro ($349)</th>
-                  <th>Overage Fee</th>
+                  <th>Essential (₹79 / $23)</th>
+                  <th>Advanced (₹159 / $68)</th>
+                  <th>Expert (₹279 / $279)</th>
+                  <th>Cai AI Standalone</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td class="font-medium text-stone-900">Additional 100 AI Chats</td>
-                  <td>$12.00</td>
-                  <td>$9.00</td>
-                  <td>$6.00</td>
-                  <td>Metered end-of-month</td>
+                  <td class="font-medium text-stone-900">Cai AI Outcome Resolution</td>
+                  <td class="font-mono font-semibold">₹1 ($0.99)</td>
+                  <td class="font-mono font-semibold">₹1 ($0.99)</td>
+                  <td class="font-mono font-semibold">₹1 ($0.99)</td>
+                  <td class="font-mono font-semibold">₹1 ($0.99)</td>
                 </tr>
                 <tr>
-                  <td class="font-medium text-stone-900">Extra Team Seat</td>
-                  <td>$15 / seat / mo</td>
-                  <td>$12 / seat / mo</td>
-                  <td>$10 / seat / mo</td>
-                  <td>Prorated addition</td>
+                  <td class="font-medium text-stone-900">Included Free Lite Seats</td>
+                  <td>—</td>
+                  <td>20 Lite seats</td>
+                  <td>50 Lite seats</td>
+                  <td>Unlimited CRM</td>
                 </tr>
                 <tr>
-                  <td class="font-medium text-stone-900">Claude 3.5 Sonnet Grounding</td>
-                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
-                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
-                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
-                  <td>N/A</td>
+                  <td class="font-medium text-stone-900">Connected Websites / Domains</td>
+                  <td>1 domain</td>
+                  <td>3 domains</td>
+                  <td>5 domains</td>
+                  <td>Embed API</td>
                 </tr>
                 <tr>
-                  <td class="font-medium text-stone-900">Automated Pipeline Triggers</td>
-                  <td>3 Active Rules</td>
-                  <td>15 Active Rules</td>
-                  <td>Unlimited</td>
-                  <td>Tier upgrade required</td>
+                  <td class="font-medium text-stone-900">Workflow Automation Builder</td>
+                  <td>Basic Triggers</td>
+                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
+                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
+                  <td>Via Zapier / Webhooks</td>
                 </tr>
                 <tr>
-                  <td class="font-medium text-stone-900">Custom Branding Removal</td>
-                  <td>Add $19/mo</td>
-                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
-                  <td><span class="text-emerald-700 font-semibold">Included</span></td>
-                  <td>Toggle in tenant settings</td>
+                  <td class="font-medium text-stone-900">SAML SSO & Security Compliance</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td><span class="text-emerald-700 font-semibold">HIPAA / SOC2 / SSO</span></td>
+                  <td>Enterprise SSO</td>
                 </tr>
               </tbody>
             </table>
@@ -302,8 +302,8 @@
     </div>
   </div>
 
-  <script src="../js/components.js"></script>
-  <script src="../js/dashboard.js"></script>
+  <script src="../js/components.js?v=4.2"></script>
+  <script src="../js/dashboard.js?v=4.2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       CuboidShell.initSuperAdmin('plans', 'Plans & Tiers', ['Revenue']);

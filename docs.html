@@ -3,8 +3,54 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Documentation & Onboarding Guide — CuboidPilot</title>
+  <title>Documentation & Onboarding Guide — CuboidPilot & Cai AI</title>
   <meta name="description" content="Complete documentation and step-by-step onboarding guide for CuboidPilot and Cai AI Agent. Learn how to connect your business, train knowledge documents, embed the web widget, and sync WhatsApp Cloud API.">
+  <meta name="keywords" content="CuboidPilot documentation, Cai AI setup, AI customer support guide, WhatsApp Cloud API onboarding, customer service automation docs">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://cai.cuboidsoft.in/docs.html">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111111">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="CuboidPilot">
+  <meta property="og:title" content="Documentation & Onboarding Guide — CuboidPilot & Cai AI">
+  <meta property="og:description" content="Step-by-step guide to deploying Cai AI Agent across Web Chat, WhatsApp, Knowledge Base training, and human-in-the-loop workflows.">
+  <meta property="og:url" content="https://cai.cuboidsoft.in/docs.html">
+  <meta property="og:image" content="https://cai.cuboidsoft.in/assets/login-blog-banner.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@cuboidpilot">
+  <meta name="twitter:title" content="Documentation & Onboarding Guide — CuboidPilot & Cai AI">
+  <meta name="twitter:description" content="Step-by-step guide to deploying Cai AI Agent across Web Chat, WhatsApp, Knowledge Base training, and human-in-the-loop workflows.">
+  <meta name="twitter:image" content="https://cai.cuboidsoft.in/assets/login-blog-banner.png">
+
+  <!-- Schema.org TechArticle JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "CuboidPilot & Cai AI Agent Setup Documentation",
+    "description": "Complete setup and onboarding guide for deploying Cai AI customer service agent, integrating WhatsApp, and training custom knowledge bases.",
+    "url": "https://cai.cuboidsoft.in/docs.html",
+    "image": "https://cai.cuboidsoft.in/assets/login-blog-banner.png",
+    "author": {
+      "@type": "Organization",
+      "name": "CuboidPilot"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "CuboidPilot",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://cai.cuboidsoft.in/assets/logo-black.png"
+      }
+    }
+  }
+  </script>
 
   <!-- Inter & JetBrains Mono Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -347,6 +393,21 @@
                 Client JavaScript SDK
               </a>
             </li>
+            <li>
+              <a href="#channels-integrations" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                Channels &amp; Integrations
+              </a>
+            </li>
+            <li>
+              <a href="#crm-sheets-sync" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                CRMs &amp; Google Sheets
+              </a>
+            </li>
+            <li>
+              <a href="#webhooks-api" class="mobile-nav-link block px-2 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-100">
+                Webhooks &amp; Events API
+              </a>
+            </li>
           </ul>
         </div>
 
@@ -478,6 +539,21 @@
             <li>
               <a href="#js-sdk-api" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
                 Client JavaScript SDK
+              </a>
+            </li>
+            <li>
+              <a href="#channels-integrations" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                Channels &amp; Integrations
+              </a>
+            </li>
+            <li>
+              <a href="#crm-sheets-sync" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                CRMs &amp; Google Sheets
+              </a>
+            </li>
+            <li>
+              <a href="#webhooks-api" class="nav-sidebar-link block px-2.5 py-1.5 rounded-[2px] text-stone-600 hover:bg-stone-200/60 transition-colors">
+                Webhooks &amp; Events API
               </a>
             </li>
           </ul>
@@ -773,7 +849,7 @@
           </div>
           <pre id="embed-snippet-1" class="p-3 sm:p-4 font-mono text-[11px] sm:text-xs overflow-x-auto leading-relaxed text-emerald-400"><code>&lt;!-- CuboidPilot Cai AI Agent Widget --&gt;
 &lt;script 
-  src="https://cai.cuboidsoft.in/widget.js" 
+  src="https://cai.cuboidsoft.in/widget.js?v=5.6" 
   data-company="cp_live_cuboidsoft" 
   data-color="#111111" 
   data-position="right"
@@ -964,6 +1040,295 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
         </div>
       </section>
 
+      <!-- CHANNELS & EXTERNAL INTEGRATIONS -->
+      <section id="channels-integrations" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Channels &amp; Integrations Architecture
+        </h2>
+        <p>
+          CuboidPilot provides a dedicated management hub at <a href="app/channels.html" class="underline font-medium text-stone-900"><code>app/channels.html</code></a> allowing clients and developers to connect messaging endpoints, calendar scheduling services, transactional email, Google Sheets, and external CRMs with zero vendor lock-in.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-5">
+          <!-- WhatsApp Business -->
+          <div class="p-4 border border-[#e7e5de] bg-white rounded-[4px] shadow-2xs space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-stone-900 text-xs flex items-center gap-1.5">
+                <i data-lucide="message-circle" class="w-4 h-4 text-[#25D366]"></i> WhatsApp Business (Meta Cloud API)
+              </span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-emerald-50 text-emerald-800 rounded border border-emerald-200">2-Way Sync</span>
+            </div>
+            <p class="text-xs text-stone-600 leading-relaxed m-0">
+              Integrates with Meta's official WhatsApp Business Cloud API. Supports bi-directional incoming inquiries, template notifications, interactive buttons, and media messages.
+            </p>
+            <div class="p-2 bg-stone-50 rounded border border-stone-200 text-[11px] font-mono text-stone-700">
+              <strong>Callback URL:</strong> <code>https://cai.cuboidsoft.in/api/whatsapp_webhook.php</code><br>
+              <strong>Required Scopes:</strong> <code>whatsapp_business_messaging</code>, <code>whatsapp_business_management</code>
+            </div>
+          </div>
+
+          <!-- Instagram DMs -->
+          <div class="p-4 border border-[#e7e5de] bg-white rounded-[4px] shadow-2xs space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-stone-900 text-xs flex items-center gap-1.5">
+                <i data-lucide="instagram" class="w-4 h-4 text-rose-500"></i> Instagram Direct Messages (Graph API)
+              </span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-rose-50 text-rose-800 rounded border border-rose-200">Social CRM</span>
+            </div>
+            <p class="text-xs text-stone-600 leading-relaxed m-0">
+              Automatically qualifies prospects who DM your business or reply to stories. Syncs inquiries into the unified Cai inbox in real time.
+            </p>
+            <div class="p-2 bg-stone-50 rounded border border-stone-200 text-[11px] font-mono text-stone-700">
+              <strong>Callback URL:</strong> <code>https://cai.cuboidsoft.in/api/instagram_webhook.php</code><br>
+              <strong>Webhook Fields:</strong> <code>messages</code>, <code>messaging_postbacks</code>
+            </div>
+          </div>
+
+          <!-- Google Calendar & Meet -->
+          <div class="p-4 border border-[#e7e5de] bg-white rounded-[4px] shadow-2xs space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-stone-900 text-xs flex items-center gap-1.5">
+                <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i> Google Calendar &amp; Meet
+              </span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-blue-50 text-blue-800 rounded border border-blue-200">Auto Booking</span>
+            </div>
+            <p class="text-xs text-stone-600 leading-relaxed m-0">
+              Performs real-time free/busy conflict checking against counselor calendars and automatically creates Google Meet links upon meeting booking.
+            </p>
+            <div class="p-2 bg-stone-50 rounded border border-stone-200 text-[11px] font-mono text-stone-700">
+              <strong>Redirect URI:</strong> <code>https://cai.cuboidsoft.in/api/google_callback.php</code><br>
+              <strong>Scopes:</strong> <code>https://www.googleapis.com/auth/calendar.events</code>
+            </div>
+          </div>
+
+          <!-- Transactional Email -->
+          <div class="p-4 border border-[#e7e5de] bg-white rounded-[4px] shadow-2xs space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-stone-900 text-xs flex items-center gap-1.5">
+                <i data-lucide="mail" class="w-4 h-4 text-amber-600"></i> Transactional Email (SMTP)
+              </span>
+              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-amber-50 text-amber-800 rounded border border-amber-200">Instant Alert</span>
+            </div>
+            <p class="text-xs text-stone-600 leading-relaxed m-0">
+              Sends immediate email notifications to sales reps upon high-intent qualification, and dispatches conversation summaries to clients via standard SMTP.
+            </p>
+            <div class="p-2 bg-stone-50 rounded border border-stone-200 text-[11px] font-mono text-stone-700">
+              <strong>Supported Ports:</strong> 587 (TLS), 465 (SSL), 25<br>
+              <strong>Compatible:</strong> SendGrid, Postmark, AWS SES, Google Workspace
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CRMS & GOOGLE SHEETS SYNC -->
+      <section id="crm-sheets-sync" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          External CRM Pipelines &amp; Google Sheets
+        </h2>
+        <p>
+          Clients use different CRM software for sales and lead follow-up. CuboidPilot provides modular adapters so you can synchronize captured leads into whichever CRM your team already uses:
+        </p>
+
+        <!-- CRM Comparison Table -->
+        <div class="overflow-x-auto my-4 border border-[#e7e5de] rounded-[4px]">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-[#fbfaf6] border-b border-[#e7e5de] text-stone-700 font-semibold font-mono">
+              <tr>
+                <th class="p-3">Platform</th>
+                <th class="p-3">Method</th>
+                <th class="p-3">Target Objects</th>
+                <th class="p-3">Sync Speed</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#f0ede6] text-stone-600">
+              <tr>
+                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="phone-call" class="w-3.5 h-3.5 text-purple-600"></i> TeleCRM (TellyCRM)</td>
+                <td class="p-3 font-mono text-[11px]">API Key / REST</td>
+                <td class="p-3">Leads + Caller Assignment Tags</td>
+                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 150ms</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="briefcase" class="w-3.5 h-3.5 text-red-600"></i> Zoho CRM</td>
+                <td class="p-3 font-mono text-[11px]">OAuth 2.0 Refresh Token</td>
+                <td class="p-3">Leads &amp; Contacts Modules (zoho.in / zoho.com)</td>
+                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 300ms</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="activity" class="w-3.5 h-3.5 text-orange-600"></i> HubSpot CRM</td>
+                <td class="p-3 font-mono text-[11px]">Private App Access Token</td>
+                <td class="p-3">Contacts &amp; Deal Pipelines</td>
+                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 250ms</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="cloud" class="w-3.5 h-3.5 text-sky-600"></i> Salesforce CRM</td>
+                <td class="p-3 font-mono text-[11px]">Connected App / REST</td>
+                <td class="p-3">Lead &amp; Opportunity Standard Objects</td>
+                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 400ms</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="sheet" class="w-3.5 h-3.5 text-emerald-600"></i> Google Sheets</td>
+                <td class="p-3 font-mono text-[11px]">Apps Script Webhook</td>
+                <td class="p-3">Real-time row appending (Spreadsheet)</td>
+                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 200ms</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Ready to paste Google Apps Script snippet -->
+        <h3 id="google-sheets-apps-script" class="text-sm font-semibold text-stone-900 mt-6 mb-2">
+          Google Sheets Apps Script Receiver (Ready-to-Paste)
+        </h3>
+        <p class="text-xs text-stone-600">
+          In your Google Sheet, open <strong>Extensions &gt; Apps Script</strong>, paste this code, and click <strong>Deploy &gt; New deployment &gt; Web app</strong> (Access: <em>Anyone</em>):
+        </p>
+
+        <div class="border border-stone-800 rounded-[3px] bg-stone-900 text-stone-200 overflow-hidden my-4">
+          <div class="px-3.5 py-2 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
+            <span class="font-mono text-[11px] text-stone-400">Google Apps Script (Code.gs)</span>
+            <button onclick="copyCode('apps-script-snippet', this)" class="text-xs text-stone-300 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>Copy</span>
+            </button>
+          </div>
+          <pre id="apps-script-snippet" class="p-3 sm:p-4 font-mono text-[11px] overflow-x-auto leading-relaxed text-emerald-400"><code>function doPost(e) {
+  try {
+    var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    var payload = JSON.parse(e.postData.contents);
+    var data = payload.data || {};
+
+    // Auto-create column headers if sheet is blank
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(["Timestamp", "Lead Name", "Phone", "Email", "Intent Score", "Summary", "Source"]);
+      sheet.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#f3f4f6");
+    }
+
+    // Append lead row
+    sheet.appendRow([
+      new Date().toISOString(),
+      data.name || "Anonymous Visitor",
+      data.phone || "",
+      data.email || "",
+      data.intent_score || "Tier 3",
+      data.summary || "",
+      payload.source || "Website Widget"
+    ]);
+
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", row: sheet.getLastRow() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</code></pre>
+        </div>
+      </section>
+
+      <!-- UNIVERSAL OUTBOUND WEBHOOKS & EVENTS API -->
+      <section id="webhooks-api" class="mb-14 sm:mb-16">
+        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
+          Universal Outbound Webhooks &amp; Events Specification
+        </h2>
+        <p>
+          Configure custom HTTP POST webhooks in <a href="app/channels.html" class="underline font-medium text-stone-900"><code>app/channels.html</code></a> to stream real-time events to your proprietary backend, AWS Lambda, Zapier, or Make. Every webhook request includes an <code>X-Cuboid-Signature</code> header generated via HMAC-SHA256 for cryptographic authentication.
+        </p>
+
+        <!-- Webhook Headers -->
+        <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] my-4 text-xs font-mono space-y-1 text-stone-700">
+          <div><strong>POST</strong> <code>https://api.yourdomain.com/cai/webhook</code></div>
+          <div><strong>Content-Type:</strong> <code>application/json</code></div>
+          <div><strong>User-Agent:</strong> <code>CuboidPilot-Webhook-Agent/2.0</code></div>
+          <div><strong>X-Cuboid-Event:</strong> <code>lead.qualified</code></div>
+          <div><strong>X-Cuboid-Signature:</strong> <code>sha256=d5b4a9f3...</code> (Hex digest)</div>
+          <div><strong>X-Cuboid-Timestamp:</strong> <code>1768924000</code></div>
+        </div>
+
+        <!-- Verification Sample Code -->
+        <h3 class="text-sm font-semibold text-stone-900 mt-6 mb-2">
+          Verifying Webhook Signatures (Node.js &amp; PHP)
+        </h3>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 my-4">
+          <!-- Node.js Verification -->
+          <div class="border border-stone-800 rounded-[3px] bg-stone-900 text-stone-200 overflow-hidden">
+            <div class="px-3.5 py-2 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
+              <span class="font-mono text-[11px] text-stone-400">Node.js (Express)</span>
+              <button onclick="copyCode('verify-node-snippet', this)" class="text-xs text-stone-300 hover:text-white inline-flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre id="verify-node-snippet" class="p-3 font-mono text-[11px] overflow-x-auto leading-relaxed text-emerald-400"><code>const crypto = require('crypto');
+
+function verifySignature(req, signingSecret) {
+  const signature = req.headers['x-cuboid-signature'];
+  const expected = 'sha256=' + crypto
+    .createHmac('sha256', signingSecret)
+    .update(req.rawBody)
+    .digest('hex');
+
+  return crypto.timingSafeEqual(
+    Buffer.from(signature || ''),
+    Buffer.from(expected)
+  );
+}</code></pre>
+          </div>
+
+          <!-- PHP Verification -->
+          <div class="border border-stone-800 rounded-[3px] bg-stone-900 text-stone-200 overflow-hidden">
+            <div class="px-3.5 py-2 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
+              <span class="font-mono text-[11px] text-stone-400">PHP</span>
+              <button onclick="copyCode('verify-php-snippet', this)" class="text-xs text-stone-300 hover:text-white inline-flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre id="verify-php-snippet" class="p-3 font-mono text-[11px] overflow-x-auto leading-relaxed text-emerald-400"><code>$secret = 'whsec_your_signing_secret';
+$rawPayload = file_get_contents('php://input');
+$signature = $_SERVER['HTTP_X_CUBOID_SIGNATURE'] ?? '';
+
+$expected = 'sha256=' . hash_hmac('sha256', $rawPayload, $secret);
+
+if (!hash_equals($expected, $signature)) {
+    http_response_code(401);
+    die('Signature verification failed');
+}</code></pre>
+          </div>
+        </div>
+
+        <!-- Sample JSON Payload -->
+        <h3 class="text-sm font-semibold text-stone-900 mt-6 mb-2">
+          Sample Event Payload (<code>lead.qualified</code>)
+        </h3>
+
+        <div class="border border-stone-800 rounded-[3px] bg-stone-900 text-stone-200 overflow-hidden my-4">
+          <div class="px-3.5 py-2 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
+            <span class="font-mono text-[11px] text-stone-400">JSON Payload</span>
+            <button onclick="copyCode('payload-json-snippet', this)" class="text-xs text-stone-300 hover:text-white inline-flex items-center gap-1.5 cursor-pointer">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+              <span>Copy</span>
+            </button>
+          </div>
+          <pre id="payload-json-snippet" class="p-3 font-mono text-[11px] overflow-x-auto leading-relaxed text-amber-300"><code>{
+  "event": "lead.qualified",
+  "id": "evt_983147891234",
+  "created_at": "2026-10-04T05:30:00Z",
+  "company_id": 1,
+  "data": {
+    "lead_id": 482,
+    "name": "Priya Sharma",
+    "phone": "+919876543210",
+    "email": "priya@zenithcorp.in",
+    "intent_score": "Tier 1 (High Commercial Intent)",
+    "intent_confidence": 0.94,
+    "summary": "Inquired regarding Enterprise Plan deployment, requested demo for 25 seats.",
+    "channel": "widget",
+    "conversation_id": "conv_89127"
+  }
+}</code></pre>
+        </div>
+      </section>
+
       <!-- Bottom Next Steps Navigation -->
       <div class="pt-8 border-t border-[#e7e5de] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -1000,6 +1365,9 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
         <li><a href="#live-takeover" class="hover:text-black transition-colors block">Live Chat Takeover</a></li>
         <li><a href="#closing-radar" class="hover:text-black transition-colors block">Closing Radar</a></li>
         <li><a href="#js-sdk-api" class="hover:text-black transition-colors block">JavaScript SDK</a></li>
+        <li><a href="#channels-integrations" class="hover:text-black transition-colors block">Channels &amp; Integrations</a></li>
+        <li><a href="#crm-sheets-sync" class="hover:text-black transition-colors block">CRMs &amp; Sheets Sync</a></li>
+        <li><a href="#webhooks-api" class="hover:text-black transition-colors block">Webhooks &amp; Events</a></li>
       </ul>
     </aside>
 

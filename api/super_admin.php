@@ -25,7 +25,7 @@ $uStmt = $pdo->prepare("SELECT is_super_admin, role FROM `users` WHERE id = ? LI
 $uStmt->execute([$userId]);
 $user = $uStmt->fetch();
 
-if (!$user || (empty($user['is_super_admin']) && $user['role'] !== 'owner')) {
+if (!$user || empty($user['is_super_admin']) || (int)$user['is_super_admin'] !== 1) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Super admin authorization required']);
     exit;
@@ -371,6 +371,213 @@ try {
             echo json_encode([
                 'success' => true, 
                 'message' => 'Executive LinkedIn URLs and team profiles updated successfully!'
+            ]);
+            break;
+
+        case 'delete_company':
+            $rawInput = file_get_contents('php://input');
+            $data = json_decode($rawInput, true) ?? $_POST;
+            $delCompanyId = (int)($data['company_id'] ?? ($_GET['company_id'] ?? 0));
+
+            if ($delCompanyId <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Valid company ID required.']);
+                exit;
+            }
+
+            // Protect primary system company (e.g. ID 3 / CuboidSoft or active admin session)
+            if ($delCompanyId === 3 || (!empty($_SESSION['company_id']) && $delCompanyId === (int)$_SESSION['company_id'] && $delCompanyId === 3)) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Cannot delete the primary platform administration organization (CuboidSoft).']);
+                exit;
+            }
+
+            // Verify company exists
+            $chkStmt = $pdo->prepare("SELECT id, name FROM `companies` WHERE `id` = ? LIMIT 1");
+            $chkStmt->execute([$delCompanyId]);
+            $compToDelete = $chkStmt->fetch();
+
+            if (!$compToDelete) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Organization not found.']);
+                exit;
+            }
+
+            $pdo->beginTransaction();
+
+            // 1. Delete messages
+            try {
+                $pdo->prepare("
+                    DELETE m FROM `messages` m
+                    INNER JOIN `conversations` c ON c.id = m.conversation_id
+                    WHERE c.company_id = ?
+                ")->execute([$delCompanyId]);
+            } catch (Exception $ex) {}
+
+            // 2. Delete conversations
+            try { $pdo->prepare("DELETE FROM `conversations` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+
+            // 3. Delete lead events & leads
+            try { $pdo->prepare("DELETE FROM `lead_events` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+            try { $pdo->prepare("DELETE FROM `leads` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+
+            // 4. Delete installments & customers
+            try { $pdo->prepare("DELETE FROM `installments` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+            try { $pdo->prepare("DELETE FROM `customers` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+
+            // 5. Delete whatsapp records
+            try { $pdo->prepare("DELETE FROM `whatsapp_messages` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+            try { $pdo->prepare("DELETE FROM `whatsapp_handoffs` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+            try { $pdo->prepare("DELETE FROM `whatsapp_accounts` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+
+            // 6. Delete knowledge, widget settings, pipeline stages
+            try { $pdo->prepare("DELETE FROM `knowledge_sources` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+            try { $pdo->prepare("DELETE FROM `widget_settings` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+            try { $pdo->prepare("DELETE FROM `pipeline_stages` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+
+            // 7. Delete billing / subscriptions / payments
+            try { $pdo->prepare("DELETE FROM `payments` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+            try { $pdo->prepare("DELETE FROM `subscriptions` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+
+            // 8. Delete users
+            try { $pdo->prepare("DELETE FROM `users` WHERE `company_id` = ?")->execute([$delCompanyId]); } catch (Exception $ex) {}
+
+            // 9. Delete company record itself
+            $pdo->prepare("DELETE FROM `companies` WHERE `id` = ?")->execute([$delCompanyId]);
+
+            $pdo->commit();
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Organization '{$compToDelete['name']}' (ID: {$delCompanyId}) and all associated records have been permanently deleted."
+            ]);
+            break;
+
+        case 'export_companies':
+            $stmt = $pdo->query("
+                SELECT c.id, c.name, c.slug, c.status, c.plan_tier, c.created_at,
+                       u.name as owner_name, u.email as owner_email,
+                       (SELECT COUNT(*) FROM leads WHERE company_id = c.id) as leads_count,
+                       (SELECT COUNT(*) FROM conversations WHERE company_id = c.id) as convs_count
+                FROM `companies` c
+                LEFT JOIN `users` u ON u.company_id = c.id AND u.role = 'owner'
+                ORDER BY c.id DESC
+            ");
+            $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            header('Content-Type: text/csv; charset=utf-8');
+            header('Content-Disposition: attachment; filename=cuboidpilot_companies_' . date('Y-m-d') . '.csv');
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['Company ID', 'Name', 'Slug', 'Plan Tier', 'Status', 'Owner Name', 'Owner Email', 'Leads', 'Conversations', 'Created Date']);
+            foreach ($rows as $r) {
+                fputcsv($out, [
+                    $r['id'], $r['name'], $r['slug'], $r['plan_tier'] ?: 'growth', $r['status'],
+                    $r['owner_name'], $r['owner_email'], $r['leads_count'], $r['convs_count'], $r['created_at']
+                ]);
+            }
+            fclose($out);
+            exit;
+
+        // Resume / Activate Workspace (Unlocks workspace immediately)
+        case 'resume_company':
+            $rawInput = file_get_contents('php://input');
+            $data = json_decode($rawInput, true) ?? $_POST;
+            $resCompanyId = (int)($data['company_id'] ?? ($_GET['company_id'] ?? 0));
+
+            if ($resCompanyId <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Valid company ID required']);
+                exit;
+            }
+
+            // Set company to active, extend trial/subscription dates by 30 days
+            $pdo->prepare("
+                UPDATE `companies`
+                SET `status` = 'active',
+                    `trial_ends_at` = DATE_ADD(NOW(), INTERVAL 30 DAY),
+                    `updated_at` = NOW()
+                WHERE id = ?
+            ")->execute([$resCompanyId]);
+
+            // Ensure subscription record is active
+            $subStmt = $pdo->prepare("SELECT id FROM `subscriptions` WHERE `company_id` = ? LIMIT 1");
+            $subStmt->execute([$resCompanyId]);
+            $subId = $subStmt->fetchColumn();
+
+            if ($subId) {
+                $pdo->prepare("
+                    UPDATE `subscriptions`
+                    SET `status` = 'active',
+                        `current_period_end` = DATE_ADD(NOW(), INTERVAL 30 DAY),
+                        `updated_at` = NOW()
+                    WHERE id = ?
+                ")->execute([$subId]);
+            } else {
+                $pId = (int)$pdo->query("SELECT id FROM `plans` WHERE `code` = 'growth' LIMIT 1")->fetchColumn() ?: 2;
+                $pdo->prepare("
+                    INSERT INTO `subscriptions`
+                    (`company_id`, `plan_id`, `status`, `amount_inr`, `current_period_start`, `current_period_end`, `created_at`, `updated_at`)
+                    VALUES (?, ?, 'active', 24999, NOW(), DATE_ADD(NOW(), INTERVAL 30 DAY), NOW(), NOW())
+                ")->execute([$resCompanyId, $pId]);
+            }
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Workspace (ID: {$resCompanyId}) has been successfully resumed and unlocked!"
+            ]);
+            break;
+
+        // Extend 14-Day Free Trial (+14 or custom days)
+        case 'extend_trial':
+            $rawInput = file_get_contents('php://input');
+            $data = json_decode($rawInput, true) ?? $_POST;
+            $extCompanyId = (int)($data['company_id'] ?? ($_GET['company_id'] ?? 0));
+            $days = max(1, min(365, (int)($data['days'] ?? 14)));
+
+            if ($extCompanyId <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Valid company ID required']);
+                exit;
+            }
+
+            $pdo->prepare("
+                UPDATE `companies`
+                SET `status` = 'trial',
+                    `trial_ends_at` = DATE_ADD(GREATEST(COALESCE(`trial_ends_at`, NOW()), NOW()), INTERVAL ? DAY),
+                    `updated_at` = NOW()
+                WHERE id = ?
+            ")->execute([$days, $extCompanyId]);
+
+            // Get new expiration date
+            $newEndStmt = $pdo->prepare("SELECT trial_ends_at FROM `companies` WHERE id = ?");
+            $newEndStmt->execute([$extCompanyId]);
+            $newEnd = $newEndStmt->fetchColumn();
+
+            echo json_encode([
+                'success'       => true,
+                'message'       => "Free trial extended by {$days} days. New trial end: " . date('M j, Y', strtotime($newEnd)),
+                'trial_ends_at' => $newEnd
+            ]);
+            break;
+
+        // Suspend Workspace (Manual lock by Super Admin)
+        case 'suspend_company':
+            $rawInput = file_get_contents('php://input');
+            $data = json_decode($rawInput, true) ?? $_POST;
+            $susCompanyId = (int)($data['company_id'] ?? ($_GET['company_id'] ?? 0));
+
+            if ($susCompanyId <= 0 || $susCompanyId === 3) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Cannot suspend primary admin workspace']);
+                exit;
+            }
+
+            $pdo->prepare("UPDATE `companies` SET `status` = 'suspended', `updated_at` = NOW() WHERE id = ?")->execute([$susCompanyId]);
+            $pdo->prepare("UPDATE `subscriptions` SET `status` = 'suspended', `updated_at` = NOW() WHERE `company_id` = ?")->execute([$susCompanyId]);
+
+            echo json_encode([
+                'success' => true,
+                'message' => "Workspace (ID: {$susCompanyId}) has been suspended."
             ]);
             break;
 

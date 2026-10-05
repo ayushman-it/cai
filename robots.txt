@@ -1,0 +1,26 @@
+# robots.txt for CuboidPilot
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /pricing.html
+Allow: /blog.html
+Allow: /blog.php
+Allow: /docs.html
+Allow: /why-choose-cai.html
+Allow: /privacy.html
+Allow: /terms.html
+Allow: /security.html
+Allow: /assets/
+
+# Restrict sensitive API and admin endpoints
+Disallow: /api/
+Disallow: /super-admin/
+Disallow: /scratch/
+Disallow: /config/
+Disallow: /database/
+Disallow: /includes/
+Disallow: /auth/
+
+# Sitemaps
+Sitemap: https://cai.cuboidsoft.in/sitemap.xml
+Sitemap: https://cai.cuboidsoft.in/sitemap.php

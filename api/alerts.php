@@ -49,6 +49,19 @@ function sendSalespersonAssignmentAlert($pdo, $companyId, $leadId, $assignee = n
         $summary   = $lead['ai_summary'] ?: 'High commercial intent indicated in chat session.';
         $action    = $lead['radar_recommended_action'] ?: 'Follow up promptly with prospective student.';
 
+        // Anti-spam cooldown: don't dispatch same alert type for same lead within 15 minutes
+        $cdStmt = $pdo->prepare("SELECT id FROM `alert_logs` WHERE `lead_id` = ? AND `alert_type` = ? AND `sent_at` >= DATE_SUB(NOW(), INTERVAL 15 MINUTE) LIMIT 1");
+        $cdStmt->execute([$leadId, $alertType]);
+        if ($cdStmt->fetch()) {
+            return [
+                'success'      => true,
+                'alert_status' => 'cooldown_skipped',
+                'lead_id'      => $leadId,
+                'recipient'    => $recipientPhone,
+                'message'      => 'Alert skipped due to 15-minute anti-spam cooldown'
+            ];
+        }
+
         $headline = match ($alertType) {
             'LEAD_ASSIGNED'         => "🎯 NEW LEAD ASSIGNED TO YOU",
             'HIGH_INTENT_DETECTED'  => "🔥 HIGH-INTENT PROSPECT ACTIVE",
@@ -67,6 +80,42 @@ function sendSalespersonAssignmentAlert($pdo, $companyId, $leadId, $assignee = n
             . "Recommended Action:\n{$action}\n"
             . "View Lead: https://cuboidpilot.app/app/lead-detail.html?id={$leadId}";
 
+        // Check if Meta WhatsApp Cloud API credentials exist for direct delivery
+        $waStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` = 'connected' LIMIT 1");
+        $waStmt->execute([$companyId]);
+        $waAcc = $waStmt->fetch();
+
+        $dispatchStatus = 'queued';
+        if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token'])) {
+            try {
+                $cleanRecipient = preg_replace('/[^0-9]/', '', $recipientPhone);
+                $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
+                $payload = [
+                    'messaging_product' => 'whatsapp',
+                    'to'                => $cleanRecipient,
+                    'type'              => 'text',
+                    'text'              => ['body' => $alertBody]
+                ];
+                $ch = curl_init($endpoint);
+                curl_setopt_array($ch, [
+                    CURLOPT_POST           => true,
+                    CURLOPT_POSTFIELDS     => json_encode($payload),
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_HTTPHEADER     => [
+                        'Content-Type: application/json',
+                        'Authorization: Bearer ' . $waAcc['whatsapp_access_token']
+                    ],
+                    CURLOPT_TIMEOUT        => 8
+                ]);
+                $cloudResponse = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                $dispatchStatus = ($httpCode >= 200 && $httpCode < 300) ? 'sent' : 'failed';
+            } catch (Exception $e) {
+                $dispatchStatus = 'failed';
+            }
+        }
+
         // Record in alert_logs
         $pdo->prepare("
             INSERT INTO `alert_logs` (`company_id`, `lead_id`, `alert_type`, `recipient`, `sent_at`)
@@ -77,12 +126,13 @@ function sendSalespersonAssignmentAlert($pdo, $companyId, $leadId, $assignee = n
         $pdo->prepare("
             INSERT INTO `whatsapp_messages` 
             (`company_id`, `recipient_phone`, `recipient_name`, `message_type`, `content`, `status`, `metadata_json`, `created_at`)
-            VALUES (?, ?, ?, 'human_alert', ?, 'sent', ?, NOW())
+            VALUES (?, ?, ?, 'human_alert', ?, ?, ?, NOW())
         ")->execute([
             $companyId,
             $recipientPhone,
             $assignee['name'] ?? $lead['assigned_name'] ?? 'Sales Closer',
             $alertBody,
+            $dispatchStatus,
             json_encode([
                 'alert_type' => $alertType,
                 'lead_id'    => $leadId,
@@ -92,7 +142,7 @@ function sendSalespersonAssignmentAlert($pdo, $companyId, $leadId, $assignee = n
 
         return [
             'success'       => true,
-            'alert_status'  => 'sent',
+            'alert_status'  => $dispatchStatus,
             'alert_type'    => $alertType,
             'lead_id'       => $leadId,
             'recipient'     => $recipientPhone,

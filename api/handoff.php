@@ -1,8 +1,8 @@
 <?php
 /**
- * CUBOIDPILOT — WHATSAPP HANDOFF & CONTINUITY API
- * Generates verified short-lived handoff tokens and builds contextual WhatsApp URLs.
- * Strict multi-tenant isolation and entitlement enforcement.
+ * CUBOIDPILOT — OMNICHANNEL HANDOFF & CONTINUITY API (Section 5 & 6)
+ * Supports seamless handoffs from Web Chat to WhatsApp and Instagram.
+ * Strict multi-tenant isolation, session preservation, and CRM timeline linking.
  */
 
 header("Access-Control-Allow-Origin: *");
@@ -29,11 +29,17 @@ try {
     }
 
     $companyKey     = trim($data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    $channel        = strtolower(trim($data['channel'] ?? 'whatsapp')); // 'whatsapp' or 'instagram'
     $conversationId = (int)($data['conversation_id'] ?? 0);
     $leadId         = (int)($data['lead_id'] ?? 0);
     $customerId     = (int)($data['customer_id'] ?? 0);
-    $action         = trim($data['action'] ?? 'create'); // 'create' or 'verify'
+    $sessionId      = trim($data['session_id'] ?? '');
+    $action         = trim($data['action'] ?? 'create'); // 'create', 'verify', 'create_instagram_handoff'
     $tokenParam     = trim($data['token'] ?? '');
+
+    if ($action === 'create_instagram_handoff') {
+        $channel = 'instagram';
+    }
 
     if (empty($companyKey) || $companyKey === 'default' || $companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
         $companyKey = 'cp_live_cuboidsoft';
@@ -57,7 +63,109 @@ try {
     }
     $companyId = (int)$company['id'];
 
-    // Enforce WhatsApp Entitlements
+    // Resolve customer and session if missing
+    if (!$customerId && !empty($sessionId)) {
+        $sStmt = $pdo->prepare("SELECT customer_id, lead_id, conversation_id FROM `visitor_sessions` WHERE `session_id` = ? OR `session_token` = ? AND `company_id` = ? LIMIT 1");
+        $sStmt->execute([$sessionId, $sessionId, $companyId]);
+        $sRow = $sStmt->fetch();
+        if ($sRow) {
+            $customerId = (int)$sRow['customer_id'];
+            if (!$leadId && !empty($sRow['lead_id'])) $leadId = (int)$sRow['lead_id'];
+            if (!$conversationId && !empty($sRow['conversation_id'])) $conversationId = (int)$sRow['conversation_id'];
+        }
+    }
+
+    if (!$customerId && $conversationId) {
+        $conv = $pdo->query("SELECT customer_id FROM `conversations` WHERE id = {$conversationId} AND company_id = {$companyId} LIMIT 1")->fetch();
+        if ($conv) $customerId = (int)$conv['customer_id'];
+    }
+    if (!$customerId && $leadId) {
+        $ld = $pdo->query("SELECT customer_id FROM `leads` WHERE id = {$leadId} AND company_id = {$companyId} LIMIT 1")->fetch();
+        if ($ld) $customerId = (int)$ld['customer_id'];
+    }
+
+    $customerName = 'Prospect';
+    $customerPhone = null;
+    if ($customerId) {
+        $cRow = $pdo->query("SELECT name, phone FROM `customers` WHERE id = {$customerId} AND company_id = {$companyId} LIMIT 1")->fetch();
+        if ($cRow) {
+            $customerPhone = $cRow['phone'];
+            if (!empty($cRow['name']) && $cRow['name'] !== 'Website Visitor') $customerName = $cRow['name'];
+        }
+    }
+
+    // =========================================================================
+    // 1. INSTAGRAM HANDOFF FLOW (Sections 5 & 6)
+    // =========================================================================
+    if ($channel === 'instagram') {
+        // Fetch company Instagram configuration
+        $igStmt = $pdo->prepare("SELECT * FROM `company_instagram_configs` WHERE `company_id` = ? LIMIT 1");
+        $igStmt->execute([$companyId]);
+        $igConfig = $igStmt->fetch(PDO::FETCH_ASSOC);
+
+        $igUsername = $igConfig['instagram_username'] ?? '';
+        if (empty($igUsername)) {
+            // Check widget_settings for instagram handle fallback
+            $wRow = $pdo->query("SELECT brand_name FROM `widget_settings` WHERE `company_id` = {$companyId} LIMIT 1")->fetch();
+            $igUsername = strtolower(preg_replace('/[^a-zA-Z0-9_.]/', '', $wRow['brand_name'] ?? $company['slug']));
+        }
+
+        $tokenCode = strtoupper(bin2hex(random_bytes(3)));
+        $handoffToken = "CP-IG-{$companyId}-{$tokenCode}";
+
+        // Persist in instagram_handoffs
+        $ins = $pdo->prepare("
+            INSERT INTO `instagram_handoffs`
+            (`company_id`, `handoff_token`, `session_id`, `customer_id`, `lead_id`, `web_conversation_id`, `status`, `expires_at`, `created_at`)
+            VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW() + INTERVAL 2 HOUR, NOW())
+        ");
+        $ins->execute([
+            $companyId,
+            $handoffToken,
+            $sessionId ?: "sess_{$companyId}_{$customerId}",
+            $customerId ?: 0,
+            $leadId ?: null,
+            $conversationId ?: 0
+        ]);
+
+        // Record CRM timeline event
+        if ($leadId) {
+            $pdo->prepare("
+                INSERT INTO `lead_events`
+                (`company_id`, `lead_id`, `customer_id`, `event_type`, `description`, `event_data_json`, `created_at`)
+                VALUES (?, ?, ?, 'INSTAGRAM_HANDOFF', ?, ?, NOW())
+            ")->execute([
+                $companyId,
+                $leadId,
+                $customerId,
+                "Visitor initiated Instagram continuation (Token: {$handoffToken})",
+                json_encode([
+                    'channel'       => 'instagram',
+                    'handoff_token' => $handoffToken,
+                    'session_id'    => $sessionId,
+                    'username'      => $igUsername
+                ])
+            ]);
+        }
+
+        // Build Instagram direct URL
+        $igUrl = !empty($igUsername) ? "https://ig.me/m/{$igUsername}" : "https://instagram.com";
+
+        echo json_encode([
+            'success'            => true,
+            'channel'            => 'instagram',
+            'handoff_token'      => $handoffToken,
+            'instagram_username' => $igUsername,
+            'instagram_url'      => $igUrl,
+            'prefilled_message'  => "Hi, I was chatting on your website (Ref: #{$handoffToken}) and want to continue here.",
+            'expires_in_minutes' => 120
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // =========================================================================
+    // 2. WHATSAPP HANDOFF FLOW (Existing)
+    // =========================================================================
     checkEntitlement($pdo, $companyId, 'can_use_whatsapp', true);
 
     if ($action === 'verify' && !empty($tokenParam)) {
@@ -81,34 +189,12 @@ try {
         exit;
     }
 
-    // Create / fetch handoff token
     // Get WhatsApp account
     $accStmt = $pdo->prepare("SELECT display_number FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` != 'disconnected' ORDER BY id ASC LIMIT 1");
     $accStmt->execute([$companyId]);
     $acc = $accStmt->fetch();
     $displayPhone = $acc ? $acc['display_number'] : '+91 98201 12345';
     $cleanPhone = preg_replace('/[^0-9]/', '', $displayPhone);
-
-    // If customerId is missing, resolve from conversation or lead
-    if (!$customerId && $conversationId) {
-        $conv = $pdo->query("SELECT customer_id FROM `conversations` WHERE id = $conversationId AND company_id = $companyId LIMIT 1")->fetch();
-        if ($conv) $customerId = (int)$conv['customer_id'];
-    }
-    if (!$customerId && $leadId) {
-        $ld = $pdo->query("SELECT customer_id FROM `leads` WHERE id = $leadId AND company_id = $companyId LIMIT 1")->fetch();
-        if ($ld) $customerId = (int)$ld['customer_id'];
-    }
-
-    // Get customer phone if available
-    $customerPhone = null;
-    $customerName = 'Prospect';
-    if ($customerId) {
-        $cRow = $pdo->query("SELECT name, phone FROM `customers` WHERE id = $customerId AND company_id = $companyId LIMIT 1")->fetch();
-        if ($cRow) {
-            $customerPhone = $cRow['phone'];
-            if (!empty($cRow['name'])) $customerName = $cRow['name'];
-        }
-    }
 
     // Generate unique short token
     $tokenCode = strtoupper(bin2hex(random_bytes(3)));
@@ -129,18 +215,39 @@ try {
         $customerPhone
     ]);
 
+    // Record CRM timeline event
+    if ($leadId) {
+        $pdo->prepare("
+            INSERT INTO `lead_events`
+            (`company_id`, `lead_id`, `customer_id`, `event_type`, `description`, `event_data_json`, `created_at`)
+            VALUES (?, ?, ?, 'WHATSAPP_HANDOFF', ?, ?, NOW())
+        ")->execute([
+            $companyId,
+            $leadId,
+            $customerId,
+            "Visitor initiated WhatsApp continuation (Token: {$handoffToken})",
+            json_encode([
+                'channel'       => 'whatsapp',
+                'handoff_token' => $handoffToken,
+                'session_id'    => $sessionId,
+                'phone'         => $cleanPhone
+            ])
+        ]);
+    }
+
     // Build prefilled message
     $prefilled = "Hi, I'm {$customerName}. I was chatting on your website (Ref: #{$handoffToken}). Could you help me with enrollment & fee details?";
     $encodedText = urlencode($prefilled);
     $waUrl = "https://wa.me/{$cleanPhone}?text={$encodedText}";
 
     echo json_encode([
-        'success' => true,
-        'handoff_token' => $handoffToken,
-        'whatsapp_url'  => $waUrl,
-        'display_phone' => $displayPhone,
+        'success'            => true,
+        'channel'            => 'whatsapp',
+        'handoff_token'      => $handoffToken,
+        'whatsapp_url'       => $waUrl,
+        'display_phone'      => $displayPhone,
         'expires_in_minutes' => 120
-    ]);
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 } catch (Exception $e) {
     http_response_code(500);

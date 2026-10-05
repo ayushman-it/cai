@@ -4,6 +4,33 @@
  * Automatically connects to MySQL and ensures tables and demo users exist.
  */
 
+// Load environment variables from .env if present
+(function() {
+    $envFile = dirname(__DIR__) . '/.env';
+    if (file_exists($envFile)) {
+        $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        foreach ($lines as $line) {
+            $line = trim($line);
+            if ($line === '' || str_starts_with($line, '#')) continue;
+            if (strpos($line, '=') !== false) {
+                list($key, $val) = explode('=', $line, 2);
+                $key = trim($key);
+                $val = trim($val);
+                // Strip quotes if wrapped
+                if ((str_starts_with($val, '"') && str_ends_with($val, '"')) ||
+                    (str_starts_with($val, "'") && str_ends_with($val, "'"))) {
+                    $val = substr($val, 1, -1);
+                }
+                if (!array_key_exists($key, $_SERVER) && !array_key_exists($key, $_ENV)) {
+                    putenv("{$key}={$val}");
+                    $_ENV[$key] = $val;
+                    $_SERVER[$key] = $val;
+                }
+            }
+        }
+    }
+})();
+
 // Database credentials (supports dynamic environment variables in production)
 define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
 define('DB_PORT', getenv('DB_PORT') ?: '3306');
@@ -11,8 +38,35 @@ define('DB_USER', getenv('DB_USER') ?: 'root');
 define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
 define('DB_NAME', getenv('DB_NAME') ?: 'cuboidpolit_db');
 
-// Groq AI Engine Key (Configure in environment or set here)
-define('GROQ_API_KEY', getenv('GROQ_API_KEY') ?: 'YOUR_GROQ_API_KEY_HERE');
+// Groq AI Engine Key (Configure in .env)
+define('GROQ_API_KEY', getenv('GROQ_API_KEY') ?: '');
+
+if (!defined('ENCRYPTION_KEY')) {
+    define('ENCRYPTION_KEY', getenv('CP_ENCRYPTION_KEY') ?: '');
+}
+
+/**
+ * Symmetric AES-256-CBC Encryption & Decryption for multi-tenant sensitive secrets
+ */
+function encryptSecret($plainText) {
+    if ($plainText === null || $plainText === '') return '';
+    $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length('aes-256-cbc'));
+    $encrypted = openssl_encrypt($plainText, 'aes-256-cbc', hash('sha256', ENCRYPTION_KEY, true), 0, $iv);
+    return base64_encode($iv . '::' . $encrypted);
+}
+
+function decryptSecret($cipherText) {
+    if (empty($cipherText)) return '';
+    $decoded = base64_decode($cipherText);
+    if (!$decoded || strpos($decoded, '::') === false) {
+        return $cipherText;
+    }
+    $parts = explode('::', $decoded, 2);
+    if (count($parts) < 2) return $cipherText;
+    list($iv, $encrypted) = $parts;
+    $decrypted = openssl_decrypt($encrypted, 'aes-256-cbc', hash('sha256', ENCRYPTION_KEY, true), 0, $iv);
+    return $decrypted !== false ? $decrypted : '';
+}
 
 /**
  * Get PDO Database Connection
@@ -54,11 +108,17 @@ function getDbConnection() {
     }
 
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
-    $lockFile = sys_get_temp_dir() . '/cuboid_schema_v9.lock';
-    if (!file_exists($lockFile)) {
-        initDbSchemaAndUsers($pdo);
-        ensureExtendedSchema($pdo);
-        @file_put_contents($lockFile, time());
+    static $schemaChecked = false;
+    if (!$schemaChecked) {
+        $localLock = __DIR__ . '/.schema_installed_v12';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v12.lock';
+        if (!file_exists($localLock) && !file_exists($tempLock)) {
+            initDbSchemaAndUsers($pdo);
+            ensureExtendedSchema($pdo);
+            @file_put_contents($localLock, time());
+            @file_put_contents($tempLock, time());
+        }
+        $schemaChecked = true;
     }
 
     return $pdo;
@@ -217,6 +277,12 @@ function ensureExtendedSchema(PDO $pdo) {
     } catch (Exception $e) {}
 
     // 9. Lead Attention Columns in leads table
+    $leadCols = $pdo->query("SHOW COLUMNS FROM `leads`")->fetchAll(PDO::FETCH_COLUMN);
+    if (in_array('is_radar_active', $leadCols)) {
+        try {
+            $pdo->exec("ALTER TABLE `leads` MODIFY COLUMN `is_radar_active` TINYINT(1) NOT NULL DEFAULT 0");
+        } catch (Exception $e) {}
+    }
     if (!in_array('human_attention_required', $leadCols)) {
         $pdo->exec("ALTER TABLE `leads` ADD COLUMN `human_attention_required` TINYINT(1) DEFAULT 0 AFTER `is_radar_active`");
     }
@@ -348,6 +414,45 @@ function ensureExtendedSchema(PDO $pdo) {
             KEY `idx_company` (`company_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+
+    // 15. WhatsApp Meta Cloud API credentials in whatsapp_accounts
+    $waCols = $pdo->query("SHOW COLUMNS FROM `whatsapp_accounts`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('whatsapp_access_token', $waCols)) {
+        $pdo->exec("ALTER TABLE `whatsapp_accounts` ADD COLUMN `whatsapp_access_token` TEXT NULL AFTER `display_number`");
+    }
+    if (!in_array('app_secret', $waCols)) {
+        $pdo->exec("ALTER TABLE `whatsapp_accounts` ADD COLUMN `app_secret` VARCHAR(255) NULL AFTER `whatsapp_access_token`");
+    }
+    if (!in_array('webhook_verify_token', $waCols)) {
+        $pdo->exec("ALTER TABLE `whatsapp_accounts` ADD COLUMN `webhook_verify_token` VARCHAR(100) NULL AFTER `app_secret`");
+    }
+
+    // 16. Google Calendar & Extended scheduling in widget_settings
+    $wsCols = $pdo->query("SHOW COLUMNS FROM `widget_settings`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('google_calendar_id', $wsCols)) {
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `google_calendar_id` VARCHAR(255) NULL AFTER `calendar_sync_enabled`");
+    }
+    if (!in_array('google_client_id', $wsCols)) {
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `google_client_id` VARCHAR(255) NULL AFTER `google_calendar_id`");
+    }
+    if (!in_array('google_client_secret', $wsCols)) {
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `google_client_secret` VARCHAR(255) NULL AFTER `google_client_id`");
+    }
+    if (!in_array('google_refresh_token', $wsCols)) {
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `google_refresh_token` TEXT NULL AFTER `google_client_secret`");
+    }
+    if (!in_array('google_access_token', $wsCols)) {
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `google_access_token` TEXT NULL AFTER `google_refresh_token`");
+    }
+    if (!in_array('google_token_expires_at', $wsCols)) {
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `google_token_expires_at` DATETIME NULL AFTER `google_access_token`");
+    }
+
+    // 17. Google event ID in appointments
+    $appCols = $pdo->query("SHOW COLUMNS FROM `appointments`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('google_event_id', $appCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `google_event_id` VARCHAR(255) NULL AFTER `meet_link`");
+    }
 
     // Seed default custom fields for existing companies if empty
     $compIds = $pdo->query("SELECT id FROM `companies`")->fetchAll(PDO::FETCH_COLUMN);
@@ -645,6 +750,231 @@ HTML;
             'Read how Cai, CuboidPilot\'s breakthrough autonomous AI agent, resolves 50%+ of inbound inquiries in under 1 second and automatically turns website traffic into enrolled customers.'
         ]);
     }
+
+    // 21. Company Isolated Email Configurations (Section 2)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `company_email_configs` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL UNIQUE,
+            `sender_name` VARCHAR(150) NOT NULL,
+            `sender_email` VARCHAR(150) NOT NULL,
+            `smtp_host` VARCHAR(150) NOT NULL,
+            `smtp_port` INT NOT NULL DEFAULT 587,
+            `smtp_username` VARCHAR(150) NOT NULL,
+            `smtp_password_encrypted` TEXT NOT NULL,
+            `encryption_type` ENUM('tls', 'ssl', 'none') NOT NULL DEFAULT 'tls',
+            `reply_to_email` VARCHAR(150) NULL,
+            `is_verified` TINYINT(1) NOT NULL DEFAULT 0,
+            `last_tested_at` DATETIME NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY `idx_company` (`company_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+
+    // 22. Team Member Email Invitations (Section 3)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `team_invitations` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `invited_by_user_id` INT NOT NULL,
+            `email` VARCHAR(150) NOT NULL,
+            `role` ENUM('owner', 'admin', 'manager', 'sales_agent') NOT NULL DEFAULT 'sales_agent',
+            `invitation_token` VARCHAR(64) NOT NULL UNIQUE,
+            `status` ENUM('pending', 'accepted', 'expired', 'revoked') NOT NULL DEFAULT 'pending',
+            `expires_at` DATETIME NOT NULL,
+            `accepted_at` DATETIME NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY `idx_company` (`company_id`),
+            KEY `idx_token` (`invitation_token`),
+            KEY `idx_email` (`email`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+
+    // 23. Company Instagram / Meta Business Messaging Configs (Section 4)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `company_instagram_configs` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL UNIQUE,
+            `page_id` VARCHAR(100) NULL,
+            `instagram_account_id` VARCHAR(100) NULL,
+            `instagram_username` VARCHAR(100) NULL,
+            `access_token_encrypted` TEXT NULL,
+            `app_secret_encrypted` TEXT NULL,
+            `webhook_verify_token` VARCHAR(100) NULL,
+            `status` ENUM('connected', 'disconnected', 'pending') NOT NULL DEFAULT 'disconnected',
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY `idx_company` (`company_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+
+    // 24. Instagram Handoffs (Section 5)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `instagram_handoffs` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `handoff_token` VARCHAR(64) NOT NULL UNIQUE,
+            `session_id` VARCHAR(64) NOT NULL,
+            `customer_id` INT NOT NULL,
+            `lead_id` INT NULL,
+            `web_conversation_id` INT NOT NULL,
+            `status` ENUM('pending', 'claimed', 'expired') NOT NULL DEFAULT 'pending',
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `claimed_at` DATETIME NULL,
+            `expires_at` DATETIME NOT NULL,
+            KEY `idx_token` (`handoff_token`),
+            KEY `idx_company` (`company_id`),
+            KEY `idx_session` (`session_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+
+    // 25. Company Calendar Configurations (Sections 7 & 8)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `company_calendar_configs` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL UNIQUE,
+            `provider` VARCHAR(50) NOT NULL DEFAULT 'google_calendar',
+            `google_calendar_id` VARCHAR(255) NOT NULL DEFAULT 'primary',
+            `google_client_id` VARCHAR(255) NULL,
+            `google_client_secret_encrypted` TEXT NULL,
+            `google_refresh_token_encrypted` TEXT NULL,
+            `google_access_token_encrypted` TEXT NULL,
+            `google_token_expires_at` DATETIME NULL,
+            `working_days` VARCHAR(50) NOT NULL DEFAULT '1,2,3,4,5,6',
+            `working_hours_start` TIME NOT NULL DEFAULT '09:00:00',
+            `working_hours_end` TIME NOT NULL DEFAULT '18:00:00',
+            `slot_duration_minutes` INT NOT NULL DEFAULT 30,
+            `buffer_before_minutes` INT NOT NULL DEFAULT 0,
+            `buffer_after_minutes` INT NOT NULL DEFAULT 10,
+            `min_booking_notice_hours` INT NOT NULL DEFAULT 2,
+            `max_advance_booking_days` INT NOT NULL DEFAULT 14,
+            `timezone` VARCHAR(50) NOT NULL DEFAULT 'Asia/Kolkata',
+            `meeting_title_template` VARCHAR(200) NOT NULL DEFAULT 'Consultation: {customer_name}',
+            `meeting_description_template` TEXT NULL,
+            `is_connected` TINYINT(1) NOT NULL DEFAULT 0,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY `idx_company` (`company_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    ");
+
+    // 26. Extend visitor_sessions table with Session ID & CRM associations (Section 1)
+    $vsCols = $pdo->query("SHOW COLUMNS FROM `visitor_sessions`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('session_id', $vsCols)) {
+        $pdo->exec("ALTER TABLE `visitor_sessions` ADD COLUMN `session_id` VARCHAR(64) NULL AFTER `company_id`");
+        $pdo->exec("ALTER TABLE `visitor_sessions` ADD UNIQUE KEY `idx_vs_session_id` (`session_id`)");
+    }
+    if (!in_array('visitor_id', $vsCols)) {
+        $pdo->exec("ALTER TABLE `visitor_sessions` ADD COLUMN `visitor_id` INT NULL AFTER `session_id`");
+    }
+    if (!in_array('lead_id', $vsCols)) {
+        $pdo->exec("ALTER TABLE `visitor_sessions` ADD COLUMN `lead_id` INT NULL AFTER `customer_id`");
+    }
+    if (!in_array('conversation_id', $vsCols)) {
+        $pdo->exec("ALTER TABLE `visitor_sessions` ADD COLUMN `conversation_id` INT NULL AFTER `lead_id`");
+    }
+    if (!in_array('channel', $vsCols)) {
+        $pdo->exec("ALTER TABLE `visitor_sessions` ADD COLUMN `channel` VARCHAR(50) NOT NULL DEFAULT 'web' AFTER `conversation_id`");
+    }
+    if (!in_array('updated_at', $vsCols)) {
+        $pdo->exec("ALTER TABLE `visitor_sessions` ADD COLUMN `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`");
+    }
+
+    // 27. Extend appointments table with Section 11 specifications
+    $apptCols = $pdo->query("SHOW COLUMNS FROM `appointments`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('visitor_id', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `visitor_id` INT NULL AFTER `customer_id`");
+    }
+    if (!in_array('session_id', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `session_id` VARCHAR(64) NULL AFTER `lead_id`");
+    }
+    if (!in_array('conversation_id', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `conversation_id` INT NULL AFTER `session_id`");
+    }
+    if (!in_array('calendar_integration_id', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `calendar_integration_id` INT NULL AFTER `assigned_user_id`");
+    }
+    if (!in_array('customer_name', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `customer_name` VARCHAR(150) NULL AFTER `calendar_integration_id`");
+    }
+    if (!in_array('customer_phone', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `customer_phone` VARCHAR(50) NULL AFTER `customer_name`");
+    }
+    if (!in_array('customer_email', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `customer_email` VARCHAR(150) NULL AFTER `customer_phone`");
+    }
+    if (!in_array('appointment_date', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `appointment_date` DATE NULL AFTER `appointment_type`");
+    }
+    if (!in_array('start_time', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `start_time` TIME NULL AFTER `appointment_date`");
+    }
+    if (!in_array('end_time', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `end_time` TIME NULL AFTER `start_time`");
+    }
+    if (!in_array('timezone', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `timezone` VARCHAR(50) NOT NULL DEFAULT 'Asia/Kolkata' AFTER `end_time`");
+    }
+    if (!in_array('calendar_event_id', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `calendar_event_id` VARCHAR(255) NULL AFTER `meet_link`");
+    }
+    if (!in_array('created_channel', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `created_channel` VARCHAR(50) NOT NULL DEFAULT 'web' AFTER `status`");
+    }
+    if (!in_array('meeting_link', $apptCols)) {
+        $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `meeting_link` VARCHAR(255) NULL AFTER `calendar_event_id`");
+    }
+    // Update appointment status enum to support scheduled, rescheduled, completed, cancelled, no_show
+    try {
+        $pdo->exec("ALTER TABLE `appointments` MODIFY COLUMN `status` ENUM('scheduled', 'rescheduled', 'completed', 'cancelled', 'no_show') NOT NULL DEFAULT 'scheduled'");
+    } catch (Exception $e) {}
+
+    // 28. Generic Channel Architecture: Extend conversations & messages (Section 6)
+    try {
+        $pdo->exec("ALTER TABLE `conversations` MODIFY COLUMN `channel` VARCHAR(50) NOT NULL DEFAULT 'web'");
+    } catch (Exception $e) {}
+    $convCols = $pdo->query("SHOW COLUMNS FROM `conversations`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('session_id', $convCols)) {
+        $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `session_id` VARCHAR(64) NULL AFTER `visitor_session_id`");
+    }
+
+    $msgCols = $pdo->query("SHOW COLUMNS FROM `messages`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('channel', $msgCols)) {
+        $pdo->exec("ALTER TABLE `messages` ADD COLUMN `channel` VARCHAR(50) NOT NULL DEFAULT 'web' AFTER `company_id`");
+    }
+    if (!in_array('session_id', $msgCols)) {
+        $pdo->exec("ALTER TABLE `messages` ADD COLUMN `session_id` VARCHAR(64) NULL AFTER `conversation_id`");
+    }
+
+    // 29. Workspace Payments: Ensure payments.customer_id is nullable for workspace subscriptions
+    try {
+        $pdo->exec("ALTER TABLE `payments` MODIFY COLUMN `customer_id` INT(11) NULL DEFAULT NULL");
+    } catch (Exception $e) {}
+
+    // 30. Company Digital Assets Library (Documents, Syllabi, Brochures, Fee Charts, PDFs)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `company_assets` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `title` VARCHAR(255) NOT NULL,
+            `category` VARCHAR(64) NOT NULL DEFAULT 'document',
+            `description` TEXT NULL,
+            `keywords` TEXT NULL,
+            `file_name` VARCHAR(255) NOT NULL,
+            `file_path` VARCHAR(500) NOT NULL,
+            `file_size` INT DEFAULT 0,
+            `file_type` VARCHAR(100) DEFAULT 'application/pdf',
+            `download_count` INT DEFAULT 0,
+            `is_active` TINYINT(1) DEFAULT 1,
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX `idx_company_asset` (`company_id`, `is_active`),
+            INDEX `idx_asset_category` (`company_id`, `category`),
+            CONSTRAINT `fk_asset_company` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
 }
 
 /**
@@ -810,6 +1140,24 @@ function provisionTenantWorkspace(PDO $pdo, array $params): array {
         $insField->execute([$companyId, $f[0], $f[1], $f[2], $f[3], $f[4]]);
     }
 
+    // 10. Seed Initial 14-Day Free Trial Subscription & $0 Payment Receipt (Start with $0 / ₹0)
+    try {
+        $growthPlan = $pdo->query("SELECT id FROM `plans` WHERE code = 'growth' OR name LIKE '%growth%' LIMIT 1")->fetch();
+        $planId = $growthPlan ? (int)$growthPlan['id'] : 2;
+
+        $pdo->prepare("
+            INSERT INTO `subscriptions`
+            (`company_id`, `plan_id`, `status`, `amount_inr`, `current_period_start`, `current_period_end`, `created_at`, `updated_at`)
+            VALUES (?, ?, 'trial', 0, NOW(), DATE_ADD(NOW(), INTERVAL 14 DAY), NOW(), NOW())
+        ")->execute([$companyId, $planId]);
+
+        $pdo->prepare("
+            INSERT INTO `payments`
+            (`company_id`, `customer_id`, `amount_inr`, `currency`, `status`, `razorpay_order_id`, `razorpay_payment_id`, `paid_at`, `created_at`, `updated_at`)
+            VALUES (?, NULL, 0, 'INR', 'paid', 'order_trial_free_14d', 'pay_trial_start_0', NOW(), NOW(), NOW())
+        ")->execute([$companyId]);
+    } catch (Exception $e) {}
+
     return [
         'company_id'  => $companyId,
         'user_id'     => $userId,
@@ -894,11 +1242,8 @@ function initDbSchemaAndUsers(PDO $pdo) {
         $existing = $checkStmt->fetch();
 
         if ($existing) {
-            // Update password hash if needed so password123 always works
-            if (!password_verify('password123', $existing['password_hash'])) {
-                $upd = $pdo->prepare("UPDATE `users` SET `password_hash` = ?, `is_active` = 1 WHERE `id` = ?");
-                $upd->execute([$hash, $existing['id']]);
-            }
+            // User exists; preserve their existing password and active status
+            continue;
         } else {
             // Insert production user
             $ins = $pdo->prepare("

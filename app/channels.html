@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Channels & Integrations — Cai by CuboidSoft</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=4.2">
+  <style>
+    .channel-card {
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .channel-card:hover {
+      border-color: #c7c4b8;
+      box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+    }
+    .cat-pill.active {
+      background-color: #111111;
+      color: #ffffff;
+      border-color: #111111;
+    }
+    .status-badge-active {
+      background-color: #ecfdf5;
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+    .status-badge-inactive {
+      background-color: #f5f4ef;
+      color: #78716c;
+      border: 1px solid #e7e5de;
+    }
+    .modal-backdrop {
+      background: rgba(17, 17, 17, 0.55);
+      backdrop-filter: blur(2px);
+    }
+  </style>
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6 pb-12">
+          
+          <!-- Header -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2.5">
+                <h1 class="app-page-title">Channels &amp; Integrations</h1>
+                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-[4px] text-[11px] font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> Multi-Channel Sync Active
+                </span>
+              </div>
+              <p class="text-xs text-stone-500 mt-0.5">
+                Connect messaging channels, calendars, spreadsheets, and CRMs.
+              </p>
+            </div>
+            
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <a href="../docs.html#channels-integrations" target="_blank" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 shadow-2xs">
+                <i data-lucide="book-open" class="w-3.5 h-3.5 text-stone-500"></i>
+                <span>Developer Guide</span>
+              </a>
+              <button onclick="refreshChannelsList()" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 shadow-2xs">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-stone-500"></i>
+                <span>Refresh Status</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Stats / Health Summary Bar -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-white border border-[#e7e5de] p-3.5 rounded-[6px] shadow-2xs">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Active Channels</div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span id="stat-active-count" class="text-xl font-bold text-stone-900 font-mono">0</span>
+                <span class="text-[11px] text-stone-400">of 11 available</span>
+              </div>
+            </div>
+            <div class="bg-white border border-[#e7e5de] p-3.5 rounded-[6px] shadow-2xs">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Messaging Platforms</div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span id="stat-messaging-status" class="text-xs font-semibold text-emerald-700 flex items-center gap-1">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> WhatsApp &amp; IG
+                </span>
+              </div>
+            </div>
+            <div class="bg-white border border-[#e7e5de] p-3.5 rounded-[6px] shadow-2xs">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">CRM Lead Pipelines</div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span id="stat-crm-status" class="text-xs font-medium text-stone-600">Flexible Sync Ready</span>
+              </div>
+            </div>
+            <div class="bg-white border border-[#e7e5de] p-3.5 rounded-[6px] shadow-2xs">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Real-time Webhook</div>
+              <div class="flex items-baseline gap-2 mt-1">
+                <span class="text-xs font-mono text-stone-700">HMAC-SHA256 Encrypted</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Pills & Search Bar -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+            <!-- Category Tabs -->
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs select-none">
+              <button onclick="filterCategory('all', this)" class="cat-pill active px-3 py-1.5 rounded-[4px] border border-[#e7e5de] bg-[#111111] text-white font-medium transition-colors">
+                All Channels (11)
+              </button>
+              <button onclick="filterCategory('messaging', this)" class="cat-pill px-3 py-1.5 rounded-[4px] border border-[#e7e5de] bg-white hover:bg-stone-50 text-stone-700 font-medium transition-colors">
+                Messaging (2)
+              </button>
+              <button onclick="filterCategory('scheduling', this)" class="cat-pill px-3 py-1.5 rounded-[4px] border border-[#e7e5de] bg-white hover:bg-stone-50 text-stone-700 font-medium transition-colors">
+                Scheduling (2)
+              </button>
+              <button onclick="filterCategory('email', this)" class="cat-pill px-3 py-1.5 rounded-[4px] border border-[#e7e5de] bg-white hover:bg-stone-50 text-stone-700 font-medium transition-colors">
+                Email (1)
+              </button>
+              <button onclick="filterCategory('spreadsheets', this)" class="cat-pill px-3 py-1.5 rounded-[4px] border border-[#e7e5de] bg-white hover:bg-stone-50 text-stone-700 font-medium transition-colors">
+                Spreadsheets (1)
+              </button>
+              <button onclick="filterCategory('crm', this)" class="cat-pill px-3 py-1.5 rounded-[4px] border border-[#e7e5de] bg-white hover:bg-stone-50 text-stone-700 font-medium transition-colors">
+                External CRMs (5)
+              </button>
+            </div>
+
+            <!-- Quick Filter Input -->
+            <div class="relative w-full sm:w-64 shrink-0">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+              <input 
+                id="channel-search-input" 
+                type="text" 
+                placeholder="Search channels..." 
+                oninput="searchChannels(this.value)" 
+                class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#e7e5de] rounded-[4px] focus:outline-none focus:border-stone-900 transition-colors"
+              >
+            </div>
+          </div>
+
+          <!-- Channels Grid -->
+          <div id="channels-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            
+            <!-- 1. WhatsApp Cloud API -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="whatsapp" data-category="messaging">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/whatsapp.png" alt="WhatsApp" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">WhatsApp Business</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Meta Cloud API</span>
+                    </div>
+                  </div>
+                  <span id="badge-whatsapp" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">2-way automated AI customer chats &amp; lead triage.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">2-Way Sync</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Official WABA</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Autonomous AI</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-whatsapp" onchange="toggleChannelState('whatsapp', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('whatsapp')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Instagram DMs -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="instagram" data-category="messaging">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/instagram.png" alt="Instagram" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">Instagram Direct Messages</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Meta Graph API</span>
+                    </div>
+                  </div>
+                  <span id="badge-instagram" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Automate direct messages &amp; story reply conversion.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Direct Messages</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Story Replies</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Lead Scoring</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-instagram" onchange="toggleChannelState('instagram', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('instagram')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Google Calendar & Meet -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="google_calendar" data-category="scheduling">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/google-calendar.png" alt="Google Calendar" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">Google Calendar &amp; Meet</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Google Workspace API</span>
+                    </div>
+                  </div>
+                  <span id="badge-google_calendar" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Live consultation booking with auto Google Meet links.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Instant Meet Link</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Conflict Check</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Calendar Sync</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-google_calendar" onchange="toggleChannelState('google_calendar', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('google_calendar')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Cal.com / Calendly -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="calendly" data-category="scheduling">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/calendly.png" alt="Calendly" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">Cal.com &amp; Calendly</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Scheduling Engine</span>
+                    </div>
+                  </div>
+                  <span id="badge-calendly" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Instant booking cards via Calendly &amp; Cal.com links.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Booking Links</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Webhook Sync</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">No-Code</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-calendly" onchange="toggleChannelState('calendly', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('calendly')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Transactional Email (SMTP) -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="email_smtp" data-category="email">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/gmail.png" alt="Gmail SMTP" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">Transactional Email</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">SMTP / SendGrid / Postmark</span>
+                    </div>
+                  </div>
+                  <span id="badge-email_smtp" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Real-time lead dispatch alerts &amp; chat transcripts.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">TLS/SSL</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Custom Domain</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Instant Alert</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-email_smtp" onchange="toggleChannelState('email_smtp', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('email_smtp')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. Google Sheets Real-time Sync -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="google_sheets" data-category="spreadsheets">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/google-sheets.png" alt="Google Sheets" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">Google Sheets Sync</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Real-Time Row Streaming</span>
+                    </div>
+                  </div>
+                  <span id="badge-google_sheets" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Stream captured leads directly into your Google Sheet.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Live Streaming</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Zero Delay</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Apps Script / API</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-google_sheets" onchange="toggleChannelState('google_sheets', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('google_sheets')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 7. TeleCRM (TellyCRM) -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="telecrm" data-category="crm">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/telecrm.png" alt="TeleCRM" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">TeleCRM (TellyCRM)</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Telesales &amp; Calling CRM</span>
+                    </div>
+                  </div>
+                  <span id="badge-telecrm" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Auto-assign qualified leads to telecallers with tags.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Telesales Routing</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Caller Assignment</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Lead Scoring</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-telecrm" onchange="toggleChannelState('telecrm', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('telecrm')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 8. Zoho CRM -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="zoho_crm" data-category="crm">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/zoho.png" alt="Zoho CRM" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">Zoho CRM</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Cloud Enterprise CRM</span>
+                    </div>
+                  </div>
+                  <span id="badge-zoho_crm" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Sync leads, contacts &amp; deals via OAuth 2.0.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">OAuth 2.0</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">zoho.in / zoho.com</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Leads &amp; Contacts</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-zoho_crm" onchange="toggleChannelState('zoho_crm', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('zoho_crm')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 9. HubSpot CRM -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="hubspot" data-category="crm">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/hubspot.png" alt="HubSpot" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">HubSpot CRM</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Inbound Sales &amp; Deals</span>
+                    </div>
+                  </div>
+                  <span id="badge-hubspot" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Create contacts &amp; pipeline deals with Private App token.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Deals Pipeline</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Private App Token</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Auto Contacts</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-hubspot" onchange="toggleChannelState('hubspot', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('hubspot')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 10. Salesforce CRM -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="salesforce" data-category="crm">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/salesforce.png" alt="Salesforce" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">Salesforce CRM</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Enterprise Cloud</span>
+                    </div>
+                  </div>
+                  <span id="badge-salesforce" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Enterprise lead injection directly via Salesforce REST API.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">REST API</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Enterprise Ready</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Objects Map</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-salesforce" onchange="toggleChannelState('salesforce', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('salesforce')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 11. Universal Outbound Webhook -->
+            <div class="channel-card bg-white border border-[#e7e5de] rounded-[8px] p-4 flex flex-col justify-between shadow-2xs hover:border-stone-400 transition-all" data-channel="webhooks" data-category="crm">
+              <div>
+                <div class="flex items-start justify-between gap-3 mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-[8px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img src="../assets/brands/webhook.png" alt="Webhook" class="w-7 h-7 object-contain">
+                    </div>
+                    <div>
+                      <h3 class="text-xs font-semibold text-stone-900 leading-tight">Custom Outbound Webhook</h3>
+                      <span class="text-[11px] text-stone-500 font-normal">Universal Event Stream</span>
+                    </div>
+                  </div>
+                  <span id="badge-webhooks" class="status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0">
+                    Inactive
+                  </span>
+                </div>
+                <div class="text-[11.5px] text-stone-600 mb-2.5 truncate font-normal">Instant HMAC-SHA256 signed event streams to any endpoint.</div>
+                <div class="flex flex-wrap items-center gap-1.5 mb-3 text-[10px] text-stone-500 font-mono">
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">HMAC-SHA256</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Zapier / Make</span>
+                  <span class="px-1.5 py-0.5 bg-stone-100 rounded border border-stone-200">Universal JSON</span>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-[#f0ede6] flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="toggle-webhooks" onchange="toggleChannelState('webhooks', this.checked)" class="sr-only peer">
+                    <div class="w-7 h-4 bg-stone-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-emerald-600"></div>
+                  </label>
+                  <span class="text-[11px] text-stone-500 font-medium">Enabled</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="openChannelModal('webhooks')" class="btn-secondary btn-sm text-xs py-1 px-2.5 inline-flex items-center gap-1">
+                    <i data-lucide="settings" class="w-3 h-3 text-stone-500"></i>
+                    <span>Configure</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DYNAMIC MODAL CONTAINER -->
+  <div id="channel-modal-overlay" class="modal-backdrop fixed inset-0 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white border border-[#e7e5de] rounded-lg shadow-xl w-full max-w-xl my-8 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 border-b border-[#e7e5de] flex items-center justify-between bg-[#fbfaf6]">
+        <div class="flex items-center gap-3">
+          <div id="modal-icon-container" class="w-8 h-8 rounded-[4px] bg-stone-100 flex items-center justify-center text-stone-800">
+            <i data-lucide="layers" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h2 id="modal-title" class="text-sm font-semibold text-stone-900 leading-tight">Configure Channel</h2>
+            <p id="modal-subtitle" class="text-[11px] text-stone-500">API credentials and synchronization settings</p>
+          </div>
+        </div>
+        <button onclick="closeChannelModal()" class="p-1.5 text-stone-400 hover:text-stone-900 rounded hover:bg-stone-200/50 transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Form Fields) -->
+      <div id="modal-form-body" class="p-5 space-y-4 max-h-[65vh] overflow-y-auto text-xs text-stone-700">
+        <!-- Rendered dynamically by openChannelModal(channelKey) -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-[#fbfaf6] border-t border-[#e7e5de] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2">
+          <button id="modal-test-btn" onclick="testCurrentChannel()" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5">
+            <i data-lucide="play-circle" class="w-3.5 h-3.5 text-stone-500"></i>
+            <span>Test Connection</span>
+          </button>
+          <span id="modal-test-status" class="text-[11px] text-stone-500"></span>
+        </div>
+        <div class="flex items-center gap-2 self-end sm:self-auto">
+          <button onclick="closeChannelModal()" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+            Cancel
+          </button>
+          <button id="modal-save-btn" onclick="saveCurrentChannel()" class="btn-primary btn-sm text-xs py-1.5 px-4 inline-flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save &amp; Activate</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script>
+    // State
+    let channelsData = {};
+    let activeModalChannel = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('channels', 'Channels & Integrations', ['Settings']);
+      refreshChannelsList();
+    });
+
+    // Fetch and populate list from api/channels.php
+    async function refreshChannelsList() {
+      try {
+        const res = await fetch('../api/channels.php?action=list');
+        const data = await res.json();
+        if (data && data.success) {
+          channelsData = data.channels || {};
+          renderChannelsUI();
+        }
+      } catch (err) {
+        console.error('Failed to load channels:', err);
+      }
+    }
+
+    function renderChannelsUI() {
+      let activeCount = 0;
+      Object.keys(channelsData).forEach(key => {
+        const ch = channelsData[key];
+        const isAct = Boolean(ch.is_active);
+        if (isAct) activeCount++;
+
+        // Update badge
+        const badge = document.getElementById('badge-' + key);
+        if (badge) {
+          if (isAct) {
+            badge.className = 'status-badge-active text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0 flex items-center gap-1';
+            badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Active';
+          } else {
+            badge.className = 'status-badge-inactive text-[10px] font-mono px-2 py-0.5 rounded-[3px] font-medium shrink-0';
+            badge.textContent = ch.configured ? 'Paused' : 'Inactive';
+          }
+        }
+
+        // Update toggle switch
+        const toggle = document.getElementById('toggle-' + key);
+        if (toggle) {
+          toggle.checked = isAct;
+        }
+      });
+
+      // Update stat count
+      const statEl = document.getElementById('stat-active-count');
+      if (statEl) statEl.textContent = activeCount;
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Toggle Channel State directly from grid switch
+    async function toggleChannelState(channelKey, isChecked) {
+      try {
+        const formData = new FormData();
+        formData.append('channel_key', channelKey);
+        formData.append('is_active', isChecked ? '1' : '0');
+
+        const res = await fetch('../api/channels.php?action=toggle', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          if (!channelsData[channelKey]) channelsData[channelKey] = {};
+          channelsData[channelKey].is_active = isChecked ? 1 : 0;
+          renderChannelsUI();
+          CuboidShell.toast(`Channel ${channelKey} is now ${isChecked ? 'active' : 'paused'}.`, 'success');
+        } else {
+          // Revert toggle
+          const toggle = document.getElementById('toggle-' + channelKey);
+          if (toggle) toggle.checked = !isChecked;
+          CuboidShell.toast(data.error || 'Failed to update channel status', 'error');
+        }
+      } catch (err) {
+        CuboidShell.toast('Network error updating channel', 'error');
+      }
+    }
+
+    // Filter by Category
+    function filterCategory(cat, btn) {
+      document.querySelectorAll('.cat-pill').forEach(b => b.classList.remove('active', 'bg-[#111111]', 'text-white'));
+      if (btn && btn.classList) {
+        btn.classList.add('active', 'bg-[#111111]', 'text-white');
+      } else {
+        const match = document.querySelector(`.cat-pill[data-cat="${cat}"]`);
+        if (match) match.classList.add('active', 'bg-[#111111]', 'text-white');
+      }
+
+      const cards = document.querySelectorAll('.channel-card');
+      cards.forEach(c => {
+        if (cat === 'all' || c.getAttribute('data-category') === cat) {
+          c.style.display = '';
+        } else {
+          c.style.display = 'none';
+        }
+      });
+    }
+    window.filterCategory = filterCategory;
+
+    // Search Channels
+    function searchChannels(query) {
+      const q = query.toLowerCase().trim();
+      const cards = document.querySelectorAll('.channel-card');
+      cards.forEach(c => {
+        const text = c.innerText.toLowerCase();
+        if (!q || text.includes(q)) {
+          c.style.display = '';
+        } else {
+          c.style.display = 'none';
+        }
+      });
+    }
+
+    // Open Channel Configuration Modal
+    function openChannelModal(channelKey) {
+      activeModalChannel = channelKey;
+      const ch = channelsData[channelKey] || {};
+      const creds = ch.credentials || {};
+      const settings = ch.settings || {};
+
+      const modalTitle = document.getElementById('modal-title');
+      const modalSubtitle = document.getElementById('modal-subtitle');
+      const modalBody = document.getElementById('modal-form-body');
+      const testStatus = document.getElementById('modal-test-status');
+      testStatus.textContent = '';
+
+      const brandIcons = {
+        whatsapp: '../assets/brands/whatsapp.png',
+        instagram: '../assets/brands/instagram.png',
+        google_calendar: '../assets/brands/google-calendar.png',
+        calendly: '../assets/brands/calendly.png',
+        email_smtp: '../assets/brands/gmail.png',
+        google_sheets: '../assets/brands/google-sheets.png',
+        telecrm: '../assets/brands/telecrm.png',
+        zoho_crm: '../assets/brands/zoho.png',
+        hubspot: '../assets/brands/hubspot.png',
+        salesforce: '../assets/brands/salesforce.png',
+        webhooks: '../assets/brands/webhook.png'
+      };
+      const modalIconContainer = document.getElementById('modal-icon-container');
+      if (modalIconContainer && brandIcons[channelKey]) {
+        modalIconContainer.className = 'w-9 h-9 rounded-[6px] bg-white border border-[#e7e5de] p-1.5 flex items-center justify-center shrink-0 shadow-2xs';
+        modalIconContainer.innerHTML = `<img src="${brandIcons[channelKey]}" alt="${channelKey}" class="w-6 h-6 object-contain">`;
+      }
+
+      let formHtml = '';
+
+      if (channelKey === 'whatsapp') {
+        modalTitle.textContent = 'WhatsApp Business Configuration';
+        modalSubtitle.textContent = 'Meta Cloud API Credentials & Webhook Listener';
+        formHtml = `
+          <div class="space-y-3">
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Phone Number ID</label>
+              <input type="text" id="cfg-phone_number_id" value="${escapeHtml(creds.phone_number_id || '')}" placeholder="e.g. 109823485721940" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              <span class="text-[11px] text-stone-400">Found in Meta App Dashboard > WhatsApp > API Setup</span>
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">WhatsApp Business Account ID (WABA)</label>
+              <input type="text" id="cfg-business_account_id" value="${escapeHtml(creds.business_account_id || '')}" placeholder="e.g. 104829104812390" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Permanent Access Token (System User)</label>
+              <input type="password" id="cfg-access_token" value="${escapeHtml(creds.access_token || '')}" placeholder="EAAG..." class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              <span class="text-[11px] text-stone-400">Requires <code>whatsapp_business_messaging</code> permissions</span>
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Webhook Verify Token</label>
+              <input type="text" id="cfg-verify_token" value="${escapeHtml(creds.verify_token || 'cuboidpilot_secure_verify')}" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] space-y-1">
+              <div class="font-medium text-stone-800 text-[11px]">Meta Webhook Callback URL:</div>
+              <div class="flex items-center justify-between gap-2">
+                <code class="font-mono text-[11px] text-stone-700 select-all">https://cai.cuboidsoft.in/api/whatsapp_webhook.php</code>
+                <button type="button" onclick="navigator.clipboard.writeText('https://cai.cuboidsoft.in/api/whatsapp_webhook.php'); CuboidShell.toast('Webhook copied', 'success')" class="text-stone-500 hover:text-black text-[11px] font-medium">Copy</button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'instagram') {
+        modalTitle.textContent = 'Instagram Direct Messages Setup';
+        modalSubtitle.textContent = 'Meta Graph API & Instagram Messaging Webhook';
+        formHtml = `
+          <div class="space-y-3">
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Instagram Business Account ID</label>
+              <input type="text" id="cfg-instagram_account_id" value="${escapeHtml(creds.instagram_account_id || '')}" placeholder="e.g. 178414058292019" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Facebook Page Access Token</label>
+              <input type="password" id="cfg-page_access_token" value="${escapeHtml(creds.page_access_token || '')}" placeholder="EAA..." class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Verify Token</label>
+              <input type="text" id="cfg-verify_token" value="${escapeHtml(creds.verify_token || 'cuboid_ig_verify')}" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] space-y-1">
+              <div class="font-medium text-stone-800 text-[11px]">Instagram Webhook URL:</div>
+              <div class="flex items-center justify-between gap-2">
+                <code class="font-mono text-[11px] text-stone-700 select-all">https://cai.cuboidsoft.in/api/instagram_webhook.php</code>
+                <button type="button" onclick="navigator.clipboard.writeText('https://cai.cuboidsoft.in/api/instagram_webhook.php'); CuboidShell.toast('Webhook copied', 'success')" class="text-stone-500 hover:text-black text-[11px] font-medium">Copy</button>
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'google_calendar') {
+        modalTitle.textContent = 'Google Calendar & Meet Setup';
+        modalSubtitle.textContent = 'Direct appointment synchronization';
+        formHtml = `
+          <div class="space-y-3">
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Google OAuth Client ID</label>
+              <input type="text" id="cfg-client_id" value="${escapeHtml(creds.client_id || '')}" placeholder="xxxx.apps.googleusercontent.com" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Google OAuth Client Secret</label>
+              <input type="password" id="cfg-client_secret" value="${escapeHtml(creds.client_secret || '')}" placeholder="GOCSPX-..." class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Calendar ID</label>
+              <input type="text" id="cfg-calendar_id" value="${escapeHtml(creds.calendar_id || 'primary')}" placeholder="primary or specific email" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div class="flex items-center gap-2 pt-1">
+              <input type="checkbox" id="cfg-auto_meet" ${settings.auto_meet !== false ? 'checked' : ''} class="rounded text-stone-900">
+              <label for="cfg-auto_meet" class="text-stone-700">Auto-generate Google Meet link for every booked session</label>
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'calendly') {
+        modalTitle.textContent = 'Cal.com / Calendly Setup';
+        modalSubtitle.textContent = 'External scheduling service connection';
+        formHtml = `
+          <div class="space-y-3">
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Scheduling Platform</label>
+              <select id="cfg-platform" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+                <option value="cal_com" ${creds.platform === 'cal_com' ? 'selected' : ''}>Cal.com</option>
+                <option value="calendly" ${creds.platform === 'calendly' ? 'selected' : ''}>Calendly</option>
+              </select>
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Booking Link / Event URL</label>
+              <input type="text" id="cfg-booking_url" value="${escapeHtml(creds.booking_url || '')}" placeholder="https://cal.com/your-team/30min" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">API Key / Personal Access Token</label>
+              <input type="password" id="cfg-api_key" value="${escapeHtml(creds.api_key || '')}" placeholder="cal_live_..." class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'email_smtp') {
+        modalTitle.textContent = 'Transactional Email (SMTP) Configuration';
+        modalSubtitle.textContent = 'Real-time sales alerts and client confirmations';
+        formHtml = `
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">SMTP Host</label>
+                <input type="text" id="cfg-host" value="${escapeHtml(creds.host || '')}" placeholder="smtp.sendgrid.net / smtp.gmail.com" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              </div>
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Port</label>
+                <input type="number" id="cfg-port" value="${escapeHtml(creds.port || '587')}" placeholder="587" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Username / API Key</label>
+                <input type="text" id="cfg-username" value="${escapeHtml(creds.username || '')}" placeholder="apikey or email" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+              </div>
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Password</label>
+                <input type="password" id="cfg-password" value="${escapeHtml(creds.password || '')}" placeholder="••••••••" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Sender Email</label>
+                <input type="email" id="cfg-from_email" value="${escapeHtml(creds.from_email || '')}" placeholder="notifications@yourdomain.com" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+              </div>
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Sender Name</label>
+                <input type="text" id="cfg-from_name" value="${escapeHtml(creds.from_name || 'Cai AI Pilot')}" placeholder="Cai AI Pilot" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'google_sheets') {
+        modalTitle.textContent = 'Google Sheets Real-time Sync';
+        modalSubtitle.textContent = 'Stream new leads and summaries directly to your sheet';
+        formHtml = `
+          <div class="space-y-3">
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Google Apps Script Webhook URL</label>
+              <input type="text" id="cfg-webhook_url" value="${escapeHtml(creds.webhook_url || '')}" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              <span class="text-[11px] text-stone-400">Deployed as Web App with access set to "Anyone"</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Spreadsheet ID (Optional)</label>
+                <input type="text" id="cfg-sheet_id" value="${escapeHtml(creds.sheet_id || '')}" placeholder="1BxiMVs0XRA5nFMdKvBdB..." class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              </div>
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Sheet Name</label>
+                <input type="text" id="cfg-sheet_name" value="${escapeHtml(creds.sheet_name || 'Leads')}" placeholder="Leads" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+              </div>
+            </div>
+            <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] text-[11px] text-stone-600">
+              <strong>Tip:</strong> Need the ready-to-paste Apps Script code? Check our <a href="../docs.html#google-sheets-apps-script" target="_blank" class="text-stone-900 underline font-medium">Google Sheets Developer Guide &rarr;</a>
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'telecrm') {
+        modalTitle.textContent = 'TeleCRM (TellyCRM) Integration';
+        modalSubtitle.textContent = 'Push qualified leads to your telesales team instantly';
+        formHtml = `
+          <div class="space-y-3">
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">TeleCRM API Key / Enterprise Token</label>
+              <input type="password" id="cfg-api_key" value="${escapeHtml(creds.api_key || '')}" placeholder="tc_live_..." class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Endpoint / Subdomain</label>
+              <input type="text" id="cfg-endpoint" value="${escapeHtml(creds.endpoint || 'https://api.telecrm.in/enterprise/v1/lead')}" placeholder="https://api.telecrm.in/enterprise/v1/lead" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Default Lead Tag</label>
+                <input type="text" id="cfg-lead_tag" value="${escapeHtml(creds.lead_tag || 'Cai AI Lead')}" placeholder="Cai AI Lead" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+              </div>
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Assignee Agent ID (Optional)</label>
+                <input type="text" id="cfg-assigned_to" value="${escapeHtml(creds.assigned_to || '')}" placeholder="agent_12" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'zoho_crm') {
+        modalTitle.textContent = 'Zoho CRM Integration';
+        modalSubtitle.textContent = 'Map leads to Zoho CRM Leads & Contacts';
+        formHtml = `
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Zoho Region</label>
+                <select id="cfg-domain" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+                  <option value="zoho.in" ${creds.domain === 'zoho.in' ? 'selected' : ''}>India (zoho.in)</option>
+                  <option value="zoho.com" ${creds.domain === 'zoho.com' ? 'selected' : ''}>United States (zoho.com)</option>
+                  <option value="zoho.eu" ${creds.domain === 'zoho.eu' ? 'selected' : ''}>Europe (zoho.eu)</option>
+                  <option value="zoho.com.au" ${creds.domain === 'zoho.com.au' ? 'selected' : ''}>Australia (zoho.com.au)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Target Module</label>
+                <select id="cfg-module" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+                  <option value="Leads" ${creds.module === 'Leads' ? 'selected' : ''}>Leads</option>
+                  <option value="Contacts" ${creds.module === 'Contacts' ? 'selected' : ''}>Contacts</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">OAuth Client ID</label>
+              <input type="text" id="cfg-client_id" value="${escapeHtml(creds.client_id || '')}" placeholder="1000.XXXXX" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">OAuth Client Secret</label>
+              <input type="password" id="cfg-client_secret" value="${escapeHtml(creds.client_secret || '')}" placeholder="••••••••" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Permanent Refresh Token</label>
+              <input type="password" id="cfg-refresh_token" value="${escapeHtml(creds.refresh_token || '')}" placeholder="1000.YYYYY" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'hubspot') {
+        modalTitle.textContent = 'HubSpot CRM Integration';
+        modalSubtitle.textContent = 'Inbound contacts and deal synchronization';
+        formHtml = `
+          <div class="space-y-3">
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Private App Access Token</label>
+              <input type="password" id="cfg-access_token" value="${escapeHtml(creds.access_token || '')}" placeholder="pat-na1-..." class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              <span class="text-[11px] text-stone-400">Requires <code>crm.objects.contacts.write</code> and <code>crm.objects.deals.write</code></span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">HubSpot Portal ID</label>
+                <input type="text" id="cfg-portal_id" value="${escapeHtml(creds.portal_id || '')}" placeholder="e.g. 24891048" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              </div>
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Pipeline ID (Optional)</label>
+                <input type="text" id="cfg-pipeline_id" value="${escapeHtml(creds.pipeline_id || 'default')}" placeholder="default" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'salesforce') {
+        modalTitle.textContent = 'Salesforce CRM Integration';
+        modalSubtitle.textContent = 'Enterprise lead sync into Salesforce REST API';
+        formHtml = `
+          <div class="space-y-3">
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Salesforce Login Instance</label>
+              <input type="text" id="cfg-instance_url" value="${escapeHtml(creds.instance_url || 'https://login.salesforce.com')}" placeholder="https://login.salesforce.com or custom domain" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Connected App Consumer Key (Client ID)</label>
+              <input type="text" id="cfg-consumer_key" value="${escapeHtml(creds.consumer_key || '')}" placeholder="3MVG9..." class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Connected App Consumer Secret (Client Secret)</label>
+              <input type="password" id="cfg-consumer_secret" value="${escapeHtml(creds.consumer_secret || '')}" placeholder="••••••••" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Salesforce Username</label>
+                <input type="text" id="cfg-username" value="${escapeHtml(creds.username || '')}" placeholder="admin@domain.com" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] text-xs focus:outline-none focus:border-stone-900">
+              </div>
+              <div>
+                <label class="block font-medium text-stone-800 mb-1">Password + Security Token</label>
+                <input type="password" id="cfg-security_token" value="${escapeHtml(creds.security_token || '')}" placeholder="••••••••" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              </div>
+            </div>
+          </div>
+        `;
+      } else if (channelKey === 'webhooks') {
+        modalTitle.textContent = 'Universal Outbound Webhook';
+        modalSubtitle.textContent = 'Stream real-time events to your custom endpoints';
+        formHtml = `
+          <div class="space-y-3">
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Target Endpoint URL (POST)</label>
+              <input type="url" id="cfg-webhook_url" value="${escapeHtml(creds.webhook_url || '')}" placeholder="https://api.yourdomain.com/cai/webhook" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+              <span class="text-[11px] text-stone-400">Must respond with HTTP 200 within 5 seconds</span>
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Signing Secret (HMAC-SHA256)</label>
+              <div class="flex items-center gap-2">
+                <input type="text" id="cfg-secret_token" value="${escapeHtml(creds.secret_token || 'whsec_' + Math.random().toString(36).substring(2, 12))}" class="w-full px-3 py-1.5 border border-[#e7e5de] rounded-[4px] font-mono text-xs focus:outline-none focus:border-stone-900">
+                <button type="button" onclick="document.getElementById('cfg-secret_token').value = 'whsec_' + Math.random().toString(36).substring(2, 14); CuboidShell.toast('Generated new secret', 'info')" class="btn-secondary btn-sm text-xs py-1.5 px-2.5 shrink-0">Regenerate</button>
+              </div>
+              <span class="text-[11px] text-stone-400">Passed in <code>X-Cuboid-Signature</code> header for payload verification</span>
+            </div>
+            <div>
+              <label class="block font-medium text-stone-800 mb-1">Event Subscriptions</label>
+              <div class="space-y-1.5 pt-1">
+                <label class="flex items-center gap-2 text-stone-700">
+                  <input type="checkbox" id="cfg-evt_lead" checked class="rounded text-stone-900">
+                  <span><code>lead.created</code> &amp; <code>lead.qualified</code> (New contact captured)</span>
+                </label>
+                <label class="flex items-center gap-2 text-stone-700">
+                  <input type="checkbox" id="cfg-evt_convo" checked class="rounded text-stone-900">
+                  <span><code>conversation.resolved</code> (Full AI dialogue summary)</span>
+                </label>
+                <label class="flex items-center gap-2 text-stone-700">
+                  <input type="checkbox" id="cfg-evt_apt" checked class="rounded text-stone-900">
+                  <span><code>appointment.scheduled</code> (Calendar booking confirmation)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      modalBody.innerHTML = formHtml;
+      document.getElementById('channel-modal-overlay').classList.remove('hidden');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeChannelModal() {
+      document.getElementById('channel-modal-overlay').classList.add('hidden');
+      activeModalChannel = null;
+    }
+
+    // Collect Credentials from Modal Form
+    function collectModalCredentials(channelKey) {
+      const creds = {};
+      const inputs = document.querySelectorAll('#modal-form-body input, #modal-form-body select');
+      inputs.forEach(input => {
+        if (input.id && input.id.startsWith('cfg-')) {
+          const field = input.id.replace('cfg-', '');
+          if (input.type === 'checkbox') {
+            creds[field] = input.checked;
+          } else {
+            creds[field] = input.value.trim();
+          }
+        }
+      });
+      return creds;
+    }
+
+    // Save Channel Configuration
+    async function saveCurrentChannel() {
+      if (!activeModalChannel) return;
+      const saveBtn = document.getElementById('modal-save-btn');
+      const origHtml = saveBtn.innerHTML;
+      saveBtn.disabled = true;
+      saveBtn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Saving...';
+      if (window.lucide) lucide.createIcons();
+
+      try {
+        const creds = collectModalCredentials(activeModalChannel);
+        const formData = new FormData();
+        formData.append('channel_key', activeModalChannel);
+        formData.append('credentials', JSON.stringify(creds));
+        formData.append('is_active', '1');
+
+        const res = await fetch('../api/channels.php?action=save', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          CuboidShell.toast(`Channel settings saved successfully.`, 'success');
+          closeChannelModal();
+          refreshChannelsList();
+        } else {
+          CuboidShell.toast(data.error || 'Failed to save settings', 'error');
+        }
+      } catch (err) {
+        CuboidShell.toast('Network error saving channel', 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = origHtml;
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    // Test Channel Connection
+    async function testCurrentChannel() {
+      if (!activeModalChannel) return;
+      const testBtn = document.getElementById('modal-test-btn');
+      const testStatus = document.getElementById('modal-test-status');
+      const origHtml = testBtn.innerHTML;
+      testBtn.disabled = true;
+      testBtn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Testing...';
+      testStatus.textContent = 'Verifying handshake...';
+      testStatus.className = 'text-[11px] text-stone-500 animate-pulse';
+      if (window.lucide) lucide.createIcons();
+
+      try {
+        const creds = collectModalCredentials(activeModalChannel);
+        const formData = new FormData();
+        formData.append('channel_key', activeModalChannel);
+        formData.append('credentials', JSON.stringify(creds));
+
+        const res = await fetch('../api/channels.php?action=test_connection', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          testStatus.textContent = '✓ ' + (data.message || 'Connected successfully');
+          testStatus.className = 'text-[11px] text-emerald-600 font-medium';
+        } else {
+          testStatus.textContent = '✗ ' + (data.error || 'Verification failed');
+          testStatus.className = 'text-[11px] text-rose-600 font-medium';
+        }
+      } catch (err) {
+        testStatus.textContent = '✗ Network error testing connection';
+        testStatus.className = 'text-[11px] text-rose-600 font-medium';
+      } finally {
+        testBtn.disabled = false;
+        testBtn.innerHTML = origHtml;
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+  </script>
+</body>
+</html>

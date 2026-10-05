@@ -44,7 +44,9 @@ function getCompanyEntitlements(PDO $pdo, int $companyId): array {
 
     $trialDaysRemaining = $isTrialActive ? max(0, (int)ceil(($trialEndsAt - $now) / 86400)) : 0;
 
-    // Determine effective plan tier
+    // Determine effective plan tier and feature unlock
+    $isFullAccess = $isSubscriptionActive || $isTrialActive;
+
     if ($isSubscriptionActive) {
         $effectiveTier = !empty($company['plan_code']) ? $company['plan_code'] : 'premium';
         $statusLabel = 'ACTIVE';
@@ -52,7 +54,7 @@ function getCompanyEntitlements(PDO $pdo, int $companyId): array {
     } elseif ($isTrialActive) {
         $effectiveTier = 'free_trial';
         $statusLabel = 'TRIALING';
-        $isPremium = false;
+        $isPremium = false; // Flag to indicate on trial
     } elseif ($isTrialExpired) {
         $effectiveTier = 'expired_trial';
         $statusLabel = 'EXPIRED';
@@ -63,42 +65,54 @@ function getCompanyEntitlements(PDO $pdo, int $companyId): array {
         $isPremium = false;
     }
 
-    return [
-        'valid'                  => true,
-        'company_id'             => (int)$company['id'],
-        'company_name'           => $company['name'],
-        'company_key'            => $company['company_key'],
-        'status'                 => $statusLabel,
-        'effective_tier'         => $effectiveTier,
-        'is_premium'             => $isPremium,
-        'is_trial'               => $isTrialActive,
-        'trial_days_remaining'   => $trialDaysRemaining,
-        'trial_ends_at'          => date('Y-m-d H:i:s', $trialEndsAt),
-        'whatsapp_connected'     => (bool)($company['whatsapp_connected'] ?? 0),
-        
-        // Capabilities (Sections 11 & 20)
-        'capabilities' => [
-            // Core free / trial features
-            'can_use_ai_assistant'          => true,
-            'can_capture_leads'             => true,
-            'can_use_crm'                   => true,
-            'can_view_conversations'        => true,
-            'can_use_lead_qualification'    => true,
-            'can_use_lead_priority'         => true,
-            'can_use_basic_pipeline'        => true,
-            'can_use_basic_analytics'       => true,
+        // Advanced & Omnichannel features (Gated for free_trial/starter; Unlocked on Growth/Pro/Active Premium)
+        $canAdvancedFeatures = ($isSubscriptionActive || ($isTrialActive && !in_array($company['plan_tier'] ?? '', ['free_trial', 'starter', 'free']))) && !$isTrialExpired;
 
-            // Premium workflow features
-            'can_use_whatsapp'              => $isPremium,
-            'can_use_whatsapp_continuation' => $isPremium,
-            'can_create_team'               => $isPremium,
-            'can_assign_leads'              => $isPremium,
-            'can_receive_whatsapp_alerts'   => $isPremium,
-            'can_use_automations'           => $isPremium,
-            'can_use_payment_reminders'     => $isPremium,
-        ]
-    ];
-}
+        return [
+            'valid'                  => true,
+            'company_id'             => (int)$company['id'],
+            'company_name'           => $company['name'],
+            'company_key'            => $company['company_key'],
+            'status'                 => $statusLabel,
+            'effective_tier'         => $effectiveTier,
+            'is_premium'             => $isPremium,
+            'is_trial'               => $isTrialActive,
+            'is_trial_expired'       => $isTrialExpired,
+            'is_full_access'         => $isFullAccess,
+            'trial_days_remaining'   => $trialDaysRemaining,
+            'trial_started_at'       => $company['trial_started_at'] ?? $company['created_at'],
+            'trial_ends_at'          => date('Y-m-d H:i:s', $trialEndsAt),
+            'formatted_trial_end'    => date('M j, Y', $trialEndsAt),
+            'whatsapp_connected'     => (bool)($company['whatsapp_connected'] ?? 0),
+            'current_plan_name'      => $company['plan_name'] ?? '14-Day Free Trial (Advanced Tier)',
+            'current_cycle_amount'   => ($isTrialActive && !$isSubscriptionActive) ? 0 : (int)($company['price_monthly_inr'] ?? 199),
+            
+            'capabilities' => [
+                // Core capabilities
+                'can_use_ai_assistant'          => $isFullAccess,
+                'can_capture_leads'             => true,
+                'can_use_crm'                   => true,
+                'can_view_conversations'        => true,
+                'can_use_lead_qualification'    => true,
+                'can_use_lead_priority'         => true,
+                'can_use_basic_pipeline'        => true,
+                'can_use_basic_analytics'       => true,
+
+                // Advanced & Omnichannel features
+                'can_use_whatsapp'              => $canAdvancedFeatures,
+                'can_use_whatsapp_continuation' => $canAdvancedFeatures,
+                'can_create_team'               => $isFullAccess,
+                'can_assign_leads'              => $isFullAccess,
+                'can_receive_whatsapp_alerts'   => $canAdvancedFeatures,
+                'can_use_automations'           => $canAdvancedFeatures,
+                'can_use_payment_reminders'     => $canAdvancedFeatures,
+                'can_use_closing_radar'         => $isFullAccess,
+                'can_use_calendar_integration'  => $isFullAccess,
+                'can_use_ai_appointment_booking'=> $isFullAccess,
+                'can_use_advanced_reminders'    => $canAdvancedFeatures,
+            ]
+        ];
+    }
 
 /**
  * Checks if a company has entitlement for a capability.

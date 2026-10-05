@@ -1,8 +1,9 @@
 <?php
 /**
- * CUBOIDPILOT — VISITOR LEAD CAPTURE API (Sections 7, 8 & 9)
- * Collects visitor identity (Name + Phone/Email), establishes session,
- * and provisions Lead + Conversation in MySQL before chat begins.
+ * CUBOIDPILOT — VISITOR IDENTIFICATION & AI SESSION CREATION API (Section 1)
+ * Collects visitor identity (Name + Phone required, Email optional),
+ * provisions/re-identifies Visitor, generates unique Session ID (e.g. CP-8F42K91),
+ * links Company + Visitor + Lead + Conversation + Session, and updates CRM timeline.
  */
 
 header("Access-Control-Allow-Origin: *");
@@ -22,17 +23,41 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+/**
+ * Generate human-readable unique Session ID in format CP-XXXXXXX (e.g. CP-8F42K91)
+ */
+function generateUniqueSessionId(PDO $pdo): string {
+    $chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+    for ($attempt = 0; $attempt < 10; $attempt++) {
+        $rand = '';
+        for ($i = 0; $i < 7; $i++) {
+            $rand .= $chars[random_int(0, strlen($chars) - 1)];
+        }
+        $code = "CP-{$rand}";
+        $chk = $pdo->prepare("SELECT id FROM `visitor_sessions` WHERE `session_id` = ? LIMIT 1");
+        $chk->execute([$code]);
+        if (!$chk->fetch()) {
+            return $code;
+        }
+    }
+    return 'CP-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 7));
+}
+
 try {
     $pdo = getDbConnection();
 
     $rawInput = file_get_contents('php://input');
     $data = json_decode($rawInput, true) ?? $_POST;
 
-    $companyKey = trim($data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
-    $name       = trim($data['name'] ?? '');
-    $phone      = trim($data['phone'] ?? '');
-    $email      = strtolower(trim($data['email'] ?? ''));
-    $sessionId  = trim($data['session_id'] ?? '');
+    $companyKey  = trim($data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    $name        = trim($data['name'] ?? '');
+    $phone       = trim($data['phone'] ?? '');
+    $email       = strtolower(trim($data['email'] ?? ''));
+    $clientSess  = trim($data['session_id'] ?? '');
+    $channel     = strtolower(trim($data['channel'] ?? 'web'));
+    if (!in_array($channel, ['web', 'instagram', 'whatsapp', 'email', 'widget'])) {
+        $channel = 'web';
+    }
 
     // Resolve tenant
     $company = null;
@@ -72,30 +97,31 @@ try {
     }
     $companyId = (int)$company['id'];
 
+    // 1. Validation (Section 1: Name Required, Phone Required, Email Optional)
     if (empty($name)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Please share your name so we know who we are speaking with.']);
+        echo json_encode(['success' => false, 'error' => 'Please provide your full name.']);
         exit;
     }
 
-    if (empty($phone) && empty($email)) {
+    if (empty($phone)) {
         http_response_code(400);
-        echo json_encode(['success' => false, 'error' => 'Please provide at least one contact method (phone number or email) so we can reach you.']);
+        echo json_encode(['success' => false, 'error' => 'Please provide your phone number so we can reach you.']);
         exit;
     }
 
-    // Clean phone number
-    $cleanPhone = !empty($phone) ? preg_replace('/[^0-9+]/', '', $phone) : null;
-
-    if (empty($sessionId)) {
-        $sessionId = 'sess_' . bin2hex(random_bytes(12));
+    $cleanPhone = preg_replace('/[^0-9+]/', '', $phone);
+    if (strlen(preg_replace('/[^0-9]/', '', $cleanPhone)) < 7) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'Please provide a valid phone number.']);
+        exit;
     }
 
-    // 1. Customer deduplication within this company
+    // 2. Identify existing visitor/customer to prevent duplicate leads
     $customer = null;
     if (!empty($cleanPhone)) {
-        $cStmt = $pdo->prepare("SELECT id, name, phone, email FROM `customers` WHERE `company_id` = ? AND `phone` = ? LIMIT 1");
-        $cStmt->execute([$companyId, $cleanPhone]);
+        $cStmt = $pdo->prepare("SELECT id, name, phone, email FROM `customers` WHERE `company_id` = ? AND (`phone` = ? OR `whatsapp_number` = ?) LIMIT 1");
+        $cStmt->execute([$companyId, $cleanPhone, $cleanPhone]);
         $customer = $cStmt->fetch();
     }
     if (!$customer && !empty($email)) {
@@ -103,12 +129,25 @@ try {
         $cStmt->execute([$companyId, $email]);
         $customer = $cStmt->fetch();
     }
+    if (!$customer && !empty($clientSess)) {
+        $sStmt = $pdo->prepare("
+            SELECT c.id, c.name, c.phone, c.email 
+            FROM `customers` c
+            JOIN `visitor_sessions` vs ON vs.customer_id = c.id
+            WHERE (vs.session_id = ? OR vs.session_token = ?) AND vs.company_id = ?
+            LIMIT 1
+        ");
+        $sStmt->execute([$clientSess, $clientSess, $companyId]);
+        $customer = $sStmt->fetch();
+    }
+
+    $isReturningVisitor = (bool)$customer;
 
     if ($customer) {
         $customerId = (int)$customer['id'];
         $custUpdates = [];
         $custParams = [];
-        if (!empty($name)) {
+        if (!empty($name) && ($customer['name'] === 'Website Visitor' || $customer['name'] === 'Prospect')) {
             $custUpdates[] = "`name` = ?";
             $custParams[] = $name;
         }
@@ -118,14 +157,16 @@ try {
             $custParams[] = $cleanPhone;
             $custParams[] = $cleanPhone;
         }
-        if (!empty($email)) {
+        if (!empty($email) && empty($customer['email'])) {
             $custUpdates[] = "`email` = ?";
             $custParams[] = $email;
         }
         $custUpdates[] = "`last_seen_at` = NOW()";
         $custParams[] = $customerId;
+        $custParams[] = $companyId;
 
-        $pdo->prepare("UPDATE `customers` SET " . implode(', ', $custUpdates) . " WHERE `id` = ?")->execute($custParams);
+        $pdo->prepare("UPDATE `customers` SET " . implode(', ', $custUpdates) . " WHERE `id` = ? AND `company_id` = ?")
+            ->execute($custParams);
     } else {
         $custUuid = 'cust_' . bin2hex(random_bytes(12));
         $insCust = $pdo->prepare("
@@ -144,19 +185,36 @@ try {
         $customerId = (int)$pdo->lastInsertId();
     }
 
-    // 2. Register or update visitor session (Atomic ON DUPLICATE KEY UPDATE prevents 1062 duplicate key error)
-    $pdo->prepare("
-        INSERT INTO `visitor_sessions` (`company_id`, `session_token`, `customer_id`, `created_at`)
-        VALUES (?, ?, ?, NOW())
-        ON DUPLICATE KEY UPDATE 
-            `customer_id` = VALUES(`customer_id`),
-            `company_id` = VALUES(`company_id`)
-    ")->execute([$companyId, $sessionId, $customerId]);
+    $visitorId = $customerId; // visitor_id maps to customer_id
 
-    // 3. Find or Create initial Conversation
+    // 3. Unique Session ID Generation (CP-8F42K91)
+    // Reuse existing Session ID if valid format, else generate new CP-XXXXXXX
+    $sessionId = null;
+    if (!empty($clientSess) && preg_match('/^CP-[A-Z0-9]{5,10}$/i', $clientSess)) {
+        $sessionId = strtoupper($clientSess);
+    }
+
+    if (!$sessionId && $isReturningVisitor) {
+        // Check if customer already has a CP-XXXXXXX session in this company
+        $sessCheck = $pdo->prepare("
+            SELECT session_id FROM `visitor_sessions` 
+            WHERE `customer_id` = ? AND `company_id` = ? AND `session_id` LIKE 'CP-%'
+            ORDER BY id DESC LIMIT 1
+        ");
+        $sessCheck->execute([$customerId, $companyId]);
+        $sessionId = $sessCheck->fetchColumn();
+    }
+
+    if (!$sessionId) {
+        $sessionId = generateUniqueSessionId($pdo);
+    }
+
+    $sessionToken = "sess_" . substr(hash('sha256', "{$sessionId}_{$companyId}_{$customerId}"), 0, 16);
+
+    // 4. Find or Create Conversation
     $convStmt = $pdo->prepare("
         SELECT id FROM `conversations` 
-        WHERE `company_id` = ? AND `customer_id` = ? AND `channel` = 'widget' AND `status` = 'ai_handling'
+        WHERE `company_id` = ? AND `customer_id` = ? AND `status` IN ('ai_handling', 'human_requested', 'human_active')
         ORDER BY id DESC LIMIT 1
     ");
     $convStmt->execute([$companyId, $customerId]);
@@ -164,17 +222,19 @@ try {
 
     if ($existingConv) {
         $conversationId = (int)$existingConv['id'];
+        $pdo->prepare("UPDATE `conversations` SET `session_id` = ?, `last_message_at` = NOW() WHERE `id` = ? AND `company_id` = ?")
+            ->execute([$sessionId, $conversationId, $companyId]);
     } else {
         $insConv = $pdo->prepare("
             INSERT INTO `conversations`
-            (`company_id`, `customer_id`, `channel`, `status`, `ownership`, `last_message_preview`, `last_message_at`, `created_at`)
-            VALUES (?, ?, 'widget', 'ai_handling', 'ai', 'Lead details captured', NOW(), NOW())
+            (`company_id`, `customer_id`, `session_id`, `channel`, `status`, `ownership`, `last_message_preview`, `last_message_at`, `created_at`)
+            VALUES (?, ?, ?, ?, 'ai_handling', 'ai', 'Visitor identified and session started', NOW(), NOW())
         ");
-        $insConv->execute([$companyId, $customerId]);
+        $insConv->execute([$companyId, $customerId, $sessionId, $channel]);
         $conversationId = (int)$pdo->lastInsertId();
     }
 
-    // 4. Find or Create Lead (Section 8: Initial State NEW, Priority LOW / UNASSESSED, Source WEBSITE_WIDGET)
+    // 5. Find or Create Lead (Avoid duplicate leads for returning visitors)
     $leadStmt = $pdo->prepare("
         SELECT id FROM `leads` 
         WHERE `company_id` = ? AND `customer_id` = ? AND `status` = 'open' 
@@ -190,10 +250,9 @@ try {
             SET `conversation_id` = COALESCE(`conversation_id`, ?),
                 `title` = ?,
                 `last_activity_at` = NOW()
-            WHERE `id` = ?
-        ")->execute([$conversationId, $name, $leadId]);
+            WHERE `id` = ? AND `company_id` = ?
+        ")->execute([$conversationId, $name, $leadId, $companyId]);
     } else {
-        // Resolve first stage
         $stgStmt = $pdo->prepare("SELECT id, name FROM `pipeline_stages` WHERE `company_id` = ? ORDER BY `stage_order` ASC LIMIT 1");
         $stgStmt->execute([$companyId]);
         $firstStage = $stgStmt->fetch();
@@ -205,17 +264,10 @@ try {
             (`company_id`, `customer_id`, `conversation_id`, `title`, `stage_id`, `stage_name`, `intent_level`, `priority`, `opportunity_value`, `source`, `status`, `radar_reason`, `radar_recommended_action`, `last_activity_at`, `created_at`, `updated_at`)
             VALUES (?, ?, ?, ?, ?, ?, 'low', 'LOW', 0, 'WEBSITE_WIDGET', 'open', 'New website visitor identified', 'Awaiting first question', NOW(), NOW(), NOW())
         ");
-        $insLead->execute([
-            $companyId,
-            $customerId,
-            $conversationId,
-            $name,
-            $stageId,
-            $stageName
-        ]);
+        $insLead->execute([$companyId, $customerId, $conversationId, $name, $stageId, $stageName]);
         $leadId = (int)$pdo->lastInsertId();
 
-        // 5. Activity Timeline Event (Section 44)
+        // Timeline Event: Visitor & Lead Created
         $pdo->prepare("
             INSERT INTO `lead_events`
             (`company_id`, `lead_id`, `customer_id`, `event_type`, `description`, `event_data_json`, `created_at`)
@@ -224,28 +276,59 @@ try {
             $companyId,
             $leadId,
             $customerId,
-            "Lead created from website widget: {$name} ({$cleanPhone})",
-            json_encode(['name' => $name, 'phone' => $cleanPhone, 'email' => $email, 'source' => 'WEBSITE_WIDGET'])
+            "Visitor identified: {$name} ({$cleanPhone})",
+            json_encode(['name' => $name, 'phone' => $cleanPhone, 'email' => $email, 'session_id' => $sessionId, 'channel' => $channel])
+        ]);
+    }
+
+    // 6. Persist / Update visitor_sessions with full linking
+    $pdo->prepare("
+        INSERT INTO `visitor_sessions` 
+        (`company_id`, `session_id`, `visitor_id`, `session_token`, `customer_id`, `lead_id`, `conversation_id`, `channel`, `created_at`, `updated_at`)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+        ON DUPLICATE KEY UPDATE 
+            `session_id` = VALUES(`session_id`),
+            `visitor_id` = VALUES(`visitor_id`),
+            `customer_id` = VALUES(`customer_id`),
+            `lead_id` = VALUES(`lead_id`),
+            `conversation_id` = VALUES(`conversation_id`),
+            `channel` = VALUES(`channel`),
+            `updated_at` = NOW()
+    ")->execute([$companyId, $sessionId, $visitorId, $sessionToken, $customerId, $leadId, $conversationId, $channel]);
+
+    // Timeline Event: Session Created
+    if ($leadId) {
+        $pdo->prepare("
+            INSERT INTO `lead_events`
+            (`company_id`, `lead_id`, `customer_id`, `event_type`, `description`, `event_data_json`, `created_at`)
+            VALUES (?, ?, ?, 'SESSION_CREATED', ?, ?, NOW())
+        ")->execute([
+            $companyId,
+            $leadId,
+            $customerId,
+            "AI Session established: {$sessionId}",
+            json_encode(['session_id' => $sessionId, 'channel' => $channel, 'returning_visitor' => $isReturningVisitor])
         ]);
     }
 
     $firstName = explode(' ', $name)[0];
 
     echo json_encode([
-        'success'         => true,
-        'customer_id'     => $customerId,
-        'lead_id'         => $leadId,
-        'conversation_id' => $conversationId,
-        'session_id'      => $sessionId,
-        'visitor_name'    => $name,
-        'reply'           => "Hi {$firstName} 👋 Thanks for sharing your details. I'm Cai, your AI assistant for {$company['name']}. What can I help you with today?"
+        'success'           => true,
+        'company_id'        => $companyId,
+        'visitor_id'        => $visitorId,
+        'customer_id'       => $customerId,
+        'lead_id'           => $leadId,
+        'conversation_id'   => $conversationId,
+        'session_id'        => $sessionId,
+        'session_token'     => $sessionToken,
+        'visitor_name'      => $name,
+        'returning_visitor' => $isReturningVisitor,
+        'system_message'    => "Session created successfully\nYou can now continue your conversation.",
+        'reply'             => "Hi {$firstName} 👋 Thanks for sharing your details. I'm Cai, your AI assistant for {$company['name']}. How can I help you today?"
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
 } catch (Exception $e) {
-    error_log("[CuboidPilot Visitor API Error] " . $e->getMessage());
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error'   => 'Please provide a valid phone number or email address so we can get in touch.'
-    ]);
+    echo json_encode(['success' => false, 'error' => 'Server error: ' . $e->getMessage()]);
 }

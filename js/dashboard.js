@@ -1793,6 +1793,57 @@ window.CuboidDashboard = {
 
     // Initial load
     this.loadConversations();
+
+    // Start Real-Time Live Polling (3.5s interval for low-latency live chat)
+    this.startLiveConversationPolling();
+  },
+
+  startLiveConversationPolling: function() {
+    if (this._convoPollInterval) clearInterval(this._convoPollInterval);
+    this._convoPollInterval = setInterval(async () => {
+      // 1. Refresh threads list keeping active conversation
+      await this.loadConversations(true);
+
+      // 2. If a conversation is actively open, refresh its message stream
+      if (this.currentConversationId) {
+        try {
+          const res = await fetch(`../api/conversations.php?id=${this.currentConversationId}`);
+          const data = await res.json();
+          if (data && data.success && Array.isArray(data.messages)) {
+            const currentCount = this._lastMsgCount || 0;
+            if (data.messages.length !== currentCount) {
+              const prevCount = this._lastMsgCount || 0;
+              this._lastMsgCount = data.messages.length;
+              if (prevCount > 0 && data.messages.length > prevCount) {
+                const latestMsg = data.messages[data.messages.length - 1];
+                if (latestMsg.sender_type === 'visitor' || latestMsg.sender_type === 'user') {
+                  this.playNotificationSound();
+                }
+              }
+              const activeName = (this.currentConversationData && this.currentConversationData.customer_name) || 'Customer';
+              await this.selectConversation(this.currentConversationId, activeName, true);
+            }
+          }
+        } catch (e) {}
+      }
+    }, 3500);
+  },
+
+  playNotificationSound: function() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.25);
+    } catch (e) {}
   },
 
   loadTeamMembersForDossier: async function() {
@@ -2007,10 +2058,14 @@ window.CuboidDashboard = {
 
       if (conversations.length === 0) {
         listContainer.innerHTML = `
-          <div class="p-8 text-center text-stone-400 space-y-2">
-            <i data-lucide="inbox" class="w-7 h-7 mx-auto text-stone-300"></i>
-            <div class="text-xs font-medium text-stone-600">No conversations in this queue</div>
-            <div class="text-[11px] text-stone-400">Inbound website & WhatsApp visitors will appear here automatically.</div>
+          <div class="p-8 text-center text-stone-400 space-y-2.5">
+            <div class="w-10 h-10 mx-auto rounded-full bg-stone-100 flex items-center justify-center text-stone-400 border border-stone-200">
+              <i data-lucide="check-check" class="w-5 h-5 text-emerald-600"></i>
+            </div>
+            <div class="text-xs font-semibold text-stone-700">You're all caught up</div>
+            <div class="text-[11px] text-stone-500 leading-relaxed max-w-[260px] mx-auto">
+              Cai is handling conversations. When something needs your team, it will appear here with context and a suggested next step.
+            </div>
           </div>
         `;
         if (window.lucide) lucide.createIcons();
@@ -2026,7 +2081,8 @@ window.CuboidDashboard = {
         const isSelected = c.id === this.currentConversationId;
         const isWa = c.channel === 'whatsapp';
         const isAi = c.ownership === 'ai';
-        const isHigh = c.priority === 'HIGH' || c.priority === 'URGENT';
+        const isUrgent = c.priority === 'URGENT';
+        const isHigh = c.priority === 'HIGH' || isUrgent;
         const isAttention = !!c.human_attention_required;
         const initials = (c.customer_name || 'V').trim().split(/\s+/).map(n => n[0]).slice(0, 2).join('').toUpperCase() || 'V';
 
@@ -2039,20 +2095,21 @@ window.CuboidDashboard = {
                 </span>
                 <span class="font-medium text-xs text-stone-900 truncate">${escapeHtml(c.customer_name)}</span>
                 ${isWa ? `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" title="WhatsApp"></span>` : ''}
-                ${isHigh ? `<span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" title="High Intent"></span>` : ''}
-                ${isAttention ? `<span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse" title="Human Attention Required"></span>` : ''}
+                ${isUrgent ? `<span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-600 shrink-0 animate-ping" title="Urgent Action"></span>` : (isHigh ? `<span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0" title="High Intent"></span>` : '')}
+                ${isAttention ? `<span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse" title="Human Action Required"></span>` : ''}
               </div>
               <span class="text-[10px] text-stone-400 shrink-0">${c.last_time || 'Just now'}</span>
             </div>
             
             <div class="flex items-center justify-between text-[10.5px] text-stone-500 mb-1 pl-8">
-              <div class="flex items-center gap-1.5">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 <span class="px-1.5 py-0.2 rounded text-[9.5px] ${isAi ? 'bg-stone-100 text-stone-700 border border-stone-200' : 'bg-stone-900 text-white'} font-medium">
-                  ${isAi ? 'Cai AI' : 'Counselor'}
+                  ${isAi ? 'Cai AI' : 'Human Specialist'}
                 </span>
                 <span class="text-stone-300">&bull;</span>
                 <span class="capitalize text-stone-400 text-[10px]">${c.stage}</span>
-                ${isAttention ? `<span class="px-1 py-0.2 rounded text-[9px] bg-amber-50 text-amber-800 border border-amber-200 font-medium">Attention</span>` : ''}
+                ${isUrgent ? `<span class="px-1.5 py-0.2 rounded text-[9px] bg-rose-50 text-rose-800 border border-rose-200 font-semibold">URGENT</span>` : (isHigh ? `<span class="px-1.5 py-0.2 rounded text-[9px] bg-indigo-50 text-indigo-700 border border-indigo-200 font-medium">HIGH INTENT</span>` : '')}
+                ${isAttention ? `<span class="px-1.5 py-0.2 rounded text-[9px] bg-amber-50 text-amber-800 border border-amber-200 font-semibold">Action Required</span>` : ''}
               </div>
               ${c.status === 'resolved' ? `<span class="text-emerald-700 font-medium text-[9.5px]">Resolved</span>` : ''}
             </div>
@@ -2313,18 +2370,25 @@ window.CuboidDashboard = {
       if (streamContainer) {
         let html = '';
 
-        // AI Summary Banner
-        if (conv.ai_summary) {
+        // Cai Summary / Human Action Banner
+        if (conv.ai_summary || (conv.artifact && conv.artifact.summary)) {
+          const sumText = conv.ai_summary || conv.artifact.summary;
+          const recAction = (conv.artifact && conv.artifact.recommended_action) || conv.radar_recommended_action;
+          const isAttn = !!conv.human_attention_required;
           html += `
-            <div class="p-3.5 bg-[#eff2fe] border border-[#dbe4fe] rounded-lg text-indigo-950 text-xs mb-3 space-y-1">
-              <div class="flex items-center gap-1.5 font-semibold text-indigo-700">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                <span>Autonomous AI Lead Summary</span>
+            <div class="p-3.5 ${isAttn ? 'bg-amber-50/90 border-amber-200 text-amber-950' : 'bg-[#eff2fe] border-[#dbe4fe] text-indigo-950'} border rounded-lg text-xs mb-3 space-y-1.5 shadow-2xs">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 font-semibold ${isAttn ? 'text-amber-800' : 'text-indigo-700'}">
+                  <i data-lucide="${isAttn ? 'alert-triangle' : 'sparkles'}" class="w-3.5 h-3.5"></i>
+                  <span>${isAttn ? 'Cai Human Action Alert' : 'Cai Conversation Summary'}</span>
+                </div>
+                ${isAttn ? `<span class="px-2 py-0.5 rounded text-[9.5px] font-bold bg-amber-200/80 text-amber-900 uppercase tracking-wide">Action Needed</span>` : ''}
               </div>
-              <p class="text-stone-700 leading-relaxed">${escapeHtml(conv.ai_summary)}</p>
-              ${conv.radar_recommended_action ? `
-                <div class="text-[11px] text-indigo-800 font-medium pt-1 border-t border-indigo-200/60 mt-1">
-                  Recommended Action: ${escapeHtml(conv.radar_recommended_action)}
+              <p class="text-stone-700 leading-relaxed whitespace-pre-line">${escapeHtml(sumText)}</p>
+              ${recAction ? `
+                <div class="text-[11px] ${isAttn ? 'text-amber-900 bg-amber-100/60 border-amber-200' : 'text-indigo-900 bg-white/80 border-indigo-100'} p-2 rounded font-medium border mt-1 flex items-start gap-1.5">
+                  <span class="font-bold shrink-0">Recommended Action:</span>
+                  <span>${escapeHtml(recAction)}</span>
                 </div>
               ` : ''}
             </div>
@@ -2915,103 +2979,6 @@ window.CuboidDashboard = {
     }
   },
 
-  // 10. Knowledge Store Loader (app/knowledge.html)
-  loadKnowledge: async function() {
-    try {
-      const res = await fetch('../api/knowledge.php');
-      const data = await res.json();
-      if (!data || !data.success) return;
-
-      const countLabel = document.getElementById('knowledge-count-label');
-      if (countLabel) {
-        countLabel.textContent = `All Sources (${data.count || 0})`;
-      }
-
-      const tbody = document.getElementById('knowledge-table-tbody');
-      if (tbody && data.sources) {
-        if (data.sources.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-xs text-stone-400">No knowledge sources added yet. Click "Add Source" to train your AI.</td></tr>`;
-        } else {
-          tbody.innerHTML = data.sources.map(s => {
-            const iconName = s.type === 'website_url' ? 'globe' : (s.type === 'faq' ? 'help-circle' : 'file-text');
-            return `
-              <tr>
-                <td>
-                  <div class="flex items-center gap-2 font-medium text-stone-900">
-                    <i data-lucide="${iconName}" class="w-4 h-4 text-stone-500"></i>
-                    ${escapeHtml(s.title)}
-                  </div>
-                </td>
-                <td class="text-xs text-stone-600">${escapeHtml(s.type_label)}</td>
-                <td class="text-xs text-stone-600">${escapeHtml(s.category)}</td>
-                <td>
-                  <span class="${s.is_active ? 'badge-signal-green' : 'badge-neutral bg-stone-100 text-stone-500'} text-[10px]">
-                    ${s.is_active ? 'Active & Grounded' : 'Disabled'}
-                  </span>
-                </td>
-                <td class="font-mono text-stone-400 text-xs">${s.last_synced}</td>
-                <td class="text-right space-x-2">
-                  <button onclick="CuboidDashboard.toggleKnowledgeSource(${s.id})" class="text-xs text-stone-600 hover:text-stone-900 underline">
-                    ${s.is_active ? 'Disable' : 'Enable'}
-                  </button>
-                  <button onclick="CuboidDashboard.deleteKnowledgeSource(${s.id})" class="text-xs text-rose-600 hover:text-rose-900">Delete</button>
-                </td>
-              </tr>
-            `;
-          }).join('');
-        }
-      }
-
-      if (window.lucide) lucide.createIcons();
-    } catch (err) {
-      console.warn('[CuboidDashboard] Knowledge fetch error:', err);
-    }
-  },
-
-  toggleKnowledgeSource: async function(id) {
-    try {
-      await fetch('../api/knowledge.php?action=toggle_active', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      });
-      this.loadKnowledge();
-    } catch(e) {}
-  },
-
-  deleteKnowledgeSource: async function(id) {
-    if (!confirm('Are you sure you want to remove this knowledge source from AI grounding?')) return;
-    try {
-      await fetch('../api/knowledge.php?action=delete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      });
-      this.loadKnowledge();
-    } catch(e) {}
-  },
-
-  addKnowledgeSource: async function(title, type, content, category, source_url) {
-    try {
-      const res = await fetch('../api/knowledge.php?action=add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, type, content, category, source_url })
-      });
-      const data = await res.json();
-      if (data && data.success) {
-        alert('Knowledge source added and AI updated successfully!');
-        this.loadKnowledge();
-        return true;
-      } else {
-        alert(data.error || 'Failed to add source');
-        return false;
-      }
-    } catch(e) {
-      alert('Network error while adding source');
-      return false;
-    }
-  },
 
   // 11. WhatsApp Omnichannel Loader (app/whatsapp.html)
   loadWhatsAppSync: async function() {
@@ -3788,30 +3755,69 @@ window.CuboidDashboard = {
 
   loadBilling: async function() {
     try {
-      const res = await fetch('../api/me.php');
+      const res = await fetch('../api/billing.php?action=status');
       const data = await res.json();
-      if (data && data.success && data.company) {
-        const comp = data.company;
+      if (data && data.success) {
         const ent = data.entitlements;
-        const legalNameEl = document.getElementById('billing-company-legal-name');
-        if (legalNameEl) legalNameEl.textContent = comp.name + ' Technologies Pvt Ltd';
-        
-        const emailEl = document.getElementById('billing-email-val');
-        if (emailEl && data.user) emailEl.textContent = data.user.email;
+        const sub = data.subscription;
+        const invoices = data.invoices || [];
 
         const isPro = ent && ent.is_premium;
+        const isTrial = ent && ent.is_trial;
+        const isExpired = ent && ent.is_trial_expired;
+
         const planNameEl = document.getElementById('billing-plan-name');
         if (planNameEl) {
-          planNameEl.textContent = isPro ? 'CuboidPilot Pro Enterprise' : '14-Day Free Trial';
+          if (isPro) planNameEl.textContent = (sub && sub.plan_name) ? sub.plan_name : 'CuboidPilot Pro Workspace';
+          else if (isTrial) planNameEl.textContent = `14-Day Free Trial (${ent.trial_days_remaining} Days Remaining)`;
+          else if (isExpired) planNameEl.textContent = '14-Day Free Trial (Expired)';
+          else planNameEl.textContent = 'Growth Plan';
         }
+
+        const planDescEl = document.getElementById('billing-plan-desc');
+        if (planDescEl) {
+          if (isTrial) planDescEl.innerHTML = `All platform features are active at <strong>₹0</strong> during your 14-day free trial until <strong>${ent.formatted_trial_end || '14 days'}</strong>.`;
+          else if (isExpired) planDescEl.innerHTML = `<span class="text-red-600 font-semibold">Your trial period ended on ${ent.formatted_trial_end || 'recently'}. Please renew your plan below to reactivate WhatsApp, Team Seats, and AI automation.</span>`;
+          else planDescEl.textContent = 'Full multi-channel autonomous engagement, WhatsApp continuation, sales team assignment, and Closing Radar unlocked.';
+        }
+
         const badgeEl = document.getElementById('billing-status-badge');
         if (badgeEl) {
-          badgeEl.className = isPro ? 'inline-flex items-center gap-1 px-2 py-0.5 bg-stone-100 text-stone-700 border border-stone-200/80 rounded-[4px] text-[11px] font-mono font-medium' : 'inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200/80 rounded-[4px] text-[11px] font-mono font-medium';
-          badgeEl.textContent = isPro ? 'Active · Paid' : 'Trial Active';
+          if (isPro) {
+            badgeEl.className = 'inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-[4px] text-[11px] font-mono font-medium';
+            badgeEl.textContent = 'Active · Subscribed';
+          } else if (isTrial) {
+            badgeEl.className = 'inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200/80 rounded-[4px] text-[11px] font-mono font-medium';
+            badgeEl.textContent = `Trial Active · ${ent.trial_days_remaining}d Left`;
+          } else {
+            badgeEl.className = 'inline-flex items-center gap-1 px-2 py-0.5 bg-rose-50 text-rose-800 border border-rose-200/80 rounded-[4px] text-[11px] font-mono font-medium';
+            badgeEl.textContent = 'Trial Expired';
+          }
         }
+
         const headerTierEl = document.getElementById('billing-header-tier');
         if (headerTierEl) {
-          headerTierEl.textContent = isPro ? 'Pro Workspace Active' : 'Trial Active';
+          headerTierEl.textContent = isPro ? 'Pro Workspace Active' : (isTrial ? `Trial (${ent.trial_days_remaining}d left)` : 'Trial Expired');
+        }
+
+        // Render Invoices table if element exists
+        const invTbody = document.getElementById('billing-invoices-tbody');
+        if (invTbody) {
+          if (invoices.length === 0) {
+            invTbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-xs text-stone-400">No paid invoices recorded yet.</td></tr>`;
+          } else {
+            invTbody.innerHTML = invoices.map(inv => `
+              <tr>
+                <td class="font-mono text-stone-800 text-xs">INV-${String(inv.id).padStart(5, '0')}</td>
+                <td class="text-xs text-stone-600">${inv.paid_at ? inv.paid_at.split(' ')[0] : '2026-10-01'}</td>
+                <td class="text-xs font-semibold text-stone-900 font-mono">₹${Number(inv.amount_inr || 0).toLocaleString()}</td>
+                <td><span class="badge-signal-green text-[10px]">Paid</span></td>
+                <td class="text-right">
+                  <button class="btn-secondary btn-sm text-[11px] py-1 px-2" onclick="alert('Downloading invoice INV-${String(inv.id).padStart(5, '0')}.pdf')">Download PDF</button>
+                </td>
+              </tr>
+            `).join('');
+          }
         }
       }
     } catch(e) {
@@ -4914,19 +4920,74 @@ window.CuboidDashboard = {
   // KNOWLEDGE REPOSITORY ENGINE (Intercom Fin AI Style)
   // =========================================================================
   kbCurrentSources: [],
+  kbCurrentAssets: [],
   kbCurrentFilter: 'all',
   kbSearchQuery: '',
 
   loadKnowledge: async function() {
+    this.loadAssets();
     const tbody = document.getElementById('knowledge-table-tbody');
     if (!tbody) return;
 
     try {
       const res = await fetch('../api/knowledge.php?action=list');
-      const data = await res.json();
+
+      if (res.status === 401) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-xs text-stone-500">
+              <div class="max-w-sm mx-auto space-y-2">
+                <i data-lucide="lock" class="w-5 h-5 mx-auto text-stone-400"></i>
+                <p class="font-medium text-stone-700">Session expired</p>
+                <p class="text-stone-400 text-[11px]">Please log in again to view verified knowledge sources.</p>
+                <a href="../login.php" class="btn-primary btn-sm inline-block py-1.5 px-3 mt-1 text-xs">Log in</a>
+              </div>
+            </td>
+          </tr>
+        `;
+        if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+        return;
+      }
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.warn('[CuboidDashboard] Failed to parse knowledge API response:', parseErr);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-xs text-stone-500">
+              <div class="max-w-sm mx-auto space-y-2">
+                <i data-lucide="alert-circle" class="w-5 h-5 mx-auto text-amber-500"></i>
+                <p class="font-medium text-stone-700">Invalid server response</p>
+                <p class="text-stone-400 text-[11px]">The server returned an unexpected response format.</p>
+                <button onclick="CuboidDashboard.loadKnowledge()" class="btn-secondary btn-sm py-1.5 px-3 text-xs inline-flex items-center gap-1">
+                  <i data-lucide="refresh-cw" class="w-3 h-3"></i> <span>Retry</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+        return;
+      }
 
       if (!data || !data.success) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-xs text-stone-500">Failed to load knowledge sources: ${data.error || 'Server error'}</td></tr>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="p-8 text-center text-xs text-stone-500">
+              <div class="max-w-sm mx-auto space-y-2">
+                <i data-lucide="alert-circle" class="w-5 h-5 mx-auto text-amber-500"></i>
+                <p class="font-medium text-stone-700">Failed to load knowledge sources</p>
+                <p class="text-stone-400 text-[11px]">${data && data.error ? data.error : 'Server encountered an error'}</p>
+                <button onclick="CuboidDashboard.loadKnowledge()" class="btn-secondary btn-sm py-1.5 px-3 text-xs inline-flex items-center gap-1">
+                  <i data-lucide="refresh-cw" class="w-3 h-3"></i> <span>Retry</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+        if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
         return;
       }
 
@@ -4953,11 +5014,65 @@ window.CuboidDashboard = {
 
       this.renderKnowledgeTable();
     } catch(e) {
-      tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-xs text-stone-500">Network error fetching knowledge sources</td></tr>`;
+      console.warn('[CuboidDashboard] Network error loading knowledge:', e);
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="p-8 text-center text-xs text-stone-500">
+            <div class="max-w-sm mx-auto space-y-2">
+              <i data-lucide="wifi-off" class="w-5 h-5 mx-auto text-stone-400"></i>
+              <p class="font-medium text-stone-700">Network connection issue</p>
+              <p class="text-stone-400 text-[11px]">Could not reach the knowledge server. Please verify your connection.</p>
+              <button onclick="CuboidDashboard.loadKnowledge()" class="btn-secondary btn-sm py-1.5 px-3 text-xs inline-flex items-center gap-1">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i> <span>Retry</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+    }
+  },
+
+  loadAssets: async function() {
+    try {
+      const res = await fetch('../api/assets.php?action=list');
+      const data = await res.json();
+      if (data && data.success) {
+        this.kbCurrentAssets = data.assets || [];
+        const countAssets = document.getElementById('kb-tab-count-assets');
+        if (countAssets) countAssets.textContent = this.kbCurrentAssets.length;
+        const statAssets = document.getElementById('kb-stat-assets');
+        if (statAssets) statAssets.textContent = this.kbCurrentAssets.length;
+
+        if (this.kbCurrentFilter === 'assets') {
+          this.renderAssetsTable();
+        }
+      }
+    } catch (e) {
+      console.warn('[CuboidDashboard] Error loading assets:', e);
     }
   },
 
   renderKnowledgeTable: function() {
+    if (this.kbCurrentFilter === 'assets') {
+      this.renderAssetsTable();
+      return;
+    }
+
+    const thead = document.getElementById('knowledge-table-thead');
+    if (thead) {
+      thead.innerHTML = `
+        <tr>
+          <th>Source Name & Content Preview</th>
+          <th>Type</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Last Synced</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      `;
+    }
+
     const tbody = document.getElementById('knowledge-table-tbody');
     if (!tbody) return;
 
@@ -5043,22 +5158,311 @@ window.CuboidDashboard = {
     if (window.lucide) window.lucide.createIcons();
   },
 
+  renderAssetsTable: function() {
+    const thead = document.getElementById('knowledge-table-thead');
+    if (thead) {
+      thead.innerHTML = `
+        <tr>
+          <th>Asset / Course Title & AI Keywords</th>
+          <th>Category</th>
+          <th>File Details</th>
+          <th>Dispatched</th>
+          <th>AI Auto-Share</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      `;
+    }
+
+    const tbody = document.getElementById('knowledge-table-tbody');
+    if (!tbody) return;
+
+    let filtered = this.kbCurrentAssets || [];
+
+    if (this.kbSearchQuery) {
+      const q = this.kbSearchQuery.toLowerCase();
+      filtered = filtered.filter(a => 
+        (a.title && a.title.toLowerCase().includes(q)) ||
+        (a.keywords && a.keywords.toLowerCase().includes(q)) ||
+        (a.description && a.description.toLowerCase().includes(q)) ||
+        (a.category && a.category.toLowerCase().includes(q)) ||
+        (a.file_name && a.file_name.toLowerCase().includes(q))
+      );
+    }
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="p-10 text-center text-xs text-stone-500 bg-white">
+            <div class="w-10 h-10 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center mx-auto mb-2.5">
+              <i data-lucide="file-up" class="w-5 h-5"></i>
+            </div>
+            <div class="font-medium text-stone-800 text-sm">No Digital Assets or Syllabi Uploaded</div>
+            <p class="text-[11px] text-stone-400 mt-1 max-w-md mx-auto">Upload course syllabi (e.g. Full Stack Development), brochures, or fee charts. Cai AI will automatically share them with website visitors and email copies instantly.</p>
+            <button onclick="CuboidDashboard.openUploadAssetModal()" class="btn-primary btn-sm inline-flex items-center gap-1.5 py-1.5 px-3 mt-3.5 text-xs bg-stone-900 hover:bg-black text-white">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Upload First Document
+            </button>
+          </td>
+        </tr>
+      `;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
+    function formatCategoryBadge(cat) {
+      switch(cat) {
+        case 'syllabus':
+          return '<span class="inline-block px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-[10px] font-medium">Syllabus</span>';
+        case 'brochure':
+          return '<span class="inline-block px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded text-[10px] font-medium">Brochure</span>';
+        case 'fee_chart':
+          return '<span class="inline-block px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded text-[10px] font-medium">Fee Chart</span>';
+        case 'curriculum':
+          return '<span class="inline-block px-2 py-0.5 bg-purple-50 text-purple-800 border border-purple-200 rounded text-[10px] font-medium">Curriculum</span>';
+        case 'guide':
+          return '<span class="inline-block px-2 py-0.5 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded text-[10px] font-medium">Guide</span>';
+        default:
+          return '<span class="inline-block px-2 py-0.5 bg-stone-100 text-stone-700 border border-stone-200 rounded text-[10px] font-medium">Document</span>';
+      }
+    }
+
+    function formatFileSize(bytes) {
+      if (!bytes || bytes <= 0) return '0 B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    }
+
+    tbody.innerHTML = filtered.map(a => {
+      const sizeText = formatFileSize(a.file_size);
+      const kwList = (a.keywords || '').split(',').map(k => k.trim()).filter(Boolean);
+      const kwBadges = kwList.slice(0, 4).map(k => `<span class="inline-block px-1.5 py-0.2 bg-stone-100 text-stone-600 rounded text-[10px] mr-1 mt-1">${escapeHtml(k)}</span>`).join('') +
+        (kwList.length > 4 ? `<span class="inline-block text-[10px] text-stone-400 mt-1">+${kwList.length - 4} more</span>` : '');
+
+      const isActive = parseInt(a.is_active) === 1;
+
+      return `
+        <tr class="hover:bg-stone-50/60 transition-colors">
+          <td class="max-w-md">
+            <div class="flex items-start gap-2.5">
+              <div class="mt-0.5 p-1.5 bg-stone-100 border border-stone-200 rounded text-stone-800 shrink-0">
+                <i data-lucide="file-text" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="font-medium text-stone-900 text-xs">${escapeHtml(a.title)}</div>
+                ${a.description ? `<div class="text-[11px] text-stone-500 line-clamp-1 mt-0.5">${escapeHtml(a.description)}</div>` : ''}
+                <div class="flex flex-wrap items-center mt-1">
+                  <span class="text-[10px] text-stone-400 mr-1.5">AI Triggers:</span>
+                  ${kwBadges || '<span class="text-[10px] text-stone-400 italic">None</span>'}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            ${formatCategoryBadge(a.category)}
+          </td>
+          <td>
+            <div class="text-xs text-stone-800 font-mono font-medium truncate max-w-[160px]">${escapeHtml(a.file_name)}</div>
+            <div class="text-[10px] text-stone-400 mt-0.5">${sizeText}</div>
+          </td>
+          <td>
+            <div class="inline-flex items-center gap-1 text-xs text-stone-700 font-medium">
+              <i data-lucide="download-cloud" class="w-3.5 h-3.5 text-stone-400"></i>
+              <span>${a.download_count || 0}</span>
+            </div>
+            <div class="text-[10px] text-stone-400">sent via chat & mail</div>
+          </td>
+          <td>
+            <button onclick="CuboidDashboard.toggleAssetStatus(${a.id}, ${isActive ? 0 : 1})" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[3px] text-[10px] font-medium cursor-pointer transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100' : 'bg-stone-100 text-stone-500 border border-stone-200 hover:bg-stone-200'}">
+              <span class="w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-600 animate-pulse' : 'bg-stone-400'}"></span>
+              ${isActive ? 'Active (Sharing)' : 'Paused'}
+            </button>
+          </td>
+          <td class="text-right space-x-2 whitespace-nowrap">
+            <a href="../api/assets.php?action=download&id=${a.id}" target="_blank" class="text-xs text-stone-700 hover:text-black font-medium inline-flex items-center gap-1" title="Download File">
+              <i data-lucide="download" class="w-3 h-3"></i> Download
+            </a>
+            <button onclick="CuboidDashboard.copyAssetLink('${escapeHtml(a.file_path)}')" class="text-xs text-stone-600 hover:text-stone-900 font-medium">
+              Copy Link
+            </button>
+            <button onclick="CuboidDashboard.deleteAsset(${a.id}, '${escapeHtml(a.title)}')" class="text-xs text-stone-400 hover:text-red-700">
+              Delete
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
+  },
+
   setKnowledgeFilter: function(type) {
     this.kbCurrentFilter = type;
     const tabs = document.querySelectorAll('.kb-tab-btn');
     tabs.forEach(t => {
       if (t.getAttribute('data-filter') === type) {
-        t.className = 'kb-tab-btn px-3 py-1.5 font-medium rounded-[4px] bg-stone-900 text-white';
+        t.className = 'kb-tab-btn px-3 py-1.5 font-medium rounded-[4px] bg-stone-900 text-white flex items-center gap-1';
       } else {
-        t.className = 'kb-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100';
+        t.className = 'kb-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100 flex items-center gap-1';
       }
     });
-    this.renderKnowledgeTable();
+
+    if (type === 'assets') {
+      this.renderAssetsTable();
+    } else {
+      this.renderKnowledgeTable();
+    }
   },
 
   handleKnowledgeSearch: function(q) {
     this.kbSearchQuery = q;
-    this.renderKnowledgeTable();
+    if (this.kbCurrentFilter === 'assets') {
+      this.renderAssetsTable();
+    } else {
+      this.renderKnowledgeTable();
+    }
+  },
+
+  openUploadAssetModal: function() {
+    const m = document.getElementById('upload-asset-modal');
+    if (m) m.classList.add('open');
+  },
+
+  closeUploadAssetModal: function() {
+    const m = document.getElementById('upload-asset-modal');
+    if (m) m.classList.remove('open');
+  },
+
+  handleAssetFileSelect: function(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const label = document.getElementById('asset-file-selected-name');
+    if (label) {
+      const sizeStr = (file.size / 1024).toFixed(1) + ' KB';
+      label.textContent = `${file.name} (${sizeStr})`;
+    }
+
+    const titleInput = document.getElementById('asset-upload-title');
+    if (titleInput && !titleInput.value) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      titleInput.value = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    }
+  },
+
+  submitUploadAsset: async function(e) {
+    if (e) e.preventDefault();
+    const fileInput = document.getElementById('asset-upload-file');
+    const file = fileInput && fileInput.files && fileInput.files[0];
+    const title = document.getElementById('asset-upload-title')?.value.trim();
+    const category = document.getElementById('asset-upload-category')?.value;
+    const keywords = document.getElementById('asset-upload-keywords')?.value.trim();
+    const description = document.getElementById('asset-upload-description')?.value.trim();
+
+    if (!file) {
+      window.CuboidShell.toast('Please select a file to upload', 'error');
+      return;
+    }
+    if (!title) {
+      window.CuboidShell.toast('Document title is required', 'error');
+      return;
+    }
+
+    const submitBtn = document.getElementById('asset-upload-submit-btn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin mr-1"></i> Uploading...';
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', title);
+      formData.append('category', category || 'document');
+      formData.append('keywords', keywords);
+      formData.append('description', description);
+
+      const res = await fetch('../api/assets.php?action=upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+
+      if (data && data.success) {
+        window.CuboidShell.toast(data.message || 'Asset uploaded successfully and active for AI sharing', 'success');
+        this.closeUploadAssetModal();
+        const form = document.getElementById('upload-asset-form');
+        if (form) form.reset();
+        const label = document.getElementById('asset-file-selected-name');
+        if (label) label.textContent = 'Choose file or drag & drop here';
+        await this.loadAssets();
+        this.setKnowledgeFilter('assets');
+      } else {
+        window.CuboidShell.toast(data.error || 'Failed to upload asset', 'error');
+      }
+    } catch (err) {
+      window.CuboidShell.toast('Network error uploading asset', 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Upload & Enable in AI';
+      }
+    }
+  },
+
+  toggleAssetStatus: async function(id, newStatus) {
+    try {
+      const res = await fetch('../api/assets.php?action=toggle_status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: id, is_active: newStatus })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        window.CuboidShell.toast(newStatus ? 'Asset activated for AI auto-sharing' : 'Asset paused', 'info');
+        await this.loadAssets();
+      } else {
+        window.CuboidShell.toast(data.error || 'Failed to update status', 'error');
+      }
+    } catch (e) {
+      window.CuboidShell.toast('Network error updating asset status', 'error');
+    }
+  },
+
+  deleteAsset: async function(id, title) {
+    window.CuboidShell.confirm({
+      title: 'Delete Asset / Syllabus?',
+      message: `Are you sure you want to remove "${title}"? Cai AI will immediately stop sharing this document in chat and email.`,
+      confirmText: 'Delete Asset',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch('../api/assets.php?action=delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+          });
+          const data = await res.json();
+          if (data && data.success) {
+            window.CuboidShell.toast('Asset removed from AI library', 'info');
+            await this.loadAssets();
+          } else {
+            window.CuboidShell.toast(data.error || 'Failed to delete asset', 'error');
+          }
+        } catch (e) {
+          window.CuboidShell.toast('Network error deleting asset', 'error');
+        }
+      }
+    });
+  },
+
+  copyAssetLink: function(filePath) {
+    if (!filePath) return;
+    const fullUrl = window.location.origin + '/' + filePath.replace(/^\/+/, '');
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      window.CuboidShell.toast('Direct asset download link copied to clipboard!', 'success');
+    }).catch(() => {
+      window.CuboidShell.toast('Could not copy link to clipboard', 'warning');
+    });
   },
 
   openAddKnowledgeModal: function() {
@@ -5073,13 +5477,74 @@ window.CuboidDashboard = {
 
   onKnowledgeTypeChange: function(val) {
     const urlField = document.getElementById('knowledge-url-field');
+    const docField = document.getElementById('knowledge-doc-field');
     const content = document.getElementById('knowledge-add-content');
-    if (val === 'website_url') {
+    const hint = document.getElementById('knowledge-content-hint');
+
+    if (val === 'doc_upload') {
+      if (docField) docField.classList.remove('hidden');
+      if (urlField) urlField.classList.add('hidden');
+      if (content) {
+        content.required = false;
+        content.placeholder = 'Extracted document text will appear here automatically for your review...';
+      }
+      if (hint) hint.textContent = 'Upload .txt, .docx, .xlsx, or .csv documents. Text will be parsed and trained into AI memory.';
+    } else if (val === 'website_url') {
+      if (docField) docField.classList.add('hidden');
       if (urlField) urlField.classList.remove('hidden');
-      if (content) content.placeholder = 'Provide page summary or key points to index from this URL...';
+      if (content) {
+        content.required = true;
+        content.placeholder = 'Provide page summary or key points to index from this URL...';
+      }
+      if (hint) hint.textContent = 'For URLs, provide a summary or preview of the web page content to index immediately.';
     } else {
+      if (docField) docField.classList.add('hidden');
       if (urlField) urlField.classList.remove('hidden');
-      if (content) content.placeholder = 'Enter factual business details, verified answers, or policy rules...';
+      if (content) {
+        content.required = true;
+        content.placeholder = 'Enter factual business details, verified answers, or policy rules...';
+      }
+      if (hint) hint.textContent = 'Enter factual business details, verified answers, or policy rules.';
+    }
+  },
+
+  handleKnowledgeFileSelect: async function(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const nameEl = document.getElementById('knowledge-file-name');
+    if (nameEl) nameEl.textContent = `${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+
+    const titleInput = document.getElementById('knowledge-add-title');
+    if (titleInput && !titleInput.value) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      titleInput.value = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    }
+
+    const contentArea = document.getElementById('knowledge-add-content');
+    if (contentArea) {
+      contentArea.value = 'Parsing document contents...';
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('doc_file', file);
+      const res = await fetch('../api/knowledge.php?action=preview_doc', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data && data.success && data.content) {
+        if (contentArea) contentArea.value = data.content;
+        window.CuboidShell.toast(`Extracted ${data.length} characters from ${file.name}`, 'info');
+      } else {
+        if (contentArea) contentArea.value = '';
+        window.CuboidShell.toast(data.error || 'Could not parse document preview', 'warning');
+      }
+    } catch(err) {
+      if (contentArea && contentArea.value === 'Parsing document contents...') {
+        contentArea.value = '';
+      }
     }
   },
 
@@ -5090,19 +5555,52 @@ window.CuboidDashboard = {
     const category = document.getElementById('knowledge-add-category')?.value.trim();
     const url = document.getElementById('knowledge-add-url')?.value.trim();
     const content = document.getElementById('knowledge-add-content')?.value.trim();
+    const fileInput = document.getElementById('knowledge-add-file');
+    const selectedFile = fileInput && fileInput.files && fileInput.files[0];
 
-    if (!title || (!content && !url)) {
-      window.CuboidShell.toast('Title and Content or URL are required', 'error');
+    if (!title && !selectedFile) {
+      window.CuboidShell.toast('Title or file upload is required', 'error');
       return;
     }
 
     try {
+      // If a file is attached and type is doc_upload, use FormData
+      if (type === 'doc_upload' && selectedFile) {
+        const formData = new FormData();
+        formData.append('doc_file', selectedFile);
+        formData.append('title', title || selectedFile.name);
+        formData.append('category', category || 'Documents');
+
+        const res = await fetch('../api/knowledge.php?action=upload_doc', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          window.CuboidShell.toast(data.message || 'Document indexed into AI knowledge base', 'success');
+          this.closeAddKnowledgeModal();
+          const f = document.getElementById('add-knowledge-form');
+          if (f) f.reset();
+          const nameEl = document.getElementById('knowledge-file-name');
+          if (nameEl) nameEl.textContent = 'Choose or drop document file here';
+          this.loadKnowledge();
+        } else {
+          window.CuboidShell.toast(data.error || 'Failed to upload document', 'error');
+        }
+        return;
+      }
+
+      if (!content && !url) {
+        window.CuboidShell.toast('Content or URL is required', 'error');
+        return;
+      }
+
       const res = await fetch('../api/knowledge.php?action=add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title,
-          type: type,
+          type: type === 'doc_upload' ? 'text_doc' : type,
           category: category || 'General',
           source_url: url,
           content: content || url
@@ -5376,12 +5874,24 @@ window.CuboidDashboard = {
 
       const tbody = document.getElementById('company-rows');
       if (tbody && data.companies) {
-        if (data.companies.length === 0) {
+        let companies = data.companies;
+        const planFilter = document.getElementById('company-plan-filter');
+        const statusFilter = document.getElementById('company-status-filter');
+        if (planFilter && planFilter.value !== 'all') {
+          const pf = planFilter.value.toLowerCase();
+          companies = companies.filter(c => (c.plan_tier && c.plan_tier.toLowerCase().includes(pf)) || (c.plan_name && c.plan_name.toLowerCase().includes(pf)));
+        }
+        if (statusFilter && statusFilter.value !== 'all') {
+          const sf = statusFilter.value.toLowerCase();
+          companies = companies.filter(c => c.status && c.status.toLowerCase() === sf);
+        }
+
+        if (companies.length === 0) {
           tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-xs text-stone-400">No organizations found matching search criteria.</td></tr>`;
           return;
         }
 
-        tbody.innerHTML = data.companies.map(c => {
+        tbody.innerHTML = companies.map(c => {
           const initials = c.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'CO';
           const planBadge = (c.plan_name && c.plan_name.toLowerCase().includes('scale')) ? 'badge-signal-purple' : 'badge-signal-blue';
           const isPro = c.id == 3 || c.plan_tier === 'pro';
@@ -5415,14 +5925,25 @@ window.CuboidDashboard = {
               </td>
               <td class="text-xs text-stone-500 font-mono">${c.created_at ? c.created_at.split(' ')[0] : '2026-09-01'}</td>
               <td>
-                <span class="badge-signal-${c.status === 'active' ? 'green' : 'amber'} text-[10px] capitalize">${c.status}</span>
+                <span class="badge-signal-${c.status === 'active' ? 'green' : (c.status === 'suspended' || c.status === 'expired' ? 'red' : 'amber')} text-[10px] capitalize">${c.status}</span>
               </td>
               <td class="text-right">
-                <div class="flex items-center justify-end gap-1.5">
-                  <a href="company-detail.html?id=${c.id}" class="btn-secondary btn-sm text-xs py-1 px-2.5">Inspect</a>
-                  <a href="../app/overview.html" class="text-xs text-stone-400 hover:text-stone-900 px-1.5 py-1" title="Login as Tenant">
+                <div class="flex items-center justify-end gap-1.5 flex-wrap">
+                  ${c.status !== 'active' ? `
+                    <button onclick="CuboidDashboard.resumeCompany(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')" class="text-[10px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-[3px] font-medium" title="Resume / Unlock Workspace">Unlock</button>
+                  ` : `
+                    <button onclick="CuboidDashboard.suspendCompany(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')" class="text-[10px] text-stone-600 bg-stone-50 hover:bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded-[3px] font-medium" title="Suspend / Lock Workspace">Lock</button>
+                  `}
+                  <button onclick="CuboidDashboard.extendCompanyTrial(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}', 14)" class="text-[10px] text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-[3px] font-medium" title="Extend Free Trial +14 Days">+14d</button>
+                  <a href="company-detail.html?id=${c.id}" class="btn-secondary btn-sm text-xs py-0.5 px-2">Inspect</a>
+                  <a href="../app/overview.html" class="text-xs text-stone-400 hover:text-stone-900 px-1 py-1" title="Login as Tenant">
                     <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
                   </a>
+                  ${!isPro && c.id != 3 ? `
+                    <button onclick="CuboidDashboard.confirmDeleteCompany(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')" class="text-xs text-red-500 hover:text-red-700 px-1 py-1" title="Delete Organization">
+                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                  ` : ''}
                 </div>
               </td>
             </tr>
@@ -5441,6 +5962,130 @@ window.CuboidDashboard = {
       }
     } catch(err) {
       console.warn('Super admin companies load error:', err);
+    }
+  },
+
+  confirmDeleteCompany: function(companyId, companyName) {
+    this._pendingDeleteCompanyId = companyId;
+    const label = document.getElementById('delete-company-name-label');
+    if (label) label.textContent = companyName || `Company #${companyId}`;
+    if (typeof openModal === 'function') {
+      openModal('delete-company-modal');
+    } else {
+      if (confirm(`Are you sure you want to permanently delete organization '${companyName}'?`)) {
+        this.executeDeleteCompany();
+      }
+    }
+  },
+
+  executeDeleteCompany: async function() {
+    const companyId = this._pendingDeleteCompanyId;
+    if (!companyId) return;
+
+    const btn = document.getElementById('confirm-delete-company-btn');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Deleting...';
+    }
+
+    try {
+      const res = await fetch('../api/super_admin.php?action=delete_company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id: companyId })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        if (typeof closeModal === 'function') closeModal('delete-company-modal');
+        alert(data.message || 'Organization deleted successfully');
+        this.loadSuperAdminCompanies();
+      } else {
+        alert(data.error || 'Failed to delete company');
+      }
+    } catch (err) {
+      alert('Network error while deleting company: ' + err.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i><span>Delete Organization</span>';
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+  },
+
+  exportCompaniesCsv: function() {
+    window.location.href = '../api/super_admin.php?action=export_companies';
+  },
+
+  resumeCompany: async function(companyId, companyName) {
+    if (!confirm(`Are you sure you want to resume and unlock workspace for "${companyName}"? This will set status to active and extend the period by 30 days.`)) return;
+    try {
+      const res = await fetch('../api/super_admin.php?action=resume_company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id: companyId })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        if (window.CuboidShell && typeof CuboidShell.toast === 'function') {
+          CuboidShell.toast(data.message || 'Workspace unlocked successfully!', 'success');
+        } else {
+          alert(data.message || 'Workspace unlocked successfully!');
+        }
+        this.loadSuperAdminCompanies();
+      } else {
+        alert(data.error || 'Failed to resume workspace');
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    }
+  },
+
+  extendCompanyTrial: async function(companyId, companyName, days = 14) {
+    if (!confirm(`Extend trial for "${companyName}" by ${days} days? This will grant immediate active access.`)) return;
+    try {
+      const res = await fetch('../api/super_admin.php?action=extend_trial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id: companyId, days: days })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        if (window.CuboidShell && typeof CuboidShell.toast === 'function') {
+          CuboidShell.toast(data.message || `Trial extended by ${days} days!`, 'success');
+        } else {
+          alert(data.message || `Trial extended by ${days} days!`);
+        }
+        this.loadSuperAdminCompanies();
+      } else {
+        alert(data.error || 'Failed to extend trial');
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    }
+  },
+
+  suspendCompany: async function(companyId, companyName) {
+    if (!confirm(`Suspend / lock workspace for "${companyName}"? The tenant will see the workspace locked screen.`)) return;
+    try {
+      const res = await fetch('../api/super_admin.php?action=suspend_company', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id: companyId })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        if (window.CuboidShell && typeof CuboidShell.toast === 'function') {
+          CuboidShell.toast(data.message || 'Workspace suspended and locked', 'info');
+        } else {
+          alert(data.message || 'Workspace suspended and locked');
+        }
+        this.loadSuperAdminCompanies();
+      } else {
+        alert(data.error || 'Failed to suspend company');
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
     }
   },
 

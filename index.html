@@ -3,9 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CuboidPilot — Turn Every Conversation Into An Opportunity</title>
-  <meta name="description" content="CuboidPilot is an AI-powered business conversation platform. Answer customer questions with AI, capture leads, continue conversations on WhatsApp, and bring in humans when it matters.">
+  <title>CuboidPilot — Autonomous AI Customer Helpdesk &amp; Sales Conversion Agent</title>
+  <meta name="description" content="CuboidPilot unifies autonomous AI customer service with real-time WhatsApp conversion and human escalation. Resolve 70%+ of support tickets in under 800ms, qualify leads, and sync to your CRM.">
+  <meta name="keywords" content="AI customer support, autonomous AI agent, Cai, customer service AI, WhatsApp business automation, lead triage, AI helpdesk, omnichannel helpdesk, sales conversion AI, grounded AI">
+  <meta name="author" content="CuboidPilot Technologies">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="theme-color" content="#111111">
+  <link rel="canonical" href="index.html">
+  <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" href="assets/logo-black.png">
+  <link rel="apple-touch-icon" href="assets/logo-black.png">
+
+  <!-- OpenGraph / Facebook / WhatsApp Rich Sharing Previews -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CuboidPilot">
+  <meta property="og:url" content="index.html">
+  <meta property="og:title" content="CuboidPilot — Autonomous AI Customer Helpdesk &amp; Sales Conversion Agent">
+  <meta property="og:description" content="Turn every visitor conversation into qualified pipeline. Resolve 70%+ of inquiries with grounded AI, continue on WhatsApp, and escalate high-intent deals to humans.">
+  <meta property="og:image" content="assets/blog/meet-cai-founder.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="CuboidPilot Platform with Cai AI Agent">
+
+  <!-- Twitter / X Cards -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@CuboidPilot">
+  <meta name="twitter:creator" content="@CuboidPilot">
+  <meta name="twitter:title" content="CuboidPilot — Autonomous AI Customer Helpdesk &amp; Sales Conversion Agent">
+  <meta name="twitter:description" content="Turn every visitor conversation into qualified pipeline. Resolve 70%+ of inquiries with grounded AI, continue on WhatsApp, and escalate high-intent deals to humans.">
+  <meta name="twitter:image" content="assets/blog/meet-cai-founder.png">
+
+  <!-- Schema.org JSON-LD Structured Data: SoftwareApplication, Organization & Rich FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://cuboidpilot.com/#organization",
+        "name": "CuboidPilot",
+        "url": "https://cuboidpilot.com/",
+        "logo": "https://cuboidpilot.com/assets/logo-black.png",
+        "description": "Autonomous AI Agent & Customer Helpdesk Platform",
+        "sameAs": [
+          "https://twitter.com/CuboidPilot",
+          "https://linkedin.com/company/cuboidpilot"
+        ]
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://cuboidpilot.com/#software",
+        "name": "CuboidPilot with Cai AI Agent",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Web, Cloud, All Modern Browsers",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD",
+          "description": "14-Day Cardless Free Trial"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.9",
+          "reviewCount": "2048",
+          "bestRating": "5",
+          "worstRating": "1"
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://cuboidpilot.com/#website",
+        "url": "https://cuboidpilot.com/",
+        "name": "CuboidPilot",
+        "publisher": {
+          "@id": "https://cuboidpilot.com/#organization"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://cuboidpilot.com/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How is Cai fundamentally different from standard chatbots?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Traditional chatbots rely on rigid decision trees, static buttons, and frequently get stuck on unforeseen questions. Cai is an autonomous AI Customer Agent built on advanced semantic grounding. It understands natural-language business inquiries, reasons across your verified knowledge documents, and resolves routine questions instantly while intelligently looping in human specialists the moment high-intent deals or complex issues arise."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does Cai ensure answers are strictly grounded in our company's verified documentation?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Cai operates under a Strict Grounding Protocol. It only draws answers from approved business documents you configure (PDFs, pricing spreadsheets, service catalogs, and live URLs). If a customer asks a question outside your approved corpus, Cai does not fabricate facts—it intelligently flags the conversation for Human Action and prepares a concise summary for your team."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How does the seamless WhatsApp continuity work?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "When a visitor wants to continue on mobile, CuboidPilot generates a secure, one-tap WhatsApp link pre-filled with their conversation session context. Your counselors or Cai can continue the conversation directly on WhatsApp, where open rates exceed 90%."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can human counselors take over conversations in real time?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes, instantly. The CuboidPilot Helpdesk dashboard provides a live stream of all active sessions. Counselors can whisper notes, adjust lead scores, or take over with one click."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How long does it take to deploy CuboidPilot on our website?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Under 5 minutes. Paste a single lightweight script snippet before your closing body tag, upload your business documents or link your website, and Cai is ready to serve visitors immediately."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Does CuboidPilot sync with our existing CRM and pipeline tools?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. CuboidPilot connects natively with Salesforce, HubSpot, Zoho CRM, Google Sheets, TeleCRM, Slack, Google Calendar, Calendly, and custom REST webhooks."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is our company data protected and encrypted?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "All knowledge embeddings and conversations are encrypted in transit via TLS 1.3 and at rest with AES-256. Your company data is never used to train public foundational AI models."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 
   <!-- Inter Google Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -43,14 +181,65 @@
 
   <!-- Custom Stylesheets -->
   <link rel="stylesheet" href="css/theme.css">
-  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/components.css?v=3.0">
+  <style>
+    .faq-content.hidden { display: none !important; }
+    .faq-icon { transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+    .faq-item.active .faq-icon { transform: rotate(180deg); }
+  </style>
+  <script>
+    // Bulletproof zero-latency FAQ toggle available before external scripts
+    window.toggleFaq = function(btn) {
+      if (!btn) return;
+      var now = Date.now();
+      if (btn._lastToggle && (now - btn._lastToggle) < 250) {
+        return;
+      }
+      btn._lastToggle = now;
+
+      var item = btn.closest('.faq-item');
+      if (!item) return;
+      var content = item.querySelector('.faq-content');
+      var icon = item.querySelector('.faq-icon');
+      var isExpanded = btn.getAttribute('aria-expanded') === 'true' || item.classList.contains('active');
+
+      // Close siblings in same accordion
+      var container = item.closest('.faq-accordion') || item.parentElement;
+      if (container && !isExpanded) {
+        var others = container.querySelectorAll('.faq-item');
+        for (var i = 0; i < others.length; i++) {
+          if (others[i] !== item) {
+            others[i].classList.remove('active');
+            var oBtn = others[i].querySelector('.faq-toggle, button');
+            var oContent = others[i].querySelector('.faq-content');
+            var oIcon = others[i].querySelector('.faq-icon');
+            if (oBtn) oBtn.setAttribute('aria-expanded', 'false');
+            if (oContent) { oContent.classList.add('hidden'); oContent.style.display = 'none'; }
+            if (oIcon) oIcon.style.transform = 'rotate(0deg)';
+          }
+        }
+      }
+
+      if (isExpanded) {
+        btn.setAttribute('aria-expanded', 'false');
+        item.classList.remove('active');
+        if (content) { content.classList.add('hidden'); content.style.display = 'none'; }
+        if (icon) icon.style.transform = 'rotate(0deg)';
+      } else {
+        btn.setAttribute('aria-expanded', 'true');
+        item.classList.add('active');
+        if (content) { content.classList.remove('hidden'); content.style.display = 'block'; }
+        if (icon) icon.style.transform = 'rotate(180deg)';
+      }
+    };
+  </script>
 </head>
 <body class="bg-white text-brand-black antialiased selection:bg-brand-black selection:text-white">
 
   <!-- Top Announcement Bar -->
   <div id="top-announcement-bar" class="w-full bg-[#000000] text-white text-[13px] py-2.5 px-4 flex items-center justify-center relative z-50">
     <div class="text-center font-normal text-stone-200">
-      ✦ Introducing <strong>Cai</strong>: The breakthrough AI Agent for support & sales. Hire Cai to resolve 50%+ of customer questions instantly. <a href="#hire-cai" class="underline hover:text-white font-medium ml-1">Meet Cai &rarr;</a>
+      ✦ Introducing <strong>Cai</strong> by CuboidPilot: AI Customer Agent with Human Action — <em>AI when it works. Humans when they matter.</em> <a href="#hire-cai" class="underline hover:text-white font-medium ml-1">Meet Cai &rarr;</a>
     </div>
     <button id="close-announcement" class="absolute right-4 text-stone-400 hover:text-white transition-colors" aria-label="Close announcement">
       <i data-lucide="x" class="w-4 h-4"></i>
@@ -59,11 +248,11 @@
 
   <!-- Header -->
   <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-brand-border transition-all duration-200">
-    <div class="max-w-[1440px] mx-auto px-6 lg:px-10 h-[76px] flex items-center justify-between">
+    <div class="max-w-[1360px] mx-auto px-6 lg:px-12 h-[76px] flex items-center justify-between">
       
       <!-- Brand Logo / Wordmark -->
       <div class="flex items-center gap-8">
-        <a href="#" class="flex items-center gap-2.5 text-brand-black group">
+        <a href="index.html" class="flex items-center gap-2.5 text-brand-black group">
           <div class="w-8 h-8 flex items-center justify-center transition-transform duration-200 group-hover:scale-95">
             <img src="assets/logo-black.png" alt="CuboidPilot" class="w-full h-full object-contain">
           </div>
@@ -148,7 +337,7 @@
                     <i data-lucide="shield-check" class="w-5 h-5 text-emerald-600"></i>
                   </div>
                   <div>
-                    <div class="text-[14px] font-semibold text-brand-black">Zero Hallucinations Guarantee</div>
+                    <div class="text-[14px] font-semibold text-brand-black">Strict Knowledge Grounding</div>
                     <div class="text-[12px] text-brand-subtle mt-0.5 leading-snug">Strict context grounding in verified business documentation.</div>
                   </div>
                 </a>
@@ -237,6 +426,8 @@
 
       <!-- Header Actions Right (Exact match to reference) -->
       <div class="hidden md:flex items-center gap-2.5">
+        <!-- Language Switcher Container -->
+        <div id="cp-header-lang"></div>
         <a href="login.php" class="text-[14px] font-medium text-stone-700 hover:text-brand-black px-2.5 py-2 transition-colors">Log in</a>
         <a href="#hero-demo" class="text-[14px] font-medium text-stone-700 hover:text-brand-black px-2.5 py-2 transition-colors">View demo</a>
         <a href="signup.html" class="btn-primary btn-sm text-[13.5px] px-4 py-2">Start free trial</a>
@@ -257,50 +448,123 @@
   </header>
 
   <!-- Mobile Drawer -->
-  <div id="mobile-drawer" class="lg:hidden p-6 flex flex-col justify-between">
+  <div id="mobile-drawer" class="lg:hidden p-5 sm:p-6 flex flex-col justify-between overflow-y-auto">
     <div>
-      <div class="flex items-center justify-between pb-6 border-b border-brand-border">
-        <div class="flex items-center gap-2.5">
-          <div class="w-8 h-8 rounded-lg bg-brand-black text-white flex items-center justify-center font-semibold text-sm">CP</div>
-          <span class="text-[19px] font-semibold tracking-tight text-brand-black">CuboidPilot</span>
-        </div>
+      <div class="flex items-center justify-between pb-4 border-b border-brand-border">
+        <a href="index.html" class="flex items-center gap-2.5">
+          <img src="assets/logo-black.png" alt="CuboidPilot" class="w-7 h-7 object-contain">
+          <span class="text-[19px] font-bold tracking-tight text-brand-black">CuboidPilot</span>
+        </a>
         <button id="close-mobile-menu" aria-label="Close navigation" class="p-2 text-brand-black hover:bg-stone-100 rounded-lg">
           <i data-lucide="x" class="w-6 h-6"></i>
         </button>
       </div>
-      <div class="py-6 flex flex-col gap-3.5 text-base font-medium text-brand-black">
-        <a href="#hire-cai" class="flex items-center gap-2 text-stone-900 font-semibold hover:text-stone-600 transition-colors">
-          Meet Cai (AI Agent)
-        </a>
-        <a href="#product-journey" class="hover:text-stone-600 transition-colors">Product & Platform</a>
-        <a href="pricing.html" class="hover:text-stone-600 transition-colors font-medium">Pricing & Plans</a>
-        <a href="docs.html" class="hover:text-stone-600 transition-colors flex items-center justify-between">
-          <span>Documentation</span>
-          <span class="text-[10px] font-mono bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded border border-stone-200">Docs</span>
-        </a>
-        <a href="blog.html" class="hover:text-stone-600 transition-colors">Blog & Stories</a>
-        <a href="#industries" class="hover:text-stone-600 transition-colors">Industries</a>
-        <a href="#faq" class="hover:text-stone-600 transition-colors">FAQ</a>
-        <a href="#trust" class="hover:text-stone-600 transition-colors">Customers</a>
+
+      <div class="py-5 space-y-6 text-sm">
+        <!-- Section 1: AI Agent & Platform -->
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2.5">Product & Platform</div>
+          <div class="flex flex-col gap-2 font-medium text-brand-black">
+            <a href="#hire-cai" class="flex items-center gap-2 hover:text-blue-600 transition-colors py-1">
+              <i data-lucide="bot" class="w-4 h-4 text-stone-500"></i>
+              <span>Meet Cai (AI Agent)</span>
+            </a>
+            <a href="why-choose-cai.html" class="flex items-center gap-2 hover:text-blue-600 transition-colors py-1">
+              <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
+              <span>Why Choose Cai</span>
+            </a>
+            <a href="#product-journey" class="flex items-center gap-2 hover:text-blue-600 transition-colors py-1">
+              <i data-lucide="git-branch" class="w-4 h-4 text-stone-500"></i>
+              <span>Customer Journey & Pipeline</span>
+            </a>
+            <a href="#integrations" class="flex items-center gap-2 hover:text-blue-600 transition-colors py-1">
+              <i data-lucide="blocks" class="w-4 h-4 text-stone-500"></i>
+              <span>Integrations & Channels</span>
+            </a>
+            <a href="pricing.html" class="flex items-center gap-2 hover:text-blue-600 transition-colors py-1">
+              <i data-lucide="tag" class="w-4 h-4 text-stone-500"></i>
+              <span>Pricing & Plans</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Section 2: Solutions by Industry -->
+        <div class="pt-4 border-t border-stone-100">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2.5">Solutions by Industry</div>
+          <div class="grid grid-cols-2 gap-2 text-xs font-medium text-stone-700">
+            <a href="#industries" class="hover:text-black py-1">Education & Academies</a>
+            <a href="#industries" class="hover:text-black py-1">Healthcare & Clinics</a>
+            <a href="#industries" class="hover:text-black py-1">SaaS & Software</a>
+            <a href="#industries" class="hover:text-black py-1">Real Estate</a>
+            <a href="#industries" class="hover:text-black py-1">E-commerce</a>
+            <a href="#industries" class="hover:text-black py-1">Professional Services</a>
+          </div>
+        </div>
+
+        <!-- Section 3: Resources & Docs -->
+        <div class="pt-4 border-t border-stone-100">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2.5">Resources & Learn</div>
+          <div class="flex flex-col gap-2 font-medium text-brand-black">
+            <a href="blog.html" class="flex items-center justify-between hover:text-blue-600 py-1">
+              <span class="flex items-center gap-2">
+                <i data-lucide="newspaper" class="w-4 h-4 text-stone-500"></i>
+                <span>The Cai Blog</span>
+              </span>
+              <span class="text-[10px] bg-stone-100 text-stone-700 px-2 py-0.5 rounded-full font-bold">New</span>
+            </a>
+            <a href="docs.html" class="flex items-center justify-between hover:text-blue-600 py-1">
+              <span class="flex items-center gap-2">
+                <i data-lucide="book-open" class="w-4 h-4 text-stone-500"></i>
+                <span>Documentation</span>
+              </span>
+              <span class="text-[10px] font-mono bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded border border-stone-200">Docs</span>
+            </a>
+            <a href="docs.html#js-sdk-api" class="flex items-center gap-2 hover:text-blue-600 py-1">
+              <i data-lucide="code" class="w-4 h-4 text-stone-500"></i>
+              <span>JavaScript SDK & API</span>
+            </a>
+            <a href="#faq" class="flex items-center gap-2 hover:text-blue-600 py-1">
+              <i data-lucide="help-circle" class="w-4 h-4 text-stone-500"></i>
+              <span>Frequently Asked Questions</span>
+            </a>
+          </div>
+        </div>
       </div>
     </div>
-    <div class="pt-6 border-t border-brand-border flex flex-col gap-3">
-      <a href="#hero-demo" class="btn-primary w-full text-center">Start free trial</a>
-      <a href="#hero-demo" class="btn-secondary w-full text-center">View demo</a>
-      <div class="text-center text-xs text-brand-subtle mt-2">© 2026 CuboidPilot Technologies</div>
+
+    <!-- Language Selector in Mobile Drawer -->
+    <div class="py-3 px-1 border-t border-brand-border flex items-center justify-between">
+      <span class="text-xs font-semibold uppercase text-stone-500 tracking-wider">Region &amp; Language</span>
+      <div id="cp-mobile-lang"></div>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="pt-5 border-t border-brand-border flex flex-col gap-2.5 shrink-0">
+      <a href="signup.php" class="w-full py-3 bg-brand-black hover:bg-stone-800 text-white text-center font-semibold rounded-full text-xs shadow-sm no-underline">
+        Start 14-Day Free Trial ($0)
+      </a>
+      <div class="grid grid-cols-2 gap-2">
+        <a href="login.php" class="w-full py-2.5 border border-stone-300 hover:border-black text-center font-medium rounded-full text-xs no-underline text-stone-800">
+          Sign In
+        </a>
+        <a href="#hero-demo" class="w-full py-2.5 border border-stone-300 hover:border-black text-center font-medium rounded-full text-xs no-underline text-stone-800">
+          View Demo
+        </a>
+      </div>
+      <div class="text-center text-[11px] text-stone-400 mt-1">© 2026 CuboidPilot Technologies</div>
     </div>
   </div>
 
   <main>
-    <!-- Hero Section (Exact 1:1 Layout with Flanking Collages & Email Form) -->
-    <section class="relative pt-8 pb-10 md:pt-12 md:pb-14 px-4 sm:px-6 lg:px-12 overflow-hidden">
+    <!-- Hero Section (Exact Intercom-Inspired Editorial Layout Matching Reference Image) -->
+    <section class="relative pt-12 pb-16 md:pt-16 md:pb-24 lg:pt-20 lg:pb-32 px-4 sm:px-6 lg:px-12 overflow-hidden bg-white">
       
       <!-- Subdued Reference Grid Accent Squares (Matching far left & right blue dots) -->
-      <div class="absolute left-4 top-4 w-1.5 h-1.5 bg-[#0057ff] hidden md:block"></div>
-      <div class="absolute right-4 top-4 w-1.5 h-1.5 bg-[#0057ff] hidden md:block"></div>
+      <div class="absolute left-6 top-6 w-1.5 h-1.5 bg-[#0057ff] hidden md:block"></div>
+      <div class="absolute right-6 top-6 w-1.5 h-1.5 bg-[#0057ff] hidden md:block"></div>
 
       <!-- LEFT FLANKING EDITORIAL COLLAGE -->
-      <div class="absolute left-0 2xl:left-6 top-[48%] -translate-y-1/2 hidden xl:flex flex-col items-start pointer-events-none select-none z-10">
+      <div class="absolute left-0 2xl:left-8 top-[48%] -translate-y-1/2 hidden xl:flex flex-col items-start pointer-events-none select-none z-10">
         <!-- Top Shadow Photo on Pavement -->
         <div class="w-[200px] h-[270px] bg-stone-200 overflow-hidden shadow-sm">
           <img src="https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=600&q=80" 
@@ -316,7 +580,7 @@
       </div>
 
       <!-- RIGHT FLANKING EDITORIAL COLLAGE -->
-      <div class="absolute right-0 2xl:right-6 top-[48%] -translate-y-1/2 hidden xl:flex flex-col items-end pointer-events-none select-none z-10">
+      <div class="absolute right-0 2xl:right-8 top-[48%] -translate-y-1/2 hidden xl:flex flex-col items-end pointer-events-none select-none z-10">
         <!-- Top Twilight Sky with Birds Photo -->
         <div class="w-[210px] h-[235px] bg-stone-200 overflow-hidden shadow-sm">
           <img src="https://images.unsplash.com/photo-1509114397022-ed747cca3f65?auto=format&fit=crop&w=600&q=80" 
@@ -334,55 +598,41 @@
       <!-- CENTER EDITORIAL COMPOSITION -->
       <div class="max-w-[960px] mx-auto text-center relative z-20">
         
-        <!-- Social Proof / Reviews -->
-        <div class="flex items-center justify-center mb-5">
-          <div class="inline-flex items-center gap-1.5 text-[13px] font-normal text-stone-500">
-            <span>Over 2,000 five-star reviews on</span>
-            <span class="inline-flex items-center font-semibold text-stone-900 ml-0.5">
-              <svg class="w-3.5 h-3.5 mr-1 text-[#ff492c]" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm3.66 14.82c-.93.59-2.07.91-3.66.91-2.9 0-5.07-1.92-5.07-4.88s2.17-4.88 5.07-4.88c1.55 0 2.76.35 3.65.98l-.88 1.48c-.68-.48-1.57-.75-2.77-.75-1.91 0-3.23 1.34-3.23 3.17s1.32 3.17 3.23 3.17c1.17 0 2.07-.31 2.78-.79v-2.03h-2.93v-1.63h4.81v5.22z"/>
-              </svg>
-              G2
-            </span>
-          </div>
+        <!-- Trust Eyebrow -->
+        <div class="flex items-center justify-center gap-2 mb-6 text-[13px] sm:text-[13.5px] text-[#737373] font-normal">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+          <span>Enterprise-Grade Customer Engagement Platform</span>
         </div>
 
-        <!-- 3-Line Editorial Headline (Reduced & Balanced) -->
-        <h1 class="text-[32px] sm:text-[46px] lg:text-[58px] leading-[1.04] tracking-[-0.03em] font-normal text-center mb-4">
-          <span class="text-[#737373] block font-normal">Hire Cai.</span>
-          <span class="text-[#111111] block font-normal">The breakthrough AI Agent</span>
-          <span class="text-[#737373] block font-normal">for support & sales.</span>
+        <!-- Exact Headline Structure: Grey / Bold Black / Grey -->
+        <h1 class="text-[38px] sm:text-[54px] md:text-[66px] lg:text-[76px] leading-[1.08] tracking-[-0.035em] font-normal text-center mb-6 max-w-[960px] mx-auto text-[#737373]">
+          <span class="block">A complete system for</span>
+          <span class="block text-[#111111] font-semibold">AI and human</span>
+          <span class="block">customer action</span>
         </h1>
 
-        <!-- Supporting Paragraph -->
-        <p class="text-[14.5px] sm:text-[16px] leading-[1.6] text-[#55534f] max-w-[620px] mx-auto text-center mb-6 font-normal">
-          Hire Cai to resolve customer questions 24/7 with zero hallucinations, qualify high-intent inbound leads, and hand off warm deals to your WhatsApp counselors in seconds.
+        <!-- Subheading Paragraph -->
+        <p class="text-[15px] sm:text-[16.5px] leading-[1.65] text-[#55534f] max-w-[680px] mx-auto text-center mb-8 font-normal">
+          CuboidPilot brings Cai and Human Action into one customer platform — so every conversation is understood, every opportunity is surfaced, and your team knows exactly when to step in and what to do next.
         </p>
 
-        <!-- Work Email Input Bar (Compact & Fully Responsive) -->
-        <div class="max-w-[390px] w-full mx-auto mb-4 px-3 sm:px-0">
-          <form class="flex flex-col sm:flex-row items-stretch sm:items-center p-1 bg-white border border-[#d5d3cb] rounded-[4px] shadow-xs focus-within:border-stone-900 transition-colors gap-1.5 sm:gap-0" onsubmit="event.preventDefault(); const email = this.querySelector('input[type=email]').value; window.location.href='signup.php?email=' + encodeURIComponent(email);">
-            <input type="email" placeholder="Work email" class="flex-1 px-3 py-2 text-xs sm:text-[13.5px] bg-transparent outline-none text-stone-900 placeholder:text-stone-400 min-w-0" required>
-            <button type="submit" class="bg-[#111111] hover:bg-black text-white text-xs sm:text-[13px] font-medium px-4 py-2 rounded-[4px] transition-colors whitespace-nowrap text-center">
-              Hire Cai free
-            </button>
-          </form>
+        <!-- CTA Buttons: Start Free Trial & Meet Cai -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 mb-4 px-3 sm:px-0">
+          <a href="signup.php" class="w-full sm:w-auto inline-flex items-center justify-center bg-[#111111] hover:bg-black text-white text-[14px] font-medium px-6 py-3 rounded-[6px] transition-colors shadow-xs">
+            Start Free Trial (₹0)
+          </a>
+          <a href="#hire-cai" class="w-full sm:w-auto inline-flex items-center justify-center bg-white hover:bg-stone-50 text-stone-900 border border-[#dcdad0] hover:border-stone-400 text-[14px] font-medium px-6 py-3 rounded-[6px] transition-colors shadow-2xs">
+            <span>Meet Cai</span>
+            <span class="ml-1.5">&rarr;</span>
+          </a>
         </div>
 
-        <!-- Micro Feature Badge -->
-        <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-5 text-xs text-stone-500">
-          <span class="inline-flex items-center gap-1.5">
-            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-stone-800"></i>
-            14-day free trial
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-stone-800"></i>
-            Zero hallucinations
-          </span>
-          <span class="inline-flex items-center gap-1.5">
-            <i data-lucide="zap" class="w-3.5 h-3.5 text-stone-800"></i>
-            Deploy in 5 minutes
-          </span>
+        <!-- Microcopy with Checkmark Icon -->
+        <div class="flex items-center justify-center gap-1.5 text-[12px] text-stone-500 font-normal">
+          <svg class="w-3.5 h-3.5 text-stone-900 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+          </svg>
+          <span>14 day free trial. No credit card required.</span>
         </div>
 
       </div>
@@ -401,19 +651,19 @@
             <!-- Mature Enterprise Headline -->
             <h2 class="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-stone-900 leading-[1.15]">
               Experience Cai in production.<br>
-              <span class="text-stone-500 font-normal">Autonomous resolution, intent qualification & unified WhatsApp handoff.</span>
+              <span class="text-stone-500 font-normal">Autonomous resolution, intent qualification & Human Action handoff.</span>
             </h2>
 
             <p class="text-stone-600 text-sm sm:text-base lg:text-[16.5px] leading-relaxed max-w-[620px]">
-              Interact directly with the live Cai runtime. Grounded strictly in verified enterprise knowledge, Cai answers customer inquiries with zero hallucinations, scores commercial buying intent, and transitions high-priority prospects to WhatsApp with full conversation continuity.
+              Interact directly with the live Cai runtime. Grounded strictly in verified enterprise knowledge, Cai answers customer inquiries accurately, scores commercial buying intent, and loops in human specialists with complete conversation context.
             </p>
 
             <!-- Interactive Evaluation Prompts -->
             <div class="space-y-2.5 pt-1">
               <div class="text-[11px] font-mono uppercase tracking-wider text-stone-500 font-medium">Try asking Cai:</div>
               <div class="flex flex-wrap gap-2">
-                <button type="button" class="hero-prompt-chip text-xs bg-[#fbfaf6] hover:bg-stone-100 text-stone-800 px-3.5 py-2 rounded-[2px] border border-[#dcdad0] transition-colors inline-flex items-center gap-1.5 cursor-pointer text-left shadow-2xs" data-query="How does Cai qualify buyer intent and hand off to WhatsApp?">
-                  <span>“How does Cai qualify buyer intent and hand off to WhatsApp?”</span>
+                <button type="button" class="hero-prompt-chip text-xs bg-[#fbfaf6] hover:bg-stone-100 text-stone-800 px-3.5 py-2 rounded-[2px] border border-[#dcdad0] transition-colors inline-flex items-center gap-1.5 cursor-pointer text-left shadow-2xs" data-query="How does Cai qualify buyer intent and loop in our human team?">
+                  <span>“How does Cai qualify buyer intent and loop in our human team?”</span>
                   <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-stone-400 shrink-0"></i>
                 </button>
                 <button type="button" class="hero-prompt-chip text-xs bg-[#fbfaf6] hover:bg-stone-100 text-stone-800 px-3.5 py-2 rounded-[2px] border border-[#dcdad0] transition-colors inline-flex items-center gap-1.5 cursor-pointer text-left shadow-2xs" data-query="What plans and deployment options are available?">
@@ -424,21 +674,21 @@
             </div>
 
             <!-- Key Proof Metrics (Mature & Authoritative) -->
-            <div class="pt-6 border-t border-[#e7e5de] grid grid-cols-3 gap-6 max-w-[620px]">
+            <div class="pt-5 sm:pt-6 border-t border-[#e7e5de] grid grid-cols-3 gap-3 sm:gap-6 max-w-[620px]">
               <div>
-                <div class="text-2xl sm:text-3xl font-semibold tracking-tight text-stone-900 font-mono">&lt; 0.8s</div>
-                <div class="text-xs font-semibold text-stone-900 mt-1">Mean Response SLA</div>
-                <div class="text-[11px] text-stone-500 font-mono mt-0.5">Zero queue latency</div>
+                <div class="text-lg sm:text-2xl lg:text-3xl font-semibold tracking-tight text-stone-900 font-mono">24/7</div>
+                <div class="text-[11px] sm:text-xs font-semibold text-stone-900 mt-0.5 sm:mt-1 leading-snug">Autonomous Support</div>
+                <div class="text-[10px] sm:text-[11px] text-stone-500 font-mono mt-0.5 leading-tight">Instant triage & resolution</div>
               </div>
               <div>
-                <div class="text-2xl sm:text-3xl font-semibold tracking-tight text-stone-900 font-mono">100%</div>
-                <div class="text-xs font-semibold text-stone-900 mt-1">Grounded Accuracy</div>
-                <div class="text-[11px] text-stone-500 font-mono mt-0.5">Zero hallucinations</div>
+                <div class="text-lg sm:text-2xl lg:text-3xl font-semibold tracking-tight text-stone-900 font-mono">Real-Time</div>
+                <div class="text-[11px] sm:text-xs font-semibold text-stone-900 mt-0.5 sm:mt-1 leading-snug">Intent Detection</div>
+                <div class="text-[10px] sm:text-[11px] text-stone-500 font-mono mt-0.5 leading-tight">Commercial signal scoring</div>
               </div>
               <div>
-                <div class="text-2xl sm:text-3xl font-semibold tracking-tight text-stone-900 font-mono">1-Tap</div>
-                <div class="text-xs font-semibold text-stone-900 mt-1">WhatsApp Continuity</div>
-                <div class="text-[11px] text-stone-500 font-mono mt-0.5">Full session sync</div>
+                <div class="text-lg sm:text-2xl lg:text-3xl font-semibold tracking-tight text-stone-900 font-mono">1-Tap</div>
+                <div class="text-[11px] sm:text-xs font-semibold text-stone-900 mt-0.5 sm:mt-1 leading-snug">Human Action</div>
+                <div class="text-[10px] sm:text-[11px] text-stone-500 font-mono mt-0.5 leading-tight">Full context takeover</div>
               </div>
             </div>
 
@@ -482,12 +732,12 @@
               <span class="text-[11px] font-mono font-medium tracking-wider uppercase text-stone-800">INTRODUCING CAI • THE AUTONOMOUS AI AGENT</span>
             </div>
           </div>
-          <h2 class="section-headline mb-3 text-brand-black">
+          <h2 class="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-stone-900 leading-[1.15] mb-3">
             Hire Cai for your business.<br>
-            Support agent & top SDR in one.
+            Support agent, top SDR, and Human Action in one.
           </h2>
           <p class="lead-body text-brand-muted max-w-[760px]">
-            Cai resolves 50%+ of customer questions in under a second, scores commercial intent, and hands off warm deals to your team on WhatsApp.
+            Cai resolves customer inquiries, scores commercial intent, and loops in your human team with complete conversational context.
           </p>
         </div>
 
@@ -500,21 +750,21 @@
               <div class="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-3.5 sm:mb-4">
                 <span class="text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-wider text-stone-500">01 / AUTONOMOUS SUPPORT</span>
                 <span class="text-[10px] sm:text-[10.5px] font-mono font-medium tracking-tight uppercase px-1.5 py-0.5 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded-[2px] shrink-0">
-                  50%+ Resolution
+                  24/7 Availability
                 </span>
               </div>
               <h3 class="text-lg sm:text-xl font-medium tracking-tight text-stone-900 mb-2">
                 Hire Cai for Customer Support
               </h3>
               <p class="text-stone-600 text-xs sm:text-[14px] leading-relaxed mb-4">
-                Answers customer questions 24/7 in under 0.8 seconds. Grounded strictly in your knowledge base—zero hallucinations.
+                Answers customer questions 24/7 without queue delay. Grounded strictly in your company's approved documentation and FAQs.
               </p>
             </div>
             
             <div class="space-y-2 pt-4 border-t border-[#ebe9e1] text-xs sm:text-[13px] text-stone-700">
               <div class="flex items-center gap-2">
                 <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0"></i>
-                <span>100% grounded answers from docs, FAQs & URLs</span>
+                <span>Grounded answers from docs, FAQs & website URLs</span>
               </div>
               <div class="flex items-center gap-2">
                 <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0"></i>
@@ -532,8 +782,8 @@
             <div>
               <div class="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-3.5 sm:mb-4">
                 <span class="text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-wider text-stone-500">02 / LEAD QUALIFICATION</span>
-                <span class="text-[10px] sm:text-[10.5px] font-mono font-medium tracking-tight uppercase px-1.5 py-0.5 border border-amber-300 bg-amber-50 text-amber-800 rounded-[2px] shrink-0">
-                  3.4× Qualified
+                <span class="text-[10px] sm:text-[10.5px] font-mono font-medium tracking-tight uppercase px-1.5 py-0.5 border border-indigo-300 bg-indigo-50 text-indigo-800 rounded-[2px] shrink-0">
+                  Intent Scoring
                 </span>
               </div>
               <h3 class="text-lg sm:text-xl font-medium tracking-tight text-stone-900 mb-2">
@@ -566,7 +816,7 @@
               <div class="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-3.5 sm:mb-4">
                 <span class="text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-wider text-stone-500">03 / OMNICHANNEL PIPELINE</span>
                 <span class="text-[10px] sm:text-[10.5px] font-mono font-medium tracking-tight uppercase px-1.5 py-0.5 border border-emerald-300 bg-emerald-50 text-emerald-800 rounded-[2px] shrink-0">
-                  0 Drop-offs
+                  Session Continuity
                 </span>
               </div>
               <h3 class="text-lg sm:text-xl font-medium tracking-tight text-stone-900 mb-2">
@@ -593,35 +843,35 @@
             </div>
           </div>
 
-          <!-- Quadrant 4: Counselor Handoff -->
+          <!-- Quadrant 4: Human Action -->
           <div class="p-5 sm:p-7 lg:p-8 flex flex-col justify-between hover:bg-[#faf9f5] transition-colors">
             <div>
               <div class="flex flex-wrap items-center justify-between gap-1.5 sm:gap-2 mb-3.5 sm:mb-4">
-                <span class="text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-wider text-stone-500">04 / SMART TRIAGE</span>
-                <span class="text-[10px] sm:text-[10.5px] font-mono font-medium tracking-tight uppercase px-1.5 py-0.5 border border-sky-300 bg-sky-50 text-sky-800 rounded-[2px] shrink-0">
-                  &lt; 60s Handoff
+                <span class="text-[10px] sm:text-[11px] font-mono font-medium uppercase tracking-wider text-stone-500">04 / HUMAN ACTION</span>
+                <span class="text-[10px] sm:text-[10.5px] font-mono font-medium tracking-tight uppercase px-1.5 py-0.5 border border-amber-300 bg-amber-50 text-amber-900 rounded-[2px] shrink-0">
+                  AI + Human Hybrid
                 </span>
               </div>
               <h3 class="text-lg sm:text-xl font-medium tracking-tight text-stone-900 mb-2">
-                Hire Cai for Counselor Handoff
+                Hire Cai for Human Action
               </h3>
               <p class="text-stone-600 text-xs sm:text-[14px] leading-relaxed mb-4">
-                Alerts your counselors with an AI executive briefing the moment high-intent enterprise deals are detected.
+                AI when it works. Humans when they matter. Cai instantly detects high-intent buying signals, dissatisfied customers, and complex requests—looping in your team with full context before friction builds.
               </p>
             </div>
             
             <div class="space-y-2 pt-4 border-t border-[#ebe9e1] text-xs sm:text-[13px] text-stone-700">
               <div class="flex items-center gap-2">
                 <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0"></i>
-                <span>Instant Closing Radar alerts for high-value prospects</span>
+                <span>Instant structured Cai Summary prepared before your rep joins</span>
               </div>
               <div class="flex items-center gap-2">
                 <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0"></i>
-                <span>AI executive summary with key objections and pitch notes</span>
+                <span>One-click Take Over silences AI completely from public customer chat</span>
               </div>
               <div class="flex items-center gap-2">
                 <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0"></i>
-                <span>Counselors take over seamlessly on web or continue on WhatsApp</span>
+                <span>Zero drop-offs: complete conversation timeline preserved</span>
               </div>
             </div>
           </div>
@@ -695,7 +945,7 @@
               </div>
             </div>
 
-            <!-- Tier 3: Cai + Your Counselors (Highlighted) -->
+            <!-- Tier 3: Cai + Your Human Team (Highlighted) -->
             <div class="p-5 sm:p-6 bg-white relative flex flex-col justify-between border-t-4 lg:border-t-0 lg:border-l-2 border-stone-900">
               <div>
                 <div class="flex items-center justify-between gap-2 mb-3.5">
@@ -703,24 +953,24 @@
                   <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
                 </div>
                 <div class="text-base sm:text-lg font-semibold text-stone-900 mb-3 flex items-center gap-1.5">
-                  <span>Cai + Your Counselors</span>
+                  <span>Cai + Your Human Team</span>
                 </div>
                 <ul class="space-y-2 text-xs sm:text-[13px] text-stone-900 font-medium">
                   <li class="flex items-start gap-2">
                     <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5"></i>
-                    <span>50%+ instant resolution with zero hallucinations</span>
+                    <span>Routine inquiry resolution grounded in company docs</span>
                   </li>
                   <li class="flex items-start gap-2">
                     <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5"></i>
-                    <span>24/7/365 coverage in &lt; 0.8s on Web & WhatsApp</span>
+                    <span>24/7 coverage across Website & WhatsApp without queues</span>
                   </li>
                   <li class="flex items-start gap-2">
                     <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5"></i>
-                    <span>Autonomous commercial intent & lead scoring</span>
+                    <span>Autonomous intent scoring & structured Cai Summary</span>
                   </li>
                   <li class="flex items-start gap-2">
                     <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0 mt-0.5"></i>
-                    <span>Counselors focus 100% on closing qualified deals</span>
+                    <span>Human Action takeover when high-value moments arise</span>
                   </li>
                 </ul>
               </div>
@@ -734,7 +984,7 @@
               Deploy Cai in under 5 minutes • Works with any CMS, Shopify, WordPress & Custom HTML
             </span>
             <div class="flex flex-wrap items-center gap-3">
-              <a href="signup.html" class="btn-primary text-xs px-4 py-2 rounded-[2px] w-full sm:w-auto text-center">Hire Cai Free</a>
+              <a href="signup.php" class="btn-primary text-xs px-4 py-2 rounded-[2px] w-full sm:w-auto text-center">Start Free</a>
               <button onclick="window.Cai && window.Cai.open()" class="btn-secondary text-xs px-4 py-2 rounded-[2px] inline-flex items-center justify-center gap-1.5 w-full sm:w-auto">
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
                 <span>Test Cai Live</span>
@@ -754,7 +1004,7 @@
         <!-- Section Header -->
         <div class="max-w-[960px] mb-12">
           <span class="eyebrow-label block mb-3">THE CUBOIDPILOT PLATFORM</span>
-          <h2 class="section-headline mb-4 text-brand-black">
+          <h2 class="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-stone-900 leading-[1.15] mb-4">
             One continuous conversation.<br>
             From first question to conversion.
           </h2>
@@ -840,16 +1090,16 @@
           <!-- Panel 3: AI Answer -->
           <div data-journey-panel="ai" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             <div class="lg:col-span-5">
-              <span class="eyebrow-label block mb-2 text-stone-500">STAGE 03 — PRECISION REASONING</span>
+              <span class="eyebrow-label block mb-2 text-stone-500">STAGE 03 — INTENT DETECTION & REASONING</span>
               <h3 class="text-xl sm:text-2xl font-medium tracking-tight text-stone-900 mb-3">
-                Ground-truth answers from verified data.
+                Grounded answers with real-time classification.
               </h3>
               <p class="text-stone-600 text-xs sm:text-[14px] leading-relaxed mb-5">
-                Cai cites your verified company documents, pricing sheets, and policies with zero hallucinations.
+                Cai classifies visitor intent in real time, citing your verified company documents, pricing sheets, and policies with strict context grounding.
               </p>
               <div class="flex items-center gap-2 text-xs sm:text-[13px] font-medium text-stone-800">
                 <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0"></i>
-                <span>Strict approval safeguards ensure complete accuracy</span>
+                <span>Strict knowledge grounding ensures trustworthy responses</span>
               </div>
             </div>
             <div class="lg:col-span-7">
@@ -906,16 +1156,16 @@
           <!-- Panel 6: Human Team -->
           <div data-journey-panel="human" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
             <div class="lg:col-span-5">
-              <span class="eyebrow-label block mb-2 text-stone-500">STAGE 06 — HUMAN HANDOFF</span>
+              <span class="eyebrow-label block mb-2 text-stone-500">STAGE 06 — HUMAN ACTION HANDOFF</span>
               <h3 class="text-xl sm:text-2xl font-medium tracking-tight text-stone-900 mb-3">
-                Assigned to the right specialist instantly.
+                Assigned with a structured Cai Summary.
               </h3>
               <p class="text-stone-600 text-xs sm:text-[14px] leading-relaxed mb-5">
-                Your account executive receives an executive summary with recommended next steps so they enter the chat fully prepared.
+                Your account executive receives an instant executive briefing with customer need, intent classification, and recommended next steps so they take over the conversation fully prepared.
               </p>
               <div class="flex items-center gap-2 text-xs sm:text-[13px] font-medium text-stone-800">
                 <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-700 shrink-0"></i>
-                <span>Zero wait time for commercial buyers</span>
+                <span>One-click takeover with zero context loss</span>
               </div>
             </div>
             <div class="lg:col-span-7">
@@ -956,7 +1206,7 @@
         
         <div class="max-w-[760px] mb-12">
           <span class="eyebrow-label block mb-3">END-TO-END VISIBILITY</span>
-          <h2 class="section-headline mb-4 text-brand-black">
+          <h2 class="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-stone-900 leading-[1.15] mb-4">
             One customer.<br>
             One continuous story.
           </h2>
@@ -976,7 +1226,7 @@
               </div>
               <div>
                 <h4 class="text-sm font-semibold text-[#111111] leading-tight">Rahul Sharma</h4>
-                <div class="text-xs text-stone-500 font-mono mt-0.5">Acme Technologies • Lifecycle Duration: 38 mins</div>
+                <div class="text-xs text-stone-500 font-mono mt-0.5">Acme Technologies <span class="px-1.5 py-0.5 text-[10px] bg-stone-100 text-stone-600 rounded border border-stone-200 ml-1">Demo Simulation</span> • Lifecycle Duration: 38 mins</div>
               </div>
             </div>
             <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[2px] text-xs font-mono font-medium bg-emerald-50 text-emerald-800 border border-emerald-300">
@@ -1002,7 +1252,7 @@
                   <span class="text-sm font-semibold text-[#111111]">Visited Pricing Page</span>
                 </div>
                 <p class="text-xs sm:text-[13px] text-stone-500 mt-1 leading-relaxed">
-                  Direct referral from tech forum discussion. Spent 1m 40s inspecting team plans and SOC2 compliance.
+                  Direct referral from tech forum discussion. Spent 1m 40s inspecting team plans and SOC 2 / HIPAA security readiness.
                 </p>
               </div>
             </div>
@@ -1021,7 +1271,7 @@
                   <span class="text-sm font-semibold text-[#111111]">Asked Cai About Plans</span>
                 </div>
                 <p class="text-xs sm:text-[13px] text-stone-500 mt-1 leading-relaxed">
-                  “What are your plans for teams with custom SOC2 compliance?” — Cai responded in 0.8s with verified documentation.
+                  “What are your plans for teams requiring SOC 2 aligned security?” — Cai responded in 0.8s with verified documentation.
                 </p>
               </div>
             </div>
@@ -1135,7 +1385,7 @@
         
         <div class="max-w-[920px] mb-14">
           <span class="eyebrow-label block mb-4">VERSATILITY</span>
-          <h2 class="section-headline mb-6 text-brand-black">
+          <h2 class="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-stone-900 leading-[1.15] mb-6">
             Built for businesses<br>
             that depend on conversations.
           </h2>
@@ -1200,14 +1450,194 @@
       </div>
     </section>
 
-        <!-- Commercial Pricing Section (Connected to Super Admin & Database) -->
+    <!-- Integrations & Channels Section (Exact Intercom Style Matching Reference) -->
+    <section id="integrations" class="py-16 md:py-24 px-6 lg:px-12 bg-white border-t border-brand-border">
+      <div class="max-w-[1360px] mx-auto">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          
+          <!-- Left Column: Narrative & Actions -->
+          <div class="lg:col-span-5 space-y-6">
+            <!-- Badges matching reference: ■ CUBOIDPILOT DESK   ■ CAI AI AGENT -->
+            <div class="flex items-center gap-6 text-[11px] font-mono tracking-wider uppercase font-semibold text-stone-800">
+              <span class="inline-flex items-center gap-2">
+                <span class="w-2 h-2 bg-[#0057ff]"></span>
+                CuboidPilot Desk
+              </span>
+              <span class="inline-flex items-center gap-2">
+                <span class="w-2 h-2 bg-[#e05638]"></span>
+                Cai AI Agent
+              </span>
+            </div>
+
+            <!-- Headline matching our site's typography -->
+            <h2 class="text-3xl sm:text-4xl lg:text-[44px] font-normal tracking-tight text-stone-900 leading-[1.12]">
+              Works with the tools<br class="hidden sm:inline"> you already use
+            </h2>
+
+            <!-- Paragraph -->
+            <p class="text-base sm:text-[17px] text-[#55534f] leading-relaxed">
+              Connect CuboidPilot and Cai to the tools you already use, like WhatsApp, Slack, Stripe, and Salesforce, so your team has full context in one workspace. Cai pulls in customer data and takes action through APIs, and your team gets live context in the unified inbox.
+            </p>
+
+            <!-- Action Buttons (Standard rectangular rounded-[4px] - Not rounded pills) -->
+            <div class="pt-2 flex flex-wrap items-center gap-3">
+              <a href="signup.php" class="inline-flex items-center justify-center bg-[#111111] hover:bg-black text-white text-[14px] font-medium px-5 py-2.5 rounded-[4px] transition-colors shadow-xs">
+                Start free trial
+              </a>
+              <a href="app/channels.html" class="inline-flex items-center justify-center bg-white hover:bg-stone-50 text-stone-900 border border-[#dcdad0] hover:border-stone-400 text-[14px] font-medium px-5 py-2.5 rounded-[4px] transition-colors shadow-2xs gap-1.5">
+                <span>View channels &amp; integrations</span>
+                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+              </a>
+            </div>
+          </div>
+
+          <!-- Right Column: Interactive Brand Integration Grid (Logo on Left, Name on Right) -->
+          <div class="lg:col-span-7">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 sm:gap-3">
+
+              <!-- Slack -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/slack.png" alt="Slack" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Slack</span>
+              </a>
+
+              <!-- WhatsApp -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/whatsapp.png" alt="WhatsApp" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">WhatsApp</span>
+              </a>
+
+              <!-- Stripe -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/stripe.png" alt="Stripe" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Stripe</span>
+              </a>
+
+              <!-- Salesforce -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/salesforce.png" alt="Salesforce" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Salesforce</span>
+              </a>
+
+              <!-- Jira -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/jira.png" alt="Jira" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Jira</span>
+              </a>
+
+              <!-- Shopify -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/shopify.png" alt="Shopify" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Shopify</span>
+              </a>
+
+              <!-- HubSpot -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/hubspot.png" alt="HubSpot" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">HubSpot</span>
+              </a>
+
+              <!-- Instagram -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/instagram.png" alt="Instagram" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Instagram</span>
+              </a>
+
+              <!-- Google Calendar -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/google-calendar.png" alt="Google Calendar" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Calendar</span>
+              </a>
+
+              <!-- Calendly -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/calendly.png" alt="Calendly" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Calendly</span>
+              </a>
+
+              <!-- Zoho CRM -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/zoho.png" alt="Zoho CRM" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Zoho CRM</span>
+              </a>
+
+              <!-- Google Sheets -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/google-sheets.png" alt="Google Sheets" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Sheets</span>
+              </a>
+
+              <!-- Gmail -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/gmail.png" alt="Gmail" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Gmail</span>
+              </a>
+
+              <!-- TeleCRM -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/telecrm.png" alt="TeleCRM" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">TeleCRM</span>
+              </a>
+
+              <!-- Facebook Messenger -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/messenger.png" alt="Messenger" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Messenger</span>
+              </a>
+
+              <!-- Webhooks & REST API -->
+              <a href="app/channels.html" class="group bg-white hover:bg-stone-50 border border-[#e7e5de] hover:border-stone-400 rounded-[4px] h-[58px] sm:h-[62px] px-4 flex items-center gap-3.5 transition-all duration-150 shadow-2xs hover:shadow-xs no-underline">
+                <div class="w-6 h-6 sm:w-7 sm:h-7 shrink-0 flex items-center justify-center">
+                  <img src="assets/brands/webhook.png" alt="Webhooks" class="w-full h-full object-contain">
+                </div>
+                <span class="text-[14px] sm:text-[15px] font-semibold text-stone-900 group-hover:text-black tracking-tight">Webhooks</span>
+              </a>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Commercial Pricing Section (Connected to Super Admin & Database) -->
     <!-- Commercial Pricing Section (Exact Intercom Structure & Connected to Super Admin) -->
     <section id="pricing" class="py-16 md:py-24 px-6 lg:px-12 bg-white border-t border-brand-border">
       <div class="max-w-[1360px] mx-auto">
         
         <!-- Header -->
         <div class="text-center max-w-[820px] mx-auto mb-12 sm:mb-14">
-          <h2 class="text-3xl sm:text-4xl lg:text-[46px] font-semibold tracking-tight text-[#111111] leading-[1.12] mb-4">
+          <h2 class="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-stone-900 leading-[1.15] mb-4">
             CuboidPilot helpdesk plans with<br class="hidden sm:inline"> Cai AI Agent built in
           </h2>
           <p class="text-base sm:text-lg text-stone-600 leading-relaxed mb-5">
@@ -1304,7 +1734,9 @@
                       <div class="text-base font-semibold text-[#111111] font-mono flex items-center gap-1">
                         <span class="cp-cai-outcome-rate">₹1</span>
                         <span class="text-xs font-normal text-stone-500">per outcome</span>
-                        <i data-lucide="help-circle" class="w-3.5 h-3.5 text-stone-400 cursor-pointer" title="Only pay when Cai resolves the customer question without human intervention."></i>
+                        <button type="button" onclick="window.openOutcomeModal ? window.openOutcomeModal() : (window.CP_Pricing && window.CP_Pricing.openOutcomeModal())" class="cp-outcome-info-trigger inline-flex items-center justify-center p-0.5 text-stone-400 hover:text-stone-700 focus:outline-none cursor-pointer" aria-label="Learn more about Cai outcome pricing" title="What counts as an outcome? Click to view details">
+                          <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1369,7 +1801,9 @@
                       <div class="text-base font-semibold text-[#111111] font-mono flex items-center gap-1">
                         <span class="cp-cai-outcome-rate">₹1</span>
                         <span class="text-xs font-normal text-stone-500">per outcome</span>
-                        <i data-lucide="help-circle" class="w-3.5 h-3.5 text-stone-400 cursor-pointer" title="Only pay when Cai resolves the customer question without human intervention."></i>
+                        <button type="button" onclick="window.openOutcomeModal ? window.openOutcomeModal() : (window.CP_Pricing && window.CP_Pricing.openOutcomeModal())" class="cp-outcome-info-trigger inline-flex items-center justify-center p-0.5 text-stone-400 hover:text-stone-700 focus:outline-none cursor-pointer" aria-label="Learn more about Cai outcome pricing" title="What counts as an outcome? Click to view details">
+                          <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1437,7 +1871,9 @@
                       <div class="text-base font-semibold text-[#111111] font-mono flex items-center gap-1">
                         <span class="cp-cai-outcome-rate">₹1</span>
                         <span class="text-xs font-normal text-stone-500">per outcome</span>
-                        <i data-lucide="help-circle" class="w-3.5 h-3.5 text-stone-400 cursor-pointer" title="Only pay when Cai resolves the customer question without human intervention."></i>
+                        <button type="button" onclick="window.openOutcomeModal ? window.openOutcomeModal() : (window.CP_Pricing && window.CP_Pricing.openOutcomeModal())" class="cp-outcome-info-trigger inline-flex items-center justify-center p-0.5 text-stone-400 hover:text-stone-700 focus:outline-none cursor-pointer" aria-label="Learn more about Cai outcome pricing" title="What counts as an outcome? Click to view details">
+                          <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -1462,7 +1898,7 @@
                       </li>
                       <li class="flex items-start gap-2">
                         <span class="text-stone-400 mt-0.5">•</span>
-                        <span>HIPAA &amp; SOC2 support</span>
+                        <span>Designed for SOC 2 &amp; HIPAA-ready workflows</span>
                       </li>
                       <li class="flex items-start gap-2">
                         <span class="text-stone-400 mt-0.5">•</span>
@@ -1523,7 +1959,9 @@
                   <div class="text-2xl font-semibold text-[#111111] font-mono flex items-center gap-1">
                     <span class="cp-cai-outcome-rate">₹1</span>
                     <span class="text-xs font-normal text-stone-500">per outcome</span>
-                    <i data-lucide="help-circle" class="w-3.5 h-3.5 text-stone-400 cursor-pointer" title="Only pay when Cai resolves the customer question without human intervention."></i>
+                    <button type="button" onclick="window.openOutcomeModal ? window.openOutcomeModal() : (window.CP_Pricing && window.CP_Pricing.openOutcomeModal())" class="cp-outcome-info-trigger inline-flex items-center justify-center p-0.5 text-stone-400 hover:text-stone-700 focus:outline-none cursor-pointer" aria-label="Learn more about Cai outcome pricing" title="What counts as an outcome? Click to view details">
+                      <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1598,9 +2036,9 @@
               <thead>
                 <tr class="border-b border-[#eceae4] bg-[#fcfbfa] text-stone-600 font-mono uppercase text-[11px]">
                   <th class="py-3 px-5 font-semibold">Capability</th>
-                  <th class="py-3 px-5 font-semibold">Essential ($29/mo)</th>
-                  <th class="py-3 px-5 font-semibold">Advanced ($85/mo)</th>
-                  <th class="py-3 px-5 font-semibold">Expert ($132/mo)</th>
+                  <th class="py-3 px-5 font-semibold">Essential (<span class="intercom-price" data-plan="essential" data-annual="₹79" data-monthly="₹99">₹79</span>/mo)</th>
+                  <th class="py-3 px-5 font-semibold">Advanced (<span class="intercom-price" data-plan="advanced" data-annual="₹159" data-monthly="₹199">₹159</span>/mo)</th>
+                  <th class="py-3 px-5 font-semibold">Expert (<span class="intercom-price" data-plan="expert" data-annual="₹279" data-monthly="₹349">₹279</span>/mo)</th>
                   <th class="py-3 px-5 font-semibold">Cai Standalone</th>
                 </tr>
               </thead>
@@ -1642,7 +2080,7 @@
                 </tr>
                 <tr>
                   <td class="py-3.5 px-5 font-medium text-[#111111]">Custom Branding Removal</td>
-                  <td class="py-3.5 px-5 text-stone-500">Add $19/mo</td>
+                  <td class="py-3.5 px-5 text-stone-500">Add ₹19/mo</td>
                   <td class="py-3.5 px-5"><span class="text-emerald-700 font-semibold">✓ Included</span></td>
                   <td class="py-3.5 px-5"><span class="text-emerald-700 font-semibold">✓ Included</span></td>
                   <td class="py-3.5 px-5"><span class="text-emerald-700 font-semibold">✓ Included</span></td>
@@ -1657,29 +2095,33 @@
               </tbody>
             </table>
           </div>
+          <div class="p-3.5 bg-[#fbfaf6] border-t border-[#eceae4] text-xs text-stone-600 flex flex-wrap items-center justify-between gap-2">
+            <span class="font-medium text-[#111111]"><i data-lucide="info" class="w-3.5 h-3.5 inline mr-1 text-emerald-700"></i>Outcome Definition: ₹1 per successful AI resolution, qualified lead, or confirmed action. No charges for greetings or human escalations.</span>
+            <a href="terms.html#pricing" class="underline hover:text-black font-mono text-[11px]">Read outcome terms →</a>
+          </div>
         </div>
 
-        <!-- Social Proof Strip (Exact match to Intercom screenshot) -->
+        <!-- Platform & Stack Compatibility Strip -->
         <div class="pt-8 border-t border-[#eceae4] text-center">
-          <div class="text-xs font-medium text-stone-500 mb-6 flex items-center justify-center gap-1.5">
-            <span>Over 2,000 five-star reviews on</span>
-            <span class="font-bold text-stone-900 tracking-wider">G2</span>
+          <div class="text-xs font-mono uppercase tracking-wider text-stone-500 mb-6 flex items-center justify-center gap-2">
+            <span>Seamless integration with your customer communication stack</span>
           </div>
 
-          <div class="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16 opacity-75 grayscale hover:grayscale-0 transition-all">
-            <span class="text-base sm:text-lg font-bold tracking-tight text-stone-900 font-sans">amazon</span>
-            <span class="text-base sm:text-lg font-mono font-semibold tracking-wider text-stone-900">ANTHROPIC</span>
-            <span class="text-sm sm:text-base font-semibold text-stone-900 flex items-center gap-1.5">
-              <span class="w-3.5 h-3.5 rounded-full bg-red-600 inline-block"></span> Rocket Money
+          <div class="flex flex-wrap items-center justify-center gap-8 sm:gap-12 md:gap-16 text-stone-700 font-medium">
+            <span class="text-sm sm:text-base font-semibold tracking-tight flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-[#25D366]"></span> WhatsApp Cloud API
             </span>
-            <span class="text-base sm:text-lg font-serif font-bold text-stone-900">GAMMA</span>
-            <span class="text-base sm:text-lg font-bold text-stone-900 font-sans">clay</span>
-            <span class="text-sm sm:text-base font-medium tracking-tight text-stone-900 flex items-center gap-1">
-              ⚡ lightspeed
+            <span class="text-sm sm:text-base font-semibold tracking-tight flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-indigo-600"></span> REST Webhooks
             </span>
-            <span class="text-sm sm:text-base font-serif italic text-stone-900">perplexity</span>
-            <span class="text-sm sm:text-base font-bold tracking-tight text-stone-900 flex items-center gap-1.5">
-              <span class="w-3.5 h-3.5 rounded bg-blue-600 inline-block"></span> Amplitude
+            <span class="text-sm sm:text-base font-semibold tracking-tight flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-[#635BFF]"></span> In-Widget Checkout
+            </span>
+            <span class="text-sm sm:text-base font-semibold tracking-tight flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-stone-800"></span> Embed Script (&lt;12KB)
+            </span>
+            <span class="text-sm sm:text-base font-semibold tracking-tight flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-600"></span> Closing Radar CRM
             </span>
           </div>
         </div>
@@ -1687,37 +2129,59 @@
       </div>
     </section>
 
-    <!-- Trust Section -->
+    <!-- Trust / Industry Use Cases Section -->
     <section id="trust" class="py-12 md:py-16 px-6 lg:px-12 bg-white border-t border-brand-border">
       <div class="max-w-[1360px] mx-auto text-center">
-        <p class="text-xs font-semibold uppercase tracking-widest text-brand-subtle mb-10">
-          Trusted by teams building better customer experiences
+        <p class="text-xs font-semibold uppercase tracking-widest text-brand-subtle mb-8">
+          Built for businesses where every high-intent conversation matters
         </p>
 
-        <!-- Fictional Monochrome Wordmarks -->
-        <div class="flex flex-wrap items-center justify-center gap-10 md:gap-16 opacity-70 grayscale">
-          <div class="text-lg md:text-xl font-semibold tracking-wider text-stone-900 font-mono">NEXORA</div>
-          <div class="text-lg md:text-xl font-medium tracking-tight text-stone-900">ARC LABS</div>
-          <div class="text-lg md:text-xl font-semibold tracking-widest text-stone-900">NORTHSTAR</div>
-          <div class="text-lg md:text-xl font-light tracking-widest text-stone-900 font-mono">KAIROS</div>
-          <div class="text-lg md:text-xl font-semibold tracking-tight text-stone-900">LUMEN</div>
-          <div class="text-lg md:text-xl font-medium tracking-wider text-stone-900 font-mono">PIXORA</div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 max-w-4xl mx-auto text-left">
+          <div class="p-4 bg-[#fbfaf6] border border-[#dcdad0] rounded-[2px]">
+            <div class="font-semibold text-xs text-stone-900 mb-1">B2B SaaS & Tech</div>
+            <div class="text-[11.5px] text-stone-500 leading-snug">Trial conversion, security answers, and high-value lead handoffs to sales engineers.</div>
+          </div>
+          <div class="p-4 bg-[#fbfaf6] border border-[#dcdad0] rounded-[2px]">
+            <div class="font-semibold text-xs text-stone-900 mb-1">High-Value Services</div>
+            <div class="text-[11.5px] text-stone-500 leading-snug">Consultancies and agencies qualifying project budgets and booking meetings.</div>
+          </div>
+          <div class="p-4 bg-[#fbfaf6] border border-[#dcdad0] rounded-[2px]">
+            <div class="font-semibold text-xs text-stone-900 mb-1">Education & Academies</div>
+            <div class="text-[11.5px] text-stone-500 leading-snug">Course fee inquiries, syllabus clarification, and WhatsApp admissions continuation.</div>
+          </div>
+          <div class="p-4 bg-[#fbfaf6] border border-[#dcdad0] rounded-[2px]">
+            <div class="font-semibold text-xs text-stone-900 mb-1">E-Commerce & Retail</div>
+            <div class="text-[11.5px] text-stone-500 leading-snug">Product sizing doubts, payment inquiries, and fast cart recovery handoffs.</div>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Testimonial Section -->
     <section class="py-12 md:py-16 px-6 lg:px-12 bg-white border-t border-brand-border">
-      <div class="max-w-[1040px] mx-auto text-center">
-        <div class="w-10 h-10 mx-auto mb-8 text-stone-300">
+      <div class="max-w-[1040px] mx-auto">
+        <div class="w-10 h-10 mx-auto mb-8 text-stone-300 text-center flex justify-center">
           <i data-lucide="quote" class="w-10 h-10"></i>
         </div>
-        <blockquote class="text-2xl sm:text-4xl md:text-[42px] font-normal leading-[1.2] tracking-tight text-brand-black mb-10">
-          “CuboidPilot helps our team understand which conversations need us instead of treating every visitor the same.”
-        </blockquote>
-        <div>
-          <div class="text-base font-semibold text-stone-900">Arjun Mehta</div>
-          <div class="text-sm text-stone-500 mt-0.5">Head of Customer Experience, Nexora</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+          <div class="p-6 sm:p-7 rounded-[2px] bg-[#fcfbfa] border border-[#eceae4] flex flex-col justify-between">
+            <blockquote class="text-base sm:text-lg font-normal leading-relaxed tracking-tight text-brand-black mb-6">
+              “CuboidPilot helps our team understand which conversations need us instead of treating every visitor the same. It eliminated our first-response delay overnight.”
+            </blockquote>
+            <div class="pt-4 border-t border-[#eceae4]">
+              <div class="text-sm font-semibold text-stone-900">Arjun Mehta</div>
+              <div class="text-xs text-stone-500 mt-0.5">Head of Customer Experience, Nexora</div>
+            </div>
+          </div>
+          <div class="p-6 sm:p-7 rounded-[2px] bg-[#fcfbfa] border border-[#eceae4] flex flex-col justify-between">
+            <blockquote class="text-base sm:text-lg font-normal leading-relaxed tracking-tight text-brand-black mb-6">
+              “With Cai, our vision was zero hallucinations and absolute document grounding: businesses can scale 24/7 customer resolutions across web and WhatsApp without bloated seat fees.”
+            </blockquote>
+            <div class="pt-4 border-t border-[#eceae4]">
+              <div class="text-sm font-semibold text-stone-900">Nikhil Nagpurkar (Nikhil Nagpurr)</div>
+              <div class="text-xs text-stone-500 mt-0.5">CEO &amp; Founder, CuboidSoft</div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -1735,7 +2199,7 @@
                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
                 Frequently Asked Questions
               </div>
-              <h2 class="text-3xl sm:text-4xl lg:text-[40px] font-semibold tracking-tight text-[#111111] leading-[1.15] mb-4">
+              <h2 class="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-stone-900 leading-[1.15] mb-4">
                 Everything you need to know about CuboidPilot.
               </h2>
               <p class="text-base text-stone-600 leading-relaxed">
@@ -1765,8 +2229,8 @@
           <div class="lg:col-span-7 space-y-3 faq-accordion">
 
             <!-- Question 1 -->
-            <div class="faq-item border border-[#dcdad0] rounded-[2px] bg-white transition-all duration-200">
-              <button type="button" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="true">
+            <div class="faq-item active border border-[#dcdad0] rounded-[2px] bg-white transition-all duration-200">
+              <button type="button" onclick="toggleFaq(this)" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="true">
                 <div class="flex items-center gap-3">
                   <span class="font-mono text-xs font-semibold text-stone-400">01</span>
                   <span class="text-sm sm:text-base font-semibold text-[#111111]">
@@ -1779,18 +2243,18 @@
               </button>
               <div class="faq-content px-5 pb-5 pt-0 border-t border-[#f0eee9]">
                 <p class="text-xs sm:text-sm text-stone-600 leading-relaxed mt-3">
-                  Traditional chatbots rely on rigid decision trees, static buttons, and frequently get stuck on unforeseen questions (<span class="italic text-stone-700">"Sorry, I didn't understand that"</span>). Cai is an autonomous AI Agent built on advanced semantic grounding. It understands complex, natural-language business inquiries, reasons across your verified knowledge documents, and resolves 50%+ of questions in under 0.8 seconds without requiring human staff.
+                  Traditional chatbots rely on rigid decision trees, static buttons, and frequently get stuck on unforeseen questions (<span class="italic text-stone-700">"Sorry, I didn't understand that"</span>). Cai is an autonomous AI Customer Agent built on advanced semantic grounding. It understands natural-language business inquiries, reasons across your verified knowledge documents, and resolves routine questions instantly while intelligently looping in human specialists the moment high-intent deals or complex issues arise.
                 </p>
               </div>
             </div>
 
             <!-- Question 2 -->
             <div class="faq-item border border-[#dcdad0] rounded-[2px] bg-white transition-all duration-200">
-              <button type="button" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
+              <button type="button" onclick="toggleFaq(this)" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
                 <div class="flex items-center gap-3">
                   <span class="font-mono text-xs font-semibold text-stone-400">02</span>
                   <span class="text-sm sm:text-base font-semibold text-[#111111]">
-                    How does Cai guarantee zero hallucinations on pricing and policies?
+                    How does Cai ensure answers are strictly grounded in our company's verified documentation?
                   </span>
                 </div>
                 <div class="faq-icon w-6 h-6 rounded-[2px] border border-[#dcdad0] bg-[#fbfaf6] flex items-center justify-center shrink-0 text-stone-600 transition-transform duration-200">
@@ -1799,14 +2263,14 @@
               </button>
               <div class="faq-content hidden px-5 pb-5 pt-0 border-t border-[#f0eee9]">
                 <p class="text-xs sm:text-sm text-stone-600 leading-relaxed mt-3">
-                  Cai operates under a <strong>Strict Grounding Protocol</strong>. It only draws answers from approved business documents you upload (PDFs, pricing spreadsheets, service catalogs, and live URLs). If a customer asks a question outside your approved corpus, Cai never fabricates facts—it proactively captures the visitor's contact info and offers to connect them with your human counselor.
+                  Cai operates under a <strong>Strict Grounding Protocol</strong>. It only draws answers from approved business documents you configure (PDFs, pricing spreadsheets, service catalogs, and live URLs). If a customer asks a question outside your approved corpus, Cai does not fabricate facts—it intelligently flags the conversation for Human Action and prepares a concise summary for your team.
                 </p>
               </div>
             </div>
 
             <!-- Question 3 -->
             <div class="faq-item border border-[#dcdad0] rounded-[2px] bg-white transition-all duration-200">
-              <button type="button" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
+              <button type="button" onclick="toggleFaq(this)" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
                 <div class="flex items-center gap-3">
                   <span class="font-mono text-xs font-semibold text-stone-400">03</span>
                   <span class="text-sm sm:text-base font-semibold text-[#111111]">
@@ -1826,7 +2290,7 @@
 
             <!-- Question 4 -->
             <div class="faq-item border border-[#dcdad0] rounded-[2px] bg-white transition-all duration-200">
-              <button type="button" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
+              <button type="button" onclick="toggleFaq(this)" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
                 <div class="flex items-center gap-3">
                   <span class="font-mono text-xs font-semibold text-stone-400">04</span>
                   <span class="text-sm sm:text-base font-semibold text-[#111111]">
@@ -1846,7 +2310,7 @@
 
             <!-- Question 5 -->
             <div class="faq-item border border-[#dcdad0] rounded-[2px] bg-white transition-all duration-200">
-              <button type="button" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
+              <button type="button" onclick="toggleFaq(this)" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
                 <div class="flex items-center gap-3">
                   <span class="font-mono text-xs font-semibold text-stone-400">05</span>
                   <span class="text-sm sm:text-base font-semibold text-[#111111]">
@@ -1866,7 +2330,7 @@
 
             <!-- Question 6 -->
             <div class="faq-item border border-[#dcdad0] rounded-[2px] bg-white transition-all duration-200">
-              <button type="button" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
+              <button type="button" onclick="toggleFaq(this)" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
                 <div class="flex items-center gap-3">
                   <span class="font-mono text-xs font-semibold text-stone-400">06</span>
                   <span class="text-sm sm:text-base font-semibold text-[#111111]">
@@ -1886,7 +2350,7 @@
 
             <!-- Question 7 -->
             <div class="faq-item border border-[#dcdad0] rounded-[2px] bg-white transition-all duration-200">
-              <button type="button" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
+              <button type="button" onclick="toggleFaq(this)" class="faq-toggle w-full p-5 text-left flex items-center justify-between gap-4 cursor-pointer focus:outline-none" aria-expanded="false">
                 <div class="flex items-center gap-3">
                   <span class="font-mono text-xs font-semibold text-stone-400">07</span>
                   <span class="text-sm sm:text-base font-semibold text-[#111111]">
@@ -1915,7 +2379,7 @@
     <section class="py-14 md:py-20 px-6 lg:px-12 bg-white border-t border-brand-border text-center">
       <div class="max-w-[820px] mx-auto">
         <span class="eyebrow-label block mb-4">HIRE CAI TODAY</span>
-        <h2 class="section-headline mb-6 text-brand-black">
+        <h2 class="text-3xl sm:text-4xl lg:text-[42px] font-normal tracking-tight text-stone-900 leading-[1.15] mb-6">
           Turn your website<br>
           into a conversation with Cai.
         </h2>
@@ -1939,11 +2403,11 @@
   </main>
 
   <!-- Footer -->
-  <footer class="bg-white border-t border-brand-border pt-20 pb-12 px-6 lg:px-12">
+  <footer class="bg-white border-t border-brand-border pt-12 sm:pt-20 pb-20 md:pb-12 px-6 lg:px-12">
     <div class="max-w-[1360px] mx-auto">
       
       <!-- Top Multi-Column Grid -->
-      <div class="grid grid-cols-2 md:grid-cols-5 gap-10 pb-16 border-b border-brand-border">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8 sm:gap-10 pb-12 sm:pb-16 border-b border-brand-border">
         
         <!-- Col 1: Product -->
         <div>
@@ -1990,7 +2454,7 @@
           <div class="text-xs font-semibold uppercase tracking-wider text-brand-black mb-4">COMPANY</div>
           <ul class="space-y-2.5 text-sm text-brand-muted">
             <li><a href="#trust" class="hover:text-brand-black transition-colors">About</a></li>
-            <li><a href="#trust" class="hover:text-brand-black transition-colors">Contact</a></li>
+            <li><a href="mailto:support@cai.cuboidsoft.in" class="hover:text-brand-black transition-colors">Contact</a></li>
             <li><a href="#trust" class="hover:text-brand-black transition-colors">Careers</a></li>
           </ul>
         </div>
@@ -1999,9 +2463,9 @@
         <div>
           <div class="text-xs font-semibold uppercase tracking-wider text-brand-black mb-4">LEGAL</div>
           <ul class="space-y-2.5 text-sm text-brand-muted">
-            <li><a href="#trust" class="hover:text-brand-black transition-colors">Privacy</a></li>
-            <li><a href="#trust" class="hover:text-brand-black transition-colors">Terms</a></li>
-            <li><a href="#trust" class="hover:text-brand-black transition-colors">Security</a></li>
+            <li><a href="privacy.html" class="hover:text-brand-black transition-colors">Privacy</a></li>
+            <li><a href="terms.html" class="hover:text-brand-black transition-colors">Terms</a></li>
+            <li><a href="security.html" class="hover:text-brand-black transition-colors">Security</a></li>
           </ul>
         </div>
 
@@ -2018,9 +2482,10 @@
         </div>
 
         <div class="flex items-center gap-6">
-          <a href="#" class="hover:text-brand-black transition-colors">Privacy</a>
-          <a href="#" class="hover:text-brand-black transition-colors">Terms</a>
-          <a href="#" class="hover:text-brand-black transition-colors">Security</a>
+          <div id="cp-footer-lang"></div>
+          <a href="privacy.html" class="hover:text-brand-black transition-colors">Privacy</a>
+          <a href="terms.html" class="hover:text-brand-black transition-colors">Terms</a>
+          <a href="security.html" class="hover:text-brand-black transition-colors">Security</a>
         </div>
       </div>
 
@@ -2028,9 +2493,19 @@
   </footer>
 
   <!-- Real Live CuboidPilot Fin AI Widget Embed -->
-  <script src="widget.js?v=2.7" data-company="cp_live_cuboidsoft" async></script>
+  <script src="widget.js?v=7.0" data-company="cp_live_cuboidsoft" async></script>
   <!-- Scripts -->
   <script src="js/main.js"></script>
   <script src="js/pricing-currency.js"></script>
+  <script src="js/lang-switcher.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.createLanguageDropdown) {
+        window.createLanguageDropdown('cp-header-lang');
+        window.createLanguageDropdown('cp-mobile-lang');
+        window.createLanguageDropdown('cp-footer-lang', { isFooter: true });
+      }
+    });
+  </script>
 </body>
 </html>

@@ -1086,7 +1086,7 @@ DROP TABLE IF EXISTS `payments`;
 CREATE TABLE `payments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `company_id` int(11) NOT NULL,
-  `customer_id` int(11) NOT NULL,
+  `customer_id` int(11) DEFAULT NULL,
   `lead_id` int(11) DEFAULT NULL,
   `razorpay_order_id` varchar(100) DEFAULT NULL,
   `razorpay_payment_id` varchar(100) DEFAULT NULL,
@@ -1604,7 +1604,35 @@ LOCK TABLES `widget_settings` WRITE;
 /*!40000 ALTER TABLE `widget_settings` DISABLE KEYS */;
 INSERT INTO `widget_settings` VALUES (3,3,'Cai','Cai','assets/uploads/logos/logo_dark_comp_3_1790755745.png','assets/uploads/logos/logo_dark_comp_3_1790755745.png','assets/uploads/logos/logo_light_comp_3_1790755745.png','#111111','light','Hi there 👋\r\n\r\nYou are now speaking with Cai. How can I help?','Powered By CuboidPilot','bottom_right',1,1,'1,2,3,4,5,6','10:00','18:00',30,0,7,'https://meet.google.com/cp-consult','calcom','cal_live_testkey12345678','https://cal.com/cuboidpilot/30min','https://httpbin.org/post',1,1,1,NULL,NULL,'HDFC Bank','CuboidSoft Technologies','50200088991122','HDFC0001234','cuboidsoft@hdfcbank',NULL,'+91 99999 88888',1,'2026-09-29 15:09:25','2026-10-02 00:27:27','https://linkedin.com/in/ayushman-varma','https://linkedin.com/company/cuboidpilot','https://linkedin.com/company/cuboidsoft');
 /*!40000 ALTER TABLE `widget_settings` ENABLE KEYS */;
-UNLOCK TABLES;
+--
+-- Table structure for table `company_assets`
+--
+
+DROP TABLE IF EXISTS `company_assets`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `company_assets` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `company_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `category` varchar(64) NOT NULL DEFAULT 'document',
+  `description` text DEFAULT NULL,
+  `keywords` text DEFAULT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_path` varchar(500) NOT NULL,
+  `file_size` int(11) DEFAULT 0,
+  `file_type` varchar(100) DEFAULT 'application/pdf',
+  `download_count` int(11) DEFAULT 0,
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_company_asset` (`company_id`,`is_active`),
+  KEY `idx_asset_category` (`company_id`,`category`),
+  CONSTRAINT `fk_asset_company` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

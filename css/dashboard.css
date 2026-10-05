@@ -44,12 +44,26 @@ body.app-body {
 }
 
 /* Dual Sidebar System (Slim Icon Rail + Secondary Contextual Pane) */
+#sidebar-container {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  flex-shrink: 0;
+  z-index: 40;
+}
+
 .app-dual-sidebar {
   display: flex;
   height: 100vh;
   height: 100dvh;
   flex-shrink: 0;
   z-index: 40;
+}
+
+/* Mobile Triggers Hidden on Desktop by Default */
+#mobile-menu-trigger,
+.shell-mobile-close {
+  display: none;
 }
 
 /* Slim Icon Rail (58px) */
@@ -984,73 +998,120 @@ input[type="checkbox"]:not(.sr-only):not(.native-checkbox):disabled,
 
 /* ==========================================================================
    MOBILE & TABLET RESPONSIVE SYSTEM (100% Mobile Optimized)
+   Universal across Company App (app/) & Super Admin (super-admin/)
    ========================================================================== */
 
 /* Universal Backdrop Blur for Drawers & Mobile Sidebar */
 .app-sidebar-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(17, 17, 17, 0.55);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
-  z-index: 999;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 220ms ease;
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(17, 17, 17, 0.6) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  z-index: 9999 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 220ms ease !important;
 }
 
 .app-sidebar-backdrop.active,
 body.sidebar-mobile-open .app-sidebar-backdrop {
-  opacity: 1;
-  pointer-events: auto;
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 /* Tablet & Mobile Breakpoint (< 1024px) */
 @media (max-width: 1023px) {
-  /* Prevent sidebar mount container from clipping or capturing clicks */
+  /* 1. Take sidebar mount completely out of flexbox flow */
   #sidebar-container {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
     width: 0 !important;
+    height: 0 !important;
+    max-width: 0 !important;
     min-width: 0 !important;
-    flex-shrink: 0 !important;
+    flex: 0 0 0px !important;
     overflow: visible !important;
-    position: relative !important;
-    z-index: 1000 !important;
+    z-index: 10001 !important;
+    pointer-events: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
   }
 
-  /* Dual Sidebar turns into high-performance off-canvas slide-out drawer */
+  /* 2. Dual Sidebar turns into high-performance off-canvas slide-out drawer */
   .app-dual-sidebar {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     bottom: 0 !important;
     width: var(--sidebar-width) !important;
+    max-width: min(88vw, 310px) !important;
     height: 100vh !important;
     height: 100dvh !important;
-    z-index: 1001 !important;
-    transform: translateX(-105%) !important;
+    z-index: 10002 !important;
+    transform: translateX(-110%) !important;
     transition: transform 260ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 260ms ease !important;
     box-shadow: none !important;
     pointer-events: none !important;
-    max-width: calc(100vw - 36px) !important;
+    visibility: hidden !important;
     background: #ffffff !important;
   }
 
+  /* When drawer is toggled open via hamburger menu */
   .app-dual-sidebar.mobile-open,
   body.sidebar-mobile-open .app-dual-sidebar {
     transform: translateX(0) !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.08) !important;
     pointer-events: auto !important;
+    visibility: visible !important;
   }
 
-  /* Topbar compact padding */
+  /* 3. Main layout container expands to 100% of mobile viewport */
+  .app-viewport {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+    position: relative !important;
+  }
+
+  .app-main {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    flex: 1 1 100% !important;
+    min-width: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+  }
+
+  /* 4. Topbar compact padding & display mobile triggers */
   .app-topbar {
-    padding: 0 12px;
+    padding: 0 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
-  /* Scroll container padding */
+  #mobile-menu-trigger {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .shell-mobile-close {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 5. Scroll container padding */
   .app-content-scroll {
-    padding: 20px 18px 48px 18px;
+    padding: 16px 14px 48px 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
     -webkit-overflow-scrolling: touch;
+    overflow-x: hidden !important;
   }
 
   /* Hide conversation dossier pane by default on tablet */
@@ -1064,22 +1125,38 @@ body.sidebar-mobile-open .app-sidebar-backdrop {
     top: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    width: 310px !important;
+    width: 320px !important;
     max-width: calc(100vw - 40px) !important;
-    z-index: 52 !important;
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.15) !important;
+    z-index: 10005 !important;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2) !important;
+    background: #ffffff !important;
   }
 }
 
 /* Mobile Handheld Breakpoint (< 768px) */
 @media (max-width: 767px) {
   .app-topbar {
-    padding: 0 12px;
+    padding: 0 10px !important;
+    height: 48px !important;
+    min-height: 48px !important;
   }
 
   .app-content-scroll {
-    padding: 16px 12px 48px 12px;
-    overflow-x: hidden;
+    padding: 12px 10px 48px 10px !important;
+  }
+
+  /* Responsive Data Tables Touch Scroll */
+  .overflow-x-auto,
+  .table-responsive {
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    display: block !important;
+  }
+
+  table {
+    min-width: 560px;
   }
 
   /* Conversations 3-Pane Adaptive Split for Mobile Phones */
@@ -1105,27 +1182,36 @@ body.sidebar-mobile-open .app-sidebar-backdrop {
     width: 100% !important;
   }
 
+  body.convo-chat-active #chat-mobile-back-btn {
+    display: inline-flex !important;
+  }
+
   /* Responsive Kanban Board */
   .kanban-board {
-    height: calc(100vh - 190px);
-    height: calc(100dvh - 190px);
-    -webkit-overflow-scrolling: touch;
+    height: calc(100vh - 180px) !important;
+    height: calc(100dvh - 180px) !important;
+    -webkit-overflow-scrolling: touch !important;
     scroll-snap-type: x mandatory;
-    gap: 12px;
+    gap: 12px !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    width: 100% !important;
   }
 
   .kanban-col {
     scroll-snap-align: start;
-    width: 82vw;
-    min-width: 82vw;
-    max-width: 320px;
+    width: 82vw !important;
+    min-width: 82vw !important;
+    max-width: 320px !important;
+    flex-shrink: 0 !important;
   }
 }
 
 /* Extra Small Phones Breakpoint (< 640px) */
 @media (max-width: 639px) {
   .app-topbar {
-    padding: 0 10px;
+    padding: 0 8px !important;
+    height: 48px !important;
   }
 
   /* Truncate/hide company prefix in breadcrumbs on narrow mobile */
@@ -1134,8 +1220,24 @@ body.sidebar-mobile-open .app-sidebar-backdrop {
     display: none !important;
   }
 
+  /* Topbar Compact Sizing for Small Screens */
+  #open-test-ai-btn span {
+    display: none !important;
+  }
+  #open-test-ai-btn {
+    padding: 5px 8px !important;
+  }
+
+  #shell-trial-indicator a {
+    display: none !important;
+  }
+
   .app-page-title {
-    font-size: 20px;
+    font-size: 18px !important;
+  }
+
+  .app-section-title {
+    font-size: 15px !important;
   }
 
   .app-modal {
@@ -1145,21 +1247,41 @@ body.sidebar-mobile-open .app-sidebar-backdrop {
   }
 
   .intercom-metric-card {
-    padding: 14px 14px 12px 14px;
-    min-height: auto;
+    padding: 12px 12px 10px 12px !important;
+    min-height: auto !important;
+  }
+
+  /* Universal flex header wrapping on mobile */
+  .app-panel > div.flex.justify-between,
+  .app-card > div.flex.justify-between,
+  .app-panel header.flex.justify-between {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  /* Universal pre and code safety to prevent horizontal page overflow */
+  pre {
+    max-width: 100% !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
   }
 }
 
 /* Ultra Narrow Screen Safety (< 360px) */
 @media (max-width: 360px) {
   :root {
-    --rail-width: 50px;
+    --rail-width: 48px;
+    --subsidebar-width: 190px;
+    --sidebar-width: 238px;
   }
   .app-icon-rail {
-    width: 50px !important;
+    width: 48px !important;
   }
   .app-sub-sidebar {
-    width: 200px !important;
+    width: 190px !important;
+  }
+  .app-dual-sidebar {
+    width: 238px !important;
   }
 }
 

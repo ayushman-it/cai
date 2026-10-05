@@ -16,14 +16,40 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 $pdo = getDbConnection();
-if (empty($_SESSION['user_id']) || empty($_SESSION['company_id'])) {
+if (empty($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'Authentication required']);
     exit;
 }
 
-$companyId = (int)$_SESSION['company_id'];
 $userId = (int)$_SESSION['user_id'];
+$companyId = (int)($_SESSION['company_id'] ?? 0);
+
+if ($companyId === 0) {
+    $uStmt = $pdo->prepare("SELECT company_id, is_super_admin FROM users WHERE id = ? LIMIT 1");
+    $uStmt->execute([$userId]);
+    $u = $uStmt->fetch();
+    if (!empty($u['company_id'])) {
+        $companyId = (int)$u['company_id'];
+        $_SESSION['company_id'] = $companyId;
+    } elseif (!empty($u['is_super_admin'])) {
+        $firstComp = $pdo->query("SELECT id FROM companies ORDER BY id ASC LIMIT 1")->fetchColumn();
+        if ($firstComp) {
+            $companyId = (int)$firstComp;
+            $_SESSION['company_id'] = $companyId;
+        }
+    }
+}
+
+if ($companyId === 0) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'error' => 'Workspace context not found']);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    session_write_close();
+}
 
 try {
 
@@ -124,7 +150,7 @@ try {
                 'ai_summary'               => $conversation['ai_summary'] ?? '',
                 'radar_recommended_action' => $conversation['radar_recommended_action'] ?? '',
                 'last_message_at'          => $conversation['last_message_at'],
-                'human_attention_required' => (bool)($conversation['human_attention_required'] ?? false),
+                'human_attention_required' => (bool)($conversation['human_attention_required'] ?? false) || $conversation['status'] === 'human_requested',
                 'human_attention_reason'   => $conversation['human_attention_reason'] ?? '',
                 'lead_score'               => $artRow ? (int)$artRow['lead_score'] : 0,
                 'priority_reason'          => $artRow ? $artRow['priority_reason'] : '',
@@ -187,7 +213,7 @@ try {
             
             $pdo->prepare("
                 UPDATE `conversations`
-                SET `ownership` = 'human', `status` = 'human_active', `assigned_user_id` = COALESCE(?, `assigned_user_id`), `last_message_at` = NOW()
+                SET `ownership` = 'human', `status` = 'human_active', `unread_human` = 0, `assigned_user_id` = COALESCE(?, `assigned_user_id`), `last_message_at` = NOW()
                 WHERE `id` = ? AND `company_id` = ?
             ")->execute([$userId, $convId, $companyId]);
 
@@ -288,7 +314,7 @@ try {
 
             $pdo->prepare("
                 UPDATE `conversations`
-                SET `ownership` = ?, `status` = ?, `last_message_at` = NOW()
+                SET `ownership` = ?, `status` = ?, `unread_human` = 0, `last_message_at` = NOW()
                 WHERE `id` = ? AND `company_id` = ?
             ")->execute([$newOwnership, $newStatus, $convId, $companyId]);
 
@@ -649,7 +675,7 @@ try {
                 'priority'                 => $row['priority'] ?? 'MEDIUM',
                 'intent_level'             => $row['intent_level'] ?? 'medium',
                 'stage'                    => $row['stage_name'] ?? 'NEW',
-                'human_attention_required' => (bool)($row['human_attention_required'] ?? false),
+                'human_attention_required' => (bool)($row['human_attention_required'] ?? false) || $row['status'] === 'human_requested',
                 'human_attention_reason'   => $row['human_attention_reason'] ?? '',
                 'last_message_preview'     => $row['last_message_preview'] ?: 'Conversation opened',
                 'last_time'                => $row['last_time'] ?: date('h:i A', strtotime($row['created_at'])),

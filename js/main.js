@@ -3,7 +3,7 @@
  * Minimal, lightweight, zero-dependency vanilla JS.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+function initMain() {
   // Initialize Lucide icons
   if (window.lucide) {
     window.lucide.createIcons();
@@ -246,26 +246,70 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // FAQ Accordion Interactivity (Intercom style)
-  const faqToggles = document.querySelectorAll('.faq-toggle');
-  faqToggles.forEach(toggle => {
-    toggle.addEventListener('click', () => {
-      const item = toggle.closest('.faq-item');
-      if (!item) return;
-      const content = item.querySelector('.faq-content');
-      const icon = item.querySelector('.faq-icon');
-      const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+  // Bulletproof Global FAQ Accordion Engine
+  window.toggleFaq = function(toggleEl) {
+    if (!toggleEl) return;
+    const now = Date.now();
+    if (toggleEl._lastToggle && (now - toggleEl._lastToggle) < 250) {
+      return;
+    }
+    toggleEl._lastToggle = now;
 
-      if (isExpanded) {
-        toggle.setAttribute('aria-expanded', 'false');
-        content?.classList.add('hidden');
-        if (icon) icon.style.transform = 'rotate(0deg)';
-      } else {
-        toggle.setAttribute('aria-expanded', 'true');
-        content?.classList.remove('hidden');
-        if (icon) icon.style.transform = 'rotate(180deg)';
+    const item = toggleEl.closest('.faq-item');
+    if (!item) return;
+    const content = item.querySelector('.faq-content');
+    const icon = item.querySelector('.faq-icon');
+    const isExpanded = toggleEl.getAttribute('aria-expanded') === 'true' || item.classList.contains('active');
+
+    // Smooth accordion: close other FAQs in the same container
+    const accordionContainer = item.closest('.faq-accordion') || item.parentElement;
+    if (accordionContainer && !isExpanded) {
+      accordionContainer.querySelectorAll('.faq-item').forEach(other => {
+        if (other !== item) {
+          other.classList.remove('active');
+          const otherToggle = other.querySelector('.faq-toggle, button');
+          const otherContent = other.querySelector('.faq-content');
+          const otherIcon = other.querySelector('.faq-icon');
+          if (otherToggle) otherToggle.setAttribute('aria-expanded', 'false');
+          if (otherContent) {
+            otherContent.classList.add('hidden');
+            otherContent.style.display = 'none';
+          }
+          if (otherIcon) otherIcon.style.transform = 'rotate(0deg)';
+        }
+      });
+    }
+
+    if (isExpanded) {
+      toggleEl.setAttribute('aria-expanded', 'false');
+      item.classList.remove('active');
+      if (content) {
+        content.classList.add('hidden');
+        content.style.display = 'none';
       }
-    });
+      if (icon) icon.style.transform = 'rotate(0deg)';
+    } else {
+      toggleEl.setAttribute('aria-expanded', 'true');
+      item.classList.add('active');
+      if (content) {
+        content.classList.remove('hidden');
+        content.style.display = 'block';
+      }
+      if (icon) icon.style.transform = 'rotate(180deg)';
+    }
+  };
+
+  // Delegated document click: handles any dynamically added FAQ buttons without double-binding
+  document.addEventListener('click', function(e) {
+    const toggle = e.target.closest('.faq-toggle');
+    if (toggle) {
+      // If element has inline onclick="toggleFaq(this)", inline handler executes; avoid duplicate run
+      if (toggle.hasAttribute('onclick')) {
+        return;
+      }
+      e.preventDefault();
+      window.toggleFaq(toggle);
+    }
   });
 
   // Intercom Pricing Section Annual/Monthly Toggle
@@ -324,5 +368,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   fetchLiveSuperAdminPlans();
-});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initMain);
+} else {
+  initMain();
+}
 

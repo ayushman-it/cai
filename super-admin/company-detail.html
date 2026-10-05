@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../css/theme.css">
-  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=4.2">
 </head>
 <body class="app-body">
 
@@ -57,8 +57,12 @@
                 <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                 <span>Impersonate (Login as Tenant)</span>
               </a>
-              <button class="btn-secondary btn-sm text-xs py-1.5 px-3 text-red-700 hover:bg-red-50 hover:border-red-300" onclick="alert('Account suspended')">
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3 text-stone-700 hover:bg-stone-50" onclick="alert('Account status updated')">
                 Suspend
+              </button>
+              <button class="btn-sm text-xs py-1.5 px-3 bg-red-50 text-red-700 border border-red-200 hover:bg-red-600 hover:text-white rounded-[4px] font-medium transition-colors" onclick="handleDeleteCurrentCompany()">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5 inline mr-1"></i>
+                Delete Organization
               </button>
             </div>
           </div>
@@ -313,8 +317,8 @@
     </div>
   </div>
 
-  <script src="../js/components.js"></script>
-  <script src="../js/dashboard.js"></script>
+  <script src="../js/components.js?v=4.2"></script>
+  <script src="../js/dashboard.js?v=4.2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       CuboidShell.initSuperAdmin('companies', 'Acme Academy Dossier', ['Business', 'Companies']);
@@ -333,6 +337,39 @@
       if (targetBtn) {
         targetBtn.classList.remove('border-transparent', 'text-stone-500');
         targetBtn.classList.add('border-stone-900', 'text-stone-900');
+      }
+    }
+
+    async function handleDeleteCurrentCompany() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const companyId = urlParams.get('id');
+      if (!companyId) {
+        alert('Company ID not specified');
+        return;
+      }
+      if (companyId == '3') {
+        alert('Cannot delete the primary platform administration organization (CuboidSoft).');
+        return;
+      }
+      if (!confirm('Are you absolutely sure you want to permanently delete this organization? All leads, conversations, documents, and user accounts will be permanently erased.')) {
+        return;
+      }
+
+      try {
+        const res = await fetch('../api/super_admin.php?action=delete_company', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company_id: companyId })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          alert(data.message || 'Organization deleted successfully');
+          window.location.href = 'companies.html';
+        } else {
+          alert(data.error || 'Failed to delete organization');
+        }
+      } catch (err) {
+        alert('Error deleting organization: ' + err.message);
       }
     }
   </script>

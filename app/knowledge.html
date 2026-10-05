@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../css/theme.css">
-  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=4.2">
 </head>
 <body class="app-body">
 
@@ -41,8 +41,11 @@
               <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CuboidDashboard.resyncAllKnowledge()">
                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5 mr-1 text-stone-500"></i> Sync All
               </button>
-              <button class="btn-primary btn-sm text-xs py-1.5 px-3" onclick="CuboidDashboard.openAddKnowledgeModal()">
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CuboidDashboard.openAddKnowledgeModal()">
                 <i data-lucide="plus" class="w-3.5 h-3.5 mr-1"></i> Add Knowledge Source
+              </button>
+              <button class="btn-primary btn-sm text-xs py-1.5 px-3 bg-stone-900 hover:bg-black text-white" onclick="CuboidDashboard.openUploadAssetModal()">
+                <i data-lucide="file-up" class="w-3.5 h-3.5 mr-1"></i> Upload Asset / Syllabus
               </button>
             </div>
           </div>
@@ -55,14 +58,14 @@
               <span class="text-[10px] text-stone-500 mt-0.5 block">100% tenant isolated</span>
             </div>
             <div class="p-3.5 bg-white border border-[#e7e5de] rounded-[4px]">
+              <span class="text-stone-400 block text-[11px] font-medium">Digital Assets & Syllabi</span>
+              <div id="kb-stat-assets" class="text-xl font-semibold text-stone-900 mt-1">0</div>
+              <span class="text-[10px] text-stone-500 mt-0.5 block">AI auto-share & email ready</span>
+            </div>
+            <div class="p-3.5 bg-white border border-[#e7e5de] rounded-[4px]">
               <span class="text-stone-400 block text-[11px] font-medium">Hallucination Defense</span>
               <div class="text-xl font-semibold text-stone-900 mt-1">100%</div>
               <span class="text-[10px] text-stone-500 mt-0.5 block">Strict refusal on unknowns</span>
-            </div>
-            <div class="p-3.5 bg-white border border-[#e7e5de] rounded-[4px]">
-              <span class="text-stone-400 block text-[11px] font-medium">Vector Store Status</span>
-              <div class="text-xl font-semibold text-stone-900 mt-1">Ready</div>
-              <span class="text-[10px] text-stone-500 mt-0.5 block">Embeddings synced</span>
             </div>
             <div class="p-3.5 bg-white border border-[#e7e5de] rounded-[4px]">
               <span class="text-stone-400 block text-[11px] font-medium">Retrieval Latency</span>
@@ -77,6 +80,9 @@
             <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 no-scrollbar" id="kb-filter-tabs">
               <button class="kb-tab-btn px-3 py-1.5 font-medium rounded-[4px] bg-stone-900 text-white" data-filter="all" onclick="CuboidDashboard.setKnowledgeFilter('all')">
                 All Sources (<span id="kb-tab-count-all">0</span>)
+              </button>
+              <button class="kb-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100 flex items-center gap-1" data-filter="assets" onclick="CuboidDashboard.setKnowledgeFilter('assets')">
+                <i data-lucide="folder-archive" class="w-3.5 h-3.5"></i> Brochures & Syllabus (<span id="kb-tab-count-assets">0</span>)
               </button>
               <button class="kb-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100" data-filter="website_url" onclick="CuboidDashboard.setKnowledgeFilter('website_url')">
                 Websites (<span id="kb-tab-count-web">0</span>)
@@ -102,7 +108,7 @@
           <!-- Structured Source Table -->
           <div class="app-table-wrapper">
             <table class="app-table">
-              <thead>
+              <thead id="knowledge-table-thead">
                 <tr>
                   <th>Source Name & Content Preview</th>
                   <th>Type</th>
@@ -160,8 +166,9 @@
             <label class="block font-medium text-stone-700 mb-1">Source Type</label>
             <select id="knowledge-add-type" class="app-select w-full text-xs" onchange="CuboidDashboard.onKnowledgeTypeChange(this.value)">
               <option value="faq">FAQ / Q&A</option>
-              <option value="text_doc">Document / Policy</option>
-              <option value="website_url">Website URL</option>
+              <option value="doc_upload">Upload Document (.txt, .docx, .xlsx, .csv)</option>
+              <option value="text_doc">Text Note / Policy</option>
+              <option value="website_url">Website URL (Live Crawler)</option>
               <option value="policy">Pricing & Policy</option>
             </select>
           </div>
@@ -170,6 +177,20 @@
             <input type="text" id="knowledge-add-category" placeholder="Pricing, Admissions, General" class="app-input w-full text-xs" value="General">
           </div>
         </div>
+
+        <!-- Document File Upload Field -->
+        <div id="knowledge-doc-field" class="hidden">
+          <label class="block font-medium text-stone-700 mb-1">Upload File (.txt, .docx, .xlsx, .csv)</label>
+          <div class="border-2 border-dashed border-stone-200 hover:border-stone-400 rounded-[6px] p-3 text-center cursor-pointer transition-colors bg-stone-50/60" onclick="document.getElementById('knowledge-add-file').click()">
+            <input type="file" id="knowledge-add-file" class="hidden" accept=".txt,.docx,.doc,.xlsx,.xls,.csv,.md,.pdf" onchange="CuboidDashboard.handleKnowledgeFileSelect(event)">
+            <div class="flex items-center justify-center gap-2 text-stone-700">
+              <i data-lucide="file-up" class="w-4 h-4 text-stone-800"></i>
+              <span id="knowledge-file-name" class="font-medium text-xs">Choose or drop document file here</span>
+            </div>
+            <p class="text-[10px] text-stone-400 mt-1">Word (.docx), Excel/Sheets (.xlsx, .csv), or Plain Text (.txt)</p>
+          </div>
+        </div>
+
         <div id="knowledge-url-field">
           <label class="block font-medium text-stone-700 mb-1">Source URL (Optional)</label>
           <input type="url" id="knowledge-add-url" placeholder="https://example.com/pricing" class="app-input w-full text-xs">
@@ -177,7 +198,7 @@
         <div>
           <label class="block font-medium text-stone-700 mb-1">Knowledge Content / Text</label>
           <textarea id="knowledge-add-content" required rows="5" placeholder="Enter factual business details, verified answers, or policy rules..." class="app-input w-full font-mono text-xs"></textarea>
-          <p class="text-[10px] text-stone-400 mt-1">For URLs, provide a summary or preview of the web page content to index immediately.</p>
+          <p class="text-[10px] text-stone-400 mt-1" id="knowledge-content-hint">For documents, content will be automatically extracted and indexed into AI training memory.</p>
         </div>
         <div class="pt-3 border-t border-[#e7e5de] flex justify-end gap-2">
           <button type="button" onclick="CuboidDashboard.closeAddKnowledgeModal()" class="btn-secondary btn-sm py-1.5 px-3">Cancel</button>
@@ -187,12 +208,84 @@
     </div>
   </div>
 
-  <script src="../js/components.js"></script>
-  <script src="../js/dashboard.js"></script>
+  <!-- Upload Asset / Syllabus Modal -->
+  <div id="upload-asset-modal" class="app-modal-overlay">
+    <div class="app-modal p-6 max-w-lg w-full">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-4">
+        <div>
+          <h3 class="text-sm font-semibold text-stone-900">Upload Digital Asset / Syllabus</h3>
+          <p class="text-[11px] text-stone-500 mt-0.5">Upload PDFs, course syllabi, fee charts or brochures for AI chat sharing & instant email delivery.</p>
+        </div>
+        <button onclick="CuboidDashboard.closeUploadAssetModal()" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="upload-asset-form" onsubmit="CuboidDashboard.submitUploadAsset(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Document / Course Title <span class="text-red-500">*</span></label>
+          <input type="text" id="asset-upload-title" required placeholder="e.g. Full Stack Web Development (MERN) Syllabus 2026" class="app-input w-full text-xs">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Category <span class="text-red-500">*</span></label>
+            <select id="asset-upload-category" class="app-select w-full text-xs">
+              <option value="syllabus">Syllabus / Curriculum</option>
+              <option value="brochure">Brochure / Prospectus</option>
+              <option value="fee_chart">Fee Chart / Pricing Schedule</option>
+              <option value="curriculum">Curriculum / Roadmap</option>
+              <option value="guide">Guide / Handbook</option>
+              <option value="document">General Document</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">AI Trigger Keywords</label>
+            <input type="text" id="asset-upload-keywords" placeholder="full stack, mern, syllabus, react, fees" class="app-input w-full text-xs">
+          </div>
+        </div>
+        <p class="text-[10px] text-stone-400 -mt-2">Keywords help Cai AI automatically identify this file when visitors ask questions in chat.</p>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Brief Description / AI Notes</label>
+          <input type="text" id="asset-upload-description" placeholder="e.g. Complete 6-month curriculum covering React, Node, MongoDB with job assistance" class="app-input w-full text-xs">
+        </div>
+
+        <!-- File Dropzone -->
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Upload File (PDF, Word, Excel, Images up to 25MB) <span class="text-red-500">*</span></label>
+          <div class="border-2 border-dashed border-stone-200 hover:border-stone-400 rounded-[6px] p-4 text-center cursor-pointer transition-colors bg-stone-50/60" onclick="document.getElementById('asset-upload-file').click()">
+            <input type="file" id="asset-upload-file" class="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.webp,.txt,.csv" onchange="CuboidDashboard.handleAssetFileSelect(event)" required>
+            <div class="flex flex-col items-center justify-center gap-1.5 text-stone-700">
+              <div class="w-9 h-9 rounded-full bg-white border border-stone-200 flex items-center justify-center shadow-xs">
+                <i data-lucide="file-up" class="w-4 h-4 text-stone-800"></i>
+              </div>
+              <span id="asset-file-selected-name" class="font-medium text-xs text-stone-800">Choose file or drag & drop here</span>
+              <p class="text-[10px] text-stone-400">PDF, Word (.docx), Excel (.xlsx), Images (.png, .jpg), or Text (.txt)</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] flex items-start gap-2 text-[11px] text-stone-600">
+          <i data-lucide="sparkles" class="w-4 h-4 text-stone-900 shrink-0 mt-0.5"></i>
+          <div>
+            <strong class="text-stone-800">AI Auto-Share & Email:</strong> When a website visitor asks for this syllabus or brochure, Cai will render an interactive download card in widget chat and dispatch a copy directly to their email.
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-[#e7e5de] flex justify-end gap-2">
+          <button type="button" onclick="CuboidDashboard.closeUploadAssetModal()" class="btn-secondary btn-sm py-1.5 px-3">Cancel</button>
+          <button type="submit" id="asset-upload-submit-btn" class="btn-primary btn-sm py-1.5 px-4 bg-stone-900 hover:bg-black text-white">Upload & Enable in AI</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/components.js?v=4.2"></script>
+  <script src="../js/dashboard.js?v=4.2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       CuboidShell.initCompanyApp('knowledge', 'Knowledge', ['AI']);
-      CuboidDashboard.loadKnowledge();
     });
   </script>
 </body>

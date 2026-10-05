@@ -22,10 +22,75 @@ if (empty($_SESSION['user_id']) || empty($_SESSION['company_id'])) {
 
 try {
     $pdo = getDbConnection();
-    ensureExtendedSchema($pdo);
 
     $companyId = (int)$_SESSION['company_id'];
     $userId = (int)$_SESSION['user_id'];
+
+    // Release session lock for read requests so concurrent assets/APIs load instantly
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        session_write_close();
+    }
+
+    $action = $_GET['action'] ?? ($_POST['action'] ?? '');
+    if ($action === 'delete_workspace') {
+        $uStmt = $pdo->prepare("SELECT role FROM `users` WHERE id = ? AND company_id = ? LIMIT 1");
+        $uStmt->execute([$userId, $companyId]);
+        $u = $uStmt->fetch();
+        if (!$u || $u['role'] !== 'owner') {
+            http_response_code(403);
+            echo json_encode(['success' => false, 'error' => 'Only the workspace Owner can delete this workspace.']);
+            exit;
+        }
+
+        if ($companyId === 3) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'The master demonstration workspace cannot be deleted.']);
+            exit;
+        }
+
+        $rawInput = file_get_contents('php://input');
+        $jsonData = json_decode($rawInput, true) ?? $_POST;
+        $confirmName = trim($jsonData['confirm_name'] ?? '');
+
+        $cStmt = $pdo->prepare("SELECT name FROM `companies` WHERE id = ? LIMIT 1");
+        $cStmt->execute([$companyId]);
+        $comp = $cStmt->fetch();
+
+        if (strtolower($confirmName) !== strtolower($comp['name'] ?? '')) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Company name does not match confirmation input.']);
+            exit;
+        }
+
+        $pdo->beginTransaction();
+        try { $pdo->prepare("DELETE m FROM `messages` m INNER JOIN `conversations` c ON c.id = m.conversation_id WHERE c.company_id = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `conversations` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `lead_events` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `leads` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `installments` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `customers` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `whatsapp_messages` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `whatsapp_handoffs` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `whatsapp_accounts` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `knowledge_sources` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `widget_settings` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `pipeline_stages` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `payments` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `subscriptions` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        try { $pdo->prepare("DELETE FROM `users` WHERE `company_id` = ?")->execute([$companyId]); } catch (Exception $ex) {}
+        $pdo->prepare("DELETE FROM `companies` WHERE `id` = ?")->execute([$companyId]);
+        $pdo->commit();
+
+        session_unset();
+        session_destroy();
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Workspace deleted successfully. Redirecting to login.',
+            'redirect' => '../login.php'
+        ]);
+        exit;
+    }
 
     // Helper to handle image file uploads
     $handleFileUpload = function($fileKey, $prefix) use ($companyId) {
@@ -76,6 +141,10 @@ try {
         $aiStmt = $pdo->prepare("SELECT * FROM `ai_configs` WHERE company_id = ? LIMIT 1");
         $aiStmt->execute([$companyId]);
         $aiConfig = $aiStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+        $waStmt = $pdo->prepare("SELECT * FROM `whatsapp_accounts` WHERE `company_id` = ? LIMIT 1");
+        $waStmt->execute([$companyId]);
+        $waAccount = $waStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
         echo json_encode([
             'success' => true,
@@ -143,6 +212,21 @@ try {
                 'calendar_booking_url'   => $widget['calendar_booking_url'] ?? '',
                 'calendar_webhook_url'   => $widget['calendar_webhook_url'] ?? '',
                 'calendar_sync_enabled'  => (int)($widget['calendar_sync_enabled'] ?? 1),
+                'google_calendar_id'     => $widget['google_calendar_id'] ?? 'primary',
+                'google_client_id'       => $widget['google_client_id'] ?? '',
+                'google_client_secret'   => !empty($widget['google_client_secret']) ? '••••••••' : '',
+                'google_refresh_token'   => !empty($widget['google_refresh_token']) ? '••••••••' : '',
+                'google_connected'       => !empty($widget['google_refresh_token']),
+            ],
+            'whatsapp' => [
+                'waba_id'              => $waAccount['waba_id'] ?? '',
+                'phone_number_id'      => $waAccount['phone_number_id'] ?? '',
+                'display_number'       => $waAccount['display_number'] ?? ($widget['whatsapp_number'] ?? ''),
+                'whatsapp_access_token'=> !empty($waAccount['whatsapp_access_token']) ? '••••••••' . substr($waAccount['whatsapp_access_token'], -4) : '',
+                'app_secret'           => !empty($waAccount['app_secret']) ? '••••••••' : '',
+                'webhook_verify_token' => $waAccount['webhook_verify_token'] ?? ('cp_wa_' . substr(md5($companyId . 'cp_secret'), 0, 12)),
+                'status'               => $waAccount['status'] ?? 'not_connected',
+                'is_configured'        => (!empty($waAccount['phone_number_id']) && !empty($waAccount['whatsapp_access_token']))
             ]
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
@@ -377,15 +461,69 @@ try {
                 $wUpdateFields[] = "`calendar_webhook_url` = ?";
                 $wParams[] = trim($_POST['calendar_webhook_url']);
             }
-            if (isset($_POST['calendar_sync_enabled'])) {
-                $wUpdateFields[] = "`calendar_sync_enabled` = ?";
-                $wParams[] = !empty($_POST['calendar_sync_enabled']) ? 1 : 0;
+            if (isset($_POST['google_calendar_id'])) {
+                $wUpdateFields[] = "`google_calendar_id` = ?";
+                $wParams[] = trim($_POST['google_calendar_id']);
+            }
+            if (isset($_POST['google_client_id'])) {
+                $wUpdateFields[] = "`google_client_id` = ?";
+                $wParams[] = trim($_POST['google_client_id']);
+            }
+            if (isset($_POST['google_client_secret']) && trim($_POST['google_client_secret']) !== '' && strpos($_POST['google_client_secret'], '••••') === false) {
+                $wUpdateFields[] = "`google_client_secret` = ?";
+                $wParams[] = trim($_POST['google_client_secret']);
+            }
+            if (isset($_POST['google_refresh_token']) && trim($_POST['google_refresh_token']) !== '' && strpos($_POST['google_refresh_token'], '••••') === false) {
+                $wUpdateFields[] = "`google_refresh_token` = ?";
+                $wParams[] = trim($_POST['google_refresh_token']);
             }
 
             if (!empty($wUpdateFields)) {
                 $wUpdateFields[] = "`updated_at` = NOW()";
                 $wParams[] = $companyId;
                 $pdo->prepare("UPDATE `widget_settings` SET " . implode(', ', $wUpdateFields) . " WHERE `company_id` = ?")->execute($wParams);
+            }
+
+            // Update WhatsApp Meta Cloud API credentials in whatsapp_accounts
+            if (isset($_POST['waba_id']) || isset($_POST['phone_number_id']) || isset($_POST['whatsapp_access_token']) || isset($_POST['app_secret'])) {
+                $wabaId     = trim($_POST['waba_id'] ?? '');
+                $phoneNumId = trim($_POST['phone_number_id'] ?? '');
+                $waToken    = trim($_POST['whatsapp_access_token'] ?? '');
+                $appSecret  = trim($_POST['app_secret'] ?? '');
+                $dispNumber = trim($_POST['display_number'] ?? $_POST['whatsapp_number'] ?? '');
+
+                $chkAcc = $pdo->prepare("SELECT id, whatsapp_access_token, app_secret FROM `whatsapp_accounts` WHERE `company_id` = ? LIMIT 1");
+                $chkAcc->execute([$companyId]);
+                $accRow = $chkAcc->fetch(PDO::FETCH_ASSOC);
+
+                if ($waToken !== '' && strpos($waToken, '••••') !== false && $accRow) {
+                    $waToken = $accRow['whatsapp_access_token'];
+                }
+                if ($appSecret !== '' && strpos($appSecret, '••••') !== false && $accRow) {
+                    $appSecret = $accRow['app_secret'];
+                }
+
+                $waStatus = (!empty($phoneNumId) && !empty($waToken)) ? 'connected' : 'not_connected';
+
+                if ($accRow) {
+                    $waFields = ["`updated_at` = NOW()"];
+                    $waP = [];
+                    if ($wabaId !== '') { $waFields[] = "`waba_id` = ?"; $waP[] = $wabaId; }
+                    if ($phoneNumId !== '') { $waFields[] = "`phone_number_id` = ?"; $waP[] = $phoneNumId; }
+                    if ($dispNumber !== '') { $waFields[] = "`display_number` = ?"; $waP[] = $dispNumber; }
+                    if ($waToken !== '') { $waFields[] = "`whatsapp_access_token` = ?"; $waP[] = $waToken; }
+                    if ($appSecret !== '') { $waFields[] = "`app_secret` = ?"; $waP[] = $appSecret; }
+                    $waFields[] = "`status` = ?"; $waP[] = $waStatus;
+                    $waP[] = $companyId;
+
+                    $pdo->prepare("UPDATE `whatsapp_accounts` SET " . implode(", ", $waFields) . " WHERE `company_id` = ?")->execute($waP);
+                } else {
+                    $pdo->prepare("
+                        INSERT INTO `whatsapp_accounts` 
+                        (`company_id`, `waba_id`, `phone_number_id`, `display_number`, `whatsapp_access_token`, `app_secret`, `status`, `created_at`, `updated_at`)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                    ")->execute([$companyId, $wabaId, $phoneNumId, $dispNumber, $waToken, $appSecret, $waStatus]);
+                }
             }
         } else {
             $pdo->prepare("

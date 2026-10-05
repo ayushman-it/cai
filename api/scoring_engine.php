@@ -345,6 +345,11 @@ function syncLeadArtifact(PDO $pdo, int $companyId, int $leadId, array $artifact
     // 5. Automatic Sales Assignment (Round-Robin) if unassigned and qualified/high priority
     if (!$assignedSalespersonId && ($priority === 'HIGH' || $priority === 'URGENT' || in_array($currentStage, ['QUALIFIED', 'PROPOSAL']))) {
         assignLeadRoundRobin($pdo, $companyId, $leadId);
+    } elseif ($assignedSalespersonId && ($priority === 'HIGH' || $priority === 'URGENT' || $humanAttentionStatus === 'attention_required')) {
+        // Lead is already assigned, but escalated to HIGH/URGENT priority or requested human counselor!
+        require_once __DIR__ . '/alerts.php';
+        $alertType = ($humanAttentionStatus === 'attention_required') ? 'HUMAN_REQUIRED' : 'HIGH_INTENT_DETECTED';
+        sendSalespersonAssignmentAlert($pdo, $companyId, $leadId, null, $alertType);
     }
 
     return [

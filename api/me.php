@@ -47,6 +47,10 @@ try {
     }
 
     $companyId = (int)($user['company_id'] ?? $_SESSION['company_id'] ?? 0);
+    if (!empty($user['company_id']) && (empty($_SESSION['company_id']) || $_SESSION['company_id'] !== $user['company_id'])) {
+        $_SESSION['company_id'] = (int)$user['company_id'];
+    }
+    session_write_close();
     $company = null;
     $entitlements = null;
 

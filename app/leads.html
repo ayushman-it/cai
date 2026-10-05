@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../css/theme.css">
-  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=4.2">
 </head>
 <body class="app-body">
 
@@ -44,26 +44,26 @@
               </div>
             </div>
             
-            <div class="flex items-center gap-2">
-              <button onclick="CuboidDashboard.exportLeadsCsv()" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 text-stone-700 hover:text-stone-900 border-[#d5d2c8]" title="Export contacts to CSV">
+            <div class="flex items-center gap-2 flex-wrap">
+              <button onclick="CuboidDashboard.exportLeadsCsv()" class="btn-secondary btn-sm text-xs py-1.5 px-2.5 sm:px-3 inline-flex items-center gap-1.5 text-stone-700 hover:text-stone-900 border-[#d5d2c8]" title="Export contacts to CSV">
                 <i data-lucide="download" class="w-3.5 h-3.5 text-stone-500"></i>
-                <span>Export</span>
+                <span class="hidden sm:inline">Export</span>
               </button>
-              <button onclick="CuboidDashboard.openImportModal()" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 text-stone-700 hover:text-stone-900 border-[#d5d2c8]" title="Import contacts from CSV or text">
+              <button onclick="CuboidDashboard.openImportModal()" class="btn-secondary btn-sm text-xs py-1.5 px-2.5 sm:px-3 inline-flex items-center gap-1.5 text-stone-700 hover:text-stone-900 border-[#d5d2c8]" title="Import contacts from CSV or text">
                 <i data-lucide="upload" class="w-3.5 h-3.5 text-stone-500"></i>
-                <span>Import</span>
+                <span class="hidden sm:inline">Import</span>
               </button>
-              <button onclick="CuboidDashboard.openAddContactModal()" class="bg-[#111111] hover:bg-black text-white text-xs font-medium py-1.5 px-3.5 rounded-md inline-flex items-center gap-1.5 transition-colors shadow-2xs">
+              <button onclick="CuboidDashboard.openAddContactModal()" class="bg-[#111111] hover:bg-black text-white text-xs font-medium py-1.5 px-3 rounded-md inline-flex items-center gap-1.5 transition-colors shadow-2xs">
                 <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                <span>Add new contact</span>
+                <span>Add contact</span>
               </button>
             </div>
           </div>
 
           <!-- Filter Toolbar: Search + Filter + View -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs pt-1">
-            <div class="flex items-center gap-2 flex-wrap flex-1">
-              <div class="relative w-72">
+            <div class="flex items-center gap-2 flex-wrap flex-1 w-full">
+              <div class="relative w-full sm:w-72">
                 <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></i>
                 <input id="leads-search-input" type="text" placeholder="Search by name, phone, email, city..." class="app-input pl-8 text-xs w-full h-8 rounded-md bg-white border-[#e7e5de] placeholder:text-stone-400">
               </div>
@@ -215,8 +215,8 @@
     </div>
   </div>
 
-  <script src="../js/components.js"></script>
-  <script src="../js/dashboard.js"></script>
+  <script src="../js/components.js?v=4.2"></script>
+  <script src="../js/dashboard.js?v=4.2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       CuboidShell.initCompanyApp('leads', 'All Contacts', ['Contacts']);

@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../css/theme.css">
-  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=4.2">
   <style>
     /* Cleanly hide horizontal tab scrollbars across all browsers */
     .no-scrollbar {
@@ -67,6 +67,11 @@
               <i data-lucide="phone-forwarded" class="w-3.5 h-3.5"></i>
               <span>WhatsApp Gateway</span>
             </button>
+            <a href="channels.html" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-emerald-800 hover:text-emerald-950 hover:border-emerald-600 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap no-underline bg-emerald-50/50 rounded-t-[3px]" title="Open dedicated multi-channel integrations hub">
+              <i data-lucide="layers" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span>Channels &amp; Integrations Hub</span>
+              <span class="text-[9px] font-mono px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded border border-emerald-200 font-semibold">11 APPS</span>
+            </a>
             <button onclick="switchSettingsSection('team-permissions')" id="nav-btn-team-permissions" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
               <i data-lucide="users" class="w-3.5 h-3.5"></i>
               <span>Team & Roles</span>
@@ -82,6 +87,14 @@
             <button onclick="switchSettingsSection('calendar-settings')" id="nav-btn-calendar-settings" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
               <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
               <span>Calendar & Scheduling</span>
+            </button>
+            <button onclick="switchSettingsSection('email-settings')" id="nav-btn-email-settings" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+              <span>Company Email (SMTP)</span>
+            </button>
+            <button onclick="switchSettingsSection('instagram-settings')" id="nav-btn-instagram-settings" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="instagram" class="w-3.5 h-3.5"></i>
+              <span>Instagram Gateway</span>
             </button>
             <button onclick="switchSettingsSection('notifications')" id="nav-btn-notifications" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
               <i data-lucide="bell" class="w-3.5 h-3.5"></i>
@@ -225,6 +238,29 @@
 
                   <div class="pt-2 flex justify-end">
                     <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save Changes</button>
+                  </div>
+                </div>
+
+                <!-- Danger Zone: Delete Workspace (Intercom Enterprise Style) -->
+                <div class="app-panel border border-[#e7e5de] p-5 rounded-xl mt-6 transition-colors hover:border-rose-200" id="danger-zone-workspace">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                      <div class="flex items-center gap-2">
+                        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-rose-50 text-rose-600 border border-rose-200/80 shrink-0">
+                          <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                        </span>
+                        <h3 class="text-sm font-semibold text-stone-900 tracking-tight">Delete workspace</h3>
+                      </div>
+                      <p class="text-xs text-stone-500 max-w-xl leading-relaxed">
+                        Permanently delete <strong class="font-medium text-stone-800" id="danger-company-name-label">this workspace</strong>, including all customer conversations, captured leads, team members, WhatsApp continuity data, and AI knowledge sources.
+                      </p>
+                    </div>
+                    <div class="shrink-0">
+                      <button type="button" onclick="openDeleteWorkspaceModal()" class="px-3.5 py-1.5 rounded-lg border border-rose-200 bg-rose-50/80 hover:bg-rose-100 text-rose-700 hover:text-rose-800 text-xs font-semibold shadow-xs transition-colors flex items-center gap-1.5">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span>Delete workspace...</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -508,7 +544,7 @@
                     </div>
                     <div>
                       <label class="block font-medium text-stone-700 mb-1">Widget Theme Mode</label>
-                      <select id="setting-theme-mode" class="app-input text-xs font-medium">
+                      <select id="setting-theme-mode" class="app-input text-xs font-medium" onchange="if(window.CuboidPilot && typeof window.CuboidPilot.setTheme === 'function'){ window.CuboidPilot.setTheme(this.value); }">
                         <option value="light">Light Mode (Crisp White / Modern Clean)</option>
                         <option value="dark" selected>Dark Mode (Fin AI Pitch Black / Executive)</option>
                       </select>
@@ -585,28 +621,90 @@
               <div id="section-whatsapp-settings" class="settings-pane space-y-6 hidden">
                 <div class="app-panel space-y-4">
                   <div class="flex items-center justify-between pb-2 border-b border-[#e7e5de]">
-                    <h2 class="text-sm font-semibold text-stone-900">WhatsApp Gateway Configuration</h2>
-                    <span class="badge-neutral text-[10px] bg-amber-50 text-amber-800 border-amber-200">Pro Feature</span>
+                    <div>
+                      <h2 class="text-sm font-semibold text-stone-900">WhatsApp Gateway Configuration</h2>
+                      <p class="text-[11px] text-stone-500 mt-0.5">Connect your official Meta WhatsApp Cloud API to receive live visitor chats and instant counselor notifications.</p>
+                    </div>
+                    <span id="setting-wa-status-badge" class="badge-neutral text-[10px] bg-stone-100 text-stone-700 border-stone-200">Checking status...</span>
                   </div>
 
-                  <div class="text-xs space-y-4">
-                    <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px]">
-                      <div class="font-medium text-stone-900">Phone Number Binding</div>
-                      <div class="text-stone-500 text-[11px] mt-0.5">Meta Cloud API Number: <strong>+91 98400 12890</strong> (CuboidSoft Official)</div>
+                  <div class="p-3 bg-emerald-50/70 border border-emerald-200/90 rounded-[4px] text-xs flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 text-emerald-950">
+                      <i data-lucide="layers" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                      <span><strong>Channels &amp; Integrations Hub:</strong> You can also manage WhatsApp along with Instagram, Calendars, CRMs, and Webhooks in the dedicated Channels Hub.</span>
+                    </div>
+                    <a href="channels.html" class="btn-secondary btn-sm text-[11px] py-1 px-2.5 bg-white text-emerald-800 border-emerald-300 hover:border-emerald-500 shrink-0 whitespace-nowrap">Open Channels Hub &rarr;</a>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">WhatsApp Business Account ID (WABA ID)</label>
+                      <input type="text" id="setting-wa-waba-id" class="app-input text-xs font-mono" placeholder="e.g. 109283746591029">
+                      <p class="text-[10.5px] text-stone-400 mt-1">Found in your Meta Business Suite &rarr; WhatsApp Accounts.</p>
                     </div>
 
                     <div>
-                      <label class="block font-medium text-stone-700 mb-1">Automated Follow-up Delay</label>
-                      <select class="app-input text-xs">
-                        <option selected>2 Hours After Inactivity</option>
-                        <option>4 Hours After Inactivity</option>
-                        <option>Next Morning (09:30 AM)</option>
-                      </select>
+                      <label class="block font-medium text-stone-700 mb-1">Phone Number ID (Meta Cloud API)</label>
+                      <input type="text" id="setting-wa-phone-id" class="app-input text-xs font-mono" placeholder="e.g. 104928172635489">
+                      <p class="text-[10.5px] text-stone-400 mt-1">Found in Meta Developer Console &rarr; WhatsApp &rarr; API Setup.</p>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Display Business Phone Number</label>
+                      <input type="text" id="setting-wa-display-number" class="app-input text-xs font-mono" placeholder="+91 98400 12890">
+                      <p class="text-[10.5px] text-stone-400 mt-1">The phone number registered and verified with Meta.</p>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Meta App Secret</label>
+                      <div class="relative">
+                        <input type="password" id="setting-wa-secret" class="app-input text-xs font-mono pr-8" placeholder="••••••••">
+                        <button type="button" onclick="togglePasswordVisibility('setting-wa-secret')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer">
+                          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                      <p class="text-[10.5px] text-stone-400 mt-1">Found in Meta App Dashboard &rarr; App settings &rarr; Basic.</p>
+                    </div>
+
+                    <div class="sm:col-span-2">
+                      <label class="block font-medium text-stone-700 mb-1">WhatsApp Cloud API Permanent Access Token</label>
+                      <div class="relative">
+                        <input type="password" id="setting-wa-token" class="app-input text-xs font-mono pr-8" placeholder="EAABwz... (System User Access Token with whatsapp_business_messaging)">
+                        <button type="button" onclick="togglePasswordVisibility('setting-wa-token')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer">
+                          <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                        </button>
+                      </div>
+                      <p class="text-[10.5px] text-stone-400 mt-1">Permanent System User Token from Meta Business Manager with permissions: <code>whatsapp_business_messaging</code>, <code>whatsapp_business_management</code>.</p>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Webhook Verify Token</label>
+                      <input type="text" id="setting-wa-verify-token" class="app-input text-xs font-mono bg-stone-50" readonly>
+                      <p class="text-[10.5px] text-stone-400 mt-1">Enter this exact token in Meta Webhooks configuration.</p>
+                    </div>
+
+                    <div>
+                      <label class="block font-medium text-stone-700 mb-1">Webhook Callback URL</label>
+                      <div class="flex items-center gap-1.5">
+                        <input type="text" id="setting-wa-callback-url" class="app-input text-xs font-mono bg-stone-50 flex-1" readonly value="https://cuboidpilot.app/api/whatsapp_webhook.php">
+                        <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('setting-wa-callback-url').value); CuboidShell.toast('Webhook URL copied!', 'success');" class="btn-secondary btn-sm text-xs py-1.5 px-2.5 shrink-0" title="Copy URL">Copy</button>
+                      </div>
+                      <p class="text-[10.5px] text-stone-400 mt-1">Paste this callback URL into Meta Developer Webhooks tab.</p>
                     </div>
                   </div>
 
+                  <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] text-xs space-y-1.5">
+                    <div class="font-medium text-stone-900 flex items-center gap-1.5">
+                      <i data-lucide="info" class="w-3.5 h-3.5 text-stone-600"></i>
+                      <span>Instant Human Help &amp; Live Chat Sync</span>
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">
+                      When a visitor asks for human help in the widget, messages automatically deliver directly to the assigned consultant's WhatsApp and display simultaneously in your live Dashboard Inbox. Once you paste your Meta Cloud credentials above, WhatsApp delivery goes live automatically!
+                    </p>
+                  </div>
+
                   <div class="pt-2 flex justify-end">
-                    <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save Changes</button>
+                    <button class="btn-primary btn-sm text-xs py-1.5 px-4" onclick="saveSettings()">Save WhatsApp Credentials</button>
                   </div>
                 </div>
               </div>
@@ -993,11 +1091,47 @@
                     <p class="text-[10.5px] text-stone-400 mt-1">Bearer token / API key used for authenticated requests.</p>
                   </div>
 
-                  <!-- Webhook Dispatch Endpoint -->
-                  <div>
-                    <label class="block font-medium text-stone-700 mb-1">Webhook Dispatch Endpoint URL</label>
-                    <input type="url" id="setting-cal-webhook-url" class="app-input text-xs font-mono" placeholder="https://api.yourdomain.com/webhooks/calendar">
-                    <p class="text-[10.5px] text-stone-400 mt-1">Receives real-time JSON POST notifications when a booking is created.</p>
+                  <!-- Google Calendar API Integration Block -->
+                  <div id="setting-google-cal-group" class="sm:col-span-2 p-3 bg-stone-50 border border-stone-200 rounded-[4px] space-y-3 mt-1">
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center gap-1.5 font-medium text-stone-900">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-stone-700"></i>
+                        <span>Google Calendar &amp; Google Meet API Sync (OAuth 2.0)</span>
+                      </div>
+                      <span id="setting-google-status-badge" class="badge-neutral text-[10px] bg-stone-100 text-stone-600 border-stone-200">Ready for API Keys</span>
+                    </div>
+                    <p class="text-[11px] text-stone-500 leading-relaxed">
+                      Syncs all widget appointments directly to your Google Calendar and generates verified Google Meet links automatically. Enter your Google Cloud OAuth credentials below when ready.
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Calendar ID</label>
+                        <input type="text" id="setting-google-calendar-id" class="app-input text-xs font-mono" placeholder="primary or sales@yourcompany.com">
+                        <p class="text-[10px] text-stone-400 mt-0.5">Default is 'primary' for your main Google calendar.</p>
+                      </div>
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Google OAuth Client ID</label>
+                        <input type="text" id="setting-google-client-id" class="app-input text-xs font-mono" placeholder="123456789-...apps.googleusercontent.com">
+                      </div>
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Google OAuth Client Secret</label>
+                        <div class="relative">
+                          <input type="password" id="setting-google-client-secret" class="app-input text-xs font-mono pr-8" placeholder="••••••••">
+                          <button type="button" onclick="togglePasswordVisibility('setting-google-client-secret')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer">
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label class="block font-medium text-stone-700 mb-1">Google OAuth Refresh Token</label>
+                        <div class="relative">
+                          <input type="password" id="setting-google-refresh-token" class="app-input text-xs font-mono pr-8" placeholder="1//04... (Permanent Refresh Token)">
+                          <button type="button" onclick="togglePasswordVisibility('setting-google-refresh-token')" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 cursor-pointer">
+                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -1019,6 +1153,170 @@
               </div>
             </div>
 
+            <!-- 11. Company Email Configuration (Section 2 & 3) -->
+            <div id="section-email-settings" class="settings-pane space-y-6 hidden">
+              <div class="app-panel space-y-5">
+                <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de]">
+                  <div>
+                    <h2 class="text-sm font-semibold text-stone-900">Company Email Gateway (SMTP)</h2>
+                    <p class="text-[11px] text-stone-500 mt-0.5">Isolated SMTP account configuration. All team invitations and company notifications are sent strictly from your verified address.</p>
+                  </div>
+                  <span id="email-cfg-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-stone-100 text-stone-600 border border-stone-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-stone-400" id="email-cfg-dot"></span>
+                    <span id="email-cfg-status-text">Not Configured</span>
+                  </span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Sender Name *</label>
+                    <input type="text" id="email-sender-name" class="app-input text-xs" placeholder="e.g. CuboidSoft Team">
+                    <p class="text-[10.5px] text-stone-400 mt-1">Name displayed in recipients' inboxes.</p>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Sender Email Address *</label>
+                    <input type="email" id="email-sender-email" class="app-input text-xs" placeholder="e.g. notifications@yourdomain.com">
+                    <p class="text-[10.5px] text-stone-400 mt-1">Must match or be authorized by your SMTP server.</p>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">SMTP Host / Server *</label>
+                    <input type="text" id="email-smtp-host" class="app-input text-xs font-mono" placeholder="e.g. smtp.gmail.com or smtp.office365.com">
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">SMTP Port *</label>
+                    <input type="number" id="email-smtp-port" class="app-input text-xs font-mono" value="587" placeholder="587 or 465">
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">SMTP Username / Account *</label>
+                    <input type="text" id="email-smtp-user" class="app-input text-xs font-mono" placeholder="e.g. notifications@yourdomain.com">
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">SMTP Password / App Password *</label>
+                    <input type="password" id="email-smtp-pass" class="app-input text-xs font-mono" placeholder="•••••••• (Encrypted with AES-256)">
+                    <p class="text-[10.5px] text-stone-400 mt-1">Stored securely using AES-256 encryption. For Gmail, use a 16-character App Password.</p>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Encryption Protocol</label>
+                    <select id="email-encryption" class="app-select text-xs font-medium">
+                      <option value="tls" selected>TLS (STARTTLS - Port 587)</option>
+                      <option value="ssl">SSL (Direct SSL - Port 465)</option>
+                      <option value="none">None (Plaintext - Port 25)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Reply-To Address (Optional)</label>
+                    <input type="email" id="email-reply-to" class="app-input text-xs" placeholder="e.g. support@yourdomain.com">
+                  </div>
+                </div>
+
+                <div id="email-test-result" class="p-3 rounded text-xs hidden"></div>
+
+                <div class="pt-3 border-t border-[#e7e5de] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div class="text-[11px] text-stone-500" id="email-last-tested-text">Last verified: Never</div>
+                  <div class="flex items-center gap-2 justify-end">
+                    <button type="button" class="btn-secondary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5" id="btn-test-email" onclick="testEmailConnection()">
+                      <i data-lucide="send" class="w-3.5 h-3.5 text-stone-600"></i>
+                      <span>Test Connection</span>
+                    </button>
+                    <button type="button" class="btn-primary btn-sm text-xs py-1.5 px-4" id="btn-save-email" onclick="saveEmailConfig()">
+                      Save Email Configuration
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 12. Instagram / Meta Business Messaging (Section 4 & 5) -->
+            <div id="section-instagram-settings" class="settings-pane space-y-6 hidden">
+              <div class="app-panel space-y-5">
+                <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de]">
+                  <div>
+                    <h2 class="text-sm font-semibold text-stone-900">Instagram &amp; Meta Business Messaging</h2>
+                    <p class="text-[11px] text-stone-500 mt-0.5">Integrate your official Instagram Business Account. Enable seamless web-to-Instagram chat handoffs and two-way automated AI messaging.</p>
+                  </div>
+                  <span id="ig-cfg-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-stone-100 text-stone-600 border border-stone-200">
+                    <span class="w-1.5 h-1.5 rounded-full bg-stone-400" id="ig-cfg-dot"></span>
+                    <span id="ig-cfg-status-text">Disconnected</span>
+                  </span>
+                </div>
+
+                <div class="p-3 bg-emerald-50/70 border border-emerald-200/90 rounded-[4px] text-xs flex items-center justify-between gap-3">
+                  <div class="flex items-center gap-2 text-emerald-950">
+                    <i data-lucide="layers" class="w-4 h-4 text-emerald-600 shrink-0"></i>
+                    <span><strong>Unified Integrations:</strong> Instagram DM synchronization is also accessible in the multi-channel grid with live testing.</span>
+                  </div>
+                  <a href="channels.html" class="btn-secondary btn-sm text-[11px] py-1 px-2.5 bg-white text-emerald-800 border-emerald-300 hover:border-emerald-500 shrink-0 whitespace-nowrap">Open Channels Hub &rarr;</a>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Facebook Page ID</label>
+                    <input type="text" id="ig-page-id" class="app-input text-xs font-mono" placeholder="e.g. 109283746592019">
+                    <p class="text-[10.5px] text-stone-400 mt-1">Your linked Facebook Page ID from Meta Business Suite.</p>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Instagram Business Account ID</label>
+                    <input type="text" id="ig-account-id" class="app-input text-xs font-mono" placeholder="e.g. 17841400234567890">
+                    <p class="text-[10.5px] text-stone-400 mt-1">Instagram Professional Account ID linked to your Meta Page.</p>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Instagram Username / Handle</label>
+                    <div class="relative">
+                      <span class="absolute left-2.5 top-2 text-stone-400 font-mono">@</span>
+                      <input type="text" id="ig-username" class="app-input text-xs font-mono pl-6" placeholder="cuboidpilot">
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block font-medium text-stone-700 mb-1">Webhook Verify Token</label>
+                    <input type="text" id="ig-verify-token" class="app-input text-xs font-mono" placeholder="cp_ig_verify_...">
+                  </div>
+
+                  <div class="md:col-span-2">
+                    <label class="block font-medium text-stone-700 mb-1">Page Access Token (Long-Lived)</label>
+                    <input type="password" id="ig-access-token" class="app-input text-xs font-mono" placeholder="EAABw... (Encrypted with AES-256)">
+                  </div>
+
+                  <div class="md:col-span-2">
+                    <label class="block font-medium text-stone-700 mb-1">App Secret</label>
+                    <input type="password" id="ig-app-secret" class="app-input text-xs font-mono" placeholder="••••••••">
+                  </div>
+                </div>
+
+                <div class="p-3 bg-stone-50 rounded-lg border border-stone-200 text-xs space-y-2">
+                  <div class="font-semibold text-stone-900 flex items-center gap-1.5">
+                    <i data-lucide="link" class="w-3.5 h-3.5 text-stone-600"></i>
+                    <span>Meta Webhook Configuration Details</span>
+                  </div>
+                  <div class="text-[11px] text-stone-600 space-y-1">
+                    <div><strong>Callback URL:</strong> <code class="bg-stone-200/70 px-1.5 py-0.5 rounded font-mono text-[10.5px]" id="ig-webhook-url-display">https://yourdomain.com/api/webhooks/instagram.php</code></div>
+                    <div><strong>Required Subscriptions:</strong> <code class="bg-stone-200/70 px-1.5 py-0.5 rounded font-mono text-[10.5px]">messages, messaging_postbacks, message_reads</code></div>
+                  </div>
+                </div>
+
+                <div id="ig-test-result" class="p-3 rounded text-xs hidden"></div>
+
+                <div class="pt-3 border-t border-[#e7e5de] flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
+                  <button type="button" class="btn-secondary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5" id="btn-test-ig" onclick="testInstagramConnection()">
+                    <i data-lucide="activity" class="w-3.5 h-3.5 text-stone-600"></i>
+                    <span>Test Connection</span>
+                  </button>
+                  <button type="button" class="btn-primary btn-sm text-xs py-1.5 px-4" id="btn-save-ig" onclick="saveInstagramConfig()">
+                    Save Instagram Configuration
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </div>
 
         </div>
@@ -1026,9 +1324,72 @@
     </div>
   </div>
 
+  <!-- Intercom-Exact Delete Workspace Modal -->
+  <div id="delete-workspace-modal" class="app-modal-overlay">
+    <div class="app-modal max-w-md w-full p-6 space-y-5">
+      <div class="flex items-start justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-rose-50 text-rose-600 border border-rose-200/80 flex items-center justify-center shrink-0">
+            <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-stone-900">Delete workspace</h3>
+            <p class="text-xs text-stone-500 mt-0.5">This action cannot be undone.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeDeleteWorkspaceModal()" class="text-stone-400 hover:text-stone-700 p-1 rounded-md transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
 
-  <script src="../js/components.js"></script>
-  <script src="../js/dashboard.js"></script>
+      <div class="p-3.5 bg-rose-50/70 border border-rose-200/80 rounded-lg text-xs space-y-2">
+        <p class="font-medium text-rose-950">
+          You are about to permanently delete <strong class="underline decoration-rose-300" id="modal-danger-company-name">workspace</strong>.
+        </p>
+        <p class="text-[11px] text-rose-800/90 leading-relaxed">
+          The following records will be purged immediately and cannot be recovered:
+        </p>
+        <ul class="list-disc list-inside space-y-1 text-rose-800 text-[11px] font-medium pl-1">
+          <li>All customer chat transcripts &amp; conversation history</li>
+          <li>Captured leads, stages &amp; contact profiles</li>
+          <li>All AI knowledge documents, URLs &amp; training embeddings</li>
+          <li>WhatsApp continuity pairings &amp; integration configs</li>
+        </ul>
+      </div>
+
+      <div class="space-y-2">
+        <label class="block text-xs text-stone-700 font-medium">
+          To verify, please type <strong class="font-mono text-stone-900 bg-stone-100 px-1.5 py-0.5 rounded border border-stone-200 select-all" id="modal-danger-company-expected">workspace</strong> below:
+        </label>
+        <input type="text" 
+               id="delete-workspace-confirm-input" 
+               name="prevent_autofill_confirm_delete" 
+               autocomplete="off" 
+               autocorrect="off" 
+               autocapitalize="off" 
+               spellcheck="false" 
+               data-lpignore="true" 
+               data-form-type="other"
+               placeholder="Type workspace name" 
+               oninput="checkWorkspaceDeleteMatch()"
+               class="app-input w-full text-xs font-mono">
+        <p id="delete-workspace-match-hint" class="text-[11px] text-stone-400">Match the exact workspace name shown above to enable deletion.</p>
+      </div>
+
+      <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-[#e7e5de]">
+        <button type="button" onclick="closeDeleteWorkspaceModal()" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+          Cancel
+        </button>
+        <button type="button" id="btn-delete-workspace" onclick="executeWorkspaceDeletion()" disabled class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-[5px] text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-1.5">
+          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          <span>Permanently Delete</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js?v=4.2"></script>
+  <script src="../js/dashboard.js?v=4.2"></script>
   <script>
     let currentUploadedFile = null;
 
@@ -1062,6 +1423,8 @@
         targetBtn.classList.remove('border-transparent', 'text-stone-500');
         targetBtn.classList.add('border-stone-900', 'text-stone-900', 'font-semibold');
       }
+      if (sectionId === 'email-settings') loadEmailConfig();
+      if (sectionId === 'instagram-settings') loadInstagramConfig();
       if (window.lucide && window.lucide.createIcons) {
         setTimeout(() => window.lucide.createIcons(), 50);
       }
@@ -1092,7 +1455,7 @@
       const themeEl = document.getElementById('setting-theme-mode');
       const embedEl = document.getElementById('setting-embed-code');
       if (keyEl && keyEl.value && embedEl) {
-        const scriptUrl = 'https://cai.cuboidsoft.in/widget.js';
+        const scriptUrl = 'https://cai.cuboidsoft.in/widget.js?v=5.6';
         const theme = themeEl ? themeEl.value : 'dark';
         embedEl.value = `<script src="${scriptUrl}" data-company="${keyEl.value}" data-theme="${theme}" async><\/script>`;
       }
@@ -1233,7 +1596,16 @@
           if (userPlaceholder) userPlaceholder.classList.remove('hidden');
         }
 
-        if (c.name) document.getElementById('setting-company-name').value = c.name;
+        if (c.name) {
+          document.getElementById('setting-company-name').value = c.name;
+          currentWorkspaceName = c.name;
+          const dangerLabel = document.getElementById('danger-company-name-label');
+          if (dangerLabel) dangerLabel.textContent = c.name;
+        }
+        if (u.role && u.role !== 'owner' && u.role !== 'super_admin') {
+          const dangerZone = document.getElementById('danger-zone-workspace');
+          if (dangerZone) dangerZone.style.display = 'none';
+        }
         if (c.industry) document.getElementById('setting-industry').value = c.industry;
         if (c.city) document.getElementById('setting-city').value = c.city;
         if (c.country) document.getElementById('setting-country').value = c.country;
@@ -1418,6 +1790,55 @@
           const cSync = document.getElementById('setting-cal-sync-enabled');
           if (cSync) cSync.checked = !!w.calendar_sync_enabled;
         }
+
+        // Google Calendar OAuth & Meet API fields
+        const gCalIdEl = document.getElementById('setting-google-calendar-id');
+        if (gCalIdEl) gCalIdEl.value = w.google_calendar_id || 'primary';
+        const gClientIdEl = document.getElementById('setting-google-client-id');
+        if (gClientIdEl) gClientIdEl.value = w.google_client_id || '';
+        const gClientSecEl = document.getElementById('setting-google-client-secret');
+        if (gClientSecEl) gClientSecEl.value = w.google_client_secret || '';
+        const gRefreshTokEl = document.getElementById('setting-google-refresh-token');
+        if (gRefreshTokEl) gRefreshTokEl.value = w.google_refresh_token || '';
+
+        const gStatusBadge = document.getElementById('setting-google-status-badge');
+        if (gStatusBadge) {
+          if (w.google_connected) {
+            gStatusBadge.className = 'badge-neutral text-[10px] bg-emerald-50 text-emerald-800 border-emerald-200';
+            gStatusBadge.textContent = 'Google API Connected';
+          } else {
+            gStatusBadge.className = 'badge-neutral text-[10px] bg-stone-100 text-stone-600 border-stone-200';
+            gStatusBadge.textContent = 'Ready for Credentials';
+          }
+        }
+
+        // WhatsApp Meta Cloud API Gateway credentials
+        if (data.whatsapp) {
+          const wa = data.whatsapp;
+          const wabaEl = document.getElementById('setting-wa-waba-id');
+          if (wabaEl) wabaEl.value = wa.waba_id || '';
+          const phoneIdEl = document.getElementById('setting-wa-phone-id');
+          if (phoneIdEl) phoneIdEl.value = wa.phone_number_id || '';
+          const dispEl = document.getElementById('setting-wa-display-number');
+          if (dispEl) dispEl.value = wa.display_number || '';
+          const tokenEl = document.getElementById('setting-wa-token');
+          if (tokenEl) tokenEl.value = wa.whatsapp_access_token || '';
+          const secEl = document.getElementById('setting-wa-secret');
+          if (secEl) secEl.value = wa.app_secret || '';
+          const vTokEl = document.getElementById('setting-wa-verify-token');
+          if (vTokEl) vTokEl.value = wa.webhook_verify_token || '';
+
+          const statusBadge = document.getElementById('setting-wa-status-badge');
+          if (statusBadge) {
+            if (wa.is_configured) {
+              statusBadge.className = 'badge-neutral text-[10px] bg-emerald-50 text-emerald-800 border-emerald-200';
+              statusBadge.textContent = 'API Connected';
+            } else {
+              statusBadge.className = 'badge-neutral text-[10px] bg-amber-50 text-amber-800 border-amber-200';
+              statusBadge.textContent = 'Ready for Credentials';
+            }
+          }
+        }
         if (typeof toggleCalendarProviderFields === 'function') {
           toggleCalendarProviderFields();
         }
@@ -1434,6 +1855,10 @@
           themeSelect.removeEventListener('change', updateEmbedCodeSnippet);
           themeSelect.addEventListener('change', updateEmbedCodeSnippet);
         }
+
+        // Load Company Email (SMTP) and Instagram configuration
+        loadEmailConfig();
+        loadInstagramConfig();
       } catch (err) {
         console.warn('Could not load workspace settings:', err);
       }
@@ -1620,6 +2045,28 @@
       if (cHook) formData.append('calendar_webhook_url', cHook.value.trim());
       const cSync = document.getElementById('setting-cal-sync-enabled');
       if (cSync) formData.append('calendar_sync_enabled', cSync.checked ? '1' : '0');
+
+      // Google Calendar OAuth & Meet API fields
+      const gCalId = document.getElementById('setting-google-calendar-id');
+      if (gCalId) formData.append('google_calendar_id', gCalId.value.trim());
+      const gClientId = document.getElementById('setting-google-client-id');
+      if (gClientId) formData.append('google_client_id', gClientId.value.trim());
+      const gClientSec = document.getElementById('setting-google-client-secret');
+      if (gClientSec) formData.append('google_client_secret', gClientSec.value.trim());
+      const gRefreshTok = document.getElementById('setting-google-refresh-token');
+      if (gRefreshTok) formData.append('google_refresh_token', gRefreshTok.value.trim());
+
+      // WhatsApp Meta Cloud API Gateway fields
+      const waWaba = document.getElementById('setting-wa-waba-id');
+      if (waWaba) formData.append('waba_id', waWaba.value.trim());
+      const waPhone = document.getElementById('setting-wa-phone-id');
+      if (waPhone) formData.append('phone_number_id', waPhone.value.trim());
+      const waDisp = document.getElementById('setting-wa-display-number');
+      if (waDisp) formData.append('display_number', waDisp.value.trim());
+      const waToken = document.getElementById('setting-wa-token');
+      if (waToken) formData.append('whatsapp_access_token', waToken.value.trim());
+      const waSec = document.getElementById('setting-wa-secret');
+      if (waSec) formData.append('app_secret', waSec.value.trim());
 
       const selectedDays = [];
       document.querySelectorAll('input[name="cal_day"]:checked').forEach(cb => {
@@ -1825,6 +2272,467 @@
       } catch (e) {
         if (statusText) {
           statusText.innerHTML = '<span class="text-red-600">Error connecting to server</span>';
+        }
+      }
+    }
+
+    let currentWorkspaceName = '';
+
+    function openDeleteWorkspaceModal() {
+      const modal = document.getElementById('delete-workspace-modal');
+      const input = document.getElementById('delete-workspace-confirm-input');
+      const btn = document.getElementById('btn-delete-workspace');
+      const nameModal = document.getElementById('modal-danger-company-name');
+      const nameExpected = document.getElementById('modal-danger-company-expected');
+      const hint = document.getElementById('delete-workspace-match-hint');
+
+      const wsName = currentWorkspaceName || document.getElementById('setting-company-name')?.value || 'workspace';
+      if (nameModal) nameModal.textContent = wsName;
+      if (nameExpected) nameExpected.textContent = wsName;
+
+      if (input) {
+        input.value = '';
+        input.classList.remove('border-rose-500', 'border-emerald-500');
+      }
+      if (btn) btn.disabled = true;
+      if (hint) {
+        hint.textContent = 'Match the exact workspace name shown above to enable deletion.';
+        hint.className = 'text-[11px] text-stone-400';
+      }
+
+      if (modal) {
+        modal.classList.add('open');
+        setTimeout(() => { if (input) input.focus(); }, 120);
+      }
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+    }
+
+    function closeDeleteWorkspaceModal() {
+      const modal = document.getElementById('delete-workspace-modal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function checkWorkspaceDeleteMatch() {
+      const input = document.getElementById('delete-workspace-confirm-input');
+      const btn = document.getElementById('btn-delete-workspace');
+      const hint = document.getElementById('delete-workspace-match-hint');
+      const expected = (currentWorkspaceName || document.getElementById('setting-company-name')?.value || '').trim();
+      const val = input ? input.value.trim() : '';
+
+      const isMatch = val.length > 0 && val.toLowerCase() === expected.toLowerCase();
+
+      if (btn) btn.disabled = !isMatch;
+
+      if (!input || !hint) return;
+
+      if (val.length === 0) {
+        input.classList.remove('border-rose-500', 'border-emerald-500');
+        hint.textContent = 'Match the exact workspace name shown above to enable deletion.';
+        hint.className = 'text-[11px] text-stone-400';
+      } else if (isMatch) {
+        input.classList.remove('border-rose-500');
+        input.classList.add('border-emerald-500');
+        hint.innerHTML = '<span class="text-emerald-600 font-medium">✓ Workspace name verified. You can now permanently delete.</span>';
+        hint.className = 'text-[11px] text-emerald-600';
+      } else {
+        input.classList.add('border-rose-500');
+        input.classList.remove('border-emerald-500');
+        hint.textContent = `Does not match "${expected}".`;
+        hint.className = 'text-[11px] text-rose-500 font-medium';
+      }
+    }
+
+    async function executeWorkspaceDeletion() {
+      const confirmInput = document.getElementById('delete-workspace-confirm-input');
+      const typedName = confirmInput ? confirmInput.value.trim() : '';
+      const expected = (currentWorkspaceName || document.getElementById('setting-company-name')?.value || '').trim();
+
+      if (!typedName || typedName.toLowerCase() !== expected.toLowerCase()) {
+        if (window.CuboidShell && window.CuboidShell.toast) {
+          window.CuboidShell.toast(`Please type the exact workspace name "${expected}" to confirm.`, 'error');
+        } else {
+          alert(`Please type the exact workspace name "${expected}" to confirm.`);
+        }
+        return;
+      }
+
+      const btn = document.getElementById('btn-delete-workspace');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin mr-1"></i> <span>Deleting...</span>';
+        if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      }
+
+      try {
+        const res = await fetch('../api/settings.php?action=delete_workspace', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirm_name: typedName })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeDeleteWorkspaceModal();
+          if (window.CuboidShell && window.CuboidShell.toast) {
+            window.CuboidShell.toast('Workspace deleted successfully.', 'success');
+          } else {
+            alert('Workspace deleted successfully.');
+          }
+          sessionStorage.clear();
+          setTimeout(() => {
+            window.location.href = data.redirect || '../login.php';
+          }, 800);
+        } else {
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i> <span>Permanently Delete</span>';
+            if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+          }
+          if (window.CuboidShell && window.CuboidShell.toast) {
+            window.CuboidShell.toast(data.error || 'Failed to delete workspace', 'error');
+          } else {
+            alert(data.error || 'Failed to delete workspace');
+          }
+        }
+      } catch (err) {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i> <span>Permanently Delete</span>';
+          if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+        }
+        if (window.CuboidShell && window.CuboidShell.toast) {
+          window.CuboidShell.toast('An unexpected network error occurred while deleting the workspace.', 'error');
+        } else {
+          alert('An unexpected network error occurred while deleting the workspace.');
+        }
+      }
+    }
+
+    // =========================================================================
+    // Company Email Configuration (SMTP) — Section 2 & 3
+    // =========================================================================
+    async function loadEmailConfig() {
+      try {
+        const res = await fetch('../api/email_config.php?action=get');
+        const data = await res.json();
+        if (!data.success || !data.config) return;
+
+        const cfg = data.config;
+        const setVal = (id, val) => {
+          const el = document.getElementById(id);
+          if (el && typeof val !== 'undefined' && val !== null) el.value = val;
+        };
+
+        setVal('email-sender-name', cfg.sender_name || '');
+        setVal('email-sender-email', cfg.sender_email || '');
+        setVal('email-smtp-host', cfg.smtp_host || 'smtp.gmail.com');
+        setVal('email-smtp-port', cfg.smtp_port || 587);
+        setVal('email-smtp-user', cfg.smtp_username || '');
+        setVal('email-encryption', cfg.encryption_type || 'tls');
+        setVal('email-reply-to', cfg.reply_to_email || '');
+
+        const passEl = document.getElementById('email-smtp-pass');
+        if (passEl) {
+          if (cfg.has_password) {
+            passEl.value = '••••••••';
+            passEl.placeholder = '•••••••• (Encrypted with AES-256)';
+          } else {
+            passEl.value = '';
+            passEl.placeholder = '•••••••• (Encrypted with AES-256)';
+          }
+        }
+
+        const badge = document.getElementById('email-cfg-badge');
+        const dot = document.getElementById('email-cfg-dot');
+        const txt = document.getElementById('email-cfg-status-text');
+        const lastTested = document.getElementById('email-last-tested-text');
+
+        if (data.configured) {
+          if (cfg.is_verified) {
+            if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200';
+            if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
+            if (txt) txt.textContent = 'Verified & Active';
+          } else {
+            if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-amber-50 text-amber-800 border border-amber-200';
+            if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
+            if (txt) txt.textContent = 'Configured (Needs Verification)';
+          }
+        } else {
+          if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-stone-100 text-stone-600 border border-stone-200';
+          if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-stone-400';
+          if (txt) txt.textContent = 'Not Configured';
+        }
+
+        if (lastTested && cfg.last_tested_at) {
+          lastTested.textContent = 'Last verified: ' + cfg.last_tested_at;
+        }
+      } catch (err) {
+        console.warn('Could not load email configuration:', err);
+      }
+    }
+
+    async function saveEmailConfig() {
+      const btn = document.getElementById('btn-save-email');
+      const resultBox = document.getElementById('email-test-result');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Saving...';
+      }
+      if (resultBox) resultBox.classList.add('hidden');
+
+      const payload = {
+        action: 'save',
+        sender_name: document.getElementById('email-sender-name')?.value.trim() || '',
+        sender_email: document.getElementById('email-sender-email')?.value.trim() || '',
+        smtp_host: document.getElementById('email-smtp-host')?.value.trim() || '',
+        smtp_port: parseInt(document.getElementById('email-smtp-port')?.value || '587', 10),
+        smtp_username: document.getElementById('email-smtp-user')?.value.trim() || '',
+        smtp_password: document.getElementById('email-smtp-pass')?.value.trim() || '',
+        encryption_type: document.getElementById('email-encryption')?.value || 'tls',
+        reply_to_email: document.getElementById('email-reply-to')?.value.trim() || ''
+      };
+
+      try {
+        const res = await fetch('../api/email_config.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (window.CuboidShell && window.CuboidShell.toast) {
+            window.CuboidShell.toast(data.message || 'Email settings saved successfully.', 'success');
+          } else {
+            alert(data.message || 'Email settings saved successfully.');
+          }
+          await loadEmailConfig();
+        } else {
+          if (resultBox) {
+            resultBox.className = 'p-3 rounded text-xs bg-red-50 text-red-700 border border-red-200';
+            resultBox.textContent = data.error || 'Failed to save email configuration.';
+            resultBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (resultBox) {
+          resultBox.className = 'p-3 rounded text-xs bg-red-50 text-red-700 border border-red-200';
+          resultBox.textContent = 'Network error saving email configuration.';
+          resultBox.classList.remove('hidden');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Save Email Configuration';
+        }
+      }
+    }
+
+    async function testEmailConnection() {
+      const btn = document.getElementById('btn-test-email');
+      const resultBox = document.getElementById('email-test-result');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Testing...';
+      }
+      if (resultBox) {
+        resultBox.className = 'p-3 rounded text-xs bg-stone-50 text-stone-600 border border-stone-200';
+        resultBox.textContent = 'Initiating SMTP socket handshake and authentication...';
+        resultBox.classList.remove('hidden');
+      }
+
+      const payload = {
+        action: 'test_connection',
+        sender_name: document.getElementById('email-sender-name')?.value.trim() || '',
+        sender_email: document.getElementById('email-sender-email')?.value.trim() || '',
+        smtp_host: document.getElementById('email-smtp-host')?.value.trim() || '',
+        smtp_port: parseInt(document.getElementById('email-smtp-port')?.value || '587', 10),
+        smtp_username: document.getElementById('email-smtp-user')?.value.trim() || '',
+        smtp_password: document.getElementById('email-smtp-pass')?.value.trim() || '',
+        encryption_type: document.getElementById('email-encryption')?.value || 'tls'
+      };
+
+      try {
+        const res = await fetch('../api/email_config.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (resultBox) {
+            resultBox.className = 'p-3 rounded text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
+            resultBox.textContent = '✓ ' + (data.message || 'SMTP connection and authentication successful.');
+          }
+          await loadEmailConfig();
+        } else {
+          if (resultBox) {
+            resultBox.className = 'p-3 rounded text-xs bg-red-50 text-red-700 border border-red-200';
+            resultBox.textContent = '✕ Connection Failed: ' + (data.error || 'Check host, port, username or App Password.');
+          }
+        }
+      } catch (e) {
+        if (resultBox) {
+          resultBox.className = 'p-3 rounded text-xs bg-red-50 text-red-700 border border-red-200';
+          resultBox.textContent = '✕ Network error while contacting SMTP test endpoint.';
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="send" class="w-3.5 h-3.5 text-stone-600"></i><span>Test Connection</span>';
+          if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+        }
+      }
+    }
+
+    // =========================================================================
+    // Instagram Gateway & Meta Business Configuration — Section 4 & 5
+    // =========================================================================
+    async function loadInstagramConfig() {
+      try {
+        const res = await fetch('../api/instagram_config.php?action=get');
+        const data = await res.json();
+        if (!data.success || !data.config) return;
+
+        const cfg = data.config;
+        const setVal = (id, val) => {
+          const el = document.getElementById(id);
+          if (el && typeof val !== 'undefined' && val !== null) el.value = val;
+        };
+
+        setVal('ig-page-id', cfg.page_id || '');
+        setVal('ig-account-id', cfg.instagram_account_id || '');
+        setVal('ig-username', cfg.instagram_username || '');
+        setVal('ig-verify-token', cfg.webhook_verify_token || '');
+
+        const tokEl = document.getElementById('ig-access-token');
+        if (tokEl) tokEl.value = cfg.has_access_token ? '••••••••' : '';
+        const secEl = document.getElementById('ig-app-secret');
+        if (secEl) secEl.value = cfg.has_app_secret ? '••••••••' : '';
+
+        const urlDisplay = document.getElementById('ig-webhook-url-display');
+        if (urlDisplay && cfg.webhook_callback_url) {
+          urlDisplay.textContent = cfg.webhook_callback_url;
+        }
+
+        const badge = document.getElementById('ig-cfg-badge');
+        const dot = document.getElementById('ig-cfg-dot');
+        const txt = document.getElementById('ig-cfg-status-text');
+
+        if (cfg.status === 'connected') {
+          if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200';
+          if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-500';
+          if (txt) txt.textContent = 'Connected';
+        } else {
+          if (badge) badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium bg-stone-100 text-stone-600 border border-stone-200';
+          if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-stone-400';
+          if (txt) txt.textContent = 'Disconnected';
+        }
+      } catch (err) {
+        console.warn('Could not load Instagram configuration:', err);
+      }
+    }
+
+    async function saveInstagramConfig() {
+      const btn = document.getElementById('btn-save-ig');
+      const resultBox = document.getElementById('ig-test-result');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Saving...';
+      }
+      if (resultBox) resultBox.classList.add('hidden');
+
+      const payload = {
+        action: 'save',
+        page_id: document.getElementById('ig-page-id')?.value.trim() || '',
+        instagram_account_id: document.getElementById('ig-account-id')?.value.trim() || '',
+        instagram_username: document.getElementById('ig-username')?.value.trim() || '',
+        webhook_verify_token: document.getElementById('ig-verify-token')?.value.trim() || '',
+        access_token: document.getElementById('ig-access-token')?.value.trim() || '',
+        app_secret: document.getElementById('ig-app-secret')?.value.trim() || '',
+        status: 'connected'
+      };
+
+      try {
+        const res = await fetch('../api/instagram_config.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (window.CuboidShell && window.CuboidShell.toast) {
+            window.CuboidShell.toast(data.message || 'Instagram settings saved successfully.', 'success');
+          } else {
+            alert(data.message || 'Instagram settings saved successfully.');
+          }
+          await loadInstagramConfig();
+        } else {
+          if (resultBox) {
+            resultBox.className = 'p-3 rounded text-xs bg-red-50 text-red-700 border border-red-200';
+            resultBox.textContent = data.error || 'Failed to save Instagram configuration.';
+            resultBox.classList.remove('hidden');
+          }
+        }
+      } catch (e) {
+        if (resultBox) {
+          resultBox.className = 'p-3 rounded text-xs bg-red-50 text-red-700 border border-red-200';
+          resultBox.textContent = 'Network error saving Instagram configuration.';
+          resultBox.classList.remove('hidden');
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Save Instagram Configuration';
+        }
+      }
+    }
+
+    async function testInstagramConnection() {
+      const btn = document.getElementById('btn-test-ig');
+      const resultBox = document.getElementById('ig-test-result');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Testing...';
+      }
+      if (resultBox) {
+        resultBox.className = 'p-3 rounded text-xs bg-stone-50 text-stone-600 border border-stone-200';
+        resultBox.textContent = 'Querying Meta Graph API endpoint...';
+        resultBox.classList.remove('hidden');
+      }
+
+      const payload = {
+        action: 'test_connection',
+        access_token: document.getElementById('ig-access-token')?.value.trim() || ''
+      };
+
+      try {
+        const res = await fetch('../api/instagram_config.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (resultBox) {
+            resultBox.className = 'p-3 rounded text-xs bg-emerald-50 text-emerald-800 border border-emerald-200';
+            resultBox.textContent = '✓ ' + (data.message || 'Meta Graph API token verified successfully.');
+          }
+          await loadInstagramConfig();
+        } else {
+          if (resultBox) {
+            resultBox.className = 'p-3 rounded text-xs bg-red-50 text-red-700 border border-red-200';
+            resultBox.textContent = '✕ Token Verification Failed: ' + (data.error || 'Access token invalid or expired.');
+          }
+        }
+      } catch (e) {
+        if (resultBox) {
+          resultBox.className = 'p-3 rounded text-xs bg-red-50 text-red-700 border border-red-200';
+          resultBox.textContent = '✕ Network error while contacting Meta Graph API test endpoint.';
+        }
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="activity" class="w-3.5 h-3.5 text-stone-600"></i><span>Test Connection</span>';
+          if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
         }
       }
     }

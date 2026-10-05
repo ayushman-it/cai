@@ -11,7 +11,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../css/theme.css">
-  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=4.2">
 </head>
 <body class="app-body">
 
@@ -79,15 +79,18 @@
             </div>
 
             <!-- 2. Inbound Channels -->
-            <div class="p-3.5 sm:px-4 sm:py-3 flex items-center justify-between">
+            <a href="channels.html" class="p-3.5 sm:px-4 sm:py-3 flex items-center justify-between hover:bg-stone-50 transition-colors no-underline group block">
               <div class="space-y-0.5">
-                <div class="text-[11px] text-stone-400 font-medium tracking-wide">Inbound Channels</div>
+                <div class="text-[11px] text-stone-400 font-medium tracking-wide flex items-center justify-between">
+                  <span>Inbound Channels</span>
+                  <i data-lucide="arrow-up-right" class="w-3 h-3 text-stone-300 group-hover:text-stone-700 transition-colors"></i>
+                </div>
                 <div class="text-xs font-semibold text-stone-900 flex items-center gap-2">
-                  <span>Widget + WhatsApp</span>
-                  <span class="text-[10px] px-1.5 py-0.5 bg-stone-100 text-stone-700 border border-stone-200 rounded font-mono font-medium">2/2</span>
+                  <span>Widget + WhatsApp &amp; Hub</span>
+                  <span class="text-[10px] px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded font-mono font-medium">11 Hub</span>
                 </div>
               </div>
-            </div>
+            </a>
 
             <!-- 3. Sales Pipeline Pulse -->
             <div class="p-3.5 sm:px-4 sm:py-3 flex items-center justify-between">
@@ -395,8 +398,8 @@
     </div>
   </div>
 
-  <script src="../js/components.js"></script>
-  <script src="../js/dashboard.js"></script>
+  <script src="../js/components.js?v=4.2"></script>
+  <script src="../js/dashboard.js?v=4.2"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       CuboidShell.initCompanyApp('overview', 'Conversations Overview', ['Reports']);

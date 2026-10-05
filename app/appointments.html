@@ -10,7 +10,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../css/theme.css">
-  <link rel="stylesheet" href="../css/dashboard.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=4.2">
 </head>
 <body class="app-body">
 
@@ -93,7 +93,8 @@
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white p-3 rounded border border-[#e7e5de]">
             <div class="flex items-center gap-1.5 overflow-x-auto">
               <button onclick="setFilter('all', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-900 text-white font-medium">All</button>
-              <button onclick="setFilter('scheduled', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium">Scheduled</button>
+              <button onclick="setFilter('today', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium">Today</button>
+              <button onclick="setFilter('upcoming', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium">Upcoming</button>
               <button onclick="setFilter('completed', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium">Completed</button>
               <button onclick="setFilter('cancelled', this)" class="filter-pill px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium">Cancelled</button>
             </div>
@@ -216,8 +217,74 @@
     </div>
   </div>
 
-  <script src="../js/components.js"></script>
-  <script src="../js/dashboard.js"></script>
+  <!-- Appointment Details Modal -->
+  <div id="details-modal" class="app-modal-overlay">
+    <div class="app-modal p-6 max-w-lg w-full">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-4">
+        <div>
+          <h3 class="text-sm font-semibold text-stone-900" id="details-title">Appointment Details</h3>
+          <p class="text-[11px] text-stone-500 mt-0.5" id="details-subtitle">Scheduled consultation breakdown</p>
+        </div>
+        <button onclick="closeDetailsModal()" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs" id="details-content">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div class="pt-4 border-t border-[#e7e5de] flex items-center justify-between mt-4">
+        <div id="details-crm-links" class="flex items-center gap-2"></div>
+        <button type="button" onclick="closeDetailsModal()" class="btn-secondary btn-sm py-1.5 px-4">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reschedule Modal -->
+  <div id="reschedule-modal" class="app-modal-overlay">
+    <div class="app-modal p-6 max-w-md w-full">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-4">
+        <div>
+          <h3 class="text-sm font-semibold text-stone-900">Reschedule Appointment</h3>
+          <p class="text-[11px] text-stone-500 mt-0.5">Select a new date and time slot for this consultation.</p>
+        </div>
+        <button onclick="closeRescheduleModal()" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="reschedule-form" onsubmit="event.preventDefault(); submitRescheduleForm();" class="space-y-4 text-xs">
+        <input type="hidden" id="resched-id">
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">New Consultation Date *</label>
+          <input type="date" id="resched-date" required class="app-input w-full text-xs">
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">New Time Slot *</label>
+          <select id="resched-time" required class="app-select w-full text-xs">
+            <option value="10:00:00">10:00 AM</option>
+            <option value="11:30:00">11:30 AM</option>
+            <option value="14:00:00">02:00 PM</option>
+            <option value="15:30:00">03:30 PM</option>
+            <option value="16:30:00">04:30 PM</option>
+            <option value="17:15:00">05:15 PM</option>
+          </select>
+        </div>
+
+        <div id="resched-error" class="p-2 bg-rose-50 border border-rose-200 text-rose-700 rounded text-xs hidden"></div>
+
+        <div class="pt-3 border-t border-[#e7e5de] flex justify-end gap-2">
+          <button type="button" onclick="closeRescheduleModal()" class="btn-secondary btn-sm py-1.5 px-3">Cancel</button>
+          <button type="submit" id="btn-submit-reschedule" class="btn-primary btn-sm py-1.5 px-4">Confirm Reschedule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="../js/components.js?v=4.2"></script>
+  <script src="../js/dashboard.js?v=4.2"></script>
   <script>
     let currentFilter = 'all';
     let currentSearch = '';
@@ -372,18 +439,34 @@
               </td>
               <td class="p-3.5 text-right">
                 <div class="flex items-center justify-end gap-1.5">
-                  ${a.status === 'scheduled' ? `
-                    <button onclick="updateAppointmentStatus(${a.id}, 'completed')" class="btn-secondary btn-sm text-xs py-1 px-2 text-emerald-700 hover:bg-emerald-50" title="Mark as Completed">
+                  <button onclick="openDetailsModal(${a.id})" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-stone-700" title="View Full Details">
+                    <i data-lucide="eye" class="w-3 h-3 mr-1"></i> Details
+                  </button>
+                  ${a.status !== 'cancelled' ? `
+                    <button onclick="openRescheduleModal(${a.id})" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-blue-700 hover:bg-blue-50" title="Reschedule Slot">
+                      <i data-lucide="calendar" class="w-3 h-3 mr-1"></i> Reschedule
+                    </button>
+                    <button onclick="updateAppointmentStatus(${a.id}, 'completed')" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-emerald-700 hover:bg-emerald-50" title="Mark as Completed">
                       <i data-lucide="check" class="w-3 h-3 mr-1"></i> Complete
                     </button>
                     <button onclick="updateAppointmentStatus(${a.id}, 'cancelled')" class="p-1 text-stone-400 hover:text-rose-600 rounded transition-colors" title="Cancel Appointment">
                       <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </button>
                   ` : `
-                    <button onclick="updateAppointmentStatus(${a.id}, 'scheduled')" class="btn-secondary btn-sm text-xs py-1 px-2 text-stone-600" title="Reopen / Reschedule">
+                    <button onclick="updateAppointmentStatus(${a.id}, 'scheduled')" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-stone-600" title="Reopen Appointment">
                       Reopen
                     </button>
                   `}
+                  ${a.lead_id ? `
+                    <a href="leads.html?id=${a.lead_id}" class="p-1 text-stone-400 hover:text-stone-900 rounded transition-colors" title="Open CRM Lead">
+                      <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                    </a>
+                  ` : ''}
+                  ${a.conversation_id ? `
+                    <a href="conversations.html?id=${a.conversation_id}" class="p-1 text-stone-400 hover:text-stone-900 rounded transition-colors" title="Open Chat Conversation">
+                      <i data-lucide="message-square" class="w-3.5 h-3.5"></i>
+                    </a>
+                  ` : ''}
                 </div>
               </td>
             </tr>
@@ -506,6 +589,172 @@
         }
       } catch (e) {
         CuboidShell.toast('Error connecting to server', 'error');
+      }
+    }
+
+    function openDetailsModal(id) {
+      const a = appointmentsData.find(item => item.id == id);
+      if (!a) return;
+
+      const modal = document.getElementById('details-modal');
+      const titleEl = document.getElementById('details-title');
+      const subtitleEl = document.getElementById('details-subtitle');
+      const contentEl = document.getElementById('details-content');
+      const crmLinksEl = document.getElementById('details-crm-links');
+
+      titleEl.textContent = a.title || 'Consultation Details';
+      subtitleEl.textContent = `${a.appointment_type || 'Consultation'} • ID #${a.id}`;
+
+      let statusBadge = 'bg-stone-100 text-stone-700 border-stone-200';
+      if (a.status === 'scheduled') statusBadge = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+      else if (a.status === 'completed') statusBadge = 'bg-blue-50 text-blue-800 border-blue-200';
+      else if (a.status === 'cancelled') statusBadge = 'bg-rose-50 text-rose-700 border-rose-200';
+      else if (a.status === 'rescheduled') statusBadge = 'bg-blue-50 text-blue-800 border-blue-200';
+
+      contentEl.innerHTML = `
+        <div class="grid grid-cols-2 gap-3 p-3 bg-stone-50 rounded-lg border border-stone-200">
+          <div>
+            <span class="text-[10.5px] uppercase font-bold text-stone-400">Date & Time</span>
+            <div class="font-semibold text-stone-900 mt-0.5">${escapeHtml(a.formatted_slot || a.slot_datetime)}</div>
+            <div class="text-[11px] text-stone-500">${escapeHtml(a.timezone || 'Asia/Kolkata')}</div>
+          </div>
+          <div>
+            <span class="text-[10.5px] uppercase font-bold text-stone-400">Status</span>
+            <div class="mt-1">
+              <span class="inline-block text-[10px] uppercase font-semibold px-2 py-0.5 rounded border ${statusBadge}">${escapeHtml(a.status)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 border border-stone-200 rounded-lg space-y-2">
+          <div class="font-semibold text-stone-900 border-b border-stone-100 pb-1.5 flex items-center justify-between">
+            <span>Customer Information</span>
+            ${a.session_id ? `<span class="text-[10px] font-mono text-stone-500 bg-stone-100 px-1.5 py-0.5 rounded">Session: ${escapeHtml(a.session_id)}</span>` : ''}
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-stone-600">
+            <div><strong class="text-stone-800">Name:</strong> ${escapeHtml(a.customer_name || 'Prospect')}</div>
+            <div><strong class="text-stone-800">Phone:</strong> ${escapeHtml(a.customer_phone || 'None')}</div>
+            <div class="sm:col-span-2"><strong class="text-stone-800">Email:</strong> ${escapeHtml(a.customer_email || 'None')}</div>
+          </div>
+        </div>
+
+        <div class="p-3 border border-stone-200 rounded-lg space-y-2">
+          <div class="font-semibold text-stone-900 border-b border-stone-100 pb-1.5">Host / Consultant</div>
+          <div class="text-stone-600">
+            <span class="font-medium text-stone-900">${escapeHtml((a.consultant && a.consultant.name) || 'Company Advisor')}</span>
+            <span class="text-stone-400"> • ${escapeHtml((a.consultant && a.consultant.job_title) || 'Consultant')}</span>
+          </div>
+        </div>
+
+        ${a.meet_link ? `
+          <div class="p-3 bg-emerald-50/50 border border-emerald-200/80 rounded-lg flex items-center justify-between">
+            <div class="min-w-0 pr-2">
+              <div class="font-medium text-emerald-900">Virtual Meeting Room</div>
+              <div class="text-[11px] text-emerald-700 font-mono truncate">${escapeHtml(a.meet_link)}</div>
+            </div>
+            <a href="${escapeHtml(a.meet_link)}" target="_blank" class="btn-primary btn-sm text-xs py-1 px-3 bg-emerald-700 hover:bg-emerald-800 shrink-0">Join</a>
+          </div>
+        ` : ''}
+
+        ${a.notes ? `
+          <div class="p-2.5 bg-stone-50 border border-stone-200 rounded text-stone-600">
+            <span class="font-semibold text-stone-700 block mb-0.5">Notes:</span>
+            ${escapeHtml(a.notes)}
+          </div>
+        ` : ''}
+      `;
+
+      crmLinksEl.innerHTML = `
+        ${a.lead_id ? `<a href="leads.html?id=${a.lead_id}" class="btn-secondary btn-sm text-xs py-1 px-2.5 flex items-center gap-1.5"><i data-lucide="user-check" class="w-3.5 h-3.5"></i><span>Open CRM Lead</span></a>` : ''}
+        ${a.conversation_id ? `<a href="conversations.html?id=${a.conversation_id}" class="btn-secondary btn-sm text-xs py-1 px-2.5 flex items-center gap-1.5"><i data-lucide="message-square" class="w-3.5 h-3.5"></i><span>Open Conversation</span></a>` : ''}
+      `;
+
+      modal.classList.add('open');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeDetailsModal() {
+      const modal = document.getElementById('details-modal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    function openRescheduleModal(id) {
+      const a = appointmentsData.find(item => item.id == id);
+      if (!a) return;
+
+      const modal = document.getElementById('reschedule-modal');
+      document.getElementById('resched-id').value = id;
+      const dateEl = document.getElementById('resched-date');
+      const errEl = document.getElementById('resched-error');
+      if (errEl) errEl.classList.add('hidden');
+
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      if (dateEl) {
+        dateEl.value = a.slot_date || tomorrow.toISOString().split('T')[0];
+        dateEl.min = new Date().toISOString().split('T')[0];
+      }
+
+      modal.classList.add('open');
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeRescheduleModal() {
+      const modal = document.getElementById('reschedule-modal');
+      if (modal) modal.classList.remove('open');
+    }
+
+    async function submitRescheduleForm() {
+      const id = document.getElementById('resched-id')?.value;
+      const date = document.getElementById('resched-date')?.value;
+      const time = document.getElementById('resched-time')?.value;
+      const errEl = document.getElementById('resched-error');
+      const submitBtn = document.getElementById('btn-submit-reschedule');
+
+      if (!id || !date || !time) return;
+
+      if (errEl) errEl.classList.add('hidden');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Rescheduling...';
+      }
+
+      try {
+        const slotDatetime = `${date} ${time}`;
+        const res = await fetch('../api/appointments.php?action=reschedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, slot_datetime: slotDatetime })
+        });
+        const data = await res.json();
+
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Confirm Reschedule';
+        }
+
+        if (!data || !data.success) {
+          if (errEl) {
+            errEl.textContent = data.error || 'Failed to reschedule appointment';
+            errEl.classList.remove('hidden');
+          }
+          return;
+        }
+
+        if (window.CuboidShell && window.CuboidShell.toast) {
+          window.CuboidShell.toast('Appointment rescheduled successfully!');
+        }
+        closeRescheduleModal();
+        loadAppointments();
+      } catch (err) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Confirm Reschedule';
+        }
+        if (errEl) {
+          errEl.textContent = 'Network error while rescheduling.';
+          errEl.classList.remove('hidden');
+        }
       }
     }
 

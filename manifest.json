@@ -1,0 +1,21 @@
+{
+  "name": "CuboidPilot — Autonomous AI Customer Service Platform",
+  "short_name": "CuboidPilot",
+  "description": "Next-generation AI customer support platform. Connect web chat, WhatsApp, and email with Cai autonomous agent and unified human handoff.",
+  "start_url": "/cuboidpilot/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#111111",
+  "icons": [
+    {
+      "src": "/cuboidpilot/assets/logo-black.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/cuboidpilot/assets/logo-black.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

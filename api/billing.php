@@ -64,8 +64,8 @@ try {
 
             // If no payment records exist yet but company is pro/active, synthesize an initial paid invoice
             if (empty($invoices) && !empty($entitlements['is_premium'])) {
-                $subAmount = $subscription ? (int)$subscription['amount_inr'] : 24999;
-                if ($subAmount <= 0) $subAmount = 24999;
+                $subAmount = $subscription ? (int)$subscription['amount_inr'] : 349;
+                if ($subAmount <= 0) $subAmount = 349;
                 $invoices = [[
                     'id'                  => 101,
                     'amount_inr'          => $subAmount,
@@ -115,7 +115,7 @@ try {
             }
 
             $amountInr = ($cycle === 'annual') ? (int)$plan['price_annual_inr'] : (int)$plan['price_monthly_inr'];
-            if ($amountInr <= 0) $amountInr = 24999;
+            if ($amountInr <= 0) $amountInr = ($cycle === 'annual') ? 3348 : 349;
 
             // =========================================================================
             // PAYMENT GATEWAY INTEGRATION HOOK (Razorpay / Stripe)
@@ -144,13 +144,14 @@ try {
             ]);
             break;
 
-        // 3. Upgrade / Activate Subscription Plan (Confirm & Provision Entitlements)
+        // 3. Upgrade / Renew / Activate Subscription Plan (Confirm & Provision Entitlements)
+        case 'renew':
         case 'upgrade':
-            $rawPlanCode = strtolower(trim($data['plan_code'] ?? 'pro'));
+            $rawPlanCode = strtolower(trim($data['plan_code'] ?? 'growth'));
             $cycle = strtolower(trim($data['billing_cycle'] ?? 'monthly')); // 'monthly' or 'annual'
             $gatewayPaymentId = trim($data['payment_id'] ?? ('pay_' . substr(md5(uniqid((string)$companyId, true)), 0, 14)));
 
-            $targetCode = 'pro';
+            $targetCode = 'growth';
             if ($rawPlanCode === 'essential' || $rawPlanCode === 'starter') $targetCode = 'starter';
             elseif ($rawPlanCode === 'advanced' || $rawPlanCode === 'growth') $targetCode = 'growth';
             elseif ($rawPlanCode === 'expert' || $rawPlanCode === 'pro' || $rawPlanCode === 'scale') $targetCode = 'pro';
@@ -174,12 +175,13 @@ try {
                     `plan_tier` = ?,
                     `plan_id` = ?,
                     `whatsapp_connected` = 1,
+                    `trial_ends_at` = DATE_ADD(COALESCE(GREATEST(`trial_ends_at`, NOW()), NOW()), INTERVAL ? DAY),
                     `updated_at` = NOW()
                 WHERE id = ?
-            ")->execute([$plan['code'], $planId, $companyId]);
+            ")->execute([$plan['code'], $planId, $periodDays, $companyId]);
 
             // 2. Insert / Update Subscription Record
-            $subCheck = $pdo->prepare("SELECT id FROM `subscriptions` WHERE `company_id` = ? LIMIT 1");
+            $subCheck = $pdo->prepare("SELECT id, current_period_end FROM `subscriptions` WHERE `company_id` = ? LIMIT 1");
             $subCheck->execute([$companyId]);
             $existingSub = $subCheck->fetch();
 
@@ -190,7 +192,7 @@ try {
                         `status` = 'active',
                         `amount_inr` = ?,
                         `current_period_start` = NOW(),
-                        `current_period_end` = DATE_ADD(NOW(), INTERVAL ? DAY),
+                        `current_period_end` = DATE_ADD(COALESCE(GREATEST(`current_period_end`, NOW()), NOW()), INTERVAL ? DAY),
                         `updated_at` = NOW()
                     WHERE `id` = ?
                 ")->execute([$planId, $amountInr, $periodDays, $existingSub['id']]);
@@ -203,11 +205,15 @@ try {
             }
 
             // 3. Record Verified Transaction in Payments Table (for Tax Invoices & Super Admin visibility)
-            $pdo->prepare("
-                INSERT INTO `payments`
-                (`company_id`, `customer_id`, `amount_inr`, `currency`, `status`, `razorpay_order_id`, `razorpay_payment_id`, `paid_at`, `created_at`, `updated_at`)
-                VALUES (?, 0, ?, 'INR', 'paid', ?, ?, NOW(), NOW(), NOW())
-            ")->execute([$companyId, $amountInr, 'ord_' . substr(md5(uniqid()), 0, 10), $gatewayPaymentId]);
+            try {
+                $pdo->prepare("
+                    INSERT INTO `payments`
+                    (`company_id`, `customer_id`, `amount_inr`, `currency`, `status`, `razorpay_order_id`, `razorpay_payment_id`, `paid_at`, `created_at`, `updated_at`)
+                    VALUES (?, NULL, ?, 'INR', 'paid', ?, ?, NOW(), NOW(), NOW())
+                ")->execute([$companyId, $amountInr, 'ord_' . substr(md5(uniqid()), 0, 10), $gatewayPaymentId]);
+            } catch (Exception $payEx) {
+                error_log("Billing payment record notice: " . $payEx->getMessage());
+            }
 
             // 4. Ensure WhatsApp gateway is ready for Pro/Scale
             $waCheck = $pdo->prepare("SELECT id FROM `whatsapp_accounts` WHERE `company_id` = ? LIMIT 1");

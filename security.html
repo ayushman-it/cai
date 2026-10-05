@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Security Architecture &amp; Data Protection — CuboidPilot</title>
+  <meta name="description" content="Explore CuboidPilot's security architecture: Multi-tenant database query isolation, AES-256 encryption at rest, TLS 1.3 in transit, and SOC 2 aligned practices.">
+  <link rel="canonical" href="https://cai.cuboidsoft.in/security.html">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111111">
+  <link rel="icon" type="image/png" href="assets/logo-black.png">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CuboidPilot">
+  <meta property="og:title" content="Security Architecture &amp; Data Protection — CuboidPilot">
+  <meta property="og:description" content="Enterprise security practices, tenant data isolation, and strict AI knowledge grounding.">
+  <meta property="og:url" content="https://cai.cuboidsoft.in/security.html">
+  <meta property="og:image" content="assets/login-blog-banner.png">
+
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/components.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-white text-stone-900 font-sans antialiased selection:bg-stone-900 selection:text-white">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-stone-200">
+    <div class="max-w-[1200px] mx-auto px-6 h-[72px] flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-2.5 text-stone-900">
+        <img src="assets/logo-black.png" alt="CuboidPilot" class="w-7 h-7 object-contain">
+        <span class="text-[19px] font-semibold tracking-tight">CuboidPilot</span>
+      </a>
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-stone-600">
+        <a href="index.html#hire-cai" class="hover:text-stone-900 transition-colors">Meet Cai</a>
+        <a href="pricing.html" class="hover:text-stone-900 transition-colors">Pricing</a>
+        <a href="docs.html" class="hover:text-stone-900 transition-colors">Docs</a>
+        <a href="security.html" class="text-stone-900 font-semibold">Security</a>
+        <a href="login.php" class="hover:text-stone-900 transition-colors">Sign in</a>
+        <a href="signup.php" class="bg-stone-900 text-white px-3.5 py-1.5 rounded-[4px] hover:bg-black transition-colors">Start Free Trial</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-[900px] mx-auto px-6 py-14 sm:py-20">
+    <div class="mb-12">
+      <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-[2px] border border-stone-200 bg-stone-50 text-stone-700 text-xs font-mono mb-4">
+        <span>SECURITY &amp; COMPLIANCE</span>
+      </div>
+      <h1 class="text-3xl sm:text-4xl font-semibold tracking-tight text-stone-900 mb-3">Enterprise Security Architecture</h1>
+      <p class="text-sm text-stone-500">Designed to support SOC 2-aligned security practices and HIPAA-ready workflows when configured.</p>
+    </div>
+
+    <div class="prose prose-stone max-w-none space-y-8 text-sm leading-relaxed text-stone-700">
+      
+      <!-- Card Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 not-prose my-6">
+        <div class="p-5 border border-stone-200 rounded-[6px] bg-stone-50/50">
+          <div class="w-8 h-8 rounded bg-white border border-stone-200 flex items-center justify-center text-stone-900 mb-3">
+            <i data-lucide="shield" class="w-4 h-4 text-emerald-600"></i>
+          </div>
+          <h3 class="text-sm font-semibold text-stone-900 mb-1">Multi-Tenant Isolation</h3>
+          <p class="text-xs text-stone-600 leading-relaxed">Every database query filters strictly by authenticated session tenant ID (`company_id`). Cross-tenant parameter spoofing is systematically blocked.</p>
+        </div>
+
+        <div class="p-5 border border-stone-200 rounded-[6px] bg-stone-50/50">
+          <div class="w-8 h-8 rounded bg-white border border-stone-200 flex items-center justify-center text-stone-900 mb-3">
+            <i data-lucide="lock" class="w-4 h-4 text-indigo-600"></i>
+          </div>
+          <h3 class="text-sm font-semibold text-stone-900 mb-1">AES-256 &amp; TLS 1.3</h3>
+          <p class="text-xs text-stone-600 leading-relaxed">Sensitive secrets and SMTP app passwords are encrypted at rest with AES-256-CBC. All network transmissions are enforced via modern TLS.</p>
+        </div>
+
+        <div class="p-5 border border-stone-200 rounded-[6px] bg-stone-50/50">
+          <div class="w-8 h-8 rounded bg-white border border-stone-200 flex items-center justify-center text-stone-900 mb-3">
+            <i data-lucide="cpu" class="w-4 h-4 text-blue-600"></i>
+          </div>
+          <h3 class="text-sm font-semibold text-stone-900 mb-1">Strict Knowledge Grounding</h3>
+          <p class="text-xs text-stone-600 leading-relaxed">Cai answers exclusively from verified company documents. If facts are absent, Cai clarifies or escalates to Human Action instead of fabricating data.</p>
+        </div>
+
+        <div class="p-5 border border-stone-200 rounded-[6px] bg-stone-50/50">
+          <div class="w-8 h-8 rounded bg-white border border-stone-200 flex items-center justify-center text-stone-900 mb-3">
+            <i data-lucide="file-check" class="w-4 h-4 text-amber-600"></i>
+          </div>
+          <h3 class="text-sm font-semibold text-stone-900 mb-1">Audit Trails &amp; SSRF Defense</h3>
+          <p class="text-xs text-stone-600 leading-relaxed">Knowledge URL scrapers validate IP ranges against private networks and metadata endpoints. Actions are recorded in tamper-evident audit logs.</p>
+        </div>
+      </div>
+
+      <section class="space-y-3">
+        <h2 class="text-lg font-semibold text-stone-900 border-b border-stone-200 pb-2">1. Cryptographic Protection at Rest &amp; Transit</h2>
+        <p>All sensitive credentials—including third-party SMTP passwords, webhook secrets, and access tokens—are symmetrically encrypted in MySQL tables using openssl AES-256-CBC with SHA-256 key derivations. Plaintext passwords are never returned in dashboard configuration responses.</p>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-lg font-semibold text-stone-900 border-b border-stone-200 pb-2">2. Multi-Tenant Query Validation</h2>
+        <p>Tenant authorization is established exclusively through authenticated server sessions (<code>$_SESSION['company_id']</code>) or cryptographically verified widget tokens. User-modifiable request parameters (such as <code>?company_id=</code> or <code>?tenant=</code>) are ignored on protected endpoints.</p>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-lg font-semibold text-stone-900 border-b border-stone-200 pb-2">3. Role-Based Access Control (RBAC)</h2>
+        <p>Granular role permissions (Owner, Admin, Manager, Sales Agent, Support Agent) are verified on both the frontend UI and the underlying backend REST endpoints before permitting any mutation or export of company records.</p>
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-lg font-semibold text-stone-900 border-b border-stone-200 pb-2">4. Contact Security Team</h2>
+        <p>For vulnerability disclosures, compliance questionnaire inquiries, or security whitepapers, please email:</p>
+        <div class="p-4 bg-stone-50 border border-stone-200 rounded-[4px] font-mono text-xs text-stone-800">
+          CuboidPilot Security Team<br>
+          Email: <a href="mailto:support@cai.cuboidsoft.in" class="underline font-semibold">support@cai.cuboidsoft.in</a><br>
+          Subject: Security &amp; Compliance Inquiry
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="bg-white border-t border-stone-200 py-8 px-6 text-xs text-stone-500">
+    <div class="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>© 2026 CuboidPilot Technologies. All rights reserved.</div>
+      <div class="flex items-center gap-6">
+        <a href="privacy.html" class="hover:text-stone-900">Privacy</a>
+        <a href="terms.html" class="hover:text-stone-900">Terms</a>
+        <a href="security.html" class="font-medium text-stone-900">Security</a>
+        <a href="mailto:support@cai.cuboidsoft.in" class="hover:text-stone-900">support@cai.cuboidsoft.in</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="widget.js?v=7.0" data-company="cp_live_cuboidsoft" async></script>
+  <script>if (window.lucide) lucide.createIcons();</script>
+</body>
+</html>
