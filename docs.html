@@ -1042,175 +1042,424 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
 
       <!-- CHANNELS & EXTERNAL INTEGRATIONS -->
       <section id="channels-integrations" class="mb-14 sm:mb-16">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-[10px] font-mono font-semibold uppercase tracking-wider px-2 py-0.5 rounded-[2px] bg-emerald-50 text-emerald-800 border border-emerald-200">
+            Beginner-Friendly &bull; 11 Channels
+          </span>
+          <span class="text-[10px] font-mono text-stone-400">Zero-Coding Supported</span>
+        </div>
+        
         <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
-          Channels &amp; Integrations Architecture
+          Channels &amp; Integrations — Step-by-Step Setup Guide
         </h2>
-        <p>
-          CuboidPilot provides a dedicated management hub at <a href="app/channels.html" class="underline font-medium text-stone-900"><code>app/channels.html</code></a> allowing clients and developers to connect messaging endpoints, calendar scheduling services, transactional email, Google Sheets, and external CRMs with zero vendor lock-in.
+        
+        <p class="text-stone-600 leading-relaxed mb-4">
+          CuboidPilot provides a unified Multi-Channel Hub located inside your workspace at <a href="app/channels.html" class="underline font-medium text-stone-900"><code>app/channels.html</code></a>. Connect your official WhatsApp, Instagram DMs, Google Calendar, Email (SMTP), Google Sheets, and CRMs. Whether you are a business owner, sales manager, or non-technical user, follow these simple visual steps to get each channel live in under 5 minutes.
         </p>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-5">
-          <!-- WhatsApp Business -->
-          <div class="p-4 border border-[#e7e5de] bg-white rounded-[4px] shadow-2xs space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-semibold text-stone-900 text-xs flex items-center gap-1.5">
-                <i data-lucide="message-circle" class="w-4 h-4 text-[#25D366]"></i> WhatsApp Business (Meta Cloud API)
-              </span>
-              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-emerald-50 text-emerald-800 rounded border border-emerald-200">2-Way Sync</span>
-            </div>
-            <p class="text-xs text-stone-600 leading-relaxed m-0">
-              Integrates with Meta's official WhatsApp Business Cloud API. Supports bi-directional incoming inquiries, template notifications, interactive buttons, and media messages.
-            </p>
-            <div class="p-2 bg-stone-50 rounded border border-stone-200 text-[11px] font-mono text-stone-700">
-              <strong>Callback URL:</strong> <code>https://cai.cuboidsoft.in/api/whatsapp_webhook.php</code><br>
-              <strong>Required Scopes:</strong> <code>whatsapp_business_messaging</code>, <code>whatsapp_business_management</code>
-            </div>
+        <!-- Quick Jump Navigation Grid -->
+        <div class="p-3.5 bg-stone-50 border border-[#e7e5de] rounded-[6px] mb-8">
+          <div class="text-[11px] font-semibold text-stone-700 uppercase tracking-wider mb-2 font-mono flex items-center gap-1.5">
+            <i data-lucide="compass" class="w-3.5 h-3.5 text-stone-500"></i>
+            <span>Quick Jump to Channel Setup Guide:</span>
           </div>
-
-          <!-- Instagram DMs -->
-          <div class="p-4 border border-[#e7e5de] bg-white rounded-[4px] shadow-2xs space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-semibold text-stone-900 text-xs flex items-center gap-1.5">
-                <i data-lucide="instagram" class="w-4 h-4 text-rose-500"></i> Instagram Direct Messages (Graph API)
-              </span>
-              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-rose-50 text-rose-800 rounded border border-rose-200">Social CRM</span>
-            </div>
-            <p class="text-xs text-stone-600 leading-relaxed m-0">
-              Automatically qualifies prospects who DM your business or reply to stories. Syncs inquiries into the unified Cai inbox in real time.
-            </p>
-            <div class="p-2 bg-stone-50 rounded border border-stone-200 text-[11px] font-mono text-stone-700">
-              <strong>Callback URL:</strong> <code>https://cai.cuboidsoft.in/api/instagram_webhook.php</code><br>
-              <strong>Webhook Fields:</strong> <code>messages</code>, <code>messaging_postbacks</code>
-            </div>
-          </div>
-
-          <!-- Google Calendar & Meet -->
-          <div class="p-4 border border-[#e7e5de] bg-white rounded-[4px] shadow-2xs space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-semibold text-stone-900 text-xs flex items-center gap-1.5">
-                <i data-lucide="calendar" class="w-4 h-4 text-blue-600"></i> Google Calendar &amp; Meet
-              </span>
-              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-blue-50 text-blue-800 rounded border border-blue-200">Auto Booking</span>
-            </div>
-            <p class="text-xs text-stone-600 leading-relaxed m-0">
-              Performs real-time free/busy conflict checking against counselor calendars and automatically creates Google Meet links upon meeting booking.
-            </p>
-            <div class="p-2 bg-stone-50 rounded border border-stone-200 text-[11px] font-mono text-stone-700">
-              <strong>Redirect URI:</strong> <code>https://cai.cuboidsoft.in/api/google_callback.php</code><br>
-              <strong>Scopes:</strong> <code>https://www.googleapis.com/auth/calendar.events</code>
-            </div>
-          </div>
-
-          <!-- Transactional Email -->
-          <div class="p-4 border border-[#e7e5de] bg-white rounded-[4px] shadow-2xs space-y-2">
-            <div class="flex items-center justify-between">
-              <span class="font-semibold text-stone-900 text-xs flex items-center gap-1.5">
-                <i data-lucide="mail" class="w-4 h-4 text-amber-600"></i> Transactional Email (SMTP)
-              </span>
-              <span class="text-[10px] font-mono px-1.5 py-0.2 bg-amber-50 text-amber-800 rounded border border-amber-200">Instant Alert</span>
-            </div>
-            <p class="text-xs text-stone-600 leading-relaxed m-0">
-              Sends immediate email notifications to sales reps upon high-intent qualification, and dispatches conversation summaries to clients via standard SMTP.
-            </p>
-            <div class="p-2 bg-stone-50 rounded border border-stone-200 text-[11px] font-mono text-stone-700">
-              <strong>Supported Ports:</strong> 587 (TLS), 465 (SSL), 25<br>
-              <strong>Compatible:</strong> SendGrid, Postmark, AWS SES, Google Workspace
-            </div>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <a href="#guide-whatsapp" class="px-2.5 py-1 bg-white hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 rounded text-stone-700 hover:text-emerald-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-[#25D366]"></span> 1. WhatsApp Cloud API
+            </a>
+            <a href="#guide-instagram" class="px-2.5 py-1 bg-white hover:bg-rose-50 border border-stone-200 hover:border-rose-300 rounded text-stone-700 hover:text-rose-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-rose-500"></span> 2. Instagram DMs
+            </a>
+            <a href="#guide-google-calendar" class="px-2.5 py-1 bg-white hover:bg-blue-50 border border-stone-200 hover:border-blue-300 rounded text-stone-700 hover:text-blue-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span> 3. Google Calendar
+            </a>
+            <a href="#guide-calendly" class="px-2.5 py-1 bg-white hover:bg-sky-50 border border-stone-200 hover:border-sky-300 rounded text-stone-700 hover:text-sky-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-sky-500"></span> 4. Calendly
+            </a>
+            <a href="#guide-email-smtp" class="px-2.5 py-1 bg-white hover:bg-amber-50 border border-stone-200 hover:border-amber-300 rounded text-stone-700 hover:text-amber-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-amber-500"></span> 5. Email (SMTP / Gmail)
+            </a>
+            <a href="#guide-google-sheets" class="px-2.5 py-1 bg-white hover:bg-emerald-50 border border-stone-200 hover:border-emerald-300 rounded text-stone-700 hover:text-emerald-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-emerald-600"></span> 6. Google Sheets
+            </a>
+            <a href="#guide-telecrm" class="px-2.5 py-1 bg-white hover:bg-purple-50 border border-stone-200 hover:border-purple-300 rounded text-stone-700 hover:text-purple-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-purple-500"></span> 7. TeleCRM
+            </a>
+            <a href="#guide-zoho" class="px-2.5 py-1 bg-white hover:bg-red-50 border border-stone-200 hover:border-red-300 rounded text-stone-700 hover:text-red-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-red-500"></span> 8. Zoho CRM
+            </a>
+            <a href="#guide-hubspot" class="px-2.5 py-1 bg-white hover:bg-orange-50 border border-stone-200 hover:border-orange-300 rounded text-stone-700 hover:text-orange-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-orange-500"></span> 9. HubSpot CRM
+            </a>
+            <a href="#guide-salesforce" class="px-2.5 py-1 bg-white hover:bg-cyan-50 border border-stone-200 hover:border-cyan-300 rounded text-stone-700 hover:text-cyan-800 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-cyan-600"></span> 10. Salesforce
+            </a>
+            <a href="#guide-webhooks" class="px-2.5 py-1 bg-white hover:bg-stone-100 border border-stone-200 rounded text-stone-700 transition-colors inline-flex items-center gap-1.5 font-medium">
+              <span class="w-2 h-2 rounded-full bg-stone-700"></span> 11. Zapier &amp; Webhooks
+            </a>
           </div>
         </div>
-      </section>
 
-      <!-- CRMS & GOOGLE SHEETS SYNC -->
-      <section id="crm-sheets-sync" class="mb-14 sm:mb-16">
-        <h2 class="text-xl sm:text-2xl font-semibold text-stone-900 mb-3 sm:mb-4">
-          External CRM Pipelines &amp; Google Sheets
-        </h2>
-        <p>
-          Clients use different CRM software for sales and lead follow-up. CuboidPilot provides modular adapters so you can synchronize captured leads into whichever CRM your team already uses:
-        </p>
+        <div class="space-y-8">
 
-        <!-- CRM Comparison Table -->
-        <div class="overflow-x-auto my-4 border border-[#e7e5de] rounded-[4px]">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-[#fbfaf6] border-b border-[#e7e5de] text-stone-700 font-semibold font-mono">
-              <tr>
-                <th class="p-3">Platform</th>
-                <th class="p-3">Method</th>
-                <th class="p-3">Target Objects</th>
-                <th class="p-3">Sync Speed</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-[#f0ede6] text-stone-600">
-              <tr>
-                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="phone-call" class="w-3.5 h-3.5 text-purple-600"></i> TeleCRM (TellyCRM)</td>
-                <td class="p-3 font-mono text-[11px]">API Key / REST</td>
-                <td class="p-3">Leads + Caller Assignment Tags</td>
-                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 150ms</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="briefcase" class="w-3.5 h-3.5 text-red-600"></i> Zoho CRM</td>
-                <td class="p-3 font-mono text-[11px]">OAuth 2.0 Refresh Token</td>
-                <td class="p-3">Leads &amp; Contacts Modules (zoho.in / zoho.com)</td>
-                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 300ms</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="activity" class="w-3.5 h-3.5 text-orange-600"></i> HubSpot CRM</td>
-                <td class="p-3 font-mono text-[11px]">Private App Access Token</td>
-                <td class="p-3">Contacts &amp; Deal Pipelines</td>
-                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 250ms</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="cloud" class="w-3.5 h-3.5 text-sky-600"></i> Salesforce CRM</td>
-                <td class="p-3 font-mono text-[11px]">Connected App / REST</td>
-                <td class="p-3">Lead &amp; Opportunity Standard Objects</td>
-                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 400ms</td>
-              </tr>
-              <tr>
-                <td class="p-3 font-medium text-stone-900 flex items-center gap-1.5"><i data-lucide="sheet" class="w-3.5 h-3.5 text-emerald-600"></i> Google Sheets</td>
-                <td class="p-3 font-mono text-[11px]">Apps Script Webhook</td>
-                <td class="p-3">Real-time row appending (Spreadsheet)</td>
-                <td class="p-3 font-mono text-emerald-700 font-semibold">&lt; 200ms</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+          <!-- CHANNEL 1: WHATSAPP CLOUD API -->
+          <div id="guide-whatsapp" class="border border-[#e7e5de] bg-white rounded-[8px] p-5 sm:p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[8px] bg-emerald-50 border border-emerald-200 p-2 flex items-center justify-center shrink-0">
+                  <img src="assets/brands/whatsapp.svg" alt="WhatsApp" class="w-6 h-6 object-contain" onerror="this.src='assets/brands/whatsapp.png'">
+                </div>
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900 leading-tight">1. WhatsApp Business (Official Meta Cloud API)</h3>
+                  <span class="text-xs text-stone-500">2-Way Autonomous AI Chat, Inbound Lead Capture &amp; Outbound Template Broadcasts</span>
+                </div>
+              </div>
+              <span class="self-start sm:self-auto text-[11px] font-mono px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-medium">
+                Time: ~5 mins &bull; Zero Coding
+              </span>
+            </div>
 
-        <!-- Ready to paste Google Apps Script snippet -->
-        <h3 id="google-sheets-apps-script" class="text-sm font-semibold text-stone-900 mt-6 mb-2">
-          Google Sheets Apps Script Receiver (Ready-to-Paste)
-        </h3>
-        <p class="text-xs text-stone-600">
-          In your Google Sheet, open <strong>Extensions &gt; Apps Script</strong>, paste this code, and click <strong>Deploy &gt; New deployment &gt; Web app</strong> (Access: <em>Anyone</em>):
-        </p>
+            <div class="bg-amber-50/70 border border-amber-200 rounded-[6px] p-3 text-xs text-amber-900 space-y-1">
+              <strong><i data-lucide="check-circle-2" class="w-3.5 h-3.5 inline mr-1 text-amber-700"></i> What you need before starting:</strong>
+              <ul class="list-disc list-inside ml-2 text-stone-700 space-y-0.5">
+                <li>A free Meta Developer account at <a href="https://developers.facebook.com" target="_blank" class="underline text-stone-900 font-medium">developers.facebook.com</a></li>
+                <li>A clean phone number (not currently registered on personal WhatsApp app)</li>
+                <li>Access to your CuboidPilot Channels hub (<a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a>)</li>
+              </ul>
+            </div>
 
-        <div class="border border-stone-800 rounded-[3px] bg-stone-900 text-stone-200 overflow-hidden my-4">
-          <div class="px-3.5 py-2 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
-            <span class="font-mono text-[11px] text-stone-400">Google Apps Script (Code.gs)</span>
-            <button onclick="copyCode('apps-script-snippet', this)" class="text-xs text-stone-300 hover:text-white inline-flex items-center gap-1.5 transition-colors cursor-pointer">
-              <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-              <span>Copy</span>
-            </button>
+            <div class="space-y-3 text-xs text-stone-700">
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">1</span>
+                <div>
+                  <strong>Create Meta Developer App:</strong> Go to <a href="https://developers.facebook.com/apps" target="_blank" class="underline text-stone-900 font-medium">Meta Developer Apps</a> &rarr; Click <strong>Create App</strong> &rarr; Select <strong>Other</strong> &rarr; Select App Type as <strong>Business</strong>.
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">2</span>
+                <div>
+                  <strong>Add WhatsApp Product:</strong> On the Add Products page, locate <strong>WhatsApp</strong> and click <strong>Set up</strong>. Meta will create a WhatsApp test sandbox and show your credentials.
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">3</span>
+                <div>
+                  <strong>Copy 3 Keys from Meta:</strong> Under <strong>WhatsApp &rarr; API Setup</strong>, copy:
+                  <ul class="list-disc list-inside ml-3 mt-1 text-stone-600 font-mono text-[11px]">
+                    <li><strong>Phone Number ID</strong> (e.g., <code>108294829104812</code>)</li>
+                    <li><strong>WhatsApp Business Account ID (WABA ID)</strong> (e.g., <code>102938192830192</code>)</li>
+                    <li><strong>Temporary / Permanent Access Token</strong> (starts with <code>EAA...</code>)</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">4</span>
+                <div class="w-full">
+                  <strong>Configure Webhook in Meta:</strong> Go to <strong>WhatsApp &rarr; Configuration &rarr; Webhook</strong>, click <strong>Edit</strong> and enter:
+                  <div class="mt-2 p-3 bg-stone-900 text-stone-200 rounded-[4px] font-mono text-[11px] space-y-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-stone-400">Callback URL:</span>
+                      <button onclick="copyCode('wh-wa-url', this)" class="text-emerald-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                    </div>
+                    <code id="wh-wa-url" class="text-emerald-300 block">https://cai.cuboidsoft.in/api/webhooks/whatsapp.php</code>
+                    <div class="flex items-center justify-between pt-1 border-t border-stone-800">
+                      <span class="text-stone-400">Verify Token:</span>
+                      <button onclick="copyCode('wh-wa-token', this)" class="text-emerald-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                    </div>
+                    <code id="wh-wa-token" class="text-emerald-300 block">cuboid_whatsapp_verify</code>
+                  </div>
+                  <div class="mt-1.5 text-stone-500">Click <strong>Verify and save</strong>, then click <strong>Manage Webhook fields</strong> and check <code>messages</code> and <code>message_template_status_update</code>.</div>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">5</span>
+                <div>
+                  <strong>Paste in CuboidPilot:</strong> In your dashboard at <a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a>, click on the <strong>WhatsApp</strong> card &rarr; Paste your Phone Number ID, WABA ID, and Token &rarr; Click <strong>Save &amp; Connect</strong>. Your AI Assistant is now live on WhatsApp!
+                </div>
+              </div>
+            </div>
           </div>
-          <pre id="apps-script-snippet" class="p-3 sm:p-4 font-mono text-[11px] overflow-x-auto leading-relaxed text-emerald-400"><code>function doPost(e) {
+
+          <!-- CHANNEL 2: INSTAGRAM DIRECT MESSAGES -->
+          <div id="guide-instagram" class="border border-[#e7e5de] bg-white rounded-[8px] p-5 sm:p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[8px] bg-rose-50 border border-rose-200 p-2 flex items-center justify-center shrink-0">
+                  <img src="assets/brands/instagram.svg" alt="Instagram" class="w-6 h-6 object-contain" onerror="this.src='assets/brands/instagram.png'">
+                </div>
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900 leading-tight">2. Instagram Direct Messages (Meta Graph API)</h3>
+                  <span class="text-xs text-stone-500">Auto-Reply to Story Replies, Reels Comments &amp; Inbound DMs with Qualified Lead Sync</span>
+                </div>
+              </div>
+              <span class="self-start sm:self-auto text-[11px] font-mono px-2 py-0.5 bg-rose-50 text-rose-800 border border-rose-200 rounded font-medium">
+                Time: ~3 mins &bull; High Converting
+              </span>
+            </div>
+
+            <div class="bg-blue-50/70 border border-blue-200 rounded-[6px] p-3 text-xs text-blue-950 space-y-1">
+              <strong><i data-lucide="info" class="w-3.5 h-3.5 inline mr-1 text-blue-700"></i> Non-Tech Prerequisite (Very Important):</strong>
+              <p class="m-0 text-stone-700">
+                Your Instagram account must be a <strong>Professional / Business / Creator</strong> account (Free in Instagram mobile app under Settings &gt; Account Type). It must be linked to an official <strong>Facebook Page</strong>.
+              </p>
+            </div>
+
+            <div class="space-y-3 text-xs text-stone-700">
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">1</span>
+                <div>
+                  <strong>Allow Connected Tools in Instagram App:</strong> On your mobile Instagram app &rarr; <strong>Settings &rarr; Messages &amp; Story Replies &rarr; Message Controls</strong> &rarr; Toggle ON <strong>"Allow Access to Messages"</strong>.
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">2</span>
+                <div>
+                  <strong>Add Instagram to Meta App:</strong> In your <a href="https://developers.facebook.com/apps" target="_blank" class="underline text-stone-900 font-medium">Meta Developer App</a>, click <strong>Add Product &rarr; Instagram Graph API</strong> &rarr; Click Set up.
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">3</span>
+                <div class="w-full">
+                  <strong>Configure Webhook in Meta (Step 3 in Meta Portal):</strong>
+                  <div class="mt-2 p-3 bg-stone-900 text-stone-200 rounded-[4px] font-mono text-[11px] space-y-1.5">
+                    <div class="flex items-center justify-between">
+                      <span class="text-stone-400">Callback URL:</span>
+                      <button onclick="copyCode('wh-ig-url', this)" class="text-rose-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                    </div>
+                    <code id="wh-ig-url" class="text-rose-300 block">https://cai.cuboidsoft.in/api/instagram_webhook.php</code>
+                    <div class="flex items-center justify-between pt-1 border-t border-stone-800">
+                      <span class="text-stone-400">Verify Token:</span>
+                      <button onclick="copyCode('wh-ig-token', this)" class="text-rose-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                    </div>
+                    <code id="wh-ig-token" class="text-rose-300 block">cuboid_ig_verify</code>
+                  </div>
+                  <div class="mt-1.5 text-stone-500">Click <strong>"Verify and save"</strong> (it will verify with a green checkmark). Under Subscribed Fields, subscribe to <code>messages</code> and <code>messaging_postbacks</code>.</div>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">4</span>
+                <div>
+                  <strong>Connect in CuboidPilot:</strong> In <a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a>, click <strong>Instagram</strong> &rarr; Enter your Instagram Username, Connected Facebook Page ID, and Access Token &rarr; Click <strong>Save &amp; Activate</strong>.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHANNEL 3: GOOGLE CALENDAR -->
+          <div id="guide-google-calendar" class="border border-[#e7e5de] bg-white rounded-[8px] p-5 sm:p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[8px] bg-blue-50 border border-blue-200 p-2 flex items-center justify-center shrink-0">
+                  <img src="assets/brands/google-calendar.svg" alt="Google Calendar" class="w-6 h-6 object-contain" onerror="this.src='assets/brands/google-calendar.png'">
+                </div>
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900 leading-tight">3. Google Calendar &amp; Google Meet</h3>
+                  <span class="text-xs text-stone-500">2-Way Free/Busy Conflict Checking &amp; Automatic Video Demo Meeting Creation</span>
+                </div>
+              </div>
+              <span class="self-start sm:self-auto text-[11px] font-mono px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded font-medium">
+                Time: ~4 mins &bull; OAuth 2.0
+              </span>
+            </div>
+
+            <div class="space-y-3 text-xs text-stone-700">
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">1</span>
+                <div>
+                  <strong>Open Google Cloud Console:</strong> Visit <a href="https://console.cloud.google.com" target="_blank" class="underline text-stone-900 font-medium">console.cloud.google.com</a> &rarr; Create or select a project &rarr; In the search bar, search for <strong>Google Calendar API</strong> and click <strong>Enable</strong>.
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">2</span>
+                <div class="w-full">
+                  <strong>Create OAuth 2.0 Credentials:</strong> Go to <strong>APIs &amp; Services &rarr; Credentials</strong> &rarr; Click <strong>Create Credentials &rarr; OAuth client ID</strong> &rarr; Select Application type as <strong>Web application</strong>. Under <strong>Authorized redirect URIs</strong>, add:
+                  <div class="mt-2 p-2.5 bg-stone-900 text-stone-200 rounded-[4px] font-mono text-[11px] flex items-center justify-between">
+                    <code id="gcal-redirect-uri" class="text-blue-300">https://cai.cuboidsoft.in/google_callback.php</code>
+                    <button onclick="copyCode('gcal-redirect-uri', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">3</span>
+                <div>
+                  <strong>Link in CuboidPilot:</strong> Copy the generated <strong>Client ID</strong> and <strong>Client Secret</strong> &rarr; Paste them into <a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a> under Google Calendar &rarr; Click <strong>Authorize with Google</strong> and grant permission. Appointments booked via AI widget or WhatsApp will automatically appear on your Google Calendar with a Google Meet link!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHANNEL 4: CALENDLY -->
+          <div id="guide-calendly" class="border border-[#e7e5de] bg-white rounded-[8px] p-5 sm:p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[8px] bg-sky-50 border border-sky-200 p-2 flex items-center justify-center shrink-0">
+                  <img src="assets/brands/calendly.svg" alt="Calendly" class="w-6 h-6 object-contain" onerror="this.src='assets/brands/calendly.png'">
+                </div>
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900 leading-tight">4. Calendly (Instant Link Booking)</h3>
+                  <span class="text-xs text-stone-500">Show Calendly Booking Cards &amp; Meeting Pickers Inside the AI Widget</span>
+                </div>
+              </div>
+              <span class="self-start sm:self-auto text-[11px] font-mono px-2 py-0.5 bg-sky-50 text-sky-800 border border-sky-200 rounded font-medium">
+                Time: 30 Seconds &bull; Easiest ⭐
+              </span>
+            </div>
+
+            <div class="space-y-3 text-xs text-stone-700">
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">1</span>
+                <div>
+                  <strong>Copy Your Calendly Link:</strong> Open your <a href="https://calendly.com" target="_blank" class="underline text-stone-900 font-medium">Calendly account</a> &rarr; Copy your 15-min or 30-min meeting link (e.g. <code>https://calendly.com/your-company/consultation</code>).
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">2</span>
+                <div>
+                  <strong>Paste &amp; Enable in Channels Hub:</strong> Go to <a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a> &rarr; Click <strong>Calendly</strong> &rarr; Paste your link &rarr; Toggle <strong>Enable</strong> &rarr; Click <strong>Save Changes</strong>.
+                </div>
+              </div>
+
+              <div class="p-3 bg-emerald-50/70 border border-emerald-200 rounded-[6px] text-xs text-emerald-900">
+                <strong><i data-lucide="sparkles" class="w-3.5 h-3.5 inline mr-1 text-emerald-700"></i> How it works on your site:</strong> Whenever a website visitor says <em>"Can I book a demo?"</em> or <em>"Schedule a meeting"</em>, the AI displays a native 1-click booking card with your Calendly calendar right inside the chat window.
+              </div>
+            </div>
+          </div>
+
+          <!-- CHANNEL 5: COMPANY EMAIL (SMTP) -->
+          <div id="guide-email-smtp" class="border border-[#e7e5de] bg-white rounded-[8px] p-5 sm:p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[8px] bg-amber-50 border border-amber-200 p-2 flex items-center justify-center shrink-0">
+                  <img src="assets/brands/gmail.svg" alt="Email" class="w-6 h-6 object-contain" onerror="this.src='assets/brands/gmail.png'">
+                </div>
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900 leading-tight">5. Company Email Account (SMTP &bull; Gmail / Zoho / Outlook / Webmail)</h3>
+                  <span class="text-xs text-stone-500">Team Invites, Instant Lead Email Alerts &amp; AI Auto-Dispatching Syllabi / Brochures</span>
+                </div>
+              </div>
+              <span class="self-start sm:self-auto text-[11px] font-mono px-2 py-0.5 bg-amber-50 text-amber-800 border border-amber-200 rounded font-medium">
+                Time: ~2 mins &bull; Essential Core
+              </span>
+            </div>
+
+            <div class="bg-amber-50/70 border border-amber-200 rounded-[6px] p-3 text-xs text-amber-950 space-y-1">
+              <strong><i data-lucide="zap" class="w-3.5 h-3.5 inline mr-1 text-amber-700"></i> What this unlocks for your business:</strong>
+              <ul class="list-disc list-inside ml-2 text-stone-700 space-y-0.5">
+                <li><strong>Team Member Invitations:</strong> Invite coworkers to join your CRM workspace with a 1-click link.</li>
+                <li><strong>Instant Lead Email Alerts:</strong> Get an email notification immediately whenever someone leaves a phone number or high-intent inquiry on your website.</li>
+                <li><strong>AI Visitor Document Dispatch:</strong> When a visitor asks for fees or syllabus, AI takes their email on the widget and dispatches the document straight to their inbox.</li>
+              </ul>
+            </div>
+
+            <div class="space-y-3 text-xs text-stone-700">
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">1</span>
+                <div>
+                  <strong>If using Gmail / Google Workspace (Generating App Password):</strong>
+                  <ul class="list-disc list-inside ml-2 mt-1 space-y-0.5 text-stone-600">
+                    <li>Go to your Google Account (<a href="https://myaccount.google.com/security" target="_blank" class="underline text-stone-900">myaccount.google.com/security</a>) &rarr; Turn ON <strong>2-Step Verification</strong>.</li>
+                    <li>Search for <strong>"App Passwords"</strong> (or visit <a href="https://myaccount.google.com/apppasswords" target="_blank" class="underline text-stone-900">myaccount.google.com/apppasswords</a>).</li>
+                    <li>Enter app name <code>CuboidPilot</code> and click <strong>Create</strong> &rarr; Copy the 16-character password shown.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">2</span>
+                <div class="w-full">
+                  <strong>Enter Credentials in CuboidPilot:</strong> Open <a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a> &rarr; Click <strong>Company Email</strong> &rarr; Fill the fields:
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2 font-mono text-[11px]">
+                    <div class="p-2 bg-stone-50 border border-stone-200 rounded">
+                      <strong>SMTP Host:</strong> <code>smtp.gmail.com</code> (or mail.yourdomain.com)
+                    </div>
+                    <div class="p-2 bg-stone-50 border border-stone-200 rounded">
+                      <strong>Port &amp; Security:</strong> <code>587</code> with <code>TLS</code> (or <code>465</code> SSL)
+                    </div>
+                    <div class="p-2 bg-stone-50 border border-stone-200 rounded">
+                      <strong>Username:</strong> <code>your-email@gmail.com</code>
+                    </div>
+                    <div class="p-2 bg-stone-50 border border-stone-200 rounded">
+                      <strong>Password:</strong> <code>[Your 16-character App Password]</code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">3</span>
+                <div>
+                  <strong>Test &amp; Save:</strong> Click <strong>"Send Test Email"</strong> &rarr; When you see <em>"SMTP verified successfully"</em>, click <strong>Save Configuration</strong>.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHANNEL 6: GOOGLE SHEETS -->
+          <div id="guide-google-sheets" class="border border-[#e7e5de] bg-white rounded-[8px] p-5 sm:p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[8px] bg-emerald-50 border border-emerald-200 p-2 flex items-center justify-center shrink-0">
+                  <img src="assets/brands/google-sheets.svg" alt="Google Sheets" class="w-6 h-6 object-contain" onerror="this.src='assets/brands/google-sheets.png'">
+                </div>
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900 leading-tight">6. Google Sheets (Real-Time Auto-Append)</h3>
+                  <span class="text-xs text-stone-500">Append Every Inbound Lead &amp; Contact Details into a Live Spreadsheet Row</span>
+                </div>
+              </div>
+              <span class="self-start sm:self-auto text-[11px] font-mono px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded font-medium">
+                Time: ~2 mins &bull; 1-Click Code
+              </span>
+            </div>
+
+            <div class="space-y-3 text-xs text-stone-700">
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">1</span>
+                <div>
+                  <strong>Open a New Google Sheet:</strong> Go to <a href="https://sheets.new" target="_blank" class="underline text-stone-900 font-medium">sheets.new</a> &rarr; Name your spreadsheet (e.g. <code>CuboidPilot Inbound Leads 2026</code>).
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">2</span>
+                <div class="w-full">
+                  <strong>Open Apps Script &amp; Paste Code:</strong> In Google Sheet top menu, click <strong>Extensions &rarr; Apps Script</strong>. Delete any existing code, paste this ready-made script:
+                  <div class="border border-stone-800 rounded-[3px] bg-stone-900 text-stone-200 overflow-hidden my-2">
+                    <div class="px-3.5 py-1.5 bg-stone-950 border-b border-stone-800 flex items-center justify-between">
+                      <span class="font-mono text-[11px] text-stone-400">Google Apps Script (Code.gs)</span>
+                      <button onclick="copyCode('gsheet-apps-script', this)" class="text-xs text-emerald-400 hover:text-white inline-flex items-center gap-1 cursor-pointer">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                        <span>Copy Code</span>
+                      </button>
+                    </div>
+                    <pre id="gsheet-apps-script" class="p-3 font-mono text-[11px] overflow-x-auto leading-relaxed text-emerald-400"><code>function doPost(e) {
   try {
     var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     var payload = JSON.parse(e.postData.contents);
-    var data = payload.data || {};
+    var data = payload.data || payload;
 
-    // Auto-create column headers if sheet is blank
     if (sheet.getLastRow() === 0) {
-      sheet.appendRow(["Timestamp", "Lead Name", "Phone", "Email", "Intent Score", "Summary", "Source"]);
-      sheet.getRange(1, 1, 1, 7).setFontWeight("bold").setBackground("#f3f4f6");
+      sheet.appendRow(["Timestamp", "Lead Name", "Phone", "Email", "Intent / Course", "Estimated Value", "AI Summary", "Channel"]);
+      sheet.getRange(1, 1, 1, 8).setFontWeight("bold").setBackground("#e6f4ea");
     }
 
-    // Append lead row
     sheet.appendRow([
-      new Date().toISOString(),
-      data.name || "Anonymous Visitor",
+      new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }),
+      data.name || data.customer_name || "Prospect",
       data.phone || "",
       data.email || "",
-      data.intent_score || "Tier 3",
-      data.summary || "",
+      data.interested_service || data.intent || "General Inquiry",
+      data.budget || data.opportunity_value || "",
+      data.summary || data.ai_summary || "",
       payload.source || "Website Widget"
     ]);
 
@@ -1221,6 +1470,150 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
       .setMimeType(ContentService.MimeType.JSON);
   }
 }</code></pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">3</span>
+                <div>
+                  <strong>Deploy as Web App:</strong> In Apps Script top right &rarr; Click <strong>Deploy &rarr; New deployment</strong> &rarr; Select type: <strong>Web app</strong> &rarr; Set <strong>Who has access: Anyone</strong> &rarr; Click <strong>Deploy</strong> &rarr; Copy the generated <strong>Web app URL</strong>.
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">4</span>
+                <div>
+                  <strong>Paste in CuboidPilot:</strong> In <a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a>, click <strong>Google Sheets</strong> &rarr; Paste your Web app URL &rarr; Click <strong>Connect &amp; Test</strong>. Every new lead will appear in your Google Sheet within 2 seconds!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHANNEL 7: TELECRM -->
+          <div id="guide-telecrm" class="border border-[#e7e5de] bg-white rounded-[8px] p-5 sm:p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[8px] bg-purple-50 border border-purple-200 p-2 flex items-center justify-center shrink-0">
+                  <img src="assets/brands/telecrm.svg" alt="TeleCRM" class="w-6 h-6 object-contain" onerror="this.src='assets/brands/telecrm.png'">
+                </div>
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900 leading-tight">7. TeleCRM (TellyCRM Direct Pipeline Sync)</h3>
+                  <span class="text-xs text-stone-500">Auto-push Captured Leads with Caller Notes, Intent Tags &amp; Auto-Call Queue</span>
+                </div>
+              </div>
+              <span class="self-start sm:self-auto text-[11px] font-mono px-2 py-0.5 bg-purple-50 text-purple-800 border border-purple-200 rounded font-medium">
+                Time: ~1 min &bull; API Key
+              </span>
+            </div>
+
+            <div class="space-y-3 text-xs text-stone-700">
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">1</span>
+                <div>
+                  <strong>Copy TeleCRM API Key:</strong> Log into your <a href="https://telecrm.in" target="_blank" class="underline text-stone-900 font-medium">TeleCRM Web Dashboard</a> &rarr; Go to <strong>Settings &rarr; Integrations / API &rarr; Generate New API Key</strong> &rarr; Copy the Key.
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">2</span>
+                <div>
+                  <strong>Connect in CuboidPilot:</strong> In <a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a>, click <strong>TeleCRM</strong> &rarr; Paste your API Key &rarr; Click <strong>Save &amp; Activate</strong>.
+                </div>
+              </div>
+
+              <div class="p-3 bg-purple-50/70 border border-purple-200 rounded-[6px] text-xs text-purple-950">
+                <strong><i data-lucide="phone-outgoing" class="w-3.5 h-3.5 inline mr-1 text-purple-700"></i> What happens automatically:</strong> When a website or WhatsApp prospect provides their contact number, they are instantly created as a New Lead in your TeleCRM mobile app, ready for your calling team to dial with 1 tap.
+              </div>
+            </div>
+          </div>
+
+          <!-- CHANNELS 8, 9 & 10: ZOHO, HUBSPOT, SALESFORCE -->
+          <div id="guide-zoho" class="border border-[#e7e5de] bg-white rounded-[8px] p-5 sm:p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[8px] bg-red-50 border border-red-200 p-2 flex items-center justify-center shrink-0">
+                  <img src="assets/brands/zoho.svg" alt="Zoho CRM" class="w-6 h-6 object-contain" onerror="this.src='assets/brands/zoho.png'">
+                </div>
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900 leading-tight">8. Zoho CRM &bull; 9. HubSpot &bull; 10. Salesforce</h3>
+                  <span class="text-xs text-stone-500">Enterprise CRM Contact &amp; Deal Synchronization</span>
+                </div>
+              </div>
+              <span class="self-start sm:self-auto text-[11px] font-mono px-2 py-0.5 bg-stone-100 text-stone-700 border border-stone-200 rounded font-medium">
+                Enterprise Ready
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+              <div class="p-3 bg-[#fbfaf6] border border-[#e7e5de] rounded-[6px] space-y-2">
+                <div class="font-semibold text-stone-900 flex items-center gap-1.5">
+                  <img src="assets/brands/zoho.svg" class="w-4 h-4" onerror="this.src='assets/brands/zoho.png'">
+                  <span>Zoho CRM Setup</span>
+                </div>
+                <p class="text-stone-600 m-0">In Zoho Developer Console &rarr; Register a Client &rarr; Copy Client ID &amp; Refresh Token &rarr; Paste in Channels hub.</p>
+                <div class="font-mono text-[10px] text-stone-500">Supports zoho.in &amp; zoho.com</div>
+              </div>
+
+              <div id="guide-hubspot" class="p-3 bg-[#fbfaf6] border border-[#e7e5de] rounded-[6px] space-y-2">
+                <div class="font-semibold text-stone-900 flex items-center gap-1.5">
+                  <img src="assets/brands/hubspot.svg" class="w-4 h-4" onerror="this.src='assets/brands/hubspot.png'">
+                  <span>HubSpot CRM Setup</span>
+                </div>
+                <p class="text-stone-600 m-0">In HubSpot Settings &rarr; Integrations &rarr; Private Apps &rarr; Create App with <code>crm.objects.contacts.write</code> &rarr; Copy Access Token.</p>
+                <div class="font-mono text-[10px] text-stone-500">Instant contact creation</div>
+              </div>
+
+              <div id="guide-salesforce" class="p-3 bg-[#fbfaf6] border border-[#e7e5de] rounded-[6px] space-y-2">
+                <div class="font-semibold text-stone-900 flex items-center gap-1.5">
+                  <img src="assets/brands/salesforce.svg" class="w-4 h-4" onerror="this.src='assets/brands/salesforce.png'">
+                  <span>Salesforce Setup</span>
+                </div>
+                <p class="text-stone-600 m-0">In Salesforce Setup &rarr; App Manager &rarr; Create Connected App &rarr; Enable OAuth &rarr; Enter Consumer Key &amp; Secret.</p>
+                <div class="font-mono text-[10px] text-stone-500">Standard Leads &amp; Deals</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHANNEL 11: ZAPIER, MAKE & CUSTOM WEBHOOKS -->
+          <div id="guide-webhooks" class="border border-[#e7e5de] bg-white rounded-[8px] p-5 sm:p-6 shadow-2xs space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#f0ede6] pb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-[8px] bg-stone-100 border border-stone-200 p-2 flex items-center justify-center shrink-0">
+                  <img src="assets/brands/webhook.svg" alt="Webhooks" class="w-6 h-6 object-contain" onerror="this.src='assets/brands/webhook.png'">
+                </div>
+                <div>
+                  <h3 class="text-base font-semibold text-stone-900 leading-tight">11. Custom Webhooks, Zapier &amp; Make (Integromat)</h3>
+                  <span class="text-xs text-stone-500">Connect to 5,000+ Apps via HTTP POST JSON Streaming</span>
+                </div>
+              </div>
+              <span class="self-start sm:self-auto text-[11px] font-mono px-2 py-0.5 bg-stone-100 text-stone-800 border border-stone-200 rounded font-medium">
+                Universal Compatibility
+              </span>
+            </div>
+
+            <div class="space-y-3 text-xs text-stone-700">
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">1</span>
+                <div>
+                  <strong>Get a Webhook URL:</strong> In <strong>Zapier</strong>, select trigger <em>"Webhooks by Zapier &rarr; Catch Hook"</em> &rarr; Copy the Catch URL. (Or in <strong>Make</strong>, add a Custom Webhook module).
+                </div>
+              </div>
+
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">2</span>
+                <div>
+                  <strong>Paste in CuboidPilot:</strong> In <a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a>, click <strong>Custom Webhook</strong> &rarr; Paste your URL &rarr; Click <strong>Save &amp; Send Test Ping</strong>.
+                </div>
+              </div>
+
+              <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] font-mono text-[11px] text-stone-700 space-y-1">
+                <div class="font-semibold text-stone-900">Enterprise Security:</div>
+                <div>Every outgoing payload includes cryptographic signature: <code>X-Cuboid-Signature: sha256=[HMAC-HEX]</code></div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
