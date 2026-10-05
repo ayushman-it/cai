@@ -3818,14 +3818,213 @@
     .cp-locked-back-btn:hover {
       color: var(--cp-text-primary, #ffffff);
     }
-      background: #0f172a;
-      color: #ffffff;
+
+    /* ------------------------------------------------------------- */
+    /* Intercom Fin / Messenger Style Waiting Pill & Handoff Card   */
+    /* ------------------------------------------------------------- */
+    .cp-waiting-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 10px auto;
+      padding: 7px 14px;
+      background: var(--cp-options-bg, #181920);
+      border: 1px solid var(--cp-border-input, #282931);
+      border-radius: 9999px;
+      font-size: 12px;
+      color: var(--cp-text-primary, #ffffff);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+      animation: cpFadeSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 90%;
+      user-select: none;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    :host([data-theme="light"]) .cp-waiting-pill,
+    .cp-window.cp-light-theme .cp-waiting-pill,
+    .cp-window.theme-light .cp-waiting-pill {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: #0f172a;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    }
+
+    .cp-waiting-avatar-wrap {
+      position: relative;
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 1;
+    }
+
+    .cp-waiting-avatar-img {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid var(--cp-bg-surface, #1e2028);
+    }
+
+    :host([data-theme="light"]) .cp-waiting-avatar-img,
+    .cp-window.cp-light-theme .cp-waiting-avatar-img,
+    .cp-window.theme-light .cp-waiting-avatar-img {
+      border-color: #f1f5f9;
+    }
+
+    .cp-waiting-dot-pulse {
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #f59e0b;
+      box-shadow: 0 0 0 2px var(--cp-bg-surface, #1e2028);
+      animation: cpPulseAmber 1.6s infinite ease-in-out;
+    }
+
+    .cp-waiting-pill.connected .cp-waiting-dot-pulse {
+      background: #10b981;
+      animation: cpPulseGreen 1.8s infinite ease-in-out;
+    }
+
+    @keyframes cpPulseAmber {
+      0%, 100% { transform: scale(1); opacity: 0.9; box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.5); }
+      50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0); }
+    }
+
+    @keyframes cpPulseGreen {
+      0%, 100% { transform: scale(1); opacity: 0.9; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+      50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
+    }
+
+    .cp-waiting-text {
+      font-weight: 500;
+      color: var(--cp-text-primary, #ffffff);
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+    }
+
+    :host([data-theme="light"]) .cp-waiting-text,
+    .cp-window.cp-light-theme .cp-waiting-text,
+    .cp-window.theme-light .cp-waiting-text {
+      color: #0f172a;
+    }
+
+    .cp-waiting-timer {
+      font-size: 11px;
+      font-weight: 600;
+      color: #f59e0b;
+      background: rgba(245, 158, 11, 0.12);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      padding: 1px 7px;
+      border-radius: 9999px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cp-waiting-pill.connected .cp-waiting-timer {
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.25);
+    }
+
+    /* Intercom Agent Takeover Card / Notification */
+    .cp-takeover-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 12px auto 8px auto;
+      padding: 10px 14px;
+      background: var(--cp-options-bg, #181920);
+      border: 1px solid var(--cp-border-input, #282931);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      animation: cpFadeSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      width: calc(100% - 16px);
+      box-sizing: border-box;
+    }
+
+    :host([data-theme="light"]) .cp-takeover-banner,
+    .cp-window.cp-light-theme .cp-takeover-banner,
+    .cp-window.theme-light .cp-takeover-banner {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+    }
+
+    .cp-takeover-avatar {
+      position: relative;
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+    }
+
+    .cp-takeover-avatar img {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 1.5px solid var(--cp-bg-surface, #1e2028);
+    }
+
+    :host([data-theme="light"]) .cp-takeover-avatar img,
+    .cp-window.cp-light-theme .cp-takeover-avatar img,
+    .cp-window.theme-light .cp-takeover-avatar img {
+      border-color: #ffffff;
+    }
+
+    .cp-takeover-status-dot {
+      position: absolute;
+      bottom: -1px;
+      right: -1px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #10b981;
+      border: 2px solid var(--cp-bg-surface, #1e2028);
+    }
+
+    :host([data-theme="light"]) .cp-takeover-status-dot,
+    .cp-window.cp-light-theme .cp-takeover-status-dot,
+    .cp-window.theme-light .cp-takeover-status-dot {
+      border-color: #ffffff;
+    }
+
+    .cp-takeover-info {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+    }
+
+    .cp-takeover-name {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--cp-text-title, #ffffff);
+      line-height: 1.3;
+    }
+
+    :host([data-theme="light"]) .cp-takeover-name,
+    .cp-window.cp-light-theme .cp-takeover-name,
+    .cp-window.theme-light .cp-takeover-name {
+      color: #0f172a;
+    }
+
+    .cp-takeover-desc {
+      font-size: 11px;
+      color: var(--cp-text-secondary, #8e929f);
+      margin-top: 1px;
+    }
+
+    :host([data-theme="light"]) .cp-takeover-desc,
+    .cp-window.cp-light-theme .cp-takeover-desc,
+    .cp-window.theme-light .cp-takeover-desc {
+      color: #64748b;
+    }
+
+    .cp-msg-row.ai.human-agent-msg .cp-bubble {
+      border-left: 2.5px solid #10b981;
     }
 
     :host([data-theme="light"]) .cp-ask-icon-bubble,
@@ -6512,8 +6711,12 @@
   }
 
   function appendAIMessage(data) {
+    const isHuman = Boolean(data.is_human || data.agent_name || data.sender === 'human_agent');
+    const senderName = data.agent_name || (isHuman ? (selectedAgent?.name || 'Advisor') : (widgetConfig.assistant_name || 'Cai'));
+    const senderRole = isHuman ? 'Human Specialist' : 'AI Agent';
+
     const row = document.createElement('div');
-    row.className = 'cp-msg-row ai';
+    row.className = 'cp-msg-row ai' + (isHuman ? ' human-agent-msg' : '');
 
     const fullText = data.reply || data.text || '';
     const bubble = document.createElement('div');
@@ -6523,9 +6726,9 @@
     const metaLine = document.createElement('div');
     metaLine.className = 'cp-meta-line';
     metaLine.innerHTML = `
-      <span>${escapeHtml(widgetConfig.assistant_name || 'Cai')}</span>
+      <span>${escapeHtml(senderName)}</span>
       <span>•</span>
-      <span>AI Agent</span>
+      <span>${escapeHtml(senderRole)}</span>
       <span>•</span>
       <span>${data.timestamp || 'Just now'}</span>
     `;
@@ -7249,6 +7452,9 @@
       if (brandLogo) updateWidgetLogo();
       if (!isIdentified && sessionStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) !== '1') {
         renderVisitorIdentificationPrompt();
+      }
+      if (conversationId) {
+        startHumanPolling();
       }
       scrollToBottom();
       return;
@@ -8237,9 +8443,16 @@
     const pill = document.createElement('div');
     pill.className = 'cp-waiting-pill';
     pill.id = 'cp-waiting-pill';
+    const fallbackAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
+    let agentAvatar = (agent && agent.avatar_url) ? (agent.avatar_url.startsWith('http') ? agent.avatar_url : `${baseUrl}/${agent.avatar_url.replace(/^\/+/, '')}`) : fallbackAvatar;
+    const targetAgentName = (agent && agent.name) ? escapeHtml(agent.name) : 'team';
+
     pill.innerHTML = `
-      <span class="cp-waiting-dot"></span>
-      <span class="cp-waiting-text" id="cp-waiting-text">Connecting to team...</span>
+      <div class="cp-waiting-avatar-wrap">
+        <img src="${agentAvatar}" class="cp-waiting-avatar-img" alt="" onerror="this.src='${fallbackAvatar}';" />
+        <span class="cp-waiting-dot-pulse"></span>
+      </div>
+      <span class="cp-waiting-text" id="cp-waiting-text">Connecting to ${targetAgentName}...</span>
       <span class="cp-waiting-timer" id="cp-waiting-timer">30s</span>
     `;
     chatStream.appendChild(pill);
@@ -8286,14 +8499,14 @@
         timerEl.textContent = `${humanSecondsRemaining}s`;
       }
       if (subtitleEl) {
-        subtitleEl.textContent = `Connecting to team (${humanSecondsRemaining}s)...`;
+        subtitleEl.textContent = `Connecting to ${selectedAgent?.name || 'team'} (${humanSecondsRemaining}s)...`;
       }
 
       if (humanSecondsRemaining <= 0) {
         if (humanAttemptNumber < 3) {
           humanAttemptNumber++;
           humanSecondsRemaining = 30;
-          if (textEl) textEl.textContent = `Attempt ${humanAttemptNumber}: Re-notifying team...`;
+          if (textEl) textEl.textContent = `Attempt ${humanAttemptNumber}: Re-notifying ${selectedAgent?.name || 'team'}...`;
           if (timerEl) timerEl.textContent = `30s`;
           if (subtitleEl) subtitleEl.textContent = `Attempt ${humanAttemptNumber} (30s)...`;
 
@@ -8341,45 +8554,84 @@
     if (humanPollingInterval) clearInterval(humanPollingInterval);
 
     humanPollingInterval = setInterval(async () => {
-      if (currentScreen !== 'human-chat' || !conversationId) return;
+      if ((currentScreen !== 'human-chat' && currentScreen !== 'chat') || !conversationId) return;
 
       try {
-        const url = `${baseUrl}/api/widget_actions.php?action=poll_messages&conversation_id=${conversationId}&after_id=${lastPolledMessageId}&company_key=${encodeURIComponent(companyKey)}`;
+        const url = `${baseUrl}/api/widget_actions.php?action=poll_messages&conversation_id=${conversationId}&after_id=${lastPolledMessageId}&company_key=${encodeURIComponent(companyKey)}&session_token=${encodeURIComponent(sessionId)}`;
         const res = await fetch(url);
         if (!res.ok) return;
         const data = await res.json();
 
         if (data.success) {
           let agentReplied = false;
+          const latestAgentName = (data.agent && data.agent.name) || selectedAgent?.name || 'Advisor';
+          const latestAgentTitle = (data.agent && data.agent.job_title) || selectedAgent?.job_title || 'Customer Specialist';
+          const latestAgentAvatar = (data.agent && data.agent.avatar_url) || selectedAgent?.avatar_url || null;
+
           if (Array.isArray(data.messages)) {
             data.messages.forEach(msg => {
               if (msg.id > lastPolledMessageId) {
                 lastPolledMessageId = msg.id;
                 if (msg.sender === 'human_agent') {
                   agentReplied = true;
-                  appendAIMessage({
-                    reply: msg.text,
-                    timestamp: msg.timestamp || 'Just now',
-                    agent_name: (data.agent && data.agent.name) || selectedAgent?.name || 'Advisor'
-                  });
-                  playReceivedSound();
+                  const alreadyExists = Array.from(chatStream.querySelectorAll('.cp-msg-row.ai .cp-bubble'))
+                    .some(b => b.textContent.trim() === msg.text.trim());
+                  if (!alreadyExists) {
+                    appendAIMessage({
+                      reply: msg.text,
+                      timestamp: msg.timestamp || 'Just now',
+                      agent_name: latestAgentName,
+                      is_human: true,
+                      avatar_url: latestAgentAvatar
+                    });
+                    playReceivedSound();
+                  }
                 }
               }
             });
           }
 
-          if (agentReplied || data.status === 'human_active') {
+          if (agentReplied || data.ownership === 'human' || data.status === 'human_active') {
             stopHumanCountdown();
+            isHumanChatActive = true;
             const activePill = shadow.getElementById('cp-waiting-pill');
             if (activePill && !activePill.classList.contains('connected')) {
               activePill.classList.add('connected');
               const textEl = shadow.getElementById('cp-waiting-text');
-              const agentName = (data.agent && data.agent.name) || selectedAgent?.name || 'Consultant';
-              if (textEl) textEl.textContent = `Connected with ${agentName}`;
-              if (subtitleEl) subtitleEl.textContent = `● Online (${agentName})`;
+              const timerEl = shadow.getElementById('cp-waiting-timer');
+              if (textEl) textEl.textContent = `Connected with ${latestAgentName}`;
+              if (timerEl) timerEl.textContent = 'Live';
+              if (subtitleEl) subtitleEl.textContent = `● Online (${latestAgentName})`;
+              if (assistantNameEl) assistantNameEl.textContent = latestAgentName;
+
+              // Render Intercom Takeover Banner once
+              if (!shadow.getElementById('cp-takeover-banner')) {
+                const banner = document.createElement('div');
+                banner.className = 'cp-takeover-banner';
+                banner.id = 'cp-takeover-banner';
+                const fAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
+                const avUrl = latestAgentAvatar ? (latestAgentAvatar.startsWith('http') ? latestAgentAvatar : `${baseUrl}/${latestAgentAvatar.replace(/^\/+/, '')}`) : fAvatar;
+                banner.innerHTML = `
+                  <div class="cp-takeover-avatar">
+                    <img src="${avUrl}" alt="${escapeHtml(latestAgentName)}" onerror="this.src='${fAvatar}';" />
+                    <span class="cp-takeover-status-dot"></span>
+                  </div>
+                  <div class="cp-takeover-info">
+                    <div class="cp-takeover-name">${escapeHtml(latestAgentName)} joined the conversation</div>
+                    <div class="cp-takeover-desc">${escapeHtml(latestAgentTitle)} • Live Support</div>
+                  </div>
+                `;
+                if (activePill.parentNode) {
+                  activePill.parentNode.insertBefore(banner, activePill);
+                } else if (chatStream) {
+                  chatStream.appendChild(banner);
+                }
+                scrollToBottom();
+              }
+
               setTimeout(() => {
                 if (activePill) activePill.remove();
-              }, 3000);
+              }, 2500);
             }
           }
         }

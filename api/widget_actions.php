@@ -662,6 +662,20 @@ try {
             ")->execute([$userId ?: null, $conversationId, $companyId]);
         }
 
+        // Ensure visitor_sessions maps session_token to conversation and customer
+        if (!empty($sessionToken)) {
+            $vsCheck = $pdo->prepare("SELECT id FROM `visitor_sessions` WHERE (`session_token` = ? OR `session_id` = ?) AND `company_id` = ? LIMIT 1");
+            $vsCheck->execute([$sessionToken, $sessionToken, $companyId]);
+            $vsRow = $vsCheck->fetch(PDO::FETCH_ASSOC);
+            if ($vsRow) {
+                $pdo->prepare("UPDATE `visitor_sessions` SET `customer_id` = ?, `conversation_id` = ?, `session_token` = ? WHERE `id` = ?")
+                    ->execute([$customerId, $conversationId, $sessionToken, (int)$vsRow['id']]);
+            } else {
+                $pdo->prepare("INSERT INTO `visitor_sessions` (`company_id`, `customer_id`, `session_token`, `session_id`, `conversation_id`, `channel`, `created_at`) VALUES (?, ?, ?, ?, ?, 'web', NOW())")
+                    ->execute([$companyId, $customerId, $sessionToken, $sessionToken, $conversationId]);
+            }
+        }
+
         // Dispatch alert notification to counselor / company
         try {
             require_once __DIR__ . '/alerts.php';
@@ -729,12 +743,28 @@ try {
         if (!empty($sessionToken)) {
             $vCheck = $pdo->prepare("
                 SELECT 1 FROM `visitor_sessions` vs
-                WHERE vs.session_token = ? AND vs.company_id = ? AND vs.customer_id = ?
+                WHERE (vs.session_token = ? OR vs.session_id = ?) 
+                  AND vs.company_id = ? 
+                  AND (vs.customer_id = ? OR vs.conversation_id = ?)
                 LIMIT 1
             ");
-            $vCheck->execute([$sessionToken, $companyId, $conv['customer_id']]);
+            $vCheck->execute([$sessionToken, $sessionToken, $companyId, $conv['customer_id'], $conversationId]);
             if ($vCheck->fetch()) {
                 $isVisitorOwner = true;
+            } else {
+                // If session exists for this tenant, securely associate conversation and authorize
+                $sCheck = $pdo->prepare("
+                    SELECT id FROM `visitor_sessions` vs
+                    WHERE (vs.session_token = ? OR vs.session_id = ?) AND vs.company_id = ?
+                    LIMIT 1
+                ");
+                $sCheck->execute([$sessionToken, $sessionToken, $companyId]);
+                $sRow = $sCheck->fetch(PDO::FETCH_ASSOC);
+                if ($sRow) {
+                    $pdo->prepare("UPDATE `visitor_sessions` SET `conversation_id` = ?, `customer_id` = ? WHERE `id` = ?")
+                        ->execute([$conversationId, $conv['customer_id'], (int)$sRow['id']]);
+                    $isVisitorOwner = true;
+                }
             }
         }
 
@@ -755,9 +785,10 @@ try {
 
         $messages = [];
         foreach ($rows as $r) {
+            $isHuman = in_array($r['sender_type'], ['agent', 'human', 'user', 'support_agent'], true);
             $messages[] = [
                 'id'          => (int)$r['id'],
-                'sender'      => ($r['sender_type'] === 'visitor') ? 'user' : (($r['sender_type'] === 'agent' || $r['sender_type'] === 'human') ? 'human_agent' : 'ai'),
+                'sender'      => ($r['sender_type'] === 'visitor') ? 'user' : ($isHuman ? 'human_agent' : 'ai'),
                 'text'        => $r['message_text'],
                 'metadata'    => json_decode($r['metadata_json'] ?? '', true),
                 'timestamp'   => date('g:i A', strtotime($r['created_at']))
@@ -809,6 +840,17 @@ try {
             WHERE id = ? AND company_id = ?
         ")->execute([substr($messageText, 0, 150), $conversationId, $companyId]);
 
+        // Securely link session
+        if (!empty($sessionToken)) {
+            $vsCheck = $pdo->prepare("SELECT id FROM `visitor_sessions` WHERE (`session_token` = ? OR `session_id` = ?) AND `company_id` = ? LIMIT 1");
+            $vsCheck->execute([$sessionToken, $sessionToken, $companyId]);
+            $vsRow = $vsCheck->fetch(PDO::FETCH_ASSOC);
+            if ($vsRow) {
+                $pdo->prepare("UPDATE `visitor_sessions` SET `conversation_id` = ? WHERE `id` = ?")
+                    ->execute([$conversationId, (int)$vsRow['id']]);
+            }
+        }
+
         // Dispatch alert to Counselor WhatsApp (Meta Cloud API wiring)
         try {
             $waStmt = $pdo->prepare("
@@ -825,6 +867,7 @@ try {
             $waStmt->execute([$conversationId, $companyId]);
             $waInfo = $waStmt->fetch(PDO::FETCH_ASSOC);
 
+            $custLabel = !empty($waInfo['cust_name']) ? $waInfo['cust_name'] : 'Website Visitor';
             $targetPhone = !empty($waInfo['agent_phone']) ? $waInfo['agent_phone'] : '';
             if (empty($targetPhone)) {
                 $uStmt = $pdo->prepare("SELECT phone FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND `phone` IS NOT NULL AND `phone` != '' LIMIT 1");
