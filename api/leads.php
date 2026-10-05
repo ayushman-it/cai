@@ -333,6 +333,17 @@ try {
         $leadStmt->execute([$companyId, $customerId, $name, $stageName, $priority, strtolower($priority), $value, $aiSummary]);
         $leadId = (int)$pdo->lastInsertId();
 
+        try {
+            require_once __DIR__ . '/../includes/channel_sync.php';
+            ChannelSync::dispatchLead($pdo, $companyId, $leadId, [
+                'phone'  => $phone,
+                'email'  => $email,
+                'source' => 'Direct CRM'
+            ]);
+        } catch (Throwable $e) {
+            error_log("[Leads] ChannelSync dispatch error: " . $e->getMessage());
+        }
+
         echo json_encode(['success' => true, 'lead_id' => $leadId, 'message' => 'Contact created successfully']);
         exit;
     }

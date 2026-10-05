@@ -281,6 +281,20 @@ try {
         ]);
     }
 
+    // 5b. Dispatch to Google Sheets & connected CRM channels
+    if (!empty($cleanPhone) || !empty($email)) {
+        try {
+            require_once __DIR__ . '/../includes/channel_sync.php';
+            ChannelSync::dispatchLead($pdo, $companyId, $leadId, [
+                'phone'  => $cleanPhone,
+                'email'  => $email,
+                'source' => 'Website Visitor Lead'
+            ]);
+        } catch (Throwable $e) {
+            error_log("[Visitor] ChannelSync dispatch error: " . $e->getMessage());
+        }
+    }
+
     // 6. Persist / Update visitor_sessions with full linking
     $pdo->prepare("
         INSERT INTO `visitor_sessions` 

@@ -564,6 +564,20 @@ try {
             error_log('[Google Calendar Hook Note] ' . $gcalEx->getMessage());
         }
 
+        // Multi-Channel & Google Sheets Real-Time Sync on appointment booking
+        if ($leadId) {
+            try {
+                require_once __DIR__ . '/../includes/channel_sync.php';
+                ChannelSync::dispatchLead($pdo, $companyId, $leadId, [
+                    'phone'  => $visitorPhone,
+                    'email'  => $visitorEmail,
+                    'source' => 'Widget Appointment Booking'
+                ]);
+            } catch (Throwable $e) {
+                error_log('[WidgetActions] ChannelSync dispatch error: ' . $e->getMessage());
+            }
+        }
+
         if ($conversationId) {
             $msgText = "📅 **Appointment Confirmed!**\nWith **{$agent['name']}** ({$agent['job_title']})\nDate & Time: **" . date('l, F j, Y \a\t g:i A', strtotime($slotDatetime)) . "**\nGoogle Meet: {$meetLink}";
             $pdo->prepare("

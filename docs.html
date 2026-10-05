@@ -1447,6 +1447,13 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
     var payload = JSON.parse(e.postData.contents);
     var data = payload.data || payload;
 
+    // Optional: target specific tab if provided
+    var sName = payload.sheet_name || (data && data.sheet_name);
+    if (sName) {
+      var targetTab = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sName);
+      if (targetTab) sheet = targetTab;
+    }
+
     if (sheet.getLastRow() === 0) {
       sheet.appendRow(["Timestamp", "Lead Name", "Phone", "Email", "Intent / Course", "Estimated Value", "AI Summary", "Channel"]);
       sheet.getRange(1, 1, 1, 8).setFontWeight("bold").setBackground("#e6f4ea");

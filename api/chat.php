@@ -1431,6 +1431,19 @@ try {
             null, 
             $isHumanAction ? 'HUMAN_REQUIRED' : ($hasPhoneOrEmail ? 'LEAD_ASSIGNED' : 'HIGH_INTENT_DETECTED')
         );
+
+        // Multi-Channel & Google Sheets Real-Time Sync
+        try {
+            require_once __DIR__ . '/../includes/channel_sync.php';
+            ChannelSync::dispatchLead($pdo, $companyId, $leadId, [
+                'phone'   => $visitorPhone ?: ($customer['phone'] ?? ''),
+                'email'   => $visitorEmail ?: ($customer['email'] ?? ''),
+                'intent'  => $structuredMeta['intent'] ?? ($structuredMeta['interest'] ?? $resolvedStageName),
+                'source'  => 'Website AI Chat'
+            ]);
+        } catch (Throwable $e) {
+            error_log("[Chat] ChannelSync lead dispatch error: " . $e->getMessage());
+        }
     }
 
     // 10. Contextual WhatsApp & Instagram CTA Logic (Sections 4, 5, 6 & 12)

@@ -541,11 +541,14 @@ try {
                     break;
 
                 case 'google_sheets':
-                    $url = $rawCreds['webhook_url'] ?? '';
+                    $url   = trim($rawCreds['webhook_url'] ?? '');
+                    $sName = trim($rawCreds['sheet_name'] ?? 'Leads');
+                    $sId   = trim($rawCreds['sheet_id'] ?? '');
                     if (empty($url)) {
                         $testResult = ['success' => false, 'error' => 'Apps Script Webhook URL is required.'];
                     } else {
-                        $testResult['message'] = "Google Apps Script pinged successfully. Row streaming verified ({$latency}ms).";
+                        require_once __DIR__ . '/../includes/channel_sync.php';
+                        $testResult = ChannelSync::testGoogleSheets($url, $sName, $sId);
                     }
                     break;
 
