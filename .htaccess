@@ -27,12 +27,19 @@ Options -Indexes
     Deny from all
 </Files>
 
-# 3. Production Security Headers
+# 3. Production Security Headers & Cache Control
 <IfModule mod_headers.c>
     Header set X-Content-Type-Options "nosniff"
     Header set X-Frame-Options "SAMEORIGIN"
     Header set X-XSS-Protection "1; mode=block"
     Header set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Prevent browsers & Hostinger CDN from caching HTML, JS, and CSS files indefinitely
+    <FilesMatch "\.(html|htm|js|css)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+        Header set Pragma "no-cache"
+        Header set Expires "0"
+    </FilesMatch>
 </IfModule>
 
 # 4. Protect PHP Session cookies

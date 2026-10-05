@@ -225,7 +225,7 @@ $defaultBrand = !empty($widget['brand_name'])
 
   <!-- Embed Authentic Live Cai Widget in Embedded Mode -->
   <script 
-    src="../widget.js?v=4.2" 
+    src="../widget.js?v=5.0.0" 
     data-company="<?= htmlspecialchars($company['company_key']) ?>" 
     data-embedded="true" 
     data-target="#cuboidpilot-embed-root"

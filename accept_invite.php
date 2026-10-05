@@ -141,7 +141,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error) && $invitation) {
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="css/theme.css">
-  <link rel="stylesheet" href="css/dashboard.css?v=4.2">
+  <link rel="stylesheet" href="css/dashboard.css?v=5.0.0">
 </head>
 <body class="bg-[#f7f6f2] text-stone-900 min-h-screen flex items-center justify-center p-4">
 
