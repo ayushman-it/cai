@@ -129,8 +129,8 @@ function getDbConnection() {
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
     static $schemaChecked = false;
     if (!$schemaChecked) {
-        $localLock = __DIR__ . '/.schema_installed_v12';
-        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v12.lock';
+        $localLock = __DIR__ . '/.schema_installed_v15';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v15.lock';
         if (!file_exists($localLock) && !file_exists($tempLock)) {
             initDbSchemaAndUsers($pdo);
             ensureExtendedSchema($pdo);
@@ -1089,6 +1089,119 @@ HTML;
             CONSTRAINT `fk_asset_company` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     ");
+
+    // 31. Omnichannel Identity Mapping (Web, WhatsApp, Instagram, Email, Phone)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `customer_channel_identities` (
+            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `customer_id` INT NOT NULL,
+            `channel` ENUM('web', 'whatsapp', 'instagram', 'email', 'phone') NOT NULL,
+            `external_user_id` VARCHAR(128) NOT NULL,
+            `external_account_id` VARCHAR(128) NULL,
+            `phone` VARCHAR(64) NULL,
+            `email` VARCHAR(128) NULL,
+            `verified_at` DATETIME NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY `uq_company_channel_user` (`company_id`, `channel`, `external_user_id`),
+            KEY `idx_customer` (`customer_id`),
+            KEY `idx_comp_channel` (`company_id`, `channel`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    // 32. Omnichannel Customer Journeys (Single Source of Truth across Channels)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `customer_journeys` (
+            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `customer_id` INT NOT NULL,
+            `lead_id` INT NULL,
+            `conversation_id` INT NOT NULL,
+            `state` VARCHAR(64) NOT NULL DEFAULT 'NEW',
+            `current_channel` VARCHAR(32) NOT NULL DEFAULT 'web',
+            `previous_channel` VARCHAR(32) NULL,
+            `pending_action` VARCHAR(64) NULL,
+            `pending_asset_id` INT NULL,
+            `assigned_user_id` INT NULL,
+            `conversation_summary` TEXT NULL,
+            `last_activity_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            KEY `idx_comp_cust` (`company_id`, `customer_id`),
+            KEY `idx_comp_conv` (`company_id`, `conversation_id`),
+            KEY `idx_lead` (`lead_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    // 33. Unified Channel Handoffs (Web -> WhatsApp / Instagram)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `channel_handoffs` (
+            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `customer_id` INT NOT NULL,
+            `lead_id` INT NULL,
+            `journey_id` BIGINT NOT NULL,
+            `conversation_id` INT NOT NULL,
+            `source_channel` VARCHAR(32) NOT NULL DEFAULT 'web',
+            `target_channel` VARCHAR(32) NOT NULL,
+            `handoff_token` VARCHAR(32) NOT NULL UNIQUE,
+            `status` ENUM('pending', 'completed', 'expired') NOT NULL DEFAULT 'pending',
+            `expires_at` DATETIME NOT NULL,
+            `completed_at` DATETIME NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            KEY `idx_token` (`handoff_token`),
+            KEY `idx_comp_journey` (`company_id`, `journey_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    // 34. Channel Consents & Opt-In Auditing
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `channel_consents` (
+            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `customer_id` INT NOT NULL,
+            `channel` VARCHAR(32) NOT NULL,
+            `consent_type` VARCHAR(64) NOT NULL,
+            `consent_status` ENUM('granted', 'revoked') NOT NULL DEFAULT 'granted',
+            `consent_source` VARCHAR(64) NOT NULL DEFAULT 'website_widget',
+            `consent_text_version` VARCHAR(32) NOT NULL DEFAULT 'v1',
+            `handoff_token` VARCHAR(32) NULL,
+            `granted_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `revoked_at` DATETIME NULL,
+            KEY `idx_cust_consent` (`company_id`, `customer_id`, `channel`, `consent_type`),
+            KEY `idx_handoff_token` (`handoff_token`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    // Ensure handoff_token exists in channel_consents
+    try {
+        $cCols = $pdo->query("SHOW COLUMNS FROM `channel_consents`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('handoff_token', $cCols)) {
+            $pdo->exec("ALTER TABLE `channel_consents` ADD COLUMN `handoff_token` VARCHAR(32) NULL AFTER `consent_text_version`");
+            $pdo->exec("ALTER TABLE `channel_consents` ADD INDEX `idx_handoff_token` (`handoff_token`)");
+        }
+    } catch (Exception $e) {}
+
+    // Ensure conversation_id in customer_journeys allows NULL
+    try {
+        $pdo->exec("ALTER TABLE `customer_journeys` MODIFY `conversation_id` INT NULL");
+    } catch (Exception $e) {}
+
+    // Ensure lead_events supports modern CRM events and nullable lead_id/customer_id
+    try {
+        $pdo->exec("ALTER TABLE `lead_events` MODIFY `lead_id` INT NULL");
+        $pdo->exec("ALTER TABLE `lead_events` MODIFY `customer_id` INT NULL");
+        $pdo->exec("ALTER TABLE `lead_events` MODIFY `event_type` VARCHAR(64) NOT NULL");
+    } catch (Exception $e) {}
+
+    // Ensure messages table has channel column
+    try {
+        $msgCols = $pdo->query("SHOW COLUMNS FROM `messages`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('channel', $msgCols)) {
+            $pdo->exec("ALTER TABLE `messages` ADD COLUMN `channel` VARCHAR(32) NOT NULL DEFAULT 'web' AFTER `message_text`");
+        }
+    } catch (Exception $e) {}
 }
 
 /**

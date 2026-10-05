@@ -18,6 +18,8 @@ header("Content-Type: application/json; charset=UTF-8");
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
+require_once __DIR__ . '/../includes/customer_journey_service.php';
+require_once __DIR__ . '/../includes/channel_handoff_service.php';
 
 try {
     $pdo = getDbConnection();
@@ -94,61 +96,34 @@ try {
         }
     }
 
+    // Resolve Omnichannel Journey
+    $journey = CustomerJourneyService::getOrCreateJourney($pdo, $companyId, $customerId, $leadId, 'web', $sessionId, $conversationId);
+    $journeyId = (int)$journey['id'];
+
     // =========================================================================
     // 1. INSTAGRAM HANDOFF FLOW (Sections 5 & 6)
     // =========================================================================
     if ($channel === 'instagram') {
-        // Fetch company Instagram configuration
         $igStmt = $pdo->prepare("SELECT * FROM `company_instagram_configs` WHERE `company_id` = ? LIMIT 1");
         $igStmt->execute([$companyId]);
         $igConfig = $igStmt->fetch(PDO::FETCH_ASSOC);
 
         $igUsername = $igConfig['instagram_username'] ?? '';
         if (empty($igUsername)) {
-            // Check widget_settings for instagram handle fallback
             $wRow = $pdo->query("SELECT brand_name FROM `widget_settings` WHERE `company_id` = {$companyId} LIMIT 1")->fetch();
             $igUsername = strtolower(preg_replace('/[^a-zA-Z0-9_.]/', '', $wRow['brand_name'] ?? $company['slug']));
         }
 
-        $tokenCode = strtoupper(bin2hex(random_bytes(3)));
-        $handoffToken = "CP-IG-{$companyId}-{$tokenCode}";
-
-        // Persist in instagram_handoffs
-        $ins = $pdo->prepare("
-            INSERT INTO `instagram_handoffs`
-            (`company_id`, `handoff_token`, `session_id`, `customer_id`, `lead_id`, `web_conversation_id`, `status`, `expires_at`, `created_at`)
-            VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW() + INTERVAL 2 HOUR, NOW())
-        ");
-        $ins->execute([
+        $handoffRes = ChannelHandoffService::createHandoff(
+            $pdo,
             $companyId,
-            $handoffToken,
-            $sessionId ?: "sess_{$companyId}_{$customerId}",
-            $customerId ?: 0,
-            $leadId ?: null,
-            $conversationId ?: 0
-        ]);
-
-        // Record CRM timeline event
-        if ($leadId) {
-            $pdo->prepare("
-                INSERT INTO `lead_events`
-                (`company_id`, `lead_id`, `customer_id`, `event_type`, `description`, `event_data_json`, `created_at`)
-                VALUES (?, ?, ?, 'INSTAGRAM_HANDOFF', ?, ?, NOW())
-            ")->execute([
-                $companyId,
-                $leadId,
-                $customerId,
-                "Visitor initiated Instagram continuation (Token: {$handoffToken})",
-                json_encode([
-                    'channel'       => 'instagram',
-                    'handoff_token' => $handoffToken,
-                    'session_id'    => $sessionId,
-                    'username'      => $igUsername
-                ])
-            ]);
-        }
-
-        // Build Instagram direct URL
+            $customerId,
+            $leadId,
+            $conversationId,
+            'instagram',
+            $journeyId
+        );
+        $handoffToken = $handoffRes['handoff_token'];
         $igUrl = !empty($igUsername) ? "https://ig.me/m/{$igUsername}" : "https://instagram.com";
 
         echo json_encode([
@@ -157,27 +132,40 @@ try {
             'handoff_token'      => $handoffToken,
             'instagram_username' => $igUsername,
             'instagram_url'      => $igUrl,
-            'prefilled_message'  => "Hi, I was chatting on your website (Ref: #{$handoffToken}) and want to continue here.",
+            'prefilled_message'  => "Hi, I was chatting on your website (Ref: {$handoffToken}) and want to continue here.",
             'expires_in_minutes' => 120
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
     }
 
     // =========================================================================
-    // 2. WHATSAPP HANDOFF FLOW (Existing)
+    // 2. WHATSAPP HANDOFF FLOW
     // =========================================================================
     checkEntitlement($pdo, $companyId, 'can_use_whatsapp', true);
 
     if ($action === 'verify' && !empty($tokenParam)) {
         $stmt = $pdo->prepare("
             SELECT h.*, c.name as customer_name, c.phone as customer_phone
-            FROM `whatsapp_handoffs` h
+            FROM `channel_handoffs` h
             LEFT JOIN `customers` c ON c.id = h.customer_id
             WHERE h.handoff_token = ? AND h.company_id = ? AND h.expires_at > NOW()
             LIMIT 1
         ");
         $stmt->execute([$tokenParam, $companyId]);
         $handoff = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$handoff) {
+            // Check legacy table
+            $stmt = $pdo->prepare("
+                SELECT h.*, c.name as customer_name, c.phone as customer_phone
+                FROM `whatsapp_handoffs` h
+                LEFT JOIN `customers` c ON c.id = h.customer_id
+                WHERE h.handoff_token = ? AND h.company_id = ? AND h.expires_at > NOW()
+                LIMIT 1
+            ");
+            $stmt->execute([$tokenParam, $companyId]);
+            $handoff = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
 
         if (!$handoff) {
             http_response_code(404);
@@ -196,47 +184,19 @@ try {
     $displayPhone = $acc ? $acc['display_number'] : '+91 98201 12345';
     $cleanPhone = preg_replace('/[^0-9]/', '', $displayPhone);
 
-    // Generate unique short token
-    $tokenCode = strtoupper(bin2hex(random_bytes(3)));
-    $handoffToken = "CP-{$companyId}-{$tokenCode}";
-
-    // Persist in whatsapp_handoffs table
-    $ins = $pdo->prepare("
-        INSERT INTO `whatsapp_handoffs`
-        (`company_id`, `handoff_token`, `customer_id`, `lead_id`, `web_conversation_id`, `phone`, `status`, `expires_at`, `created_at`)
-        VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW() + INTERVAL 2 HOUR, NOW())
-    ");
-    $ins->execute([
+    $handoffRes = ChannelHandoffService::createHandoff(
+        $pdo,
         $companyId,
-        $handoffToken,
-        $customerId ?: 0,
-        $leadId ?: null,
-        $conversationId ?: 0,
-        $customerPhone
-    ]);
-
-    // Record CRM timeline event
-    if ($leadId) {
-        $pdo->prepare("
-            INSERT INTO `lead_events`
-            (`company_id`, `lead_id`, `customer_id`, `event_type`, `description`, `event_data_json`, `created_at`)
-            VALUES (?, ?, ?, 'WHATSAPP_HANDOFF', ?, ?, NOW())
-        ")->execute([
-            $companyId,
-            $leadId,
-            $customerId,
-            "Visitor initiated WhatsApp continuation (Token: {$handoffToken})",
-            json_encode([
-                'channel'       => 'whatsapp',
-                'handoff_token' => $handoffToken,
-                'session_id'    => $sessionId,
-                'phone'         => $cleanPhone
-            ])
-        ]);
-    }
+        $customerId,
+        $leadId,
+        $conversationId,
+        'whatsapp',
+        $journeyId
+    );
+    $handoffToken = $handoffRes['handoff_token'];
 
     // Build prefilled message
-    $prefilled = "Hi, I'm {$customerName}. I was chatting on your website (Ref: #{$handoffToken}). Could you help me with enrollment & fee details?";
+    $prefilled = "Hi, I'm {$customerName}. I was chatting on your website (Ref: {$handoffToken}). Could you help me with enrollment & fee details?";
     $encodedText = urlencode($prefilled);
     $waUrl = "https://wa.me/{$cleanPhone}?text={$encodedText}";
 

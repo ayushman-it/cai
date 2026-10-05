@@ -100,6 +100,7 @@ try {
 
         $mStmt = $pdo->prepare("
             SELECT m.id, m.sender_type, m.sender_id, m.message_text, m.detected_intent, m.metadata_json, m.created_at,
+                   COALESCE(m.channel, 'web') AS channel,
                    DATE_FORMAT(m.created_at, '%h:%i %p') AS time_formatted,
                    u.avatar_url AS sender_avatar
             FROM `messages` m
@@ -122,6 +123,11 @@ try {
             $aStmt->execute([(int)$conversation['customer_id'], $companyId]);
             $artRow = $aStmt->fetch(PDO::FETCH_ASSOC);
         }
+
+        // Fetch Omnichannel Customer Journey
+        $jStmt = $pdo->prepare("SELECT * FROM `customer_journeys` WHERE (`conversation_id` = ? OR `customer_id` = ?) AND `company_id` = ? ORDER BY id DESC LIMIT 1");
+        $jStmt->execute([$convId, (int)$conversation['customer_id'], $companyId]);
+        $journeyRow = $jStmt->fetch(PDO::FETCH_ASSOC);
 
         // Fetch any appointments for this customer
         $appStmt = $pdo->prepare("SELECT * FROM `appointments` WHERE `customer_id` = ? AND `company_id` = ? ORDER BY slot_datetime DESC LIMIT 3");
@@ -154,6 +160,14 @@ try {
                 'human_attention_reason'   => $conversation['human_attention_reason'] ?? '',
                 'lead_score'               => $artRow ? (int)$artRow['lead_score'] : 0,
                 'priority_reason'          => $artRow ? $artRow['priority_reason'] : '',
+                'journey'                  => $journeyRow ? [
+                    'id'               => (int)$journeyRow['id'],
+                    'journey_stage'    => $journeyRow['journey_stage'],
+                    'intent_summary'   => $journeyRow['intent_summary'],
+                    'current_channel'  => $journeyRow['current_channel'],
+                    'pending_action'   => $journeyRow['pending_action'],
+                    'offered_assets'   => !empty($journeyRow['offered_assets_json']) ? json_decode($journeyRow['offered_assets_json'], true) : []
+                ] : null,
                 'artifact'                 => $artRow ? [
                     'score'               => (int)$artRow['lead_score'],
                     'priority'            => $artRow['priority'],
@@ -171,6 +185,7 @@ try {
                 return [
                     'id'            => (int)$m['id'],
                     'sender_type'   => $m['sender_type'],
+                    'channel'       => $m['channel'] ?? 'web',
                     'text'          => $m['message_text'],
                     'intent'        => $m['detected_intent'],
                     'time'          => $m['time_formatted'],

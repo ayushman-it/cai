@@ -6,6 +6,10 @@
  */
 
 require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../includes/customer_identity_resolver.php';
+require_once __DIR__ . '/../../includes/customer_journey_service.php';
+require_once __DIR__ . '/../../includes/channel_handoff_service.php';
+require_once __DIR__ . '/../../includes/asset_helper.php';
 
 $pdo = getDbConnection();
 
@@ -110,67 +114,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $messageText = trim($message['text']);
 
-            // 1. Resolve or Claim Handoff Token if referenced (e.g. #CP-IG-3-XYZ)
-            $sessionId = null;
-            $customerId = null;
-            $leadId = null;
-
-            if (preg_match('/(?:#|\b)(CP-IG-[0-9]+-[A-F0-9]+)\b/i', $messageText, $tMatch)) {
-                $refToken = strtoupper($tMatch[1]);
-                $hStmt = $pdo->prepare("
-                    SELECT * FROM `instagram_handoffs`
-                    WHERE `handoff_token` = ? AND `company_id` = ?
-                    LIMIT 1
-                ");
-                $hStmt->execute([$refToken, $companyId]);
-                $handoff = $hStmt->fetch(PDO::FETCH_ASSOC);
-
-                if ($handoff) {
-                    $sessionId = $handoff['session_id'];
-                    $customerId = (int)$handoff['customer_id'];
-                    $leadId = !empty($handoff['lead_id']) ? (int)$handoff['lead_id'] : null;
-
-                    // Mark handoff claimed
-                    $pdo->prepare("UPDATE `instagram_handoffs` SET `status` = 'claimed', `claimed_at` = NOW() WHERE `id` = ?")
-                        ->execute([(int)$handoff['id']]);
-                }
-            }
-
-            // 2. Resolve Customer
-            if (!$customerId) {
-                // Check if customer exists by instagram sender ID
-                $custCheck = $pdo->prepare("SELECT id FROM `customers` WHERE `company_id` = ? AND (`customer_uuid` = ? OR `email` = ?) LIMIT 1");
-                $custCheck->execute([$companyId, "ig_{$senderId}", "ig_{$senderId}@instagram.user"]);
-                $customerId = (int)($custCheck->fetchColumn() ?: 0);
-
-                if (!$customerId) {
-                    $insCust = $pdo->prepare("
-                        INSERT INTO `customers`
-                        (`company_id`, `customer_uuid`, `name`, `email`, `first_seen_at`, `last_seen_at`)
-                        VALUES (?, ?, ?, ?, NOW(), NOW())
-                    ");
-                    $insCust->execute([
-                        $companyId,
-                        "ig_{$senderId}",
-                        "Instagram User " . substr($senderId, -4),
-                        "ig_{$senderId}@instagram.user"
-                    ]);
-                    $customerId = (int)$pdo->lastInsertId();
-                }
-            }
+            // 1. Resolve Identity via Central Omnichannel Resolver
+            $identity = CustomerIdentityResolver::resolveFromInstagram($pdo, $companyId, $senderId, $messageText);
+            $customerId = (int)$identity['customer_id'];
+            $customer = $identity['customer'];
+            $matchedHandoff = $identity['handoff'];
+            $leadId = !empty($identity['lead_id']) ? (int)$identity['lead_id'] : null;
 
             if (empty($sessionId)) {
                 $sessionId = "sess_ig_" . substr(hash('sha256', "ig_{$senderId}_{$companyId}"), 0, 12);
             }
 
-            // 3. Resolve or Create Conversation with channel = 'instagram'
-            $convStmt = $pdo->prepare("
-                SELECT id FROM `conversations`
-                WHERE `company_id` = ? AND `customer_id` = ? AND `channel` = 'instagram'
-                ORDER BY id DESC LIMIT 1
-            ");
-            $convStmt->execute([$companyId, $customerId]);
-            $conversationId = (int)($convStmt->fetchColumn() ?: 0);
+            // 2. Resolve or Link Unified Conversation
+            $conversationId = null;
+            if ($matchedHandoff && !empty($matchedHandoff['web_conversation_id'])) {
+                $conversationId = (int)$matchedHandoff['web_conversation_id'];
+            }
+            if (!$conversationId && !empty($identity['conversation_id'])) {
+                $conversationId = (int)$identity['conversation_id'];
+            }
+
+            $journey = CustomerJourneyService::getOrCreateJourney(
+                $pdo,
+                $companyId,
+                $customerId,
+                $leadId,
+                'instagram',
+                $sessionId,
+                $conversationId
+            );
+
+            if (!$conversationId && !empty($journey['conversation_id'])) {
+                $conversationId = (int)$journey['conversation_id'];
+            }
+
+            if (!$conversationId) {
+                $convStmt = $pdo->prepare("SELECT id FROM `conversations` WHERE `company_id` = ? AND `customer_id` = ? ORDER BY id DESC LIMIT 1");
+                $convStmt->execute([$companyId, $customerId]);
+                $conversationId = (int)($convStmt->fetchColumn() ?: 0);
+            }
 
             if (!$conversationId) {
                 $insConv = $pdo->prepare("
@@ -180,24 +162,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ");
                 $insConv->execute([$companyId, $customerId, $sessionId, substr($messageText, 0, 150)]);
                 $conversationId = (int)$pdo->lastInsertId();
+                CustomerJourneyService::updateJourneyState($pdo, (int)$journey['id'], ['conversation_id' => $conversationId]);
             } else {
                 $pdo->prepare("
                     UPDATE `conversations`
-                    SET `last_message_preview` = ?,
+                    SET `channel` = 'instagram',
+                        `last_message_preview` = ?,
                         `last_message_at` = NOW(),
                         `session_id` = COALESCE(`session_id`, ?)
                     WHERE `id` = ? AND `company_id` = ?
                 ")->execute([substr($messageText, 0, 150), $sessionId, $conversationId, $companyId]);
             }
 
-            // 4. Record Message with channel = 'instagram' and session_id
+            // 3. Record Message with channel = 'instagram'
             $pdo->prepare("
                 INSERT INTO `messages`
                 (`company_id`, `conversation_id`, `channel`, `session_id`, `sender_type`, `message_text`, `created_at`)
                 VALUES (?, ?, 'instagram', ?, 'visitor', ?, NOW())
             ")->execute([$companyId, $conversationId, $sessionId, $messageText]);
 
-            // 5. Update CRM Timeline
+            // 4. Update CRM Timeline
             if ($leadId) {
                 $pdo->prepare("
                     INSERT INTO `lead_events`
@@ -210,6 +194,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     "Received message on Instagram: " . substr($messageText, 0, 80),
                     json_encode(['channel' => 'instagram', 'session_id' => $sessionId, 'text' => $messageText])
                 ]);
+            }
+
+            // 5. Check Pending Action (SEND_ASSET_EMAIL)
+            $pendingAsset = null;
+            if (!empty($journey['pending_asset_id'])) {
+                $paStmt = $pdo->prepare("SELECT * FROM `company_assets` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
+                $paStmt->execute([(int)$journey['pending_asset_id'], $companyId]);
+                $pendingAsset = $paStmt->fetch(PDO::FETCH_ASSOC);
+            }
+
+            $extractedEmail = '';
+            if (preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $messageText, $emMatch)) {
+                $extractedEmail = strtolower($emMatch[0]);
+            }
+            $targetEmail = $extractedEmail ?: ($customer['email'] ?? '');
+            $isAffirmative = (bool)preg_match('/\b(haan|ha|yes|sure|okay|ok|bhej\s*do|send\s*kr\s*do|send\s*karo|bhejo|mail\s*kr\s*do|email\s*pe\s*bhej|please\s*send)\b/i', $messageText);
+
+            $aiReply = '';
+            if (!empty($journey['pending_action']) && $journey['pending_action'] === 'SEND_ASSET_EMAIL' && $pendingAsset) {
+                if (!empty($targetEmail)) {
+                    AssetHelper::dispatchAssetEmail(
+                        $pdo,
+                        $companyId,
+                        $targetEmail,
+                        $customer['name'] ?? 'there',
+                        $pendingAsset,
+                        $igConfig['instagram_username'] ?: 'Cai'
+                    );
+                    CustomerJourneyService::updateJourneyState($pdo, (int)$journey['id'], [
+                        'pending_action'   => null,
+                        'pending_asset_id' => null,
+                        'offered_assets'   => array_unique(array_merge($journey['offered_assets'] ?? [], [(int)$pendingAsset['id']]))
+                    ]);
+                    $aiReply = "Maine **{$pendingAsset['title']}** aapki email (`{$targetEmail}`) par send kar diya hai! ✉️ Kripya apna inbox check karein.";
+                } elseif ($isAffirmative) {
+                    $aiReply = "Zaroor! Kripya apna **email address** yahan send karein, taaki main turant **{$pendingAsset['title']}** dispatch kar sakun. ✉️";
+                }
+            }
+
+            if (!empty($aiReply)) {
+                $pdo->prepare("
+                    INSERT INTO `messages`
+                    (`company_id`, `conversation_id`, `channel`, `session_id`, `sender_type`, `message_text`, `created_at`)
+                    VALUES (?, ?, 'instagram', ?, 'ai', ?, NOW())
+                ")->execute([$companyId, $conversationId, $sessionId, $aiReply]);
             }
         }
     }

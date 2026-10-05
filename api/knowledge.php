@@ -289,19 +289,54 @@ function extractTextFromDocument($tmpPath, $originalName, $ext) {
     } elseif ($ext === 'pdf') {
         $raw = @file_get_contents($tmpPath);
         if ($raw) {
-            preg_match_all('/\((.*?)\)\s*Tj/s', $raw, $m1);
-            if (!empty($m1[1])) {
-                $text = implode(' ', $m1[1]);
-            } else {
-                preg_match_all('/\[(.*?)\]\s*TJ/s', $raw, $m2);
-                if (!empty($m2[1])) {
-                    $text = implode(' ', $m2[1]);
+            // 1. First attempt: Stream decompression (FlateDecode / zlib)
+            if (preg_match_all('/stream[\r\n]+(.*?)[\r\n]+endstream/s', $raw, $streamMatches)) {
+                foreach ($streamMatches[1] as $stream) {
+                    $decompressed = @gzuncompress($stream);
+                    if (!$decompressed) $decompressed = @zlib_decode($stream);
+                    if (!$decompressed) $decompressed = @gzinflate($stream);
+                    if (!$decompressed) $decompressed = $stream;
+
+                    if (preg_match_all('/BT[\s\S]*?ET/s', $decompressed, $btBlocks)) {
+                        foreach ($btBlocks[0] as $bt) {
+                            if (preg_match_all('/\((.*?)\)\s*Tj/s', $bt, $tjMatches)) {
+                                foreach ($tjMatches[1] as $tj) {
+                                    $text .= str_replace(['\\(', '\\)', '\\\\', '\\n', '\\r', '\\t'], ['(', ')', '\\', "\n", "\r", "\t"], $tj) . ' ';
+                                }
+                            }
+                            if (preg_match_all('/\[(.*?)\]\s*TJ/s', $bt, $tjArrMatches)) {
+                                foreach ($tjArrMatches[1] as $arr) {
+                                    if (preg_match_all('/\((.*?)\)/s', $arr, $subStrs)) {
+                                        foreach ($subStrs[1] as $sub) {
+                                            $text .= str_replace(['\\(', '\\)', '\\\\', '\\n', '\\r', '\\t'], ['(', ')', '\\', "\n", "\r", "\t"], $sub) . ' ';
+                                        }
+                                    }
+                                }
+                            }
+                            $text .= "\n";
+                        }
+                    }
                 }
             }
-            if (empty($text)) {
+
+            // 2. Second attempt if stream decompression was empty: Raw text markers
+            if (empty(trim($text))) {
+                preg_match_all('/\((.*?)\)\s*Tj/s', $raw, $m1);
+                if (!empty($m1[1])) {
+                    $text = implode(' ', $m1[1]);
+                } else {
+                    preg_match_all('/\[(.*?)\]\s*TJ/s', $raw, $m2);
+                    if (!empty($m2[1])) {
+                        $text = implode(' ', $m2[1]);
+                    }
+                }
+            }
+
+            // 3. Third attempt: ASCII token scanning
+            if (empty(trim($text))) {
                 preg_match_all('/[a-zA-Z0-9\s.,!?:;\-\/\\(\\)\"\'₹$@%]{4,}/', $raw, $m3);
                 if (!empty($m3[0])) {
-                    $text = implode(' ', array_slice($m3[0], 0, 1000));
+                    $text = implode(' ', array_slice($m3[0], 0, 1500));
                 }
             }
         }

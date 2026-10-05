@@ -6816,6 +6816,33 @@
         bubble.appendChild(igCard);
       }
 
+      // Proactive Email / Document Action Chip
+      const isDocOffer = Boolean(
+        (data.reply && /(?:email par send|email par bhej|send kar doon|bhej doon|email address share)/i.test(data.reply)) ||
+        (data.shared_asset && !data.shared_asset.email_dispatched)
+      );
+
+      if (isDocOffer && !data.chat_ended) {
+        const chipContainer = document.createElement('div');
+        chipContainer.className = 'cp-doc-action-chips';
+        chipContainer.style.cssText = 'display:flex; gap:8px; margin-top:8px; flex-wrap:wrap;';
+        chipContainer.innerHTML = `
+          <button type="button" class="cp-chip-btn" style="display:inline-flex; align-items:center; gap:6px; background:rgba(99,102,241,0.12); color:#6366f1; border:1px solid rgba(99,102,241,0.3); border-radius:20px; padding:6px 14px; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.15s ease;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <span>✉️ Haan, email par bhej do</span>
+          </button>
+        `;
+        const emailChip = chipContainer.querySelector('.cp-chip-btn');
+        if (emailChip) {
+          emailChip.addEventListener('click', () => {
+            emailChip.disabled = true;
+            emailChip.style.opacity = '0.5';
+            handleSend("Haan, email par bhej do");
+          });
+        }
+        bubble.appendChild(chipContainer);
+      }
+
       // Interactive Appointment Slots (Sections 8, 9, 10, 11)
       if (data.appointment_slots && Array.isArray(data.appointment_slots) && data.appointment_slots.length > 0) {
         const slotsBox = document.createElement('div');
@@ -7063,14 +7090,16 @@
   }
 
   // 11. Send Message to Backend (Sections 7, 8, 9 & 10)
-  async function handleSend() {
+  async function handleSend(textOverride) {
     clearInactivityChips();
     if (isSending) return;
-    const text = inputField.value.trim();
+    const text = (typeof textOverride === 'string' && textOverride.length > 0) ? textOverride.trim() : inputField.value.trim();
     if (!text && !pendingAttachment) return;
 
-    inputField.value = '';
-    inputField.style.height = 'auto';
+    if (!textOverride) {
+      inputField.value = '';
+      inputField.style.height = 'auto';
+    }
     sendBtn.classList.remove('active');
     hideAllPopovers();
     if (isVoiceListening) stopVoiceRecording();

@@ -23,6 +23,9 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
 require_once __DIR__ . '/../includes/appointment_helper.php';
 require_once __DIR__ . '/../includes/asset_helper.php';
+require_once __DIR__ . '/../includes/customer_identity_resolver.php';
+require_once __DIR__ . '/../includes/customer_journey_service.php';
+require_once __DIR__ . '/../includes/channel_handoff_service.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -225,118 +228,30 @@ try {
         }
     }
 
-    // 4. Resolve / Validate Customer & Conversation
-    $customer = null;
-    if ($conversationId) {
-        $convCheck = $pdo->prepare("SELECT id, customer_id FROM `conversations` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
-        $convCheck->execute([$conversationId, $companyId]);
-        $existingConv = $convCheck->fetch();
-        if ($existingConv) {
-            if (!empty($existingConv['customer_id'])) {
-                $cStmt = $pdo->prepare("SELECT * FROM `customers` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
-                $cStmt->execute([(int)$existingConv['customer_id'], $companyId]);
-                $customer = $cStmt->fetch();
-            }
-        } else {
-            // Reset cross-tenant conversation ID to prevent corruption
-            $conversationId = null;
-        }
+    // 4. Resolve / Validate Customer via Central Omnichannel Resolver
+    $handoffCheck = CustomerIdentityResolver::extractAndResolveHandoff($pdo, $companyId, $messageText);
+    if ($handoffCheck && !empty($handoffCheck['customer_id'])) {
+        $customerId = (int)$handoffCheck['customer_id'];
+        if (!empty($handoffCheck['lead_id'])) $leadId = (int)$handoffCheck['lead_id'];
+        if (!empty($handoffCheck['conversation_id'])) $conversationId = (int)$handoffCheck['conversation_id'];
     }
 
-    if ($leadId) {
-        $lCheck = $pdo->prepare("SELECT id FROM `leads` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
-        $lCheck->execute([$leadId, $companyId]);
-        if (!$lCheck->fetch()) {
-            $leadId = null;
-        }
-    }
+    $resolvedIdentity = CustomerIdentityResolver::resolveFromWeb(
+        $pdo,
+        $companyId,
+        $sessionId,
+        $visitorPhone,
+        $visitorEmail,
+        $visitorName,
+        $conversationId,
+        $leadId
+    );
+    $customer = $resolvedIdentity['customer'];
+    $customerId = (int)$resolvedIdentity['customer_id'];
+    if (!empty($resolvedIdentity['conversation_id'])) $conversationId = (int)$resolvedIdentity['conversation_id'];
+    if (!empty($resolvedIdentity['lead_id'])) $leadId = (int)$resolvedIdentity['lead_id'];
 
-    // Deduplicate customer by phone or email within company
-    if (!$customer && !empty($visitorPhone)) {
-        $cStmt = $pdo->prepare("SELECT * FROM `customers` WHERE `company_id` = ? AND (`phone` = ? OR `whatsapp_number` = ?) LIMIT 1");
-        $cStmt->execute([$companyId, $visitorPhone, $visitorPhone]);
-        $customer = $cStmt->fetch();
-    }
-    if (!$customer && !empty($visitorEmail)) {
-        $cStmt = $pdo->prepare("SELECT * FROM `customers` WHERE `company_id` = ? AND `email` = ? LIMIT 1");
-        $cStmt->execute([$companyId, $visitorEmail]);
-        $customer = $cStmt->fetch();
-    }
-    if (!$customer && !empty($sessionId)) {
-        $sessStmt = $pdo->prepare("
-            SELECT c.* FROM `customers` c
-            JOIN `visitor_sessions` vs ON vs.customer_id = c.id
-            WHERE (vs.session_id = ? OR vs.session_token = ?) AND vs.company_id = ?
-            LIMIT 1
-        ");
-        $sessStmt->execute([$sessionId, $sessionId, $companyId]);
-        $customer = $sessStmt->fetch();
-    }
-
-    if (!$customer) {
-        $custUuid = 'cust_' . bin2hex(random_bytes(12));
-        $custName = !empty($visitorName) ? $visitorName : (!empty($visitorPhone) ? 'Prospect ' . $visitorPhone : 'Website Visitor');
-        $pdo->prepare("
-            INSERT INTO `customers` 
-            (`company_id`, `customer_uuid`, `name`, `phone`, `email`, `whatsapp_number`, `first_seen_at`, `last_seen_at`)
-            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
-        ")->execute([
-            $companyId,
-            $custUuid,
-            $custName,
-            $visitorPhone ?: null,
-            $visitorEmail ?: null,
-            $visitorPhone ?: null
-        ]);
-        $customerId = (int)$pdo->lastInsertId();
-
-        $cFetch = $pdo->prepare("SELECT * FROM `customers` WHERE id = ? LIMIT 1");
-        $cFetch->execute([$customerId]);
-        $customer = $cFetch->fetch();
-    } else {
-        $customerId = (int)$customer['id'];
-        $cleanCustName = !empty($visitorName) ? $visitorName : ($customer['name'] === 'Website Visitor' && !empty($visitorPhone) ? 'Prospect ' . $visitorPhone : $customer['name']);
-        if (!empty($visitorName) || !empty($visitorPhone) || !empty($visitorEmail)) {
-            $custUpdates = [];
-            $custParams = [];
-            if (!empty($cleanCustName)) {
-                $custUpdates[] = "`name` = ?";
-                $custParams[] = $cleanCustName;
-            }
-            if (!empty($visitorPhone)) {
-                $custUpdates[] = "`phone` = ?";
-                $custUpdates[] = "`whatsapp_number` = ?";
-                $custParams[] = $visitorPhone;
-                $custParams[] = $visitorPhone;
-            }
-            if (!empty($visitorEmail)) {
-                $custUpdates[] = "`email` = ?";
-                $custParams[] = $visitorEmail;
-            }
-            $custUpdates[] = "`last_seen_at` = NOW()";
-            $custParams[] = $customerId;
-            $custParams[] = $companyId;
-
-            $pdo->prepare("UPDATE `customers` SET " . implode(', ', $custUpdates) . " WHERE `id` = ? AND `company_id` = ?")->execute($custParams);
-
-            $cFetch = $pdo->prepare("SELECT * FROM `customers` WHERE id = ? LIMIT 1");
-            $cFetch->execute([$customerId]);
-            $customer = $cFetch->fetch();
-        }
-    }
-
-    // Ensure conversation belongs to this workspace
-    if (!$conversationId) {
-        $insConv = $pdo->prepare("
-            INSERT INTO `conversations` 
-            (`company_id`, `customer_id`, `channel`, `status`, `ownership`, `last_message_preview`, `last_message_at`, `created_at`)
-            VALUES (?, ?, 'widget', 'ai_handling', 'ai', ?, NOW(), NOW())
-        ");
-        $insConv->execute([$companyId, $customerId, substr($messageText, 0, 150)]);
-        $conversationId = (int)$pdo->lastInsertId();
-    }
-
-    // Resolve or generate Session ID (Section 1: CP-XXXXXXX)
+    // Resolve or generate Session ID (CP-XXXXXXX)
     if (empty($sessionId) && !empty($conversationId)) {
         $sStmt = $pdo->prepare("SELECT session_id FROM `conversations` WHERE id = ? AND company_id = ? LIMIT 1");
         $sStmt->execute([$conversationId, $companyId]);
@@ -351,9 +266,30 @@ try {
         $sessionId = 'CP-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 7));
     }
 
-    // Ensure session association in conversations
-    $pdo->prepare("UPDATE `conversations` SET `session_id` = ?, `channel` = 'web' WHERE id = ? AND company_id = ? AND (`session_id` IS NULL OR `session_id` = '')")
-        ->execute([$sessionId, $conversationId, $companyId]);
+    // Ensure conversation exists and is unified
+    if (!$conversationId) {
+        $insConv = $pdo->prepare("
+            INSERT INTO `conversations` 
+            (`company_id`, `customer_id`, `channel`, `session_id`, `status`, `ownership`, `last_message_preview`, `last_message_at`, `created_at`)
+            VALUES (?, ?, 'web', ?, 'ai_handling', 'ai', ?, NOW(), NOW())
+        ");
+        $insConv->execute([$companyId, $customerId, $sessionId, substr($messageText, 0, 150)]);
+        $conversationId = (int)$pdo->lastInsertId();
+    } else {
+        $pdo->prepare("UPDATE `conversations` SET `session_id` = COALESCE(NULLIF(session_id, ''), ?), `channel` = 'web' WHERE id = ? AND company_id = ?")
+            ->execute([$sessionId, $conversationId, $companyId]);
+    }
+
+    // Resolve or Create Omnichannel Customer Journey
+    $journey = CustomerJourneyService::getOrCreateJourney(
+        $pdo,
+        $companyId,
+        $customerId,
+        $leadId,
+        'web',
+        $sessionId,
+        $conversationId
+    );
 
     // Handle Direct Slot Confirmation (Section 10 & 11)
     if ($action === 'confirm_slot' || (!empty($selectedSlot) && $action !== 'chat')) {
@@ -692,18 +628,8 @@ try {
     $prevArtifactStmt->execute([$customerId, $companyId]);
     $prevArtifact = $prevArtifactStmt->fetch(PDO::FETCH_ASSOC) ?: [];
 
-    $knownFields = [];
-    if (!empty($visitorDisplayName)) $knownFields[] = "- Customer Name: {$visitorDisplayName}";
-    if (!empty($customer['phone'])) $knownFields[] = "- Phone: {$customer['phone']}";
-    if (!empty($customer['email'])) $knownFields[] = "- Email: {$customer['email']}";
-    if (!empty($prevArtifact['interested_service'])) $knownFields[] = "- Interested Service: {$prevArtifact['interested_service']}";
-    if (!empty($prevArtifact['budget'])) $knownFields[] = "- Stated Budget: {$prevArtifact['budget']}";
-    if (!empty($prevArtifact['timeline'])) $knownFields[] = "- Timeline: {$prevArtifact['timeline']}";
-    if (!empty($prevArtifact['requirement'])) $knownFields[] = "- Requirement: {$prevArtifact['requirement']}";
-
-    $memorySection = !empty($knownFields) 
-        ? "STRUCTURED CUSTOMER MEMORY (ALREADY COLLECTED — DO NOT ASK FOR THESE AGAIN):\n" . implode("\n", $knownFields) . "\n\n"
-        : "";
+    // Omnichannel Structured Customer Memory
+    $memorySection = CustomerJourneyService::buildStructuredMemory($journey, $historyMessages);
 
     $systemPrompt = "You are {$assistantName}, the consultative and warm AI representative for {$brandDisplayName} ({$company['name']}).\n"
                   . "Visitor Information:\n"
@@ -716,15 +642,13 @@ try {
                   . "Verified Company Knowledge Base (Grounding):\n"
                   . $knowledgeContext . "\n\n"
                   . "CRITICAL CONVERSATIONAL GUIDELINES:\n"
-                  . "1. ULTRA-HUMAN & CONSULTATIVE PERSONA: Speak like an empathetic, friendly human team member who genuinely wants to help. NEVER sound robotic, scripted, or like an automated answering machine. NEVER say 'Here is the verified information for...' or dump raw unformatted text.\n"
-                  . (empty($visitorGreetingName)
-                      ? "2. MANDATORY NAME-FIRST INTAKE: The visitor has not provided their name yet. In this conversation, YOU MUST ASK FOR THEIR NAME FIRST before providing catalog breakdowns, deep solutions, or proceeding further! If they ask a question or greet you, politely and warmly acknowledge that you will be delighted to help them with full details, but kindly ask: 'Aage badhne se pehle, kya main aapka shubh naam jaan sakta hoon?' (or 'Before we proceed, could you please tell me your name so I can assist you better?'). Once they tell you their name, you will answer their question in the next turn.\n"
-                      : "2. VISITOR IS IDENTIFIED: The visitor's verified name is '{$visitorGreetingName}'. Greet them warmly by name (e.g. 'Namaste {$visitorGreetingName}!' or 'Hi {$visitorGreetingName}!'). CRITICAL CONVERSATION CONTINUITY: If the visitor just provided their name in response to your previous prompt asking for their name, AND they had previously asked a question in this chat (such as inquiring about courses, fees, syllabus, or services), DO NOT JUST SAY GREETINGS! You MUST IMMEDIATELY AND COMPREHENSIVELY ANSWER THEIR PREVIOUS QUESTION with full details, pricing, and markdown tables from the Verified Knowledge Base right here in this response!\n")
-                  . "3. STRICT NAME SAFETY: Inquiry terms such as 'Courses', 'Fees', 'Syllabus', 'Details', 'Python', 'Training', 'Admission' are SUBJECT TOPICS, NEVER personal names! NEVER say 'Nice to meet you, [Topic]'. If name is not specified or visitor asked a query, address them warmly without a name.\n"
+                  . "1. ULTRA-HUMAN & CONSULTATIVE PERSONA: Speak like an empathetic, friendly human team member who genuinely wants to help. NEVER sound robotic, scripted, or like an automated answering machine. NEVER dump raw unformatted text.\n"
+                  . "2. ANSWER-FIRST CONSULTATIVE APPROACH: When the visitor asks about courses, fees, syllabus, services, or technical training, IMMEDIATELY AND DIRECTLY ANSWER THEIR QUESTION FIRST with accurate facts and figures from Verified Company Knowledge Base! Never block information or refuse to answer by demanding their name first. If their name is known ('{$visitorGreetingName}'), greet them warmly by name. If their name is not known, answer their question first, and you may politely invite their name naturally at the very end of your helpful answer (e.g. 'Waise aage ki updates ke liye, kya main aapka shubh naam jaan sakta hoon?').\n"
+                  . "3. STRICT NAME SAFETY: Inquiry terms such as 'Courses', 'Fees', 'Syllabus', 'Details', 'Python', 'Training', 'Admission' are SUBJECT TOPICS, NEVER personal names! NEVER say 'Nice to meet you, [Topic]'.\n"
                   . "4. CLEAN TABLES & BULLETS: When presenting courses, pricing, fees, or comparative data, format them cleanly using standard Markdown tables (e.g. | Course | Duration | Fee | with separator |---|---|---|) or clean bullet points with bold titles. Keep it mobile-friendly and readable.\n"
-                  . "5. SEAMLESS TYPO HANDLING: Understand typos naturally without pointing them out. For example, if the visitor types 'prinings bata do', understand they are asking about pricing/plans; if they write 'apki services kya hai', explain our services clearly and conversationally.\n"
-                  . "6. GROUNDED CONSULTATION: Answer using facts from the Verified Company Knowledge Base above. Keep details accurate, clear, and honest.\n"
-                  . "7. PROGRESSIVE LEAD COLLECTION: If the visitor's Name or WhatsApp/Phone number is not yet known, after answering their question, naturally invite them to share their Name and WhatsApp number so our team can send them the syllabus/brochure or set up a personalized demo.\n"
+                  . "5. SEAMLESS TYPO HANDLING: Understand typos naturally without pointing them out (e.g. 'prinings' -> pricing, 'servises' -> services).\n"
+                  . "6. GROUNDED CONSULTATION: Answer using facts from the Verified Company Knowledge Base above. Keep details accurate, clear, and honest. NEVER invent false courses or dummy prices.\n"
+                  . "7. PROACTIVE OFFICIAL DOCUMENT / SYLLABUS OFFER: When answering any course or service inquiry, if there is a relevant syllabus, brochure, or curriculum document in Downloadable Documents, PROACTIVELY OFFER IT to the visitor in conversational language: 'Mere paas iska official document / syllabus available hai. Kya main ise aapki email par send kar doon?'. If they reply yes or provide an email, confirm that you are dispatching it.\n"
                   . "8. KEEP IT CRISP: Aim for 2-4 focused, readable sentences or clean bullet points/tables. Do not write walls of text.\n"
                   . "9. DIGITAL ASSET & SYLLABUS DISPATCH: If the visitor asks for a course syllabus, curriculum, brochure, or fee chart for any item in Downloadable Documents above, acknowledge that you have shared the download card right here in chat! If their email is not on file, kindly invite them to provide their email address so you can also dispatch a copy directly to their inbox.\n"
                   . "10. AT THE VERY END OF YOUR RESPONSE, output the exact delimiter '---INTERNAL_METADATA---' followed by a valid JSON object analyzing the lead. The user will not see this metadata.\n"
@@ -749,10 +673,10 @@ try {
     // =========================================================================
     // LOCAL RAG KNOWLEDGE SYNTHESIS & RELEVANCE MATCHER
     // Accurately extracts verified facts, fees, syllabus, and services
-    // in warm, human-like Hindi, Hinglish, or English.
+    // in warm, human-like Hindi, Hinglish, or English without canned dummy fallbacks.
     // =========================================================================
     if (!function_exists('synthesizeKnowledgeResponse')) {
-        function synthesizeKnowledgeResponse($messageText, $knowledgeList, $company, $assistantName, $visitorGreetingName = '', $brandDisplayName = '', $historyMessages = []) {
+        function synthesizeKnowledgeResponse($messageText, $knowledgeList, $company, $assistantName, $visitorGreetingName = '', $brandDisplayName = '', $historyMessages = [], $companyAssetsList = []) {
             $rawMsg = trim($messageText);
             $query = mb_strtolower($rawMsg);
             $brand = !empty($brandDisplayName) ? $brandDisplayName : ($company['name'] ?? 'CuboidPilot');
@@ -799,7 +723,7 @@ try {
                 'summary'            => "Visitor asked: " . substr($rawMsg, 0, 60),
                 'human_required'     => false,
                 'recommended_action' => 'Provide consultative guidance',
-                'estimated_value'    => 35000
+                'estimated_value'    => 45000
             ];
 
             if ($isGifReaction) {
@@ -818,7 +742,21 @@ try {
                 return ['reply' => $reply, 'meta' => $meta];
             }
 
-            // Dynamic Grounding: Search matching knowledge source in tenant's indexed knowledge
+            // Check matching asset from company assets for proactive offer
+            $matchingAsset = null;
+            if (!empty($companyAssetsList)) {
+                foreach ($companyAssetsList as $ca) {
+                    $terms = array_filter(preg_split('/[,\s]+/', mb_strtolower($ca['keywords'] . ' ' . $ca['title'] . ' ' . $ca['category'])));
+                    foreach ($terms as $t) {
+                        if (strlen($t) >= 3 && strpos($effectiveQuery, $t) !== false) {
+                            $matchingAsset = $ca;
+                            break 2;
+                        }
+                    }
+                }
+            }
+
+            // Deep Grounding: Search matching knowledge source in tenant's indexed knowledge
             $matchedSource = null;
             if (!empty($knowledgeList)) {
                 $terms = array_filter(preg_split('/\s+/', ($hasPriorInquiry ? $effectiveQuery : $query)), fn($w) => strlen($w) >= 3);
@@ -838,25 +776,6 @@ try {
                 }
             }
 
-            // MANDATORY NAME-FIRST POLICY: If visitor has not provided their name yet, ask for their name first!
-            if (empty($visitorGreetingName)) {
-                $meta['intent'] = 'name_request';
-                $meta['stage'] = 'NEW';
-                $meta['priority'] = 'MEDIUM';
-                $meta['summary'] = 'Asking for visitor name before proceeding';
-
-                if ($isGreeting) {
-                    $reply = $isHindi
-                        ? "Namaste! 👋 Main {$assistantName} hoon, {$brand} ka AI guide. Aage badhne se pehle, kya main aapka shubh naam jaan sakta hoon?"
-                        : "Hello! 👋 I'm {$assistantName}, your AI guide at {$brand}. Before we get started, may I know your name?";
-                } else {
-                    $reply = $isHindi
-                        ? "Namaste! Main aapko iske baare mein zaroor poori jaankari dunga. Aage badhne se pehle, kya main aapka shubh naam jaan sakta hoon?"
-                        : "Hello! I would be glad to help you with that. Before we proceed, could you please tell me your name so I can assist you better?";
-                }
-                return ['reply' => $reply, 'meta' => $meta];
-            }
-
             if ($isHumanRequest) {
                 $meta['intent'] = 'human_request';
                 $meta['stage'] = 'HUMAN_REQUIRED';
@@ -868,33 +787,53 @@ try {
                     : "I've flagged your request for our team at {$brand}. A team specialist will connect with you shortly. You can also tap the WhatsApp button below to chat with us directly!";
             } elseif ($isGreeting) {
                 $meta['intent'] = 'greeting';
+                $greetingPrefix = !empty($visitorGreetingName) ? "Namaste {$visitorGreetingName}! 👋 " : "Namaste! 👋 ";
                 $reply = $isHindi
-                    ? "Namaste {$visitorGreetingName}! 👋 Main {$assistantName} hoon, {$brand} ka AI assistant. Main aapko hamare courses, fees, services aur programs ke baare me poori jaankari de sakta hoon. Aap kis baare me jaanna chahte hain?"
-                    : "Hello {$visitorGreetingName}! 👋 I'm {$assistantName}, your AI assistant at {$brand}. How can I best assist you with our offerings and programs today?";
+                    ? "{$greetingPrefix}Main {$assistantName} hoon, {$brand} ka AI assistant. Main aapko hamare verified courses, syllabus, fees aur training programs ke baare me poori jaankari de sakta hoon. Aap kis baare me jaanna chahte hain?"
+                    : "Hello" . (!empty($visitorGreetingName) ? " {$visitorGreetingName}!" : "!") . " 👋 I'm {$assistantName}, your AI guide at {$brand}. How can I best assist you with our programs, curricula, or services today?";
             } elseif ($matchedSource && !empty($matchedSource['content'])) {
-                // Grounded directly in matched knowledge source
+                // Grounded directly in matched verified knowledge source
                 $meta['intent'] = ($isFeeInquiry || $isCourseInquiry) ? 'purchase_interest' : 'service_inquiry';
                 $meta['stage'] = 'QUALIFIED';
                 $meta['priority'] = 'HIGH';
                 $meta['interest'] = $matchedSource['title'];
                 
                 $snippet = trim($matchedSource['content']);
-                if (mb_strlen($snippet) > 800) {
-                    $snippet = mb_substr($snippet, 0, 800) . '...';
+                if (mb_strlen($snippet) > 850) {
+                    $snippet = mb_substr($snippet, 0, 850) . '...';
                 }
 
-                $reply = $isHindi
-                    ? "{$snippet}\n\nAapko iske baare mein aur detail chahiye ya batch timing aur syllabus check karna hai? Kripya apna Naam aur WhatsApp number share karein taaki hum aapko poori guide bhej sakein!"
-                    : "{$snippet}\n\nWould you like more details on the curriculum, timings, or enrollment? Please share your Name and WhatsApp number so our team can send you the complete information!";
+                $proactiveOffer = '';
+                if ($matchingAsset) {
+                    $proactiveOffer = $isHindi
+                        ? "\n\n📄 **Official Document:** Mere paas iska official **{$matchingAsset['title']}** available hai. Kya main ise aapki email par send kar doon?"
+                        : "\n\n📄 **Official Document:** I have the official **{$matchingAsset['title']}** ready. Would you like me to send a copy to your email?";
+                    $meta['offered_asset_id'] = (int)$matchingAsset['id'];
+                }
+
+                $reply = "{$snippet}{$proactiveOffer}";
             } elseif ($isFeeInquiry || $isCourseInquiry) {
                 $meta['intent'] = 'purchase_interest';
                 $meta['stage'] = 'QUALIFIED';
                 $meta['priority'] = 'HIGH';
                 $meta['recommended_action'] = 'Share detailed fee structure and syllabus';
 
+                // Assemble available knowledge summary
+                $availableTopics = [];
+                foreach ($knowledgeList as $kl) {
+                    $availableTopics[] = "• **{$kl['title']}**";
+                }
+                $topicsStr = !empty($availableTopics) ? implode("\n", array_slice($availableTopics, 0, 4)) : "• Comprehensive Career & Industry Tracks";
+
+                $proactiveOffer = '';
+                if ($matchingAsset) {
+                    $proactiveOffer = "\n\n📄 **Official Syllabus:** Mere paas **{$matchingAsset['title']}** available hai. Kya main ise aapko email par bhej doon?";
+                    $meta['offered_asset_id'] = (int)$matchingAsset['id'];
+                }
+
                 $reply = $isHindi
-                    ? "Hamare paas industry-aligned practical programs available hain. Fees aur batch structure ki poori details ke liye, kripya apna **Naam aur WhatsApp number** share karein taaki hum aapko detailed brochure aur syllabus turant send kar sakein!"
-                    : "We offer industry-aligned practical programs. For the complete fee structure and upcoming batch schedules, please share your **Name and WhatsApp number** so our team can send you the detailed brochure!";
+                    ? "Hamare paas {$brand} ke verified training programs available hain:\n\n{$topicsStr}\n\nIn sabhi courses me hands-on real projects, expert mentorship aur certification include hai.{$proactiveOffer}"
+                    : "Here are the verified training programs at {$brand}:\n\n{$topicsStr}\n\nEach program includes hands-on industry projects and certified mentorship.{$proactiveOffer}";
             } elseif ($isServiceInquiry) {
                 $meta['intent'] = 'service_inquiry';
                 $meta['stage'] = 'ENGAGED';
@@ -902,12 +841,12 @@ try {
                 $meta['recommended_action'] = 'Provide consultative services overview';
 
                 $reply = $isHindi
-                    ? "{$brand} practical, career-oriented programs aur professional solutions provide karta hai. Aapko kis specific program ya requirement ke liye guidance chahiye? Aap apna sawal pooch sakte hain ya WhatsApp number share kar sakte hain!"
-                    : "{$brand} provides career-oriented practical programs and professional services. What specific area or requirement are you looking for? Feel free to ask or share your WhatsApp number!";
+                    ? "{$brand} practical, career-oriented programs aur professional solutions provide karta hai. Aapko kis specific program ya requirement ke liye guidance chahiye?"
+                    : "{$brand} provides career-oriented practical programs and professional services. What specific area or requirement are you looking for?";
             } else {
                 $reply = $isHindi
-                    ? "Namaste! Main {$assistantName} hoon, {$brand} ka AI representative. Main aapko hamare programs, fees, batch schedules aur admission ke baare me poori jaankari de sakta hoon.\n\nAapko kis baare me help chahiye? Kripya apna sawal poochein ya apna Naam aur WhatsApp number share karein!"
-                    : "Hello! I'm {$assistantName}, your AI representative at {$brand}. How can I best help you today? Feel free to ask your question or share your Name and WhatsApp number!";
+                    ? "Namaste! Main {$assistantName} hoon, {$brand} ka AI representative. Main aapko hamare programs, fees, batch schedules aur admission ke baare me poori jaankari de sakta hoon.\n\nAapko kis baare me help chahiye?"
+                    : "Hello! I'm {$assistantName}, your AI representative at {$brand}. How can I best help you today? Feel free to ask about our courses, curriculum, or services!";
             }
 
             if ($hasPriorInquiry && !empty($visitorGreetingName) && !preg_match('/^(Namaste|Hello|Hi)/i', $reply)) {
@@ -924,7 +863,41 @@ try {
     $rawReply = '';
     $aiSuccess = false;
 
-    if (defined('GROQ_API_KEY') && !empty(GROQ_API_KEY) && GROQ_API_KEY !== 'YOUR_GROQ_API_KEY_HERE') {
+    // Check Omnichannel Pending Actions (e.g. User affirmative reply to document offer)
+    $pendingAsset = null;
+    if (!empty($journey['pending_asset_id'])) {
+        $paStmt = $pdo->prepare("SELECT * FROM `company_assets` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
+        $paStmt->execute([(int)$journey['pending_asset_id'], $companyId]);
+        $pendingAsset = $paStmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    $isAffirmativeEmail = (bool)preg_match('/\b(haan|ha|yes|sure|okay|ok|bhej\s*do|send\s*kr\s*do|send\s*karo|bhejo|mail\s*kr\s*do|email\s*pe\s*bhej|please\s*send|email\s*kardo)\b/i', $messageText);
+    $targetEmail = !empty($visitorEmail) ? $visitorEmail : (!empty($customer['email']) ? $customer['email'] : '');
+
+    if (!empty($journey['pending_action']) && $journey['pending_action'] === 'SEND_ASSET_EMAIL' && $pendingAsset) {
+        if (!empty($targetEmail)) {
+            AssetHelper::dispatchAssetEmail(
+                $pdo,
+                $companyId,
+                $targetEmail,
+                $visitorGreetingName ?: ($customer['name'] ?? 'there'),
+                $pendingAsset,
+                $brandDisplayName ?: $company['name']
+            );
+            CustomerJourneyService::updateJourneyState($pdo, (int)$journey['id'], [
+                'pending_action'   => null,
+                'pending_asset_id' => null,
+                'offered_assets'   => array_unique(array_merge($journey['offered_assets'] ?? [], [(int)$pendingAsset['id']]))
+            ]);
+            $rawReply = "Maine **{$pendingAsset['title']}** aapki email (`{$targetEmail}`) par dispatch kar diya hai! ✉️ Kripya apna inbox/spam folder check karein.\n\nIske alawa aapko hamare courses ya programs ke baare mein aur kya jaanna hai?";
+            $aiSuccess = true;
+        } elseif ($isAffirmativeEmail) {
+            $rawReply = "Zaroor! Kripya apna **email address** share karein taaki main turant **{$pendingAsset['title']}** aapke inbox me dispatch kar sakun. ✉️";
+            $aiSuccess = true;
+        }
+    }
+
+    if (!$aiSuccess && defined('GROQ_API_KEY') && !empty(GROQ_API_KEY) && GROQ_API_KEY !== 'YOUR_GROQ_API_KEY_HERE') {
         $candidateModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
 
         foreach ($candidateModels as $modelCandidate) {
@@ -935,7 +908,7 @@ try {
                     $historyMessages,
                     [['role' => 'user', 'content' => $messageText]]
                 ),
-                'max_tokens' => 450,
+                'max_tokens' => 750,
                 'temperature' => 0.3
             ];
 
@@ -979,12 +952,18 @@ try {
         }
     }
 
-    // Intelligent Human-Like Knowledge Base RAG Response if LLM call was omitted or failed
+    // Intelligent Deep Knowledge Base RAG Response if LLM call was omitted or failed
     if (!$aiSuccess || empty($publicReply)) {
-        $ragResult = synthesizeKnowledgeResponse($messageText, $knowledgeList, $company, $assistantName, $visitorGreetingName, $brandDisplayName, $historyMessages);
+        $ragResult = synthesizeKnowledgeResponse($messageText, $knowledgeList, $company, $assistantName, $visitorGreetingName, $brandDisplayName, $historyMessages, $companyAssetsList);
         $publicReply = $ragResult['reply'];
         if (!$structuredMeta) {
             $structuredMeta = $ragResult['meta'];
+        }
+        if (!empty($ragResult['meta']['offered_asset_id'])) {
+            CustomerJourneyService::updateJourneyState($pdo, (int)$journey['id'], [
+                'pending_action'   => 'SEND_ASSET_EMAIL',
+                'pending_asset_id' => (int)$ragResult['meta']['offered_asset_id']
+            ]);
         }
     }
 
@@ -1469,21 +1448,16 @@ try {
 
         if ($isEnabledInWidget && !empty($waNumber) && ($isExplicitHandoff || $isChatEnding)) {
             $showWhatsappCta = true;
-            // Generate short-lived opaque handoff token (Section 24)
-            $handoffToken = 'wh_' . bin2hex(random_bytes(16));
-            $pdo->prepare("
-                INSERT INTO `whatsapp_handoffs`
-                (`company_id`, `handoff_token`, `customer_id`, `lead_id`, `web_conversation_id`, `phone`, `status`, `expires_at`, `created_at`)
-                VALUES (?, ?, ?, ?, ?, ?, 'pending', DATE_ADD(NOW(), INTERVAL 2 HOUR), NOW())
-            ")->execute([
+            $handoffRes = ChannelHandoffService::createHandoff(
+                $pdo,
                 $companyId,
-                $handoffToken,
                 $customerId,
                 $leadId,
                 $conversationId,
-                $customer['phone'] ?? null
-            ]);
-
+                'whatsapp',
+                (int)($journey['id'] ?? 0)
+            );
+            $handoffToken = $handoffRes['handoff_token'];
             $greetingRef = "Hi! I was chatting with Cai on your website. [Ref: {$handoffToken}]";
             $whatsappUrl = "https://wa.me/{$waNumber}?text=" . urlencode($greetingRef);
         }
@@ -1500,20 +1474,16 @@ try {
 
     if ($igRow && ($isExplicitHandoff || $isChatEnding || preg_match('/(instagram|insta|ig)/i', $messageText))) {
         $showInstagramCta = true;
-        $instagramHandoffToken = 'CP-IG-' . $companyId . '-' . bin2hex(random_bytes(6));
-        $pdo->prepare("
-            INSERT INTO `instagram_handoffs`
-            (`company_id`, `handoff_token`, `session_id`, `customer_id`, `lead_id`, `web_conversation_id`, `status`, `expires_at`, `created_at`)
-            VALUES (?, ?, ?, ?, ?, ?, 'pending', DATE_ADD(NOW(), INTERVAL 24 HOUR), NOW())
-        ")->execute([
+        $igHandoffRes = ChannelHandoffService::createHandoff(
+            $pdo,
             $companyId,
-            $instagramHandoffToken,
-            $sessionId,
             $customerId,
             $leadId,
-            $conversationId
-        ]);
-
+            $conversationId,
+            'instagram',
+            (int)($journey['id'] ?? 0)
+        );
+        $instagramHandoffToken = $igHandoffRes['handoff_token'];
         $igHandle = !empty($igRow['instagram_username']) ? $igRow['instagram_username'] : ($igRow['instagram_account_id'] ?: 'cuboidpilot');
         $instagramUrl = "https://ig.me/m/" . urlencode($igHandle) . "?ref=" . urlencode($instagramHandoffToken);
     }

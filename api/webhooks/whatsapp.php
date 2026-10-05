@@ -11,6 +11,10 @@ header("Content-Type: application/json; charset=UTF-8");
 
 require_once __DIR__ . '/../../config/db.php';
 require_once __DIR__ . '/../entitlements.php';
+require_once __DIR__ . '/../../includes/customer_identity_resolver.php';
+require_once __DIR__ . '/../../includes/customer_journey_service.php';
+require_once __DIR__ . '/../../includes/channel_handoff_service.php';
+require_once __DIR__ . '/../../includes/asset_helper.php';
 
 $pdo = getDbConnection();
 
@@ -93,65 +97,20 @@ try {
         exit;
     }
 
-    // 3. Multi-Tenant Resolution
-    $resolvedCompanyId = null;
-    $matchedHandoff = null;
+    // 3. Multi-Tenant & Omnichannel Customer Identity Resolution
+    $identity = CustomerIdentityResolver::resolveFromWhatsApp(
+        $pdo,
+        $cleanSender,
+        $messageText,
+        $wabaId,
+        $cleanDest
+    );
 
-    // Strategy 1: Handoff token in message text (e.g. [Ref: wh_...] or #CP-1-AB12)
-    if (preg_match('/(?:Ref:\s*|#)?(wh_[a-f0-9]+|CP-\d+-[A-Z0-9]+)/i', $messageText, $tokenMatch)) {
-        $foundToken = trim($tokenMatch[1]);
-        $hStmt = $pdo->prepare("
-            SELECT * FROM `whatsapp_handoffs` 
-            WHERE (`handoff_token` = ? OR `handoff_token` = ?) AND `status` != 'expired'
-            LIMIT 1
-        ");
-        $hStmt->execute([$foundToken, strtoupper($foundToken)]);
-        $handoffRow = $hStmt->fetch();
-
-        if ($handoffRow) {
-            $resolvedCompanyId = (int)$handoffRow['company_id'];
-            $matchedHandoff = $handoffRow;
-        }
-    }
-
-    // Strategy 2: WABA ID / Channel ID -> whatsapp_accounts.waba_id
-    if (!$resolvedCompanyId && !empty($wabaId)) {
-        $wStmt = $pdo->prepare("SELECT company_id FROM `whatsapp_accounts` WHERE `waba_id` = ? LIMIT 1");
-        $wStmt->execute([$wabaId]);
-        $acc = $wStmt->fetch();
-        if ($acc) {
-            $resolvedCompanyId = (int)$acc['company_id'];
-        }
-    }
-
-    // Strategy 3: Destination Phone Number -> whatsapp_accounts.display_number
-    if (!$resolvedCompanyId && !empty($cleanDest)) {
-        $dStmt = $pdo->prepare("
-            SELECT company_id FROM `whatsapp_accounts` 
-            WHERE REPLACE(REPLACE(REPLACE(display_number, ' ', ''), '-', ''), '+', '') LIKE ?
-            LIMIT 1
-        ");
-        $dStmt->execute(["%{$cleanDest}%"]);
-        $acc = $dStmt->fetch();
-        if ($acc) {
-            $resolvedCompanyId = (int)$acc['company_id'];
-        }
-    }
-
-    // Strategy 4: Sender Phone match against customers table
-    if (!$resolvedCompanyId && !empty($cleanSender)) {
-        $cStmt = $pdo->prepare("
-            SELECT company_id FROM `customers` 
-            WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', '') LIKE ? 
-               OR REPLACE(REPLACE(REPLACE(whatsapp_number, ' ', ''), '-', ''), '+', '') LIKE ?
-            ORDER BY last_seen_at DESC LIMIT 1
-        ");
-        $cStmt->execute(["%{$cleanSender}%", "%{$cleanSender}%"]);
-        $cust = $cStmt->fetch();
-        if ($cust) {
-            $resolvedCompanyId = (int)$cust['company_id'];
-        }
-    }
+    $resolvedCompanyId = $identity['company_id'];
+    $customerId = $identity['customer_id'];
+    $customer = $identity['customer'];
+    $matchedHandoff = $identity['handoff'];
+    $leadId = $identity['lead_id'];
 
     // If resolution fails: Log to webhook_events with UNRESOLVED_TENANT, return HTTP 200
     if (!$resolvedCompanyId) {
@@ -182,64 +141,45 @@ try {
         exit;
     }
 
-    // 4. Resolve or Create Customer record
-    $customerId = null;
-    $customerName = 'WhatsApp Visitor';
+    $customerName = !empty($customer['name']) && $customer['name'] !== 'Website Visitor' ? $customer['name'] : 'WhatsApp Prospect';
 
-    if ($matchedHandoff && !empty($matchedHandoff['customer_id'])) {
-        $customerId = (int)$matchedHandoff['customer_id'];
-        $cRow = $pdo->query("SELECT name FROM customers WHERE id = $customerId")->fetch();
-        if ($cRow && !empty($cRow['name'])) $customerName = $cRow['name'];
-        // Update phone
-        $pdo->prepare("UPDATE customers SET phone = COALESCE(phone, ?), whatsapp_number = ?, last_seen_at = NOW() WHERE id = ?")
-            ->execute([$senderPhone, $senderPhone, $customerId]);
-    } else {
-        $cLookup = $pdo->prepare("
-            SELECT id, name FROM `customers` 
-            WHERE `company_id` = ? AND (
-                REPLACE(REPLACE(REPLACE(phone, ' ', ''), '-', ''), '+', '') LIKE ? OR
-                REPLACE(REPLACE(REPLACE(whatsapp_number, ' ', ''), '-', ''), '+', '') LIKE ?
-            ) LIMIT 1
-        ");
-        $cLookup->execute([$resolvedCompanyId, "%{$cleanSender}%", "%{$cleanSender}%"]);
-        $existingCust = $cLookup->fetch();
-
-        if ($existingCust) {
-            $customerId = (int)$existingCust['id'];
-            if (!empty($existingCust['name'])) $customerName = $existingCust['name'];
-            $pdo->prepare("UPDATE `customers` SET `last_seen_at` = NOW() WHERE `id` = ?")->execute([$customerId]);
-        } else {
-            $custUuid = 'cust_' . bin2hex(random_bytes(10));
-            $cIns = $pdo->prepare("
-                INSERT INTO `customers` 
-                (`company_id`, `customer_uuid`, `name`, `phone`, `whatsapp_number`, `first_seen_at`, `last_seen_at`)
-                VALUES (?, ?, ?, ?, ?, NOW(), NOW())
-            ");
-            $cIns->execute([$resolvedCompanyId, $custUuid, $customerName, $senderPhone, $senderPhone]);
-            $customerId = (int)$pdo->lastInsertId();
-        }
+    // 4. Omnichannel Journey & Unified Conversation Resolution
+    $conversationId = null;
+    if ($matchedHandoff && !empty($matchedHandoff['web_conversation_id'])) {
+        $conversationId = (int)$matchedHandoff['web_conversation_id'];
+    }
+    if (!$conversationId && !empty($identity['conversation_id'])) {
+        $conversationId = (int)$identity['conversation_id'];
     }
 
-    // Mark handoff as claimed if matched
-    if ($matchedHandoff) {
+    $journey = CustomerJourneyService::getOrCreateJourney(
+        $pdo,
+        $resolvedCompanyId,
+        $customerId,
+        $leadId,
+        'whatsapp',
+        null,
+        $conversationId
+    );
+
+    if (!$conversationId && !empty($journey['conversation_id'])) {
+        $conversationId = (int)$journey['conversation_id'];
+    }
+
+    if (!$conversationId) {
+        $cStmt = $pdo->prepare("SELECT id FROM `conversations` WHERE `company_id` = ? AND `customer_id` = ? ORDER BY id DESC LIMIT 1");
+        $cStmt->execute([$resolvedCompanyId, $customerId]);
+        $conversationId = (int)($cStmt->fetchColumn() ?: 0);
+    }
+
+    if ($conversationId) {
         $pdo->prepare("
-            UPDATE `whatsapp_handoffs` 
-            SET `status` = 'claimed', `claimed_at` = NOW(), `phone` = COALESCE(`phone`, ?) 
-            WHERE `id` = ?
-        ")->execute([$senderPhone, $matchedHandoff['id']]);
-    }
-
-    // 5. Find or Create WhatsApp Conversation
-    $convStmt = $pdo->prepare("
-        SELECT id FROM `conversations`
-        WHERE `company_id` = ? AND `customer_id` = ? AND `channel` = 'whatsapp' AND `status` != 'closed'
-        ORDER BY id DESC LIMIT 1
-    ");
-    $convStmt->execute([$resolvedCompanyId, $customerId]);
-    $conv = $convStmt->fetch();
-
-    if ($conv) {
-        $conversationId = (int)$conv['id'];
+            UPDATE `conversations`
+            SET `channel` = 'whatsapp',
+                `last_message_preview` = ?,
+                `last_message_at` = NOW()
+            WHERE id = ? AND company_id = ?
+        ")->execute([substr($messageText, 0, 150), $conversationId, $resolvedCompanyId]);
     } else {
         $convIns = $pdo->prepare("
             INSERT INTO `conversations`
@@ -248,13 +188,14 @@ try {
         ");
         $convIns->execute([$resolvedCompanyId, $customerId, substr($messageText, 0, 150)]);
         $conversationId = (int)$pdo->lastInsertId();
+        CustomerJourneyService::updateJourneyState($pdo, (int)$journey['id'], ['conversation_id' => $conversationId]);
     }
 
-    // Record incoming message in messages & whatsapp_messages
+    // Record incoming message with channel = 'whatsapp'
     $pdo->prepare("
         INSERT INTO `messages` 
-        (`company_id`, `conversation_id`, `sender_type`, `message_text`, `created_at`)
-        VALUES (?, ?, 'visitor', ?, NOW())
+        (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+        VALUES (?, ?, 'visitor', ?, 'whatsapp', NOW())
     ")->execute([$resolvedCompanyId, $conversationId, $messageText]);
 
     $pdo->prepare("
@@ -269,9 +210,44 @@ try {
         json_encode(['direction' => 'incoming', 'conversation_id' => $conversationId])
     ]);
 
-    // 6. Grounded AI Response Generation
-    // Fetch knowledge
-    // 6. Grounded AI Response Generation with Customer Memory Layer
+    // 5. Check Omnichannel Pending Action: SEND_ASSET_EMAIL
+    $pendingAsset = null;
+    if (!empty($journey['pending_asset_id'])) {
+        $paStmt = $pdo->prepare("SELECT * FROM `company_assets` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
+        $paStmt->execute([(int)$journey['pending_asset_id'], $resolvedCompanyId]);
+        $pendingAsset = $paStmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    $extractedEmail = '';
+    if (preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $messageText, $emMatch)) {
+        $extractedEmail = strtolower($emMatch[0]);
+    }
+    $targetEmail = $extractedEmail ?: ($customer['email'] ?? '');
+    $isAffirmative = (bool)preg_match('/\b(haan|ha|yes|sure|okay|ok|bhej\s*do|send\s*kr\s*do|send\s*karo|bhejo|mail\s*kr\s*do|email\s*pe\s*bhej|please\s*send)\b/i', $messageText);
+
+    $aiReply = '';
+    if (!empty($journey['pending_action']) && $journey['pending_action'] === 'SEND_ASSET_EMAIL' && $pendingAsset) {
+        if (!empty($targetEmail)) {
+            AssetHelper::dispatchAssetEmail(
+                $pdo,
+                $resolvedCompanyId,
+                $targetEmail,
+                $customerName,
+                $pendingAsset,
+                $company['name']
+            );
+            CustomerJourneyService::updateJourneyState($pdo, (int)$journey['id'], [
+                'pending_action'   => null,
+                'pending_asset_id' => null,
+                'offered_assets'   => array_unique(array_merge($journey['offered_assets'] ?? [], [(int)$pendingAsset['id']]))
+            ]);
+            $aiReply = "Maine **{$pendingAsset['title']}** aapki email (`{$targetEmail}`) par send kar diya hai! ✉️ Kripya apna inbox check karein.\n\nIske alawa aapko aur kis baare mein information chahiye?";
+        } elseif ($isAffirmative) {
+            $aiReply = "Zaroor! Kripya apna **email address** share karein, taaki main turant **{$pendingAsset['title']}** aapke inbox me send kar sakun. ✉️";
+        }
+    }
+
+    // 6. Grounded AI Response Generation with Structured Omnichannel Memory
     require_once __DIR__ . '/../scoring_engine.php';
     require_once __DIR__ . '/../events.php';
 
@@ -291,88 +267,76 @@ try {
         $kbText .= "### " . $d['title'] . "\n" . $d['content'] . "\n\n";
     }
 
-    // Retrieve previous lead artifact & structured memory
-    $artRow = null;
-    $leadIdForArtifact = !empty($matchedHandoff['lead_id']) ? (int)$matchedHandoff['lead_id'] : null;
-    if ($leadIdForArtifact) {
-        $aStmt = $pdo->prepare("SELECT * FROM `lead_artifacts` WHERE `lead_id` = ? AND `company_id` = ? LIMIT 1");
-        $aStmt->execute([$leadIdForArtifact, $resolvedCompanyId]);
-        $artRow = $aStmt->fetch(PDO::FETCH_ASSOC);
-    }
-    if (!$artRow && $customerId) {
-        $aStmt = $pdo->prepare("SELECT * FROM `lead_artifacts` WHERE `customer_id` = ? AND `company_id` = ? ORDER BY id DESC LIMIT 1");
-        $aStmt->execute([$customerId, $resolvedCompanyId]);
-        $artRow = $aStmt->fetch(PDO::FETCH_ASSOC);
-        if ($artRow && !$leadIdForArtifact) {
-            $leadIdForArtifact = (int)$artRow['lead_id'];
+    // Load recent messages for conversational context
+    $recentMsgs = [];
+    if ($conversationId) {
+        $recStmt = $pdo->prepare("SELECT sender_type, message_text FROM `messages` WHERE `conversation_id` = ? AND `company_id` = ? ORDER BY id DESC LIMIT 8");
+        $recStmt->execute([$conversationId, $resolvedCompanyId]);
+        $recRows = array_reverse($recStmt->fetchAll());
+        foreach ($recRows as $rr) {
+            $recentMsgs[] = ['role' => ($rr['sender_type'] === 'visitor' ? 'user' : 'assistant'), 'content' => $rr['message_text']];
         }
     }
 
-    $knownFields = [];
-    if (!empty($customerName) && $customerName !== 'WhatsApp Visitor') $knownFields[] = "- Customer Name: {$customerName}";
-    if ($artRow) {
-        if (!empty($artRow['interested_service'])) $knownFields[] = "- Interested Service: {$artRow['interested_service']}";
-        if (!empty($artRow['budget'])) $knownFields[] = "- Stated Budget: {$artRow['budget']}";
-        if (!empty($artRow['timeline'])) $knownFields[] = "- Stated Timeline: {$artRow['timeline']}";
-        if (!empty($artRow['conversation_summary'])) $knownFields[] = "- Previous Discussion Summary: {$artRow['conversation_summary']}";
-    }
-
-    $memorySection = !empty($knownFields)
-        ? "STRUCTURED CUSTOMER MEMORY (ALREADY COLLECTED ON WEBSITE):\n" . implode("\n", $knownFields) . "\n\n"
-        : "";
+    // Omnichannel Structured Customer Memory
+    $memorySection = CustomerJourneyService::buildStructuredMemory($journey, $recentMsgs);
 
     $welcomeGuidance = $matchedHandoff
-        ? "- WELCOME BACK CONTINUITY: The customer clicked 'Continue on WhatsApp' from your website. Warmly welcome them back by name, explicitly recognize what they were discussing so they know you have full context, and ask ONLY for missing information. DO NOT restart qualification or re-ask questions already in the memory above!\n"
-        : "- Warmly greet the prospect, answer their question helpfully, and guide them toward qualification.\n";
+        ? "- WELCOME BACK CONTINUITY: The customer transitioned to WhatsApp from the website. Warmly welcome them back by name, recognize their ongoing inquiry, and do NOT restart qualification or ask for details already present in memory above!\n"
+        : "- Warmly greet the prospect, answer their question helpfully, and guide them with verified facts.\n";
 
-    $aiReply = "Welcome to {$company['name']}! I'm {$asstName}, your AI assistant. How can I assist you today?";
+    if (empty($aiReply)) {
+        $aiReply = "Welcome to {$company['name']}! I'm {$asstName}, your AI assistant. How can I assist you today?";
 
-    if (defined('GROQ_API_KEY') && !empty(GROQ_API_KEY) && !empty($kbText)) {
-        $prompt = "You are {$asstName}, the dedicated AI counselor on WhatsApp for {$company['name']}.\n"
-            . "Customer Name: {$customerName}\n\n"
-            . (!empty($customRules) ? "CUSTOM COMPANY RULES:\n{$customRules}\n\n" : "")
-            . $memorySection
-            . "Verified Company Knowledge Base:\n" . $kbText . "\n"
-            . "CRITICAL WHATSAPP RULES:\n"
-            . $welcomeGuidance
-            . "- Answer accurately based ONLY on the verified company knowledge. Never invent pricing, discounts, guarantees, or delivery dates.\n"
-            . "- Keep your response natural, conversational, and nicely spaced for WhatsApp (under 120 words).\n";
+        if (defined('GROQ_API_KEY') && !empty(GROQ_API_KEY) && !empty($kbText)) {
+            $prompt = "You are {$asstName}, the dedicated AI counselor on WhatsApp for {$company['name']}.\n"
+                . "Customer Name: {$customerName}\n\n"
+                . (!empty($customRules) ? "CUSTOM COMPANY RULES:\n{$customRules}\n\n" : "")
+                . $memorySection
+                . "Verified Company Knowledge Base:\n" . $kbText . "\n"
+                . "CRITICAL WHATSAPP RULES:\n"
+                . $welcomeGuidance
+                . "- Answer accurately based ONLY on the verified company knowledge. Never invent pricing, discounts, guarantees, or delivery dates.\n"
+                . "- Keep your response natural, conversational, and nicely spaced for WhatsApp (under 120 words).\n";
 
-        $groqPayload = [
-            'model' => 'qwen/qwen3.8-27b',
-            'messages' => [
-                ['role' => 'system', 'content' => $prompt],
-                ['role' => 'user', 'content' => $messageText]
-            ],
-            'temperature' => 0.25,
-            'max_tokens' => 300
-        ];
+            $groqPayload = [
+                'model' => 'qwen/qwen3.8-27b',
+                'messages' => array_merge(
+                    [['role' => 'system', 'content' => $prompt]],
+                    $recentMsgs,
+                    [['role' => 'user', 'content' => $messageText]]
+                ),
+                'temperature' => 0.25,
+                'max_tokens' => 350
+            ];
 
-        $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($groqPayload),
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Authorization: Bearer ' . GROQ_API_KEY
-            ],
-            CURLOPT_TIMEOUT => 10,
-            CURLOPT_SSL_VERIFYPEER => false
-        ]);
-        $res = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+            $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST => true,
+                CURLOPT_POSTFIELDS => json_encode($groqPayload),
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . GROQ_API_KEY
+                ],
+                CURLOPT_TIMEOUT => 10,
+                CURLOPT_SSL_VERIFYPEER => false
+            ]);
+            $res = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
 
-        if ($code === 200 && !empty($res)) {
-            $json = json_decode($res, true);
-            if (!empty($json['choices'][0]['message']['content'])) {
-                $aiReply = trim($json['choices'][0]['message']['content']);
+            if ($code === 200 && !empty($res)) {
+                $json = json_decode($res, true);
+                if (!empty($json['choices'][0]['message']['content'])) {
+                    $aiReply = trim($json['choices'][0]['message']['content']);
+                }
             }
         }
     }
 
-    // Sync Lead Artifact with WhatsApp channel and updated interaction
+    // Sync Lead Artifact with WhatsApp channel
+    $leadIdForArtifact = $leadId ?: (int)($journey['lead_id'] ?? 0);
     if ($leadIdForArtifact) {
         $signals = [
             'whatsapp_continued' => true,
@@ -381,7 +345,6 @@ try {
         ];
         syncLeadArtifact($pdo, $resolvedCompanyId, $leadIdForArtifact, $signals);
 
-        // Dispatch continuity event
         dispatchSystemEvent($pdo, $resolvedCompanyId, 'whatsapp.connected', [
             'lead_id'         => $leadIdForArtifact,
             'customer_id'     => $customerId,
@@ -391,11 +354,11 @@ try {
         ]);
     }
 
-    // Persist outgoing AI response
+    // Persist outgoing AI response with channel = 'whatsapp'
     $pdo->prepare("
         INSERT INTO `messages` 
-        (`company_id`, `conversation_id`, `sender_type`, `message_text`, `created_at`)
-        VALUES (?, ?, 'ai', ?, NOW())
+        (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+        VALUES (?, ?, 'ai', ?, 'whatsapp', NOW())
     ")->execute([$resolvedCompanyId, $conversationId, $aiReply]);
 
     $pdo->prepare("
