@@ -1421,6 +1421,18 @@ try {
         ]);
     }
 
+    // Automated Salesperson & Owner Alert Dispatch (Instant Email & WhatsApp Notification)
+    if (!empty($leadId) && ($hasPhoneOrEmail || $isHumanAction || in_array($newPriority, ['HIGH', 'URGENT']))) {
+        require_once __DIR__ . '/alerts.php';
+        sendSalespersonAssignmentAlert(
+            $pdo, 
+            $companyId, 
+            $leadId, 
+            null, 
+            $isHumanAction ? 'HUMAN_REQUIRED' : ($hasPhoneOrEmail ? 'LEAD_ASSIGNED' : 'HIGH_INTENT_DETECTED')
+        );
+    }
+
     // 10. Contextual WhatsApp & Instagram CTA Logic (Sections 4, 5, 6 & 12)
     $isChatEnding = (bool)preg_match('/\b(bye|goodbye|alvida|thank you|thanks|dhanyawad|that\'?s all|end chat|chat end|khatam|done|ok thanks|okay thanks)\b/i', $messageText) || 
                     in_array($rawIntent, ['conversation_end', 'goodbye', 'closing']) ||
