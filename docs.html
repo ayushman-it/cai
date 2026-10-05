@@ -162,6 +162,31 @@
       opacity: 1;
       pointer-events: auto;
     }
+    /* Mobile Responsiveness & Overflow Protection */
+    html, body {
+      max-width: 100vw;
+      overflow-x: hidden;
+    }
+    main, .doc-content {
+      min-width: 0;
+      max-width: 100%;
+    }
+    pre, code {
+      max-width: 100%;
+    }
+    code:not(pre code) {
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+    pre {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      white-space: pre;
+    }
+    .break-url {
+      word-break: break-all;
+      overflow-wrap: anywhere;
+    }
   </style>
 </head>
 <body class="bg-white text-brand-black antialiased selection:bg-brand-black selection:text-white flex flex-col min-h-screen">
@@ -254,7 +279,7 @@
     <div id="mobile-drawer-backdrop" class="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity cursor-pointer"></div>
 
     <!-- Slide-over panel -->
-    <div class="relative w-full max-w-[320px] bg-white h-full shadow-2xl flex flex-col justify-between z-10 overflow-y-auto">
+    <div class="relative w-[85vw] max-w-[320px] bg-white h-full shadow-2xl flex flex-col justify-between z-10 overflow-y-auto">
       
       <!-- Drawer Header -->
       <div class="p-4 border-b border-[#e7e5de] flex items-center justify-between bg-[#fbfaf6]">
@@ -424,7 +449,7 @@
   </div>
 
   <!-- Documentation Layout Container -->
-  <div class="max-w-[1440px] mx-auto w-full flex-1 flex">
+  <div class="max-w-[1440px] mx-auto w-full flex-1 flex min-w-0">
     
     <!-- LEFT SIDEBAR: Desktop Navigation Tree -->
     <aside class="w-64 lg:w-72 shrink-0 border-r border-[#e7e5de] bg-[#fbfaf6] p-5 hidden md:block sticky top-[70px] h-[calc(100vh-70px)] overflow-y-auto">
@@ -576,7 +601,7 @@
     </aside>
 
     <!-- MAIN CONTENT AREA -->
-    <main class="flex-1 p-4 sm:p-8 lg:p-12 xl:p-14 max-w-4xl doc-content overflow-x-hidden">
+    <main class="flex-1 min-w-0 p-4 sm:p-8 lg:p-12 xl:p-14 max-w-4xl doc-content overflow-x-hidden">
       
       <!-- Doc Title & Badge -->
       <div class="mb-8 sm:mb-10">
@@ -605,7 +630,7 @@
           </a>
         </div>
         
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 pt-2 border-t border-[#e8e6df]">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 pt-2 border-t border-[#e8e6df]">
           <a href="#step-1-business" class="p-2 rounded bg-white border border-[#e8e6df] text-center hover:border-stone-900 transition-colors">
             <span class="block text-[10px] font-mono text-stone-400">Step 1</span>
             <span class="text-xs font-medium text-stone-800">Business</span>
@@ -1160,16 +1185,16 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
                 <div class="w-full">
                   <strong>Configure Webhook in Meta:</strong> Go to <strong>WhatsApp &rarr; Configuration &rarr; Webhook</strong>, click <strong>Edit</strong> and enter:
                   <div class="mt-2 p-3 bg-stone-900 text-stone-200 rounded-[4px] font-mono text-[11px] space-y-1.5">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between gap-2">
                       <span class="text-stone-400">Callback URL:</span>
-                      <button onclick="copyCode('wh-wa-url', this)" class="text-emerald-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                      <button onclick="copyCode('wh-wa-url', this)" class="text-emerald-400 hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
                     </div>
-                    <code id="wh-wa-url" class="text-emerald-300 block">https://cai.cuboidsoft.in/api/webhooks/whatsapp.php</code>
-                    <div class="flex items-center justify-between pt-1 border-t border-stone-800">
+                    <code id="wh-wa-url" class="text-emerald-300 block break-all">https://cai.cuboidsoft.in/api/webhooks/whatsapp.php</code>
+                    <div class="flex items-center justify-between pt-1 border-t border-stone-800 gap-2">
                       <span class="text-stone-400">Verify Token:</span>
-                      <button onclick="copyCode('wh-wa-token', this)" class="text-emerald-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                      <button onclick="copyCode('wh-wa-token', this)" class="text-emerald-400 hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
                     </div>
-                    <code id="wh-wa-token" class="text-emerald-300 block">cuboid_whatsapp_verify</code>
+                    <code id="wh-wa-token" class="text-emerald-300 block break-all">cuboid_whatsapp_verify</code>
                   </div>
                   <div class="mt-1.5 text-stone-500">Click <strong>Verify and save</strong>, then click <strong>Manage Webhook fields</strong> and check <code>messages</code> and <code>message_template_status_update</code>.</div>
                 </div>
@@ -1228,16 +1253,16 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
                 <div class="w-full">
                   <strong>Configure Webhook in Meta (Step 3 in Meta Portal):</strong>
                   <div class="mt-2 p-3 bg-stone-900 text-stone-200 rounded-[4px] font-mono text-[11px] space-y-1.5">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between gap-2">
                       <span class="text-stone-400">Callback URL:</span>
-                      <button onclick="copyCode('wh-ig-url', this)" class="text-rose-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                      <button onclick="copyCode('wh-ig-url', this)" class="text-rose-400 hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
                     </div>
-                    <code id="wh-ig-url" class="text-rose-300 block">https://cai.cuboidsoft.in/api/instagram_webhook.php</code>
-                    <div class="flex items-center justify-between pt-1 border-t border-stone-800">
+                    <code id="wh-ig-url" class="text-rose-300 block break-all">https://cai.cuboidsoft.in/api/instagram_webhook.php</code>
+                    <div class="flex items-center justify-between pt-1 border-t border-stone-800 gap-2">
                       <span class="text-stone-400">Verify Token:</span>
-                      <button onclick="copyCode('wh-ig-token', this)" class="text-rose-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                      <button onclick="copyCode('wh-ig-token', this)" class="text-rose-400 hover:text-white inline-flex items-center gap-1 cursor-pointer shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
                     </div>
-                    <code id="wh-ig-token" class="text-rose-300 block">cuboid_ig_verify</code>
+                    <code id="wh-ig-token" class="text-rose-300 block break-all">cuboid_ig_verify</code>
                   </div>
                   <div class="mt-1.5 text-stone-500">Click <strong>"Verify and save"</strong> (it will verify with a green checkmark). Under Subscribed Fields, subscribe to <code>messages</code> and <code>messaging_postbacks</code>.</div>
                 </div>
@@ -1308,9 +1333,9 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
                       <span class="text-stone-400 font-normal font-sans text-[10px]">Browser domain where dashboard runs</span>
                     </div>
                     <p class="text-[11px] text-stone-600">Click <strong>+ Add URI</strong> and paste:</p>
-                    <div class="p-2 bg-stone-900 text-stone-200 rounded-[3px] font-mono text-[11px] flex items-center justify-between">
-                      <code id="gcal-origin-uri" class="text-blue-300">https://cai.cuboidsoft.in</code>
-                      <button onclick="copyCode('gcal-origin-uri', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                    <div class="p-2 bg-stone-900 text-stone-200 rounded-[3px] font-mono text-[11px] flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                      <code id="gcal-origin-uri" class="text-blue-300 break-all">https://cai.cuboidsoft.in</code>
+                      <button onclick="copyCode('gcal-origin-uri', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer self-end sm:self-auto shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
                     </div>
                   </div>
 
@@ -1322,13 +1347,13 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
                     </div>
                     <p class="text-[11px] text-stone-600">Click <strong>+ Add URI</strong> and add both of these URIs:</p>
                     <div class="space-y-1.5">
-                      <div class="p-2 bg-stone-900 text-stone-200 rounded-[3px] font-mono text-[11px] flex items-center justify-between">
-                        <code id="gcal-redirect-uri-main" class="text-blue-300">https://cai.cuboidsoft.in/google_callback.php</code>
-                        <button onclick="copyCode('gcal-redirect-uri-main', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                      <div class="p-2 bg-stone-900 text-stone-200 rounded-[3px] font-mono text-[11px] flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <code id="gcal-redirect-uri-main" class="text-blue-300 break-all">https://cai.cuboidsoft.in/google_callback.php</code>
+                        <button onclick="copyCode('gcal-redirect-uri-main', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer self-end sm:self-auto shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
                       </div>
-                      <div class="p-2 bg-stone-900 text-stone-200 rounded-[3px] font-mono text-[11px] flex items-center justify-between">
-                        <code id="gcal-redirect-uri-playground" class="text-blue-300">https://developers.google.com/oauthplayground</code>
-                        <button onclick="copyCode('gcal-redirect-uri-playground', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                      <div class="p-2 bg-stone-900 text-stone-200 rounded-[3px] font-mono text-[11px] flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <code id="gcal-redirect-uri-playground" class="text-blue-300 break-all">https://developers.google.com/oauthplayground</code>
+                        <button onclick="copyCode('gcal-redirect-uri-playground', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer self-end sm:self-auto shrink-0"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
                       </div>
                     </div>
                   </div>
@@ -2179,5 +2204,7 @@ if (!hash_equals($expected, $signature)) {
       }
     });
   </script>
+  <!-- Real Live CuboidPilot Fin AI Widget Embed -->
+  <script src="widget.js?v=7.1" data-company="cp_live_cuboidsoft" async></script>
 </body>
 </html>

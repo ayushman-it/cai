@@ -66,24 +66,54 @@
                      (currentScript && currentScript.getAttribute('data-key')) || 
                      'cp_live_cuboidsoft';
 
-  // 2. Storage Session Helpers (Sections 7, 8 & 9)
-  try {
-    const prevKey = sessionStorage.getItem('cp_active_tenant_key');
-    if (prevKey && prevKey !== companyKey) {
-      sessionStorage.removeItem('cp_chat_history');
-      sessionStorage.removeItem('cp_conversation_id');
-      sessionStorage.removeItem('cp_lead_id');
-      sessionStorage.removeItem('cp_visitor_name');
-      sessionStorage.removeItem('cp_is_identified');
+  // 2. Storage Helper (Cross-window & Cross-embed synchronization via localStorage with sessionStorage fallback)
+  const widgetStorage = {
+    getItem(key) {
+      try {
+        const val = window.localStorage ? window.localStorage.getItem(key) : null;
+        if (val !== null && val !== undefined) return val;
+      } catch (e) {}
+      try {
+        return window.sessionStorage ? window.sessionStorage.getItem(key) : null;
+      } catch (e) {
+        return null;
+      }
+    },
+    setItem(key, value) {
+      try {
+        if (window.localStorage) window.localStorage.setItem(key, String(value));
+      } catch (e) {}
+      try {
+        if (window.sessionStorage) window.sessionStorage.setItem(key, String(value));
+      } catch (e) {}
+    },
+    removeItem(key) {
+      try {
+        if (window.localStorage) window.localStorage.removeItem(key);
+      } catch (e) {}
+      try {
+        if (window.sessionStorage) window.sessionStorage.removeItem(key);
+      } catch (e) {}
     }
-    sessionStorage.setItem('cp_active_tenant_key', companyKey);
+  };
+
+  try {
+    const prevKey = widgetStorage.getItem('cp_active_tenant_key');
+    if (prevKey && prevKey !== companyKey) {
+      widgetStorage.removeItem('cp_chat_history');
+      widgetStorage.removeItem('cp_conversation_id');
+      widgetStorage.removeItem('cp_lead_id');
+      widgetStorage.removeItem('cp_visitor_name');
+      widgetStorage.removeItem('cp_is_identified');
+    }
+    widgetStorage.setItem('cp_active_tenant_key', companyKey);
 
     // Wipe legacy un-scoped key if it contains another company's name
-    const legacyHistory = sessionStorage.getItem('cp_chat_history');
+    const legacyHistory = widgetStorage.getItem('cp_chat_history');
     if (legacyHistory) {
       if (companyKey === 'cp_live_cuboidsoft' && legacyHistory.includes('The Code Munk')) {
-        sessionStorage.removeItem('cp_chat_history');
-        sessionStorage.removeItem('cp_conversation_id');
+        widgetStorage.removeItem('cp_chat_history');
+        widgetStorage.removeItem('cp_conversation_id');
       }
     }
   } catch (e) {}
@@ -100,20 +130,36 @@
     STATE: 'cp_widget_open_' + companyKey
   };
 
-  let sessionId = sessionStorage.getItem(STORAGE_KEYS.SESSION_ID);
-  if (!sessionId) {
-    sessionId = 'sess_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
-    sessionStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+  function syncConversationAcrossWindows(cId, sId) {
+    try {
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage({ type: 'CP_SYNC_CONVERSATION', conversationId: cId, sessionId: sId }, '*');
+      }
+      const iframes = document.querySelectorAll('iframe');
+      iframes.forEach(f => {
+        try {
+          if (f.contentWindow) {
+            f.contentWindow.postMessage({ type: 'CP_SYNC_CONVERSATION', conversationId: cId, sessionId: sId }, '*');
+          }
+        } catch(e) {}
+      });
+    } catch(e) {}
   }
 
-  let conversationId = sessionStorage.getItem(STORAGE_KEYS.CONVO_ID) ? parseInt(sessionStorage.getItem(STORAGE_KEYS.CONVO_ID), 10) : null;
-  let leadId = sessionStorage.getItem(STORAGE_KEYS.LEAD_ID) ? parseInt(sessionStorage.getItem(STORAGE_KEYS.LEAD_ID), 10) : null;
-  let visitorName = sessionStorage.getItem(STORAGE_KEYS.VISITOR_NAME) || '';
+  let sessionId = widgetStorage.getItem(STORAGE_KEYS.SESSION_ID);
+  if (!sessionId) {
+    sessionId = 'sess_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+    widgetStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+  }
+
+  let conversationId = widgetStorage.getItem(STORAGE_KEYS.CONVO_ID) ? parseInt(widgetStorage.getItem(STORAGE_KEYS.CONVO_ID), 10) : null;
+  let leadId = widgetStorage.getItem(STORAGE_KEYS.LEAD_ID) ? parseInt(widgetStorage.getItem(STORAGE_KEYS.LEAD_ID), 10) : null;
+  let visitorName = widgetStorage.getItem(STORAGE_KEYS.VISITOR_NAME) || '';
   if (/^(hello|hi|hey|namaste|test|null|undefined|courses?|fee|fees|pricing|syllabus|python|java)$/i.test(visitorName.trim())) {
     visitorName = '';
-    sessionStorage.removeItem(STORAGE_KEYS.VISITOR_NAME);
+    widgetStorage.removeItem(STORAGE_KEYS.VISITOR_NAME);
   }
-  let isIdentified = sessionStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) === '1';
+  let isIdentified = widgetStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) === '1';
   let leadStep = 0;
 
   // 3. Create Host and Shadow DOM
@@ -5231,7 +5277,7 @@
   function updateNavMessagesBadge() {
     if (!navMessagesBadge) return;
     try {
-      const history = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
+      const history = JSON.parse(widgetStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
       const count = history.filter(m => m.sender === 'ai' || m.sender === 'human').length;
       if (currentScreen !== 'chat' && currentScreen !== 'human-chat') {
         navMessagesBadge.textContent = (count > 0) ? (count > 9 ? '9+' : String(count)) : '2';
@@ -5385,7 +5431,7 @@
 
   function toggleTheme() {
     try {
-      sessionStorage.setItem('cp_theme_user_manual', '1');
+      widgetStorage.setItem('cp_theme_user_manual', '1');
       localStorage.setItem('cp_theme_user_manual', '1');
     } catch(e) {}
     applyTheme(currentTheme === 'light' ? 'dark' : 'light');
@@ -5660,7 +5706,7 @@
       launcherBadge.style.display = 'none';
     }
     if (persist) {
-      sessionStorage.setItem('cp_teaser_dismissed', '1');
+      widgetStorage.setItem('cp_teaser_dismissed', '1');
     }
   }
 
@@ -5669,7 +5715,7 @@
     // Subtle indicator on launcher button only if unread messages exist.
     if (chatWindow && chatWindow.classList.contains('open')) return;
     try {
-      const history = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
+      const history = JSON.parse(widgetStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
       if (history.length > 0 && launcherBadge) {
         launcherBadge.style.display = 'flex';
       }
@@ -5724,7 +5770,7 @@
       }
       optionsMenu.classList.remove('show');
     }
-    sessionStorage.setItem(STORAGE_KEYS.STATE, isOpen ? '1' : '0');
+    widgetStorage.setItem(STORAGE_KEYS.STATE, isOpen ? '1' : '0');
   }
 
   bindTap(launcherBtn, () => toggleWidget());
@@ -5781,13 +5827,13 @@
 
   function resetConversationState() {
     chatStream.innerHTML = '';
-    sessionStorage.removeItem(STORAGE_KEYS.MESSAGES);
-    sessionStorage.removeItem(STORAGE_KEYS.CONVO_ID);
-    sessionStorage.removeItem(STORAGE_KEYS.LEAD_ID);
-    sessionStorage.removeItem(STORAGE_KEYS.CUSTOMER_ID);
-    sessionStorage.removeItem(STORAGE_KEYS.VISITOR_NAME);
-    sessionStorage.removeItem(STORAGE_KEYS.IS_IDENTIFIED);
-    sessionStorage.removeItem(STORAGE_KEYS.LEAD_STEP);
+    widgetStorage.removeItem(STORAGE_KEYS.MESSAGES);
+    widgetStorage.removeItem(STORAGE_KEYS.CONVO_ID);
+    widgetStorage.removeItem(STORAGE_KEYS.LEAD_ID);
+    widgetStorage.removeItem(STORAGE_KEYS.CUSTOMER_ID);
+    widgetStorage.removeItem(STORAGE_KEYS.VISITOR_NAME);
+    widgetStorage.removeItem(STORAGE_KEYS.IS_IDENTIFIED);
+    widgetStorage.removeItem(STORAGE_KEYS.LEAD_STEP);
     conversationId = null;
     leadId = null;
     customerId = null;
@@ -6160,11 +6206,12 @@
       const data = await res.json();
       if (data.conversation_id) {
         conversationId = data.conversation_id;
-        sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+        widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+        syncConversationAcrossWindows(conversationId, sessionId);
       }
       if (data.lead_id) {
         leadId = data.lead_id;
-        sessionStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
+        widgetStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
       }
       hideTyping();
       appendAIMessage(data);
@@ -6324,7 +6371,7 @@
 
     // Dynamic Cloud Theme Sync:
     // If the user has manually selected a theme, respect user's manual choice!
-    const userManual = sessionStorage.getItem('cp_theme_user_manual') === '1' || localStorage.getItem('cp_theme_user_manual') === '1';
+    const userManual = widgetStorage.getItem('cp_theme_user_manual') === '1' || localStorage.getItem('cp_theme_user_manual') === '1';
     if (!userManual) {
       if (widgetConfig.theme_mode && (widgetConfig.theme_mode === 'dark' || widgetConfig.theme_mode === 'light')) {
         applyTheme(widgetConfig.theme_mode);
@@ -6341,7 +6388,7 @@
   async function loadConfig() {
     // 1. Check local session cache for instant startup without waiting for network
     try {
-      const cached = sessionStorage.getItem('cp_cached_cfg_' + companyKey);
+      const cached = widgetStorage.getItem('cp_cached_cfg_' + companyKey);
       if (cached) {
         const parsed = JSON.parse(cached);
         if (parsed && parsed.widget) {
@@ -6357,7 +6404,7 @@
       if (!res.ok) throw new Error('Config failed');
       const data = await res.json();
       if (data && data.success && data.widget) {
-        try { sessionStorage.setItem('cp_cached_cfg_' + companyKey, JSON.stringify(data)); } catch(e) {}
+        try { widgetStorage.setItem('cp_cached_cfg_' + companyKey, JSON.stringify(data)); } catch(e) {}
         if (data.company) widgetConfig.company = data.company;
         applyWidgetConfig(data.widget);
       }
@@ -6437,7 +6484,7 @@
 
   // Visitor Lead Capture State Initialization & Identification (Section 1)
   function renderVisitorIdentificationPrompt() {
-    if (isIdentified || sessionStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) === '1') return;
+    if (isIdentified || widgetStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) === '1') return;
     if (chatStream.querySelector('.cp-visitor-intake-card')) return;
 
     const card = document.createElement('div');
@@ -6519,19 +6566,19 @@
 
         // Store session and visitor info
         sessionId = data.session_id;
-        sessionStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+        widgetStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
         if (data.conversation_id) {
           conversationId = data.conversation_id;
-          sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+          widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
         }
         if (data.lead_id) {
           leadId = data.lead_id;
-          sessionStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
+          widgetStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
         }
         visitorName = name;
-        sessionStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
+        widgetStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
         isIdentified = true;
-        sessionStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
+        widgetStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
 
         // Remove the intake card
         card.remove();
@@ -6585,7 +6632,7 @@
     if (inputField) {
       inputField.placeholder = isIdentified ? "Ask a question..." : "Enter your details above to begin...";
     }
-    if (!isIdentified && sessionStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) !== '1') {
+    if (!isIdentified && widgetStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) !== '1') {
       renderVisitorIdentificationPrompt();
     }
   }
@@ -6900,7 +6947,7 @@
       const data = await res.json();
       if (data.session_id) {
         sessionId = data.session_id;
-        sessionStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+        widgetStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
       }
       appendAIMessage(data);
     } catch (e) {
@@ -7106,7 +7153,7 @@
         const data = await res.json();
         if (data && data.conversation_id) {
           conversationId = data.conversation_id;
-          sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+          widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
         }
       } catch (e) {
         console.warn('Send human message error:', e);
@@ -7162,17 +7209,17 @@
 
       if (data.conversation_id) {
         conversationId = data.conversation_id;
-        sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+        widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
       }
       if (data.lead_id) {
         leadId = data.lead_id;
-        sessionStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
+        widgetStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
       }
       if (data.lead_artifact && data.lead_artifact.customer_name) {
         const cName = data.lead_artifact.customer_name;
         if (!/^(website visitor|prospect|hello|hi|hey|namaste|courses?|fee|fees|pricing|syllabus|python|java|test|null|undefined)/i.test(cName.trim())) {
           visitorName = cName;
-          sessionStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
+          widgetStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
           if (inputField) {
             inputField.placeholder = "Ask a question...";
           }
@@ -7180,7 +7227,7 @@
       }
       if (data.lead_captured) {
         isIdentified = true;
-        sessionStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
+        widgetStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
       }
 
       // Realistic thinking pacing: 850ms - 1150ms natural pause
@@ -7226,20 +7273,20 @@
   // 12. Local Storage Persistence
   function saveHistory(sender, text, whatsappCta, chatEnded, attachment = null) {
     try {
-      const history = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
+      const history = JSON.parse(widgetStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
       history.push({ sender, text, whatsappCta, chatEnded, attachment, timestamp: 'Just now' });
-      sessionStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(history.slice(-30)));
+      widgetStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(history.slice(-30)));
     } catch (e) {}
   }
 
   function restoreHistory() {
     try {
-      const raw = sessionStorage.getItem(STORAGE_KEYS.MESSAGES);
+      const raw = widgetStorage.getItem(STORAGE_KEYS.MESSAGES);
       if (!raw) return;
 
       // Cross-tenant history protection: if visiting CuboidSoft, do not restore The Code Munk messages
       if (companyKey === 'cp_live_cuboidsoft' && raw.includes('The Code Munk')) {
-        sessionStorage.removeItem(STORAGE_KEYS.MESSAGES);
+        widgetStorage.removeItem(STORAGE_KEYS.MESSAGES);
         return;
       }
 
@@ -7450,7 +7497,7 @@
         if (inputField) inputField.placeholder = "Ask a question...";
       }
       if (brandLogo) updateWidgetLogo();
-      if (!isIdentified && sessionStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) !== '1') {
+      if (!isIdentified && widgetStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) !== '1') {
         renderVisitorIdentificationPrompt();
       }
       if (conversationId) {
@@ -7956,7 +8003,7 @@
     let lastSnippet = 'Search answers or chat with our AI assistant';
     let hasRecentMessages = false;
     try {
-      const history = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
+      const history = JSON.parse(widgetStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
       if (history.length > 0) {
         hasRecentMessages = true;
         const last = history[history.length - 1];
@@ -8475,7 +8522,7 @@
       if (data.success) {
         if (data.conversation_id) {
           conversationId = data.conversation_id;
-          sessionStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+          widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
         }
         if (data.agent) {
           selectedAgent = data.agent;
@@ -8550,11 +8597,32 @@
     return startInstantHumanHelpSession(agent);
   }
 
+  function showIncomingAgentNotification(agentName, messageText, avatarUrl) {
+    if (chatWindow && chatWindow.classList.contains('open') && (currentScreen === 'chat' || currentScreen === 'human-chat')) return;
+    if (launcherBadge) {
+      launcherBadge.style.display = 'flex';
+      launcherBadge.textContent = '1';
+    }
+    if (teaserBubble) {
+      if (teaserAuthor) teaserAuthor.textContent = agentName || 'Customer Specialist';
+      if (teaserMsg) teaserMsg.textContent = messageText || 'New message received';
+      teaserBubble.classList.add('visible');
+      teaserBubble.style.display = 'block';
+    }
+  }
+
   function startHumanPolling() {
     if (humanPollingInterval) clearInterval(humanPollingInterval);
 
     humanPollingInterval = setInterval(async () => {
-      if ((currentScreen !== 'human-chat' && currentScreen !== 'chat') || !conversationId) return;
+      if (!conversationId) {
+        const storedCId = widgetStorage.getItem(STORAGE_KEYS.CONVO_ID);
+        if (storedCId) {
+          conversationId = parseInt(storedCId, 10);
+        } else {
+          return;
+        }
+      }
 
       try {
         const url = `${baseUrl}/api/widget_actions.php?action=poll_messages&conversation_id=${conversationId}&after_id=${lastPolledMessageId}&company_key=${encodeURIComponent(companyKey)}&session_token=${encodeURIComponent(sessionId)}`;
@@ -8585,6 +8653,10 @@
                       avatar_url: latestAgentAvatar
                     });
                     playReceivedSound();
+                  }
+                  // Notify user if floating widget is closed or on home screen
+                  if (!isEmbedded && (!chatWindow || !chatWindow.classList.contains('open') || currentScreen === 'home')) {
+                    showIncomingAgentNotification(latestAgentName, msg.text, latestAgentAvatar);
                   }
                 }
               }
@@ -9515,6 +9587,47 @@
     // Keep floating widget docked and closed by default until explicitly clicked
     initTeaserNotification();
   }
+
+  // Auto-start polling if an active conversation exists
+  if (conversationId) {
+    startHumanPolling();
+  }
+
+  // Cross-window and Cross-frame Storage Synchronization
+  window.addEventListener('storage', (e) => {
+    if (!e || !e.key) return;
+    if (e.key === STORAGE_KEYS.CONVO_ID && e.newValue) {
+      const newId = parseInt(e.newValue, 10);
+      if (newId && newId !== conversationId) {
+        conversationId = newId;
+        startHumanPolling();
+      }
+    } else if (e.key === STORAGE_KEYS.MESSAGES && e.newValue) {
+      try {
+        const msgs = JSON.parse(e.newValue);
+        if (Array.isArray(msgs) && msgs.length > 0) {
+          const currentBubbles = chatStream ? chatStream.querySelectorAll('.cp-msg-row').length : 0;
+          if (msgs.length > currentBubbles) {
+            renderChatHistory();
+          }
+        }
+      } catch (err) {}
+    }
+  });
+
+  window.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'CP_SYNC_CONVERSATION') {
+      if (event.data.conversationId && event.data.conversationId !== conversationId) {
+        conversationId = event.data.conversationId;
+        widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+        startHumanPolling();
+      }
+      if (event.data.sessionId && event.data.sessionId !== sessionId) {
+        sessionId = event.data.sessionId;
+        widgetStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+      }
+    }
+  });
 
   // Mobile drawer collision protector: automatically hide floating widget if a full-screen drawer or modal is open
   if (!isEmbedded && hostElement) {
