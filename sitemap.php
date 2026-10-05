@@ -73,6 +73,7 @@ $urls = [
 ];
 
 $fallbackArticles = [
+    'why-cai-is-important-for-you' => '2026-10-05',
     'gandhi-jayanti-truth-technology-self-reliance' => '2026-10-02',
     'meet-cai-autonomous-ai-agent' => '2026-10-02'
 ];

@@ -38,13 +38,13 @@ try {
 
 if (!$latestBlog) {
     $latestBlog = [
-        'title' => "Meet Cai: Why We Built an Autonomous AI Customer Agent with Instant Human Action",
-        'slug' => "meet-cai-autonomous-ai-agent",
-        'cover_image' => "assets/blog/meet-cai-founder.png",
-        'category' => "Engineering & AI",
-        'published_at' => "2026-10-01",
-        'read_time_minutes' => 5,
-        'excerpt' => "Autonomous customer triage, real-time qualification, 1-on-1 team appointment booking, and instant payments inside one embeddable widget."
+        'title' => "Why Cai is Important for You: The Complete Guide (आसान शब्दों में समझें)",
+        'slug' => "why-cai-is-important-for-you",
+        'cover_image' => "assets/blog/why-cai-is-important-for-you.png",
+        'category' => "Product & Growth",
+        'published_at' => "2026-10-05",
+        'read_time_minutes' => 3,
+        'excerpt' => "Customer queries ka instant reply nahi milta? Leads miss ho rahi hain? Jaaniye kaise Cai aapke business ko 24/7 active rakh kar sales aur customer support ko superfast bana deta hai."
     ];
 }
 
