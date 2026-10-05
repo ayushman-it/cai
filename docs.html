@@ -1499,13 +1499,13 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
             <a href="#guide-telecrm" class="px-3 py-1.5 bg-white hover:bg-purple-50 border border-stone-200 hover:border-purple-300 rounded-lg text-stone-700 hover:text-purple-800 transition-all inline-flex items-center gap-1.5 font-medium shadow-2xs">
               <span class="w-2 h-2 rounded-full bg-purple-500"></span> 7. TeleCRM
             </a>
-            <a href="#guide-zoho" class="px-3 py-1.5 bg-white hover:bg-red-50 border border-stone-200 hover:border-red-300 rounded-lg text-stone-700 hover:text-red-800 transition-all inline-flex items-center gap-1.5 font-medium shadow-2xs">
+            <a href="#guide-zoho" onclick="switchCrmTab('zoho')" class="px-3 py-1.5 bg-white hover:bg-red-50 border border-stone-200 hover:border-red-300 rounded-lg text-stone-700 hover:text-red-800 transition-all inline-flex items-center gap-1.5 font-medium shadow-2xs">
               <span class="w-2 h-2 rounded-full bg-red-500"></span> 8. Zoho CRM
             </a>
-            <a href="#guide-hubspot" class="px-3 py-1.5 bg-white hover:bg-orange-50 border border-stone-200 hover:border-orange-300 rounded-lg text-stone-700 hover:text-orange-800 transition-all inline-flex items-center gap-1.5 font-medium shadow-2xs">
+            <a href="#guide-hubspot" onclick="switchCrmTab('hubspot')" class="px-3 py-1.5 bg-white hover:bg-orange-50 border border-stone-200 hover:border-orange-300 rounded-lg text-stone-700 hover:text-orange-800 transition-all inline-flex items-center gap-1.5 font-medium shadow-2xs">
               <span class="w-2 h-2 rounded-full bg-orange-500"></span> 9. HubSpot CRM
             </a>
-            <a href="#guide-salesforce" class="px-3 py-1.5 bg-white hover:bg-cyan-50 border border-stone-200 hover:border-cyan-300 rounded-lg text-stone-700 hover:text-cyan-800 transition-all inline-flex items-center gap-1.5 font-medium shadow-2xs">
+            <a href="#guide-salesforce" onclick="switchCrmTab('salesforce')" class="px-3 py-1.5 bg-white hover:bg-cyan-50 border border-stone-200 hover:border-cyan-300 rounded-lg text-stone-700 hover:text-cyan-800 transition-all inline-flex items-center gap-1.5 font-medium shadow-2xs">
               <span class="w-2 h-2 rounded-full bg-cyan-600"></span> 10. Salesforce
             </a>
             <a href="#guide-webhooks" class="px-3 py-1.5 bg-white hover:bg-stone-100 border border-stone-200 rounded-lg text-stone-700 transition-all inline-flex items-center gap-1.5 font-medium shadow-2xs">
@@ -2036,223 +2036,541 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
             </div>
           </div>
 
-          <!-- CHANNELS 8, 9 & 10: ZOHO, HUBSPOT, SALESFORCE (INTERCOM ECOSYSTEM DESIGN) -->
-          <div id="guide-zoho" class="border border-[#e7e5de] bg-white rounded-[12px] p-5 sm:p-7 shadow-xs space-y-6">
-            <!-- Header with Multi-Brand Badges -->
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#f0ede6] pb-4">
-              <div class="flex items-start sm:items-center gap-3.5">
-                <!-- Stacked Brand Badges -->
-                <div class="flex items-center -space-x-2 shrink-0">
-                  <div class="w-10 h-10 rounded-[10px] bg-red-50 border-2 border-white p-1.5 flex items-center justify-center shadow-xs">
+          <!-- CHANNELS 8, 9 & 10: ZOHO, HUBSPOT, SALESFORCE (INTERCOM APP STORE / HUB DESIGN) -->
+          <div id="guide-zoho" class="scroll-mt-24 border border-[#e7e5de] bg-white rounded-2xl p-5 sm:p-7 shadow-xs space-y-6 relative">
+            <span id="guide-hubspot" class="absolute -top-24 left-0"></span>
+            <span id="guide-salesforce" class="absolute -top-24 left-0"></span>
+            <span id="guide-crm-sync" class="absolute -top-24 left-0"></span>
+
+            <!-- Top Header & Status Meta (Intercom Style) -->
+            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#f0ede6] pb-5">
+              <div class="flex items-start gap-3.5">
+                <!-- Stacked App Store Icons -->
+                <div class="flex items-center -space-x-2 shrink-0 pt-0.5">
+                  <div class="w-10 h-10 rounded-xl bg-red-50 border-2 border-white p-1.5 flex items-center justify-center shadow-xs">
                     <img src="assets/brands/zoho.svg" alt="Zoho CRM" class="w-5 h-5 object-contain" onerror="this.src='assets/brands/zoho.png'">
                   </div>
-                  <div class="w-10 h-10 rounded-[10px] bg-amber-50 border-2 border-white p-1.5 flex items-center justify-center shadow-xs">
+                  <div class="w-10 h-10 rounded-xl bg-amber-50 border-2 border-white p-1.5 flex items-center justify-center shadow-xs">
                     <img src="assets/brands/hubspot.svg" alt="HubSpot" class="w-5 h-5 object-contain" onerror="this.src='assets/brands/hubspot.png'">
                   </div>
-                  <div class="w-10 h-10 rounded-[10px] bg-sky-50 border-2 border-white p-1.5 flex items-center justify-center shadow-xs">
+                  <div class="w-10 h-10 rounded-xl bg-sky-50 border-2 border-white p-1.5 flex items-center justify-center shadow-xs">
                     <img src="assets/brands/salesforce.svg" alt="Salesforce" class="w-5 h-5 object-contain" onerror="this.src='assets/brands/salesforce.png'">
                   </div>
                 </div>
                 <div>
                   <div class="flex items-center gap-2 flex-wrap">
-                    <h3 class="text-base sm:text-lg font-semibold text-stone-900 leading-tight">8. Zoho CRM &bull; 9. HubSpot &bull; 10. Salesforce</h3>
-                    <span class="text-[10px] font-mono px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-semibold">Active 2-Way Sync</span>
+                    <h3 class="text-base sm:text-lg font-semibold text-stone-900 tracking-tight">8. Zoho CRM &bull; 9. HubSpot &bull; 10. Salesforce</h3>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Active 2-Way Sync
+                    </span>
                   </div>
-                  <p class="text-xs text-stone-500 mt-0.5">Enterprise CRM Contact, Lead Dossier &amp; Opportunity Synchronization</p>
+                  <p class="text-xs text-stone-500 mt-0.5 leading-relaxed">
+                    Enterprise CRM Lead Dossier, Automated Contact Enrichment &amp; Opportunity Pipeline Orchestration
+                  </p>
                 </div>
               </div>
-              <div class="flex items-center gap-2 self-start lg:self-auto shrink-0">
+
+              <!-- Intercom Badges & Channels Link -->
+              <div class="flex items-center gap-2 self-start lg:self-center shrink-0 flex-wrap">
                 <span class="text-[11px] font-mono px-2.5 py-1 bg-stone-100 text-stone-700 border border-stone-200 rounded-[6px] font-medium flex items-center gap-1.5">
                   <i data-lucide="shield-check" class="w-3.5 h-3.5 text-stone-600"></i>
                   <span>OAuth 2.0 &amp; Tokens</span>
                 </span>
-                <span class="text-[11px] font-mono px-2.5 py-1 bg-[#1e2028] text-white rounded-[6px] font-medium flex items-center gap-1.5">
+                <span class="text-[11px] font-mono px-2.5 py-1 bg-[#1e2028] text-white rounded-[6px] font-medium flex items-center gap-1.5 shadow-2xs">
                   <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
                   <span>Realtime &lt; 2s</span>
                 </span>
               </div>
             </div>
 
-            <!-- Intercom-Grade 3 Column Detailed App Cards -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 text-xs">
-              
-              <!-- 1. ZOHO CRM CARD -->
-              <div class="flex flex-col bg-[#fcfbf9] border border-[#e7e5de] rounded-[10px] p-4 sm:p-5 hover:border-red-300 hover:shadow-xs transition-all">
-                <div class="flex items-center justify-between pb-3 mb-3 border-b border-[#f0ede6]">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-[8px] bg-red-100/70 border border-red-200 flex items-center justify-center shrink-0">
-                      <img src="assets/brands/zoho.svg" alt="Zoho" class="w-5 h-5 object-contain" onerror="this.src='assets/brands/zoho.png'">
-                    </div>
-                    <div>
-                      <h4 class="font-semibold text-stone-900 text-sm">Zoho CRM</h4>
-                      <span class="text-[10px] text-stone-500 font-mono">v2.1 REST API</span>
-                    </div>
-                  </div>
-                  <span class="text-[10px] font-mono px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 rounded font-medium">Zoho Suite</span>
-                </div>
-
-                <div class="space-y-3 flex-1 text-stone-700">
-                  <div class="flex items-start gap-2">
-                    <span class="w-4 h-4 rounded-full bg-red-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0 font-bold mt-0.5">1</span>
-                    <div>
-                      <strong>Register Client:</strong> In <a href="https://api-console.zoho.com" target="_blank" class="underline font-medium text-stone-900">Zoho Developer Console</a> &rarr; Click <em>Add Client</em> &rarr; Select <strong>Server-based Applications</strong>.
-                    </div>
-                  </div>
-
-                  <div class="flex items-start gap-2">
-                    <span class="w-4 h-4 rounded-full bg-red-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0 font-bold mt-0.5">2</span>
-                    <div>
-                      <strong>Authorized Redirect URI:</strong> Set Redirect URI to:
-                      <div class="mt-1 p-1.5 bg-white border border-[#e7e5de] rounded font-mono text-[10.5px] text-stone-800 break-all select-all">
-                        https://cai.cuboidsoft.in/zoho_callback.php
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex items-start gap-2">
-                    <span class="w-4 h-4 rounded-full bg-red-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0 font-bold mt-0.5">3</span>
-                    <div>
-                      <strong>Enter Credentials:</strong> Copy <strong>Client ID</strong>, <strong>Client Secret</strong> &amp; <strong>Refresh Token</strong> &rarr; Paste in <a href="app/channels.html" class="underline font-medium text-stone-900"><code>app/channels.html</code></a>.
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Feature Pill & Region Support -->
-                <div class="mt-4 pt-3 border-t border-[#f0ede6] space-y-2">
-                  <div class="p-2 bg-red-50/60 border border-red-200/70 rounded-[6px] text-[11px] text-red-950 flex items-start gap-1.5">
-                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-red-600 shrink-0 mt-0.5"></i>
-                    <span><strong>What syncs:</strong> Instant Lead/Contact creation with phone, email &amp; AI intent score.</span>
-                  </div>
-                  <div class="text-[10px] font-mono text-stone-500 flex items-center gap-1 justify-between">
-                    <span>Region Domains:</span>
-                    <span class="font-medium text-stone-700">zoho.in &bull; zoho.com &bull; zoho.eu</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 2. HUBSPOT CRM CARD -->
-              <div id="guide-hubspot" class="flex flex-col bg-[#fcfbf9] border border-[#e7e5de] rounded-[10px] p-4 sm:p-5 hover:border-amber-300 hover:shadow-xs transition-all">
-                <div class="flex items-center justify-between pb-3 mb-3 border-b border-[#f0ede6]">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-[8px] bg-amber-100/70 border border-amber-200 flex items-center justify-center shrink-0">
-                      <img src="assets/brands/hubspot.svg" alt="HubSpot" class="w-5 h-5 object-contain" onerror="this.src='assets/brands/hubspot.png'">
-                    </div>
-                    <div>
-                      <h4 class="font-semibold text-stone-900 text-sm">HubSpot CRM</h4>
-                      <span class="text-[10px] text-stone-500 font-mono">Private Apps API</span>
-                    </div>
-                  </div>
-                  <span class="text-[10px] font-mono px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded font-medium">Sales Hub</span>
-                </div>
-
-                <div class="space-y-3 flex-1 text-stone-700">
-                  <div class="flex items-start gap-2">
-                    <span class="w-4 h-4 rounded-full bg-amber-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0 font-bold mt-0.5">1</span>
-                    <div>
-                      <strong>Create Private App:</strong> In HubSpot &rarr; Click <strong>Settings (⚙️) &rarr; Integrations &rarr; Private Apps</strong> &rarr; Click <em>Create a private app</em>.
-                    </div>
-                  </div>
-
-                  <div class="flex items-start gap-2">
-                    <span class="w-4 h-4 rounded-full bg-amber-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0 font-bold mt-0.5">2</span>
-                    <div>
-                      <strong>Enable Scopes:</strong> Open <em>Scopes</em> tab &rarr; Under CRM objects, check write permission:
-                      <div class="mt-1 p-1.5 bg-white border border-[#e7e5de] rounded font-mono text-[10.5px] text-stone-800 break-all select-all">
-                        crm.objects.contacts.write, crm.objects.deals.write
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex items-start gap-2">
-                    <span class="w-4 h-4 rounded-full bg-amber-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0 font-bold mt-0.5">3</span>
-                    <div>
-                      <strong>Copy Access Token:</strong> Click <em>Create app</em> &rarr; Click <em>Show token</em> &rarr; Copy token (starts with <code>pat-na1-...</code>) &rarr; Paste in <a href="app/channels.html" class="underline font-medium text-stone-900"><code>app/channels.html</code></a>.
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Feature Pill & Pipeline Support -->
-                <div class="mt-4 pt-3 border-t border-[#f0ede6] space-y-2">
-                  <div class="p-2 bg-amber-50/60 border border-amber-200/70 rounded-[6px] text-[11px] text-amber-950 flex items-start gap-1.5">
-                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5"></i>
-                    <span><strong>What syncs:</strong> Instant contact creation + deal creation mapped to pipeline stage.</span>
-                  </div>
-                  <div class="text-[10px] font-mono text-stone-500 flex items-center gap-1 justify-between">
-                    <span>Sync Scope:</span>
-                    <span class="font-medium text-stone-700">Contacts &bull; Deals &bull; Activity Notes</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- 3. SALESFORCE CRM CARD -->
-              <div id="guide-salesforce" class="flex flex-col bg-[#fcfbf9] border border-[#e7e5de] rounded-[10px] p-4 sm:p-5 hover:border-sky-300 hover:shadow-xs transition-all">
-                <div class="flex items-center justify-between pb-3 mb-3 border-b border-[#f0ede6]">
-                  <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-[8px] bg-sky-100/70 border border-sky-200 flex items-center justify-center shrink-0">
-                      <img src="assets/brands/salesforce.svg" alt="Salesforce" class="w-5 h-5 object-contain" onerror="this.src='assets/brands/salesforce.png'">
-                    </div>
-                    <div>
-                      <h4 class="font-semibold text-stone-900 text-sm">Salesforce</h4>
-                      <span class="text-[10px] text-stone-500 font-mono">Lightning &amp; Classic</span>
-                    </div>
-                  </div>
-                  <span class="text-[10px] font-mono px-2 py-0.5 bg-sky-50 text-sky-700 border border-sky-200 rounded font-medium">Sales Cloud</span>
-                </div>
-
-                <div class="space-y-3 flex-1 text-stone-700">
-                  <div class="flex items-start gap-2">
-                    <span class="w-4 h-4 rounded-full bg-sky-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0 font-bold mt-0.5">1</span>
-                    <div>
-                      <strong>App Manager:</strong> In Salesforce &rarr; Go to <strong>Setup &rarr; Platform Tools &rarr; Apps &rarr; App Manager</strong> &rarr; Click <em>New Connected App</em>.
-                    </div>
-                  </div>
-
-                  <div class="flex items-start gap-2">
-                    <span class="w-4 h-4 rounded-full bg-sky-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0 font-bold mt-0.5">2</span>
-                    <div>
-                      <strong>Enable OAuth Settings:</strong> Check <em>Enable OAuth Settings</em> &rarr; Set Callback URL:
-                      <div class="mt-1 p-1.5 bg-white border border-[#e7e5de] rounded font-mono text-[10.5px] text-stone-800 break-all select-all">
-                        https://cai.cuboidsoft.in/salesforce_callback.php
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex items-start gap-2">
-                    <span class="w-4 h-4 rounded-full bg-sky-600 text-white font-mono text-[10px] flex items-center justify-center shrink-0 font-bold mt-0.5">3</span>
-                    <div>
-                      <strong>Copy Keys:</strong> Select OAuth scopes (<code>api</code> &amp; <code>refresh_token</code>) &rarr; Copy <strong>Consumer Key</strong> &amp; <strong>Consumer Secret</strong> &rarr; Paste in <a href="app/channels.html" class="underline font-medium text-stone-900"><code>app/channels.html</code></a>.
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Feature Pill & Queue Routing -->
-                <div class="mt-4 pt-3 border-t border-[#f0ede6] space-y-2">
-                  <div class="p-2 bg-sky-50/60 border border-sky-200/70 rounded-[6px] text-[11px] text-sky-950 flex items-start gap-1.5">
-                    <i data-lucide="check-circle" class="w-3.5 h-3.5 text-sky-600 shrink-0 mt-0.5"></i>
-                    <span><strong>What syncs:</strong> Standard Leads, Accounts &amp; Opportunities with auto lead queue assignment.</span>
-                  </div>
-                  <div class="text-[10px] font-mono text-stone-500 flex items-center gap-1 justify-between">
-                    <span>Object Mapping:</span>
-                    <span class="font-medium text-stone-700">Lead &bull; Contact &bull; Opportunity</span>
-                  </div>
-                </div>
-              </div>
-
+            <!-- Intercom Segmented Switcher Navigation -->
+            <div class="flex items-center gap-1.5 p-1 bg-[#f5f4f0] border border-[#e7e5de] rounded-xl overflow-x-auto scrollbar-none">
+              <button type="button" onclick="switchCrmTab('zoho')" data-crm-tab="zoho" class="crm-tab-btn flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-semibold bg-white text-stone-900 shadow-2xs border border-stone-200/80 transition-all cursor-pointer">
+                <img src="assets/brands/zoho.svg" alt="Zoho CRM" class="w-4 h-4 object-contain" onerror="this.src='assets/brands/zoho.png'">
+                <span>Zoho CRM</span>
+                <span class="text-[10px] font-mono px-1.5 py-0.2 bg-red-50 text-red-700 rounded border border-red-200">v2.1 REST</span>
+              </button>
+              <button type="button" onclick="switchCrmTab('hubspot')" data-crm-tab="hubspot" class="crm-tab-btn flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-900 hover:bg-white/60 border border-transparent transition-all cursor-pointer">
+                <img src="assets/brands/hubspot.svg" alt="HubSpot" class="w-4 h-4 object-contain" onerror="this.src='assets/brands/hubspot.png'">
+                <span>HubSpot CRM</span>
+                <span class="text-[10px] font-mono px-1.5 py-0.2 bg-amber-50 text-amber-700 rounded border border-amber-200">Private Apps</span>
+              </button>
+              <button type="button" onclick="switchCrmTab('salesforce')" data-crm-tab="salesforce" class="crm-tab-btn flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-900 hover:bg-white/60 border border-transparent transition-all cursor-pointer">
+                <img src="assets/brands/salesforce.svg" alt="Salesforce" class="w-4 h-4 object-contain" onerror="this.src='assets/brands/salesforce.png'">
+                <span>Salesforce</span>
+                <span class="text-[10px] font-mono px-1.5 py-0.2 bg-sky-50 text-sky-700 rounded border border-sky-200">Sales Cloud</span>
+              </button>
+              <button type="button" onclick="switchCrmTab('sync')" data-crm-tab="sync" class="crm-tab-btn flex items-center gap-2 px-3.5 sm:px-4 py-2 rounded-lg text-xs font-medium text-stone-500 hover:text-stone-900 hover:bg-white/60 border border-transparent transition-all cursor-pointer sm:ml-auto">
+                <i data-lucide="layers" class="w-4 h-4 text-stone-600"></i>
+                <span class="hidden sm:inline">Sync Architecture &amp; Matrix</span>
+                <span class="sm:hidden">Architecture</span>
+              </button>
             </div>
 
-            <!-- Intercom-Grade Architecture Data Flow Strip -->
-            <div class="p-3.5 bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 text-white rounded-[8px] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <div class="flex items-center gap-2.5">
-                <div class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center shrink-0 text-amber-400">
-                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <!-- TAB PANE 1: ZOHO CRM -->
+            <div id="crm-pane-zoho" class="crm-tab-pane space-y-6">
+              <!-- App Card Banner -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 bg-gradient-to-r from-red-50/50 via-white to-stone-50 border border-red-100 rounded-xl">
+                <div class="flex items-center gap-3.5">
+                  <div class="w-12 h-12 rounded-xl bg-white border border-red-200 p-2 flex items-center justify-center shadow-xs shrink-0">
+                    <img src="assets/brands/zoho.svg" alt="Zoho CRM" class="w-7 h-7 object-contain" onerror="this.src='assets/brands/zoho.png'">
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h4 class="text-base font-semibold text-stone-900">Zoho CRM Integration</h4>
+                      <span class="text-[10px] font-mono px-2 py-0.5 bg-red-100/70 text-red-800 rounded font-medium">Server-Based App</span>
+                    </div>
+                    <p class="text-xs text-stone-600 mt-0.5">Direct v2.1 REST API &bull; Multi-region data centers (<code>.in</code>, <code>.com</code>, <code>.eu</code>, <code>.com.au</code>)</p>
+                  </div>
                 </div>
-                <div>
-                  <span class="font-semibold text-white">Unified Multi-CRM Sync Engine:</span>
-                  <span class="text-stone-300 ml-1">Website Visitor / WhatsApp &rarr; Cai AI Qualification &rarr; Instant CRM Dispatch</span>
+                <a href="app/channels.html" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-medium rounded-lg transition-colors shrink-0 shadow-2xs">
+                  <span>Connect Zoho in Dashboard</span>
+                  <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
+
+              <!-- 3-Step Setup Cards (Intercom Style) -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Step 1 -->
+                <div class="bg-[#faf9f6] border border-[#e7e5de] rounded-xl p-5 flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="w-6 h-6 rounded-full bg-red-600 text-white font-mono text-xs flex items-center justify-center font-bold">01</span>
+                      <span class="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Console Setup</span>
+                    </div>
+                    <h5 class="text-sm font-semibold text-stone-900">Register Server App</h5>
+                    <p class="text-xs text-stone-600 leading-relaxed">
+                      Go to <a href="https://api-console.zoho.com" target="_blank" class="font-semibold text-red-700 hover:underline inline-flex items-center gap-0.5">Zoho Developer Console <i data-lucide="external-link" class="w-3 h-3"></i></a>, click <strong>Add Client</strong>, and select <strong>Server-based Applications</strong>.
+                    </p>
+                  </div>
+                  <div class="text-[11px] text-stone-500 bg-white border border-[#e7e5de] rounded-lg p-2.5">
+                    <strong>Client Name:</strong> <code>CuboidPilot Cai</code><br>
+                    <strong>Homepage URL:</strong> <code>https://cai.cuboidsoft.in</code>
+                  </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-[#faf9f6] border border-[#e7e5de] rounded-xl p-5 flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="w-6 h-6 rounded-full bg-red-600 text-white font-mono text-xs flex items-center justify-center font-bold">02</span>
+                      <span class="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Redirect URI</span>
+                    </div>
+                    <h5 class="text-sm font-semibold text-stone-900">Authorized Callback</h5>
+                    <p class="text-xs text-stone-600 leading-relaxed">
+                      Paste the CuboidPilot OAuth redirect endpoint into Zoho's <em>Authorized Redirect URIs</em> field:
+                    </p>
+                  </div>
+                  <div class="bg-[#1e2028] text-white p-2.5 rounded-lg text-xs space-y-1.5">
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="text-[10px] font-mono text-stone-400">CALLBACK URL</span>
+                      <button type="button" onclick="copyCode('zoho-redirect-url', this)" class="text-[11px] text-red-300 hover:text-white inline-flex items-center gap-1 cursor-pointer transition-colors">
+                        <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                      </button>
+                    </div>
+                    <code id="zoho-redirect-url" class="font-mono text-[11px] text-stone-200 break-all select-all block leading-tight">https://cai.cuboidsoft.in/zoho_callback.php</code>
+                  </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-[#faf9f6] border border-[#e7e5de] rounded-xl p-5 flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="w-6 h-6 rounded-full bg-red-600 text-white font-mono text-xs flex items-center justify-center font-bold">03</span>
+                      <span class="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Authorize</span>
+                    </div>
+                    <h5 class="text-sm font-semibold text-stone-900">Bind Credentials</h5>
+                    <p class="text-xs text-stone-600 leading-relaxed">
+                      Copy <strong>Client ID</strong>, <strong>Client Secret</strong> &amp; <strong>Refresh Token</strong> from Zoho, open <a href="app/channels.html" class="font-semibold text-stone-900 underline">Cai Channels</a>, select your region, and save.
+                    </p>
+                  </div>
+                  <div class="flex items-center justify-between text-[11px] font-mono bg-white border border-[#e7e5de] rounded-lg p-2.5 text-stone-600">
+                    <span>Region Endpoints:</span>
+                    <span class="font-semibold text-stone-800">.in &bull; .com &bull; .eu</span>
+                  </div>
                 </div>
               </div>
-              <a href="app/channels.html" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-stone-900 hover:bg-stone-100 font-semibold rounded-[6px] transition-colors shrink-0 text-[11px]">
-                <span>Open Channels Hub</span>
+
+              <!-- Feature Checkmarks Grid (Intercom Feature Showcase) -->
+              <div class="p-5 bg-white border border-[#e7e5de] rounded-xl space-y-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                  <h5 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">What Cai Automatically Syncs with Zoho CRM</h5>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Lead / Contact Creation
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Extracts name, phone, verified email, and company with zero manual data entry.</p>
+                  </div>
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span> AI Intent Scoring
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Writes AI commercial score (Tier 1 High, Tier 2 Warm, Tier 3 Info) into custom CRM field.</p>
+                  </div>
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span> Conversation Transcripts
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Full WhatsApp &amp; website conversation logs appended directly to the Zoho Contact timeline.</p>
+                  </div>
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Deals &amp; Pipelines
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Instantly spawns a Deal in Zoho Sales Pipeline when prospect confirms budget or schedule.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB PANE 2: HUBSPOT CRM -->
+            <div id="crm-pane-hubspot" class="crm-tab-pane space-y-6 hidden">
+              <!-- App Card Banner -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 bg-gradient-to-r from-amber-50/50 via-white to-stone-50 border border-amber-100 rounded-xl">
+                <div class="flex items-center gap-3.5">
+                  <div class="w-12 h-12 rounded-xl bg-white border border-amber-200 p-2 flex items-center justify-center shadow-xs shrink-0">
+                    <img src="assets/brands/hubspot.svg" alt="HubSpot" class="w-7 h-7 object-contain" onerror="this.src='assets/brands/hubspot.png'">
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h4 class="text-base font-semibold text-stone-900">HubSpot CRM Integration</h4>
+                      <span class="text-[10px] font-mono px-2 py-0.5 bg-amber-100/70 text-amber-800 rounded font-medium">Private Apps API</span>
+                    </div>
+                    <p class="text-xs text-stone-600 mt-0.5">Sales Hub &bull; Deals Pipeline &bull; Contact Timeline Engagements &bull; Bearer Token Auth</p>
+                  </div>
+                </div>
+                <a href="app/channels.html" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-medium rounded-lg transition-colors shrink-0 shadow-2xs">
+                  <span>Connect HubSpot in Dashboard</span>
+                  <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
+
+              <!-- 3-Step Setup Cards (Intercom Style) -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Step 1 -->
+                <div class="bg-[#faf9f6] border border-[#e7e5de] rounded-xl p-5 flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="w-6 h-6 rounded-full bg-amber-600 text-white font-mono text-xs flex items-center justify-center font-bold">01</span>
+                      <span class="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Private App</span>
+                    </div>
+                    <h5 class="text-sm font-semibold text-stone-900">Create Private App</h5>
+                    <p class="text-xs text-stone-600 leading-relaxed">
+                      In your HubSpot account, go to <strong>Settings (⚙️) &rarr; Integrations &rarr; Private Apps</strong> and click <strong>Create a private app</strong>.
+                    </p>
+                  </div>
+                  <div class="text-[11px] text-stone-500 bg-white border border-[#e7e5de] rounded-lg p-2.5">
+                    <strong>App Name:</strong> <code>Cai Fin AI Assistant</code><br>
+                    <strong>Description:</strong> <code>Realtime website &amp; WhatsApp CRM synchronization</code>
+                  </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-[#faf9f6] border border-[#e7e5de] rounded-xl p-5 flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="w-6 h-6 rounded-full bg-amber-600 text-white font-mono text-xs flex items-center justify-center font-bold">02</span>
+                      <span class="text-[10px] font-mono text-stone-500 uppercase tracking-wider">API Scopes</span>
+                    </div>
+                    <h5 class="text-sm font-semibold text-stone-900">Enable CRM Permissions</h5>
+                    <p class="text-xs text-stone-600 leading-relaxed">
+                      Open the <strong>Scopes</strong> tab. Under <em>CRM Objects</em>, check write access for contacts and deals:
+                    </p>
+                  </div>
+                  <div class="bg-[#1e2028] text-white p-2.5 rounded-lg text-xs space-y-1.5">
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="text-[10px] font-mono text-stone-400">REQUIRED SCOPES</span>
+                      <button type="button" onclick="copyCode('hubspot-scopes-text', this)" class="text-[11px] text-amber-300 hover:text-white inline-flex items-center gap-1 cursor-pointer transition-colors">
+                        <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                      </button>
+                    </div>
+                    <code id="hubspot-scopes-text" class="font-mono text-[11px] text-stone-200 break-all select-all block leading-tight">crm.objects.contacts.write, crm.objects.deals.write</code>
+                  </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-[#faf9f6] border border-[#e7e5de] rounded-xl p-5 flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="w-6 h-6 rounded-full bg-amber-600 text-white font-mono text-xs flex items-center justify-center font-bold">03</span>
+                      <span class="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Access Token</span>
+                    </div>
+                    <h5 class="text-sm font-semibold text-stone-900">Copy Access Token</h5>
+                    <p class="text-xs text-stone-600 leading-relaxed">
+                      Click <strong>Create app</strong> &rarr; click <strong>Show token</strong> &rarr; copy your token (starts with <code>pat-na1-...</code> or <code>pat-eu1-...</code>).
+                    </p>
+                  </div>
+                  <div class="text-[11px] font-mono bg-white border border-[#e7e5de] rounded-lg p-2.5 text-stone-600">
+                    Paste in <a href="app/channels.html" class="underline font-semibold text-stone-900">Cai Channels &rarr; HubSpot</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feature Checkmarks Grid -->
+              <div class="p-5 bg-white border border-[#e7e5de] rounded-xl space-y-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                  <h5 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">What Cai Automatically Syncs with HubSpot</h5>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Contact Profiles
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Creates contact record with lifecycle stage set to Lead or Sales Qualified Lead (SQL).</p>
+                  </div>
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Pipeline Deal Creation
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Creates Deal in chosen Sales Hub pipeline with estimated deal amount &amp; closing stage.</p>
+                  </div>
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Activity Engagements
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Full conversation history logged directly as timeline note for your account executives.</p>
+                  </div>
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-purple-500"></span> Multi-Channel Attribution
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Captures referring landing page, UTM source, and incoming channel (WhatsApp/Website).</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB PANE 3: SALESFORCE CRM -->
+            <div id="crm-pane-salesforce" class="crm-tab-pane space-y-6 hidden">
+              <!-- App Card Banner -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 bg-gradient-to-r from-sky-50/50 via-white to-stone-50 border border-sky-100 rounded-xl">
+                <div class="flex items-center gap-3.5">
+                  <div class="w-12 h-12 rounded-xl bg-white border border-sky-200 p-2 flex items-center justify-center shadow-xs shrink-0">
+                    <img src="assets/brands/salesforce.svg" alt="Salesforce" class="w-7 h-7 object-contain" onerror="this.src='assets/brands/salesforce.png'">
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h4 class="text-base font-semibold text-stone-900">Salesforce Sales Cloud Integration</h4>
+                      <span class="text-[10px] font-mono px-2 py-0.5 bg-sky-100/70 text-sky-800 rounded font-medium">Connected App OAuth 2.0</span>
+                    </div>
+                    <p class="text-xs text-stone-600 mt-0.5">Enterprise Leads &bull; Accounts &bull; Opportunities &bull; Queue &amp; Territory Routing</p>
+                  </div>
+                </div>
+                <a href="app/channels.html" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-medium rounded-lg transition-colors shrink-0 shadow-2xs">
+                  <span>Connect Salesforce in Dashboard</span>
+                  <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i>
+                </a>
+              </div>
+
+              <!-- 3-Step Setup Cards (Intercom Style) -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Step 1 -->
+                <div class="bg-[#faf9f6] border border-[#e7e5de] rounded-xl p-5 flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-mono text-xs flex items-center justify-center font-bold">01</span>
+                      <span class="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Lightning Setup</span>
+                    </div>
+                    <h5 class="text-sm font-semibold text-stone-900">Create Connected App</h5>
+                    <p class="text-xs text-stone-600 leading-relaxed">
+                      In Salesforce Setup, navigate to <strong>Platform Tools &rarr; Apps &rarr; App Manager</strong> and click <strong>New Connected App</strong>.
+                    </p>
+                  </div>
+                  <div class="text-[11px] text-stone-500 bg-white border border-[#e7e5de] rounded-lg p-2.5">
+                    <strong>Connected App Name:</strong> <code>Cai Salesforce Connector</code><br>
+                    <strong>API Name:</strong> <code>Cai_Connector</code>
+                  </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-[#faf9f6] border border-[#e7e5de] rounded-xl p-5 flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-mono text-xs flex items-center justify-center font-bold">02</span>
+                      <span class="text-[10px] font-mono text-stone-500 uppercase tracking-wider">OAuth Config</span>
+                    </div>
+                    <h5 class="text-sm font-semibold text-stone-900">OAuth Settings &amp; Callback</h5>
+                    <p class="text-xs text-stone-600 leading-relaxed">
+                      Check <em>Enable OAuth Settings</em>, assign <code>api</code> and <code>refresh_token</code> scopes, and set the Callback URL:
+                    </p>
+                  </div>
+                  <div class="bg-[#1e2028] text-white p-2.5 rounded-lg text-xs space-y-1.5">
+                    <div class="flex items-center justify-between gap-1">
+                      <span class="text-[10px] font-mono text-stone-400">CALLBACK URL</span>
+                      <button type="button" onclick="copyCode('salesforce-redirect-url', this)" class="text-[11px] text-sky-300 hover:text-white inline-flex items-center gap-1 cursor-pointer transition-colors">
+                        <i data-lucide="copy" class="w-3 h-3"></i> Copy
+                      </button>
+                    </div>
+                    <code id="salesforce-redirect-url" class="font-mono text-[11px] text-stone-200 break-all select-all block leading-tight">https://cai.cuboidsoft.in/salesforce_callback.php</code>
+                  </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-[#faf9f6] border border-[#e7e5de] rounded-xl p-5 flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="w-6 h-6 rounded-full bg-sky-600 text-white font-mono text-xs flex items-center justify-center font-bold">03</span>
+                      <span class="text-[10px] font-mono text-stone-500 uppercase tracking-wider">Consumer Keys</span>
+                    </div>
+                    <h5 class="text-sm font-semibold text-stone-900">Copy Consumer Keys</h5>
+                    <p class="text-xs text-stone-600 leading-relaxed">
+                      Click <strong>Manage Consumer Details</strong>, copy the <strong>Consumer Key</strong> and <strong>Consumer Secret</strong>, and paste them into Cai Channels.
+                    </p>
+                  </div>
+                  <div class="text-[11px] font-mono bg-white border border-[#e7e5de] rounded-lg p-2.5 text-stone-600">
+                    Paste in <a href="app/channels.html" class="underline font-semibold text-stone-900">Cai Channels &rarr; Salesforce</a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feature Checkmarks Grid -->
+              <div class="p-5 bg-white border border-[#e7e5de] rounded-xl space-y-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+                  <h5 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">What Cai Automatically Syncs with Salesforce</h5>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span> Standard Leads &amp; Accounts
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Auto-creates Lead object with title, phone, email, and company mapping.</p>
+                  </div>
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Opportunity Pipeline
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Maps qualified high-intent conversations directly into Salesforce Opportunity stages.</p>
+                  </div>
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Assignment Rules &amp; Queues
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Complies with active Salesforce Lead Assignment Rules and round-robin queues.</p>
+                  </div>
+                  <div class="p-3 bg-[#faf9f6] rounded-lg border border-[#f0ede6]">
+                    <div class="font-semibold text-stone-900 mb-1 flex items-center gap-1.5">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Chatter &amp; Activity Tasks
+                    </div>
+                    <p class="text-stone-500 text-[11px] leading-relaxed">Logs AI conversation transcript into Salesforce Task Activity or Chatter feed.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB PANE 4: SYNC ARCHITECTURE & MATRIX -->
+            <div id="crm-pane-sync" class="crm-tab-pane space-y-6 hidden">
+              <!-- Visual Flow Diagram (Intercom Pipeline Style) -->
+              <div class="p-5 sm:p-6 bg-gradient-to-br from-stone-950 via-stone-900 to-stone-950 text-white rounded-xl border border-stone-800 space-y-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span class="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold">Live Event Pipeline</span>
+                  </div>
+                  <span class="text-xs font-mono text-stone-400">Average Latency: &lt; 1,850ms</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2">
+                  <div class="p-3.5 bg-white/5 border border-white/10 rounded-lg space-y-1">
+                    <div class="text-[10px] font-mono text-stone-400 uppercase">1. Inbound Touchpoint</div>
+                    <div class="text-xs font-semibold text-white">Website / WhatsApp / DM</div>
+                    <p class="text-[11px] text-stone-400">Prospect engages with Cai Fin widget or WhatsApp Cloud number.</p>
+                  </div>
+                  <div class="p-3.5 bg-white/5 border border-white/10 rounded-lg space-y-1">
+                    <div class="text-[10px] font-mono text-amber-400 uppercase">2. AI Qualification</div>
+                    <div class="text-xs font-semibold text-white">Cai Fin AI Engine</div>
+                    <p class="text-[11px] text-stone-400">Validates phone, email, calculates commercial intent &amp; budget.</p>
+                  </div>
+                  <div class="p-3.5 bg-white/5 border border-white/10 rounded-lg space-y-1">
+                    <div class="text-[10px] font-mono text-cyan-400 uppercase">3. Realtime Dispatch</div>
+                    <div class="text-xs font-semibold text-white">OAuth 2.0 Webhook</div>
+                    <p class="text-[11px] text-stone-400">Secure TLS 1.3 token handshake with exponential backoff retry.</p>
+                  </div>
+                  <div class="p-3.5 bg-white/5 border border-white/10 rounded-lg space-y-1">
+                    <div class="text-[10px] font-mono text-emerald-400 uppercase">4. CRM Ingestion</div>
+                    <div class="text-xs font-semibold text-white">Zoho &bull; HubSpot &bull; Salesforce</div>
+                    <p class="text-[11px] text-stone-400">Instant Lead/Deal creation with full conversation transcript.</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Capabilities Matrix Table -->
+              <div class="border border-[#e7e5de] bg-white rounded-xl overflow-hidden shadow-2xs">
+                <div class="px-5 py-3.5 bg-[#faf9f6] border-b border-[#e7e5de] flex items-center justify-between">
+                  <h5 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">CRM Sync Capabilities Comparison</h5>
+                  <span class="text-[11px] font-mono text-stone-500">All Enterprise Plans Supported</span>
+                </div>
+                <div class="overflow-x-auto">
+                  <table class="w-full text-xs text-left">
+                    <thead class="bg-[#f5f4f0] text-stone-600 font-mono text-[11px] border-b border-[#e7e5de]">
+                      <tr>
+                        <th class="py-2.5 px-4 font-semibold">Capability / Data Point</th>
+                        <th class="py-2.5 px-4 font-semibold text-red-700">Zoho CRM</th>
+                        <th class="py-2.5 px-4 font-semibold text-amber-700">HubSpot CRM</th>
+                        <th class="py-2.5 px-4 font-semibold text-sky-700">Salesforce</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-[#f0ede6] text-stone-700">
+                      <tr class="hover:bg-stone-50/50">
+                        <td class="py-2.5 px-4 font-medium text-stone-900">Lead &amp; Contact Ingestion</td>
+                        <td class="py-2.5 px-4 text-emerald-700 font-medium">&check; Instant (&lt; 2s)</td>
+                        <td class="py-2.5 px-4 text-emerald-700 font-medium">&check; Instant (&lt; 2s)</td>
+                        <td class="py-2.5 px-4 text-emerald-700 font-medium">&check; Instant (&lt; 2s)</td>
+                      </tr>
+                      <tr class="hover:bg-stone-50/50">
+                        <td class="py-2.5 px-4 font-medium text-stone-900">Deal / Opportunity Pipeline</td>
+                        <td class="py-2.5 px-4 text-emerald-700 font-medium">&check; v2.1 Deals API</td>
+                        <td class="py-2.5 px-4 text-emerald-700 font-medium">&check; Deals Pipeline API</td>
+                        <td class="py-2.5 px-4 text-emerald-700 font-medium">&check; Opportunity Object</td>
+                      </tr>
+                      <tr class="hover:bg-stone-50/50">
+                        <td class="py-2.5 px-4 font-medium text-stone-900">Chat Transcript Dossier</td>
+                        <td class="py-2.5 px-4 text-stone-600">&check; Contact Notes</td>
+                        <td class="py-2.5 px-4 text-stone-600">&check; Activity Engagements</td>
+                        <td class="py-2.5 px-4 text-stone-600">&check; Task / Chatter</td>
+                      </tr>
+                      <tr class="hover:bg-stone-50/50">
+                        <td class="py-2.5 px-4 font-medium text-stone-900">AI Intent &amp; Commercial Score</td>
+                        <td class="py-2.5 px-4 text-stone-600">&check; Custom Field</td>
+                        <td class="py-2.5 px-4 text-stone-600">&check; Custom Property</td>
+                        <td class="py-2.5 px-4 text-stone-600">&check; Custom Field</td>
+                      </tr>
+                      <tr class="hover:bg-stone-50/50">
+                        <td class="py-2.5 px-4 font-medium text-stone-900">Authentication Standard</td>
+                        <td class="py-2.5 px-4 font-mono text-[11px] text-stone-600">OAuth 2.0 Refresh Token</td>
+                        <td class="py-2.5 px-4 font-mono text-[11px] text-stone-600">Private App Token (<code class="text-[10px]">pat-*</code>)</td>
+                        <td class="py-2.5 px-4 font-mono text-[11px] text-stone-600">Connected App OAuth 2.0</td>
+                      </tr>
+                      <tr class="hover:bg-stone-50/50">
+                        <td class="py-2.5 px-4 font-medium text-stone-900">Data Center Regions</td>
+                        <td class="py-2.5 px-4 font-mono text-[11px] text-stone-600">India, US, EU, APAC</td>
+                        <td class="py-2.5 px-4 font-mono text-[11px] text-stone-600">Global Cloud</td>
+                        <td class="py-2.5 px-4 font-mono text-[11px] text-stone-600">Multi-Org Enterprise</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Intercom-Grade Architecture Bottom Action Banner -->
+            <div class="p-4 bg-gradient-to-r from-stone-900 via-stone-800 to-stone-900 text-white rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-xs">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 text-amber-400">
+                  <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <div class="font-semibold text-white">Unified Multi-CRM Sync Engine Active</div>
+                  <div class="text-stone-300 text-[11px]">Website Visitor / WhatsApp &rarr; Cai Fin AI Qualification &rarr; Direct 2-Way CRM Dispatch (&lt; 2s)</div>
+                </div>
+              </div>
+              <a href="app/channels.html" class="inline-flex items-center gap-1.5 px-4 py-2 bg-white text-stone-900 hover:bg-stone-100 font-semibold rounded-lg transition-colors shrink-0 text-xs shadow-2xs">
+                <span>Configure in Channels Hub</span>
                 <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
               </a>
             </div>
@@ -2503,6 +2821,51 @@ if (!hash_equals($expected, $signature)) {
         }, 2000);
       });
     }
+
+    // CRM Segmented Tabs Switcher (Intercom App Store Design)
+    function switchCrmTab(tabId) {
+      const tabBtns = document.querySelectorAll('.crm-tab-btn');
+      const tabPanes = document.querySelectorAll('.crm-tab-pane');
+      
+      tabBtns.forEach(btn => {
+        const target = btn.getAttribute('data-crm-tab');
+        if (target === tabId) {
+          btn.classList.add('bg-white', 'text-stone-900', 'shadow-2xs', 'font-semibold', 'border-stone-200/80');
+          btn.classList.remove('text-stone-500', 'hover:text-stone-900', 'font-medium', 'border-transparent');
+        } else {
+          btn.classList.remove('bg-white', 'text-stone-900', 'shadow-2xs', 'font-semibold', 'border-stone-200/80');
+          btn.classList.add('text-stone-500', 'hover:text-stone-900', 'font-medium', 'border-transparent');
+        }
+      });
+      
+      tabPanes.forEach(pane => {
+        if (pane.id === 'crm-pane-' + tabId) {
+          pane.classList.remove('hidden');
+        } else {
+          pane.classList.add('hidden');
+        }
+      });
+
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+
+    function checkCrmHash() {
+      const hash = window.location.hash;
+      if (hash === '#guide-zoho') {
+        switchCrmTab('zoho');
+      } else if (hash === '#guide-hubspot') {
+        switchCrmTab('hubspot');
+      } else if (hash === '#guide-salesforce') {
+        switchCrmTab('salesforce');
+      } else if (hash === '#guide-crm-sync') {
+        switchCrmTab('sync');
+      }
+    }
+
+    window.addEventListener('hashchange', checkCrmHash);
+    checkCrmHash();
 
     // Mobile Drawer Open / Close Logic
     const drawer = document.getElementById('mobile-doc-drawer');
