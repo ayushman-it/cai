@@ -441,6 +441,27 @@ try {
                 } catch (Throwable $e) {}
             }
 
+            if ($channelKey === 'google_calendar') {
+                $gClientId  = $mergedCreds['client_id'] ?? ($mergedCreds['google_client_id'] ?? '');
+                $gClientSec = $mergedCreds['client_secret'] ?? ($mergedCreds['google_client_secret'] ?? '');
+                $gRefresh   = $mergedCreds['refresh_token'] ?? ($mergedCreds['google_refresh_token'] ?? '');
+                $gCalId     = $mergedCreds['calendar_id'] ?? ($mergedCreds['google_calendar_id'] ?? 'primary');
+
+                try {
+                    $wUp = [];
+                    $wVal = [];
+                    if (!empty($gClientId)) { $wUp[] = "`google_client_id` = ?"; $wVal[] = $gClientId; }
+                    if (!empty($gClientSec) && strpos($gClientSec, '••••') === false) { $wUp[] = "`google_client_secret` = ?"; $wVal[] = $gClientSec; }
+                    if (!empty($gRefresh) && strpos($gRefresh, '••••') === false) { $wUp[] = "`google_refresh_token` = ?"; $wVal[] = $gRefresh; }
+                    if (!empty($gCalId)) { $wUp[] = "`google_calendar_id` = ?"; $wVal[] = $gCalId; }
+                    $wUp[] = "`calendar_sync_enabled` = ?"; $wVal[] = $isActive;
+                    $wVal[] = $companyId;
+                    if (!empty($wUp)) {
+                        $pdo->prepare("UPDATE `widget_settings` SET " . implode(', ', $wUp) . " WHERE company_id = ?")->execute($wVal);
+                    }
+                } catch (Throwable $e) {}
+            }
+
             echo json_encode([
                 'success' => true,
                 'channel' => $channelKey,
@@ -527,7 +548,54 @@ try {
                     break;
 
                 case 'google_calendar':
-                    $testResult['message'] = "Google Calendar API: OIDC Token Valid. Free/busy slot engine active ({$latency}ms).";
+                    $gClientId  = trim($rawCreds['client_id'] ?? ($rawCreds['google_client_id'] ?? ''));
+                    $gClientSec = trim($rawCreds['client_secret'] ?? ($rawCreds['google_client_secret'] ?? ''));
+                    $gRefresh   = trim($rawCreds['refresh_token'] ?? ($rawCreds['google_refresh_token'] ?? ''));
+
+                    if (empty($gClientId) || empty($gClientSec)) {
+                        $testResult = ['success' => false, 'error' => 'Google OAuth Client ID and Client Secret are required.'];
+                    } elseif (empty($gRefresh)) {
+                        $testResult = [
+                            'success' => true,
+                            'message' => "Client ID & Secret saved. To enable automated Google Calendar event creation, also add the Refresh Token (see Developer Guide)."
+                        ];
+                    } else {
+                        // Live Google OAuth Token refresh handshake
+                        $ch = curl_init('https://oauth2.googleapis.com/token');
+                        curl_setopt_array($ch, [
+                            CURLOPT_POST           => true,
+                            CURLOPT_RETURNTRANSFER => true,
+                            CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
+                            CURLOPT_POSTFIELDS     => http_build_query([
+                                'client_id'     => $gClientId,
+                                'client_secret' => $gClientSec,
+                                'refresh_token' => $gRefresh,
+                                'grant_type'    => 'refresh_token'
+                            ]),
+                            CURLOPT_TIMEOUT        => 8,
+                            CURLOPT_SSL_VERIFYPEER => true
+                        ]);
+                        $res = curl_exec($ch);
+                        $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                        $err = curl_error($ch);
+                        curl_close($ch);
+
+                        if ($status === 200) {
+                            $testResult = [
+                                'success' => true,
+                                'latency_ms' => $latency,
+                                'message' => "Google Calendar API: OAuth 2.0 Token Handshake Verified (200 OK, {$latency}ms). Event & Meet sync ready!"
+                            ];
+                        } else {
+                            $tokenData = json_decode((string)$res, true) ?: [];
+                            $errMsg = $tokenData['error_description'] ?? ($tokenData['error'] ?? "HTTP {$status}");
+                            $testResult = [
+                                'success' => false,
+                                'latency_ms' => $latency,
+                                'error' => "Google OAuth Error: {$errMsg}. Check Client ID, Secret or Refresh Token."
+                            ];
+                        }
+                    }
                     break;
 
                 case 'calendly':

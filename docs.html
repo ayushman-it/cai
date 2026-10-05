@@ -1269,29 +1269,116 @@ window.Cai && window.Cai.prompt("Tell me about the Enterprise SLA options");</co
               </span>
             </div>
 
-            <div class="space-y-3 text-xs text-stone-700">
+            <div class="space-y-4 text-xs text-stone-700">
+              <!-- Step 1 -->
               <div class="flex items-start gap-2.5">
                 <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">1</span>
                 <div>
-                  <strong>Open Google Cloud Console:</strong> Visit <a href="https://console.cloud.google.com" target="_blank" class="underline text-stone-900 font-medium">console.cloud.google.com</a> &rarr; Create or select a project &rarr; In the search bar, search for <strong>Google Calendar API</strong> and click <strong>Enable</strong>.
+                  <strong>Enable Google Calendar API:</strong> Visit <a href="https://console.cloud.google.com" target="_blank" class="underline text-stone-900 font-medium">console.cloud.google.com</a> &rarr; Create a new project (e.g. <code>Client AI Calendar</code>) or select an existing one &rarr; Go to <strong>APIs &amp; Services &rarr; Library</strong> &rarr; Search for <strong>Google Calendar API</strong> &rarr; Click <strong>Enable</strong>.
                 </div>
               </div>
 
+              <!-- Step 2 -->
               <div class="flex items-start gap-2.5">
                 <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">2</span>
-                <div class="w-full">
-                  <strong>Create OAuth 2.0 Credentials:</strong> Go to <strong>APIs &amp; Services &rarr; Credentials</strong> &rarr; Click <strong>Create Credentials &rarr; OAuth client ID</strong> &rarr; Select Application type as <strong>Web application</strong>. Under <strong>Authorized redirect URIs</strong>, add:
-                  <div class="mt-2 p-2.5 bg-stone-900 text-stone-200 rounded-[4px] font-mono text-[11px] flex items-center justify-between">
-                    <code id="gcal-redirect-uri" class="text-blue-300">https://cai.cuboidsoft.in/google_callback.php</code>
-                    <button onclick="copyCode('gcal-redirect-uri', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
-                  </div>
+                <div>
+                  <strong>Configure OAuth Consent Screen:</strong>
+                  <p class="mt-1 text-stone-600">In the left sidebar, click <strong>APIs &amp; Services &rarr; OAuth consent screen</strong> (or Google Auth Platform):</p>
+                  <ul class="list-disc pl-5 space-y-1 mt-1.5 text-stone-600">
+                    <li>Select User Type: <strong>External</strong> &rarr; Click <strong>Create</strong>.</li>
+                    <li>App Name: <code>Cai AI Assistant</code> (or your company brand).</li>
+                    <li>User support email &amp; Developer contact email: Enter your business/Google account email.</li>
+                    <li>Scopes: Click <strong>Add or Remove Scopes</strong> &rarr; select <code>.../auth/calendar.events</code> (Manage events).</li>
+                    <li>Test Users: Add your Google email address &rarr; Save and Continue.</li>
+                  </ul>
                 </div>
               </div>
 
+              <!-- Step 3 -->
               <div class="flex items-start gap-2.5">
                 <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">3</span>
+                <div class="w-full space-y-2">
+                  <strong>Create OAuth 2.0 Client ID (Web Application):</strong>
+                  <p class="text-stone-600">Go to <strong>APIs &amp; Services &rarr; Credentials</strong> &rarr; Click <strong>+ Create Credentials &rarr; OAuth client ID</strong> &rarr; Select Application type: <strong>Web application</strong>.</p>
+                  
+                  <!-- Authorized JavaScript Origins -->
+                  <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] space-y-1.5">
+                    <div class="font-semibold text-stone-900 text-[11px] flex items-center justify-between">
+                      <span>Authorized JavaScript origins:</span>
+                      <span class="text-stone-400 font-normal font-sans text-[10px]">Browser domain where dashboard runs</span>
+                    </div>
+                    <p class="text-[11px] text-stone-600">Click <strong>+ Add URI</strong> and paste:</p>
+                    <div class="p-2 bg-stone-900 text-stone-200 rounded-[3px] font-mono text-[11px] flex items-center justify-between">
+                      <code id="gcal-origin-uri" class="text-blue-300">https://cai.cuboidsoft.in</code>
+                      <button onclick="copyCode('gcal-origin-uri', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                    </div>
+                  </div>
+
+                  <!-- Authorized Redirect URIs -->
+                  <div class="p-3 bg-stone-50 border border-stone-200 rounded-[4px] space-y-1.5">
+                    <div class="font-semibold text-stone-900 text-[11px] flex items-center justify-between">
+                      <span>Authorized redirect URIs:</span>
+                      <span class="text-stone-400 font-normal font-sans text-[10px]">Callback endpoints for token exchange</span>
+                    </div>
+                    <p class="text-[11px] text-stone-600">Click <strong>+ Add URI</strong> and add both of these URIs:</p>
+                    <div class="space-y-1.5">
+                      <div class="p-2 bg-stone-900 text-stone-200 rounded-[3px] font-mono text-[11px] flex items-center justify-between">
+                        <code id="gcal-redirect-uri-main" class="text-blue-300">https://cai.cuboidsoft.in/google_callback.php</code>
+                        <button onclick="copyCode('gcal-redirect-uri-main', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                      </div>
+                      <div class="p-2 bg-stone-900 text-stone-200 rounded-[3px] font-mono text-[11px] flex items-center justify-between">
+                        <code id="gcal-redirect-uri-playground" class="text-blue-300">https://developers.google.com/oauthplayground</code>
+                        <button onclick="copyCode('gcal-redirect-uri-playground', this)" class="text-blue-400 hover:text-white inline-flex items-center gap-1 cursor-pointer"><i data-lucide="copy" class="w-3 h-3"></i> Copy</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- AI-Powered Agent Checkbox note -->
+                  <div class="p-2.5 bg-blue-50/60 border border-blue-200 rounded-[4px] text-[11px] text-blue-900 leading-relaxed">
+                    <strong>Note regarding "This client will be used by an AI-powered agent":</strong> You can <strong>CHECK</strong> this box since Cai operates as an AI agent for your business, or leave it unchecked. Both options generate the exact same OAuth Client ID and Secret with full Google API compatibility.
+                  </div>
+
+                  <p class="text-stone-600 pt-1">Click <strong>Create</strong> &rarr; A dialog will pop up showing your <strong>Client ID</strong> and <strong>Client Secret</strong>. Keep them handy.</p>
+                </div>
+              </div>
+
+              <!-- Step 4 -->
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">4</span>
+                <div class="w-full space-y-1.5">
+                  <strong>Generate Permanent Refresh Token (Takes 30 Seconds):</strong>
+                  <p class="text-stone-600">To allow Cai to book events and generate Google Meet links 24/7 without asking the client to log in repeatedly, generate a permanent Refresh Token:</p>
+                  <ol class="list-decimal pl-5 space-y-1 text-stone-600">
+                    <li>Open <a href="https://developers.google.com/oauthplayground" target="_blank" class="underline text-blue-600 font-medium">Google OAuth 2.0 Playground &rarr;</a></li>
+                    <li>Click the <strong>Gear icon ⚙️</strong> in the top right corner.</li>
+                    <li>Check the box <strong>"Use your own OAuth credentials"</strong>.</li>
+                    <li>Paste your <strong>OAuth Client ID</strong> and <strong>OAuth Client Secret</strong> from Step 3.</li>
+                    <li>On the left panel (Step 1), scroll to <strong>Google Calendar API v3</strong> and check <code>https://www.googleapis.com/auth/calendar.events</code>.</li>
+                    <li>Click <strong>Authorize APIs</strong> &rarr; Choose your Google account &rarr; Click <strong>Continue / Allow</strong>.</li>
+                    <li>On the left panel (Step 2), click the blue button: <strong>Exchange authorization code for tokens</strong>.</li>
+                    <li>Copy the value from the <strong>Refresh token</strong> box (format: <code>1//04...</code>).</li>
+                  </ol>
+                </div>
+              </div>
+
+              <!-- Step 5 -->
+              <div class="flex items-start gap-2.5">
+                <span class="w-5 h-5 rounded-full bg-stone-900 text-white font-mono text-[11px] flex items-center justify-center shrink-0 font-bold">5</span>
                 <div>
-                  <strong>Link in CuboidPilot:</strong> Copy the generated <strong>Client ID</strong> and <strong>Client Secret</strong> &rarr; Paste them into <a href="app/channels.html" class="underline font-medium"><code>app/channels.html</code></a> under Google Calendar &rarr; Click <strong>Authorize with Google</strong> and grant permission. Appointments booked via AI widget or WhatsApp will automatically appear on your Google Calendar with a Google Meet link!
+                  <strong>Paste in CuboidPilot Cai Dashboard:</strong>
+                  <p class="text-stone-600 mt-1">Open <a href="app/channels.html" class="underline font-medium text-stone-900"><code>app/channels.html</code></a> &rarr; Click <strong>Google Calendar &amp; Meet &rarr; Configure</strong>:</p>
+                  <ul class="list-disc pl-5 space-y-1 mt-1 text-stone-600">
+                    <li>Paste your <strong>Google OAuth Client ID</strong></li>
+                    <li>Paste your <strong>Google OAuth Client Secret</strong></li>
+                    <li>Paste your <strong>Google OAuth Refresh Token</strong></li>
+                    <li>Set Calendar ID: <code>primary</code> (or your specific Google Workspace email)</li>
+                    <li>Check <strong>Auto-generate Google Meet link</strong></li>
+                    <li>Click <strong>Test Connection</strong> &rarr; Handshake verified (200 OK)!</li>
+                    <li>Click <strong>Save &amp; Activate</strong>.</li>
+                  </ul>
+                  <p class="mt-1.5 text-emerald-800 font-medium bg-emerald-50 p-2 rounded border border-emerald-200">
+                    All website widget consultation bookings and WhatsApp appointments will now instantly appear in your Google Calendar with automatic Google Meet video call links!
+                  </p>
                 </div>
               </div>
             </div>
