@@ -557,57 +557,17 @@
                     </div>
                   </div>
 
-                  <div class="pt-4 border-t border-[#e7e5de] space-y-4">
-                    <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">Customer Action Toggles</h3>
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <label class="flex items-center gap-2 text-xs p-2.5 rounded-lg border border-stone-200 bg-stone-50 cursor-pointer">
-                        <input type="checkbox" id="setting-action-appointments" class="rounded text-stone-900" checked>
-                        <div>
-                          <div class="font-medium text-stone-900">Book Appointment</div>
-                          <div class="text-[10px] text-stone-500">Calendar scheduling</div>
-                        </div>
-                      </label>
-
-                      <label class="flex items-center gap-2 text-xs p-2.5 rounded-lg border border-stone-200 bg-stone-50 cursor-pointer">
-                        <input type="checkbox" id="setting-action-human" class="rounded text-stone-900" checked>
-                        <div>
-                          <div class="font-medium text-stone-900">Instant Human Help</div>
-                          <div class="text-[10px] text-stone-500">Live team chat & handoff</div>
-                        </div>
-                      </label>
-
-                      <label class="flex items-center gap-2 text-xs p-2.5 rounded-lg border border-stone-200 bg-stone-50 cursor-pointer">
-                        <input type="checkbox" id="setting-action-payments" class="rounded text-stone-900" checked>
-                        <div>
-                          <div class="font-medium text-stone-900">Accept Payments</div>
-                          <div class="text-[10px] text-stone-500">UPI, Bank transfer & Cards</div>
-                        </div>
-                      </label>
-                    </div>
-
-                    <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider pt-2">Direct Bank Transfer Details</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div class="pt-4 border-t border-[#e7e5de] space-y-3">
+                    <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">Payment & Banking Integration</h3>
+                    <div class="p-3 bg-stone-50 rounded-lg border border-stone-200 text-xs text-stone-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
-                        <label class="block font-medium text-stone-700 mb-1">Bank Name</label>
-                        <input type="text" id="setting-bank-name" class="app-input text-xs" placeholder="e.g. HDFC Bank">
+                        <div class="font-medium text-stone-800">Direct Bank Transfer, UPI & Online Gateways</div>
+                        <div class="text-[11px] text-stone-500 mt-0.5">Configure your company's bank accounts, beneficiary name, IFSC, UPI ID, QR code, and Razorpay API keys in Payments & Banking.</div>
                       </div>
-                      <div>
-                        <label class="block font-medium text-stone-700 mb-1">Account Number</label>
-                        <input type="text" id="setting-bank-acc" class="app-input text-xs font-mono" placeholder="e.g. 50200088991122">
-                      </div>
-                      <div>
-                        <label class="block font-medium text-stone-700 mb-1">IFSC Code</label>
-                        <input type="text" id="setting-bank-ifsc" class="app-input text-xs font-mono uppercase" placeholder="e.g. HDFC0001234">
-                      </div>
-                      <div>
-                        <label class="block font-medium text-stone-700 mb-1">UPI ID</label>
-                        <input type="text" id="setting-bank-upi" class="app-input text-xs" placeholder="e.g. cuboidsoft@hdfcbank">
-                      </div>
-                      <div class="sm:col-span-2">
-                        <label class="block font-medium text-stone-700 mb-1">Razorpay Key ID (Optional — For Online Gateway Checkout)</label>
-                        <input type="text" id="setting-razorpay-key" class="app-input text-xs font-mono" placeholder="e.g. rzp_live_xxxxxxxxxxxx or rzp_test_xxxxxxxxxxxx">
-                      </div>
+                      <button type="button" onclick="switchSettingsSection('payment-settings')" class="btn-secondary btn-sm text-xs py-1.5 px-3 shrink-0 whitespace-nowrap inline-flex items-center gap-1.5">
+                        <i data-lucide="wallet" class="w-3.5 h-3.5"></i>
+                        <span>Configure Payments & Banking</span>
+                      </button>
                     </div>
                   </div>
 
@@ -898,23 +858,23 @@
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
                       <label class="block font-medium text-stone-700 mb-1">Account Holder / Beneficiary Name *</label>
-                      <input type="text" id="setting-bank-holder" class="app-input text-xs" placeholder="e.g. CuboidSoft Technologies Pvt Ltd">
+                      <input type="text" id="setting-bank-holder" class="app-input text-xs" placeholder="e.g. Your Registered Company or Beneficiary Name">
                     </div>
                     <div>
                       <label class="block font-medium text-stone-700 mb-1">Bank Name *</label>
-                      <input type="text" id="setting-bank-name" class="app-input text-xs" placeholder="e.g. HDFC Bank, ICICI Bank">
+                      <input type="text" id="setting-bank-name" class="app-input text-xs" placeholder="e.g. State Bank of India, HDFC Bank, ICICI Bank">
                     </div>
                     <div>
                       <label class="block font-medium text-stone-700 mb-1">Account Number *</label>
-                      <input type="text" id="setting-bank-acc" class="app-input text-xs font-mono" placeholder="e.g. 50200088991122">
+                      <input type="text" id="setting-bank-acc" class="app-input text-xs font-mono" placeholder="e.g. 12345678901234">
                     </div>
                     <div>
                       <label class="block font-medium text-stone-700 mb-1">IFSC Code *</label>
-                      <input type="text" id="setting-bank-ifsc" class="app-input text-xs font-mono uppercase" placeholder="e.g. HDFC0001234">
+                      <input type="text" id="setting-bank-ifsc" class="app-input text-xs font-mono uppercase" placeholder="e.g. SBIN0001234 / HDFC0001234">
                     </div>
                     <div>
                       <label class="block font-medium text-stone-700 mb-1">UPI ID / VPA *</label>
-                      <input type="text" id="setting-bank-upi" class="app-input text-xs font-mono" placeholder="e.g. cuboidsoft@hdfcbank">
+                      <input type="text" id="setting-bank-upi" class="app-input text-xs font-mono" placeholder="e.g. company@upi or payments@okhdfcbank">
                     </div>
                     <div>
                       <label class="block font-medium text-stone-700 mb-1">UPI QR Code (Image Upload)</label>
@@ -1699,41 +1659,46 @@
           const payEl = document.getElementById('setting-action-payments');
           if (payEl) payEl.checked = !!w.enable_payments;
         }
-        if (w.bank_name) {
+        if (typeof w.bank_name !== 'undefined') {
           const bName = document.getElementById('setting-bank-name');
-          if (bName) bName.value = w.bank_name;
+          if (bName) bName.value = w.bank_name || '';
         }
-        if (w.bank_account_no) {
+        if (typeof w.bank_account_no !== 'undefined') {
           const bAcc = document.getElementById('setting-bank-acc');
-          if (bAcc) bAcc.value = w.bank_account_no;
+          if (bAcc) bAcc.value = w.bank_account_no || '';
         }
-        if (w.bank_ifsc) {
+        if (typeof w.bank_ifsc !== 'undefined') {
           const bIfsc = document.getElementById('setting-bank-ifsc');
-          if (bIfsc) bIfsc.value = w.bank_ifsc;
+          if (bIfsc) bIfsc.value = w.bank_ifsc || '';
         }
-        if (w.bank_upi_id) {
+        if (typeof w.bank_upi_id !== 'undefined') {
           const bUpi = document.getElementById('setting-bank-upi');
-          if (bUpi) bUpi.value = w.bank_upi_id;
+          if (bUpi) bUpi.value = w.bank_upi_id || '';
         }
-        if (w.razorpay_key_id) {
+        if (typeof w.razorpay_key_id !== 'undefined') {
           const rzEl = document.getElementById('setting-razorpay-key');
-          if (rzEl) rzEl.value = w.razorpay_key_id;
+          if (rzEl) rzEl.value = w.razorpay_key_id || '';
         }
-        if (w.razorpay_key_secret) {
+        if (typeof w.razorpay_key_secret !== 'undefined') {
           const rzSec = document.getElementById('setting-razorpay-secret');
-          if (rzSec) rzSec.value = w.razorpay_key_secret;
+          if (rzSec) rzSec.value = w.razorpay_key_secret || '';
         }
-        if (w.bank_account_holder) {
+        if (typeof w.bank_account_holder !== 'undefined') {
           const bHolder = document.getElementById('setting-bank-holder');
-          if (bHolder) bHolder.value = w.bank_account_holder;
+          if (bHolder) bHolder.value = w.bank_account_holder || '';
         }
-        if (w.bank_qr_url) {
+        if (typeof w.bank_qr_url !== 'undefined') {
           const bQrUrl = document.getElementById('setting-bank-qr-url');
           const bQrPrev = document.getElementById('setting-bank-qr-preview');
-          if (bQrUrl) bQrUrl.value = w.bank_qr_url;
+          if (bQrUrl) bQrUrl.value = w.bank_qr_url || '';
           if (bQrPrev) {
-            bQrPrev.src = resolveAssetUrl(w.bank_qr_url);
-            bQrPrev.classList.remove('hidden');
+            if (w.bank_qr_url) {
+              bQrPrev.src = resolveAssetUrl(w.bank_qr_url);
+              bQrPrev.classList.remove('hidden');
+            } else {
+              bQrPrev.src = '';
+              bQrPrev.classList.add('hidden');
+            }
           }
         }
 

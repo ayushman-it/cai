@@ -241,9 +241,9 @@ try {
                 'bank_upi_id'         => $widget['bank_upi_id'] ?? '',
                 'bank_qr_url'         => $widget['bank_qr_url'] ?? '',
                 'calendar_slot_duration' => (int)($widget['calendar_slot_duration'] ?? 30),
-                'linkedin_ayush'         => $widget['linkedin_ayush'] ?? 'https://linkedin.com/in/ayushman-varma',
-                'linkedin_cai'           => $widget['linkedin_cai'] ?? 'https://linkedin.com/company/cuboidpilot',
-                'linkedin_cuboidsoft'    => $widget['linkedin_cuboidsoft'] ?? 'https://linkedin.com/company/cuboidsoft',
+                'linkedin_ayush'         => $widget['linkedin_ayush'] ?? (($company['company_key'] === 'cp_live_cuboidsoft') ? 'https://linkedin.com/in/ayushman-varma' : ''),
+                'linkedin_cai'           => $widget['linkedin_cai'] ?? (($company['company_key'] === 'cp_live_cuboidsoft') ? 'https://linkedin.com/company/cuboidpilot' : ''),
+                'linkedin_cuboidsoft'    => $widget['linkedin_cuboidsoft'] ?? (($company['company_key'] === 'cp_live_cuboidsoft') ? 'https://linkedin.com/company/cuboidsoft' : ''),
             ],
             'active_human_chat' => $activeHumanChat
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);

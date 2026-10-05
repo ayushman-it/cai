@@ -122,9 +122,11 @@ try {
             'enable_payments'    => (bool)($widget['enable_payments'] ?? 1),
             'razorpay_key_id'    => $widget['razorpay_key_id'] ?? '',
             'bank_name'          => $widget['bank_name'] ?? '',
+            'bank_account_holder'=> $widget['bank_account_holder'] ?? '',
             'bank_account_no'    => $widget['bank_account_no'] ?? '',
             'bank_ifsc'          => $widget['bank_ifsc'] ?? '',
             'bank_upi_id'        => $widget['bank_upi_id'] ?? '',
+            'bank_qr_url'        => $widget['bank_qr_url'] ?? '',
         ],
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 

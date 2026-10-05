@@ -586,8 +586,8 @@
                     <i data-lucide="credit-card" class="w-4 h-4 text-stone-700"></i>
                   </div>
                   <div>
-                    <div class="font-semibold text-stone-900" id="billing-payment-card">HDFC Corporate Credit Card (••9124)</div>
-                    <div class="text-[11px] text-stone-400 mt-0.5">Auto-Debit Active • Next renewal Oct 29, 2026</div>
+                    <div class="font-semibold text-stone-900" id="billing-payment-card">Card / UPI Auto-Debit</div>
+                    <div class="text-[11px] text-stone-400 mt-0.5" id="billing-payment-card-sub">Active workspace billing method</div>
                   </div>
                 </div>
                 <button class="btn-secondary btn-sm text-xs py-1.5 px-3 rounded-[4px] border-[#d5d2c8]" onclick="CuboidShell.toast('Payment gateway portal opened', 'info')">Update</button>
@@ -599,15 +599,15 @@
               <div class="p-3.5 border border-[#e7e5de] bg-stone-50/60 rounded-[6px] text-xs space-y-1.5" id="billing-contact-details">
                 <div class="flex items-center justify-between">
                   <span class="text-stone-500">Legal Entity</span>
-                  <span class="font-medium text-stone-900" id="billing-company-legal-name">CuboidSoft Technologies Pvt Ltd</span>
+                  <span class="font-medium text-stone-900" id="billing-company-legal-name">Workspace Organization</span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-stone-500">GSTIN</span>
-                  <span class="font-mono text-stone-800">27AABCS9912F1Z8</span>
+                  <span class="font-mono text-stone-800" id="billing-gstin-val">Not Registered</span>
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-stone-500">Billing Email</span>
-                  <span class="font-mono text-stone-800" id="billing-email-val">founder@cuboidsoft.in</span>
+                  <span class="font-mono text-stone-800" id="billing-email-val">—</span>
                 </div>
               </div>
             </div>
@@ -767,6 +767,20 @@
             activeBtn.className = 'w-full py-2.5 px-3 bg-stone-900 text-white rounded-[3px] font-semibold text-xs shadow-2xs text-center cursor-default whitespace-nowrap';
           }
         }
+
+        if (data.company) {
+          const compNameEl = document.getElementById('billing-company-legal-name');
+          if (compNameEl) compNameEl.textContent = data.company.name || 'Workspace Organization';
+          const gstinEl = document.getElementById('billing-gstin-val');
+          if (gstinEl) gstinEl.textContent = data.company.gstin || 'Not Registered';
+          const emailEl = document.getElementById('billing-email-val');
+          if (emailEl) emailEl.textContent = data.company.email || '—';
+        }
+        if (data.subscription && data.subscription.plan_name) {
+          const cardEl = document.getElementById('billing-payment-card');
+          if (cardEl) cardEl.textContent = `${data.subscription.plan_name} Active (${data.subscription.billing_cycle || 'Monthly'})`;
+        }
+
         if (window.lucide) lucide.createIcons();
       } catch (e) {
         console.warn('Sync plan highlight error:', e);

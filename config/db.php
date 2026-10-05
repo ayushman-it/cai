@@ -556,22 +556,22 @@ Annual billing receives a 20% discount or 3-month zero-interest EMI financing."
         $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `razorpay_key_id` VARCHAR(100) NULL AFTER `enable_payments`");
     }
     if (!in_array('bank_name', $widgetCols)) {
-        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_name` VARCHAR(100) DEFAULT 'HDFC Bank' AFTER `razorpay_key_id`");
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_name` VARCHAR(100) NULL DEFAULT NULL AFTER `razorpay_key_id`");
     }
     if (!in_array('bank_account_no', $widgetCols)) {
-        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_account_no` VARCHAR(50) DEFAULT '50200088991122' AFTER `bank_name`");
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_account_no` VARCHAR(50) NULL DEFAULT NULL AFTER `bank_name`");
     }
     if (!in_array('bank_ifsc', $widgetCols)) {
-        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_ifsc` VARCHAR(20) DEFAULT 'HDFC0001234' AFTER `bank_account_no`");
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_ifsc` VARCHAR(20) NULL DEFAULT NULL AFTER `bank_account_no`");
     }
     if (!in_array('bank_upi_id', $widgetCols)) {
-        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_upi_id` VARCHAR(50) DEFAULT 'cuboidsoft@hdfcbank' AFTER `bank_ifsc`");
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_upi_id` VARCHAR(50) NULL DEFAULT NULL AFTER `bank_ifsc`");
     }
     if (!in_array('razorpay_key_secret', $widgetCols)) {
         $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `razorpay_key_secret` VARCHAR(100) NULL AFTER `razorpay_key_id`");
     }
     if (!in_array('bank_account_holder', $widgetCols)) {
-        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_account_holder` VARCHAR(100) DEFAULT 'CuboidSoft Technologies' AFTER `bank_name`");
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_account_holder` VARCHAR(100) NULL DEFAULT NULL AFTER `bank_name`");
     }
     if (!in_array('bank_qr_url', $widgetCols)) {
         $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `bank_qr_url` VARCHAR(255) NULL AFTER `bank_upi_id`");

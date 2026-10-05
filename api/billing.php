@@ -78,8 +78,18 @@ try {
                 ]];
             }
 
+            $compStmt = $pdo->prepare("SELECT name, email, billing_address, gstin FROM `companies` WHERE `id` = ? LIMIT 1");
+            $compStmt->execute([$companyId]);
+            $compRow = $compStmt->fetch(PDO::FETCH_ASSOC);
+
             echo json_encode([
                 'success'      => true,
+                'company'      => [
+                    'name'            => $compRow['name'] ?? '',
+                    'email'           => $compRow['email'] ?? ($_SESSION['email'] ?? ''),
+                    'billing_address' => $compRow['billing_address'] ?? '',
+                    'gstin'           => $compRow['gstin'] ?? ''
+                ],
                 'entitlements' => $entitlements,
                 'subscription' => $subscription,
                 'invoices'     => $invoices,

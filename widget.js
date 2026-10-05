@@ -5314,11 +5314,17 @@
     greeting_heading: 'Hi there 👋 Welcome to CuboidPilot!\n\nI am Cai, your AI assistant. How can I help your business today?',
     greeting_subheading: 'Powered By CuboidPilot',
     whatsapp_enabled: true,
-    whatsapp_number: '+91 98765 43210',
+    whatsapp_number: '',
     theme_mode: 'dark',
     logo_url: '',
     logo_dark_url: '',
-    logo_light_url: ''
+    logo_light_url: '',
+    bank_name: '',
+    bank_account_holder: '',
+    bank_account_no: '',
+    bank_ifsc: '',
+    bank_upi_id: '',
+    bank_qr_url: ''
   };
 
   let isSending = false;
@@ -6335,12 +6341,12 @@
     if (typeof cfg.enable_appointments !== 'undefined') widgetConfig.enable_appointments = cfg.enable_appointments;
     if (typeof cfg.enable_human_help !== 'undefined') widgetConfig.enable_human_help = cfg.enable_human_help;
     if (typeof cfg.enable_payments !== 'undefined') widgetConfig.enable_payments = cfg.enable_payments;
-    if (cfg.bank_name) widgetConfig.bank_name = cfg.bank_name;
-    if (cfg.bank_account_no) widgetConfig.bank_account_no = cfg.bank_account_no;
-    if (cfg.bank_ifsc) widgetConfig.bank_ifsc = cfg.bank_ifsc;
-    if (cfg.bank_upi_id) widgetConfig.bank_upi_id = cfg.bank_upi_id;
-    if (cfg.bank_account_holder) widgetConfig.bank_account_holder = cfg.bank_account_holder;
-    if (cfg.bank_qr_url) widgetConfig.bank_qr_url = cfg.bank_qr_url;
+    if (typeof cfg.bank_name !== 'undefined') widgetConfig.bank_name = cfg.bank_name;
+    if (typeof cfg.bank_account_no !== 'undefined') widgetConfig.bank_account_no = cfg.bank_account_no;
+    if (typeof cfg.bank_ifsc !== 'undefined') widgetConfig.bank_ifsc = cfg.bank_ifsc;
+    if (typeof cfg.bank_upi_id !== 'undefined') widgetConfig.bank_upi_id = cfg.bank_upi_id;
+    if (typeof cfg.bank_account_holder !== 'undefined') widgetConfig.bank_account_holder = cfg.bank_account_holder;
+    if (typeof cfg.bank_qr_url !== 'undefined') widgetConfig.bank_qr_url = cfg.bank_qr_url;
 
     const asstName = widgetConfig.assistant_name || 'Cai';
     const brandName = widgetConfig.brand_name || asstName;
@@ -6399,7 +6405,7 @@
     } catch(e) {}
 
     try {
-      const url = `${baseUrl}/api/config.php?company_key=${encodeURIComponent(companyKey)}`;
+      const url = `${baseUrl}/api/config.php?company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error('Config failed');
       const data = await res.json();
@@ -6643,8 +6649,8 @@
       existing.remove();
     }
 
-    const cleanWaNum = (widgetConfig.whatsapp_number || '919876543210').replace(/[^0-9]/g, '');
-    const waLink = whatsappUrl || `https://wa.me/${cleanWaNum}?text=${encodeURIComponent('Hi, I was chatting with Cai on your website and would like further assistance.')}`;
+    const cleanWaNum = (widgetConfig.whatsapp_number || '').replace(/[^0-9]/g, '');
+    const waLink = cleanWaNum ? (whatsappUrl || `https://wa.me/${cleanWaNum}?text=${encodeURIComponent('Hi, I was chatting with Cai on your website and would like further assistance.')}`) : null;
 
     const endedDiv = document.createElement('div');
     endedDiv.className = 'cp-chat-ended-container';
@@ -6655,10 +6661,11 @@
       <div class="cp-chat-ended-card">
         <div class="cp-ended-title">Need further assistance or prefer speaking directly with our team?</div>
         <div class="cp-ended-actions">
+          ${waLink ? `
           <a class="cp-wa-btn" href="${escapeHtml(waLink)}" target="_blank" rel="noopener noreferrer">
             <svg viewBox="0 0 24 24"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.46 0 .1 5.36.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.27-1.64a11.9 11.9 0 0 0 5.77 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.47-8.42z"/></svg>
             <span>Continue on WhatsApp</span>
-          </a>
+          </a>` : ''}
           <button type="button" class="cp-ended-restart-btn" id="cp-btn-ended-human">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             <span>Talk to Human Specialist</span>
@@ -7070,7 +7077,11 @@
   }
 
   function openWhatsAppChannel(customText) {
-    const cleanNumber = (widgetConfig.whatsapp_number || '919876543210').replace(/[^0-9]/g, '');
+    const cleanNumber = (widgetConfig.whatsapp_number || '').replace(/[^0-9]/g, '');
+    if (!cleanNumber) {
+      alert('WhatsApp support is not configured for this workspace.');
+      return;
+    }
     const msg = encodeURIComponent(customText || 'Hi, I need assistance with Cai.');
     const url = `https://api.whatsapp.com/send?phone=${cleanNumber}&text=${msg}`;
     try {
@@ -7966,17 +7977,31 @@
     if (homeDataLoaded) return;
     homeDataLoaded = true;
 
-    // Fetch dynamic executive LinkedIn profiles for header avatars
-    fetch(`${baseUrl}/api/widget_actions.php?action=get_actions&company_key=${encodeURIComponent(companyKey)}`)
+    // Fetch dynamic executive LinkedIn profiles for header avatars & sync settings
+    fetch(`${baseUrl}/api/widget_actions.php?action=get_actions&company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`)
       .then(r => r.json())
       .then(d => {
         if (d && d.success && d.settings) {
+          applyWidgetConfig(d.settings);
           const lAyush = shadow.getElementById('cp-avatar-ayush-link');
           const lCai = shadow.getElementById('cp-avatar-cai-link');
           const lCuboid = shadow.getElementById('cp-avatar-cuboidsoft-link');
-          if (lAyush && d.settings.linkedin_ayush) lAyush.href = d.settings.linkedin_ayush;
-          if (lCai && d.settings.linkedin_cai) lCai.href = d.settings.linkedin_cai;
-          if (lCuboid && d.settings.linkedin_cuboidsoft) lCuboid.href = d.settings.linkedin_cuboidsoft;
+          if (lAyush) {
+            if (d.settings.linkedin_ayush) { lAyush.href = d.settings.linkedin_ayush; lAyush.style.display = 'inline-block'; }
+            else { lAyush.style.display = 'none'; }
+          }
+          if (lCai) {
+            if (d.settings.linkedin_cai) { lCai.href = d.settings.linkedin_cai; lCai.style.display = 'inline-block'; }
+            else { lCai.style.display = 'none'; }
+          }
+          if (lCuboid) {
+            if (d.settings.linkedin_cuboidsoft) { lCuboid.href = d.settings.linkedin_cuboidsoft; lCuboid.style.display = 'inline-block'; }
+            else { lCuboid.style.display = 'none'; }
+          }
+          const stack = shadow.getElementById('cp-team-avatar-stack');
+          if (stack && !d.settings.linkedin_ayush && !d.settings.linkedin_cai && !d.settings.linkedin_cuboidsoft) {
+            stack.style.display = 'none';
+          }
         }
       })
       .catch(() => {});
@@ -9234,28 +9259,43 @@
   // -------------------------------------------------------------
   // SUB-SCREEN 8A: BANK TRANSFER (NEFT / IMPS / UPI + UTR)
   // -------------------------------------------------------------
-  function renderBankTransfer() {
+  async function renderBankTransfer() {
     if (!screensView) return;
 
-    const bankName = widgetConfig.bank_name || 'HDFC Bank';
-    const accHolder = widgetConfig.bank_account_holder || '';
-    const accNo = widgetConfig.bank_account_no || '50200088991122';
-    const ifsc = widgetConfig.bank_ifsc || 'HDFC0001234';
-    const upiId = widgetConfig.bank_upi_id || 'cuboidsoft@hdfcbank';
-    const qrUrl = widgetConfig.bank_qr_url ? (widgetConfig.bank_qr_url.startsWith('http') ? widgetConfig.bank_qr_url : `${baseUrl}/${widgetConfig.bank_qr_url}`) : null;
+    if (!widgetConfig.bank_name && !widgetConfig.bank_account_no && !widgetConfig.bank_upi_id) {
+      try {
+        const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_actions&company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`);
+        const data = await res.json();
+        if (data && data.success && data.settings) {
+          applyWidgetConfig(data.settings);
+        }
+      } catch (e) {}
+    }
 
-    screensView.innerHTML = `
-      <div class="cp-section-title">Verified Bank Details</div>
+    const bankName = widgetConfig.bank_name || '';
+    const accHolder = widgetConfig.bank_account_holder || (widgetConfig.company ? widgetConfig.company.name : '') || '';
+    const accNo = widgetConfig.bank_account_no || '';
+    const ifsc = widgetConfig.bank_ifsc || '';
+    const upiId = widgetConfig.bank_upi_id || '';
+    const qrUrl = widgetConfig.bank_qr_url ? (widgetConfig.bank_qr_url.startsWith('http') ? widgetConfig.bank_qr_url : `${baseUrl}/${widgetConfig.bank_qr_url.replace(/^\/+/, '')}`) : null;
+
+    const hasAnyBankInfo = Boolean(bankName || accNo || ifsc || upiId || qrUrl);
+
+    let bankCardHtml = '';
+    if (hasAnyBankInfo) {
+      bankCardHtml = `
       <div class="cp-bank-card">
         ${accHolder ? `
         <div class="cp-bank-row">
           <span class="cp-bank-label">A/C Holder</span>
           <span class="cp-bank-val">${escapeHtml(accHolder)}</span>
         </div>` : ''}
+        ${bankName ? `
         <div class="cp-bank-row">
           <span class="cp-bank-label">Bank Name</span>
           <span class="cp-bank-val">${escapeHtml(bankName)}</span>
-        </div>
+        </div>` : ''}
+        ${accNo ? `
         <div class="cp-bank-row">
           <span class="cp-bank-label">Account No.</span>
           <div class="cp-bank-val-box">
@@ -9264,7 +9304,8 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             </button>
           </div>
-        </div>
+        </div>` : ''}
+        ${ifsc ? `
         <div class="cp-bank-row">
           <span class="cp-bank-label">IFSC Code</span>
           <div class="cp-bank-val-box">
@@ -9273,7 +9314,8 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             </button>
           </div>
-        </div>
+        </div>` : ''}
+        ${upiId ? `
         <div class="cp-bank-row">
           <span class="cp-bank-label">UPI ID</span>
           <div class="cp-bank-val-box">
@@ -9282,13 +9324,24 @@
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
             </button>
           </div>
-        </div>
+        </div>` : ''}
         ${qrUrl ? `
         <div style="margin-top:10px;text-align:center;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px dashed var(--cp-border-input, #282931);">
           <div style="font-size:11px;color:var(--cp-text-muted);margin-bottom:6px;">Scan to pay via any UPI App</div>
-          <img src="${qrUrl}" alt="UPI QR Code" style="width:120px;height:120px;margin:0 auto;border-radius:6px;background:#ffffff;padding:4px;display:block;" />
+          <img src="${escapeHtml(qrUrl)}" alt="UPI QR Code" style="width:120px;height:120px;margin:0 auto;border-radius:6px;background:#ffffff;padding:4px;display:block;" />
         </div>` : ''}
-      </div>
+      </div>`;
+    } else {
+      bankCardHtml = `
+      <div class="cp-bank-card" style="text-align:center;padding:24px 16px;">
+        <div style="font-weight:600;font-size:13px;margin-bottom:6px;color:var(--cp-text-main);">Bank Details Pending Configuration</div>
+        <div style="font-size:12px;color:var(--cp-text-muted);line-height:1.5;">Direct bank transfer details have not been published for this workspace. Please contact support or request an invoice.</div>
+      </div>`;
+    }
+
+    screensView.innerHTML = `
+      <div class="cp-section-title">Verified Bank Details</div>
+      ${bankCardHtml}
 
       <div class="cp-section-title">Submit Transfer Details (Instant Receipt)</div>
       <div class="cp-form-group">
@@ -9471,7 +9524,7 @@
             key: rzpKey,
             amount: amt * 100,
             currency: 'INR',
-            name: widgetConfig.brand_name || 'CuboidPilot',
+            name: widgetConfig.brand_name || (widgetConfig.company ? widgetConfig.company.name : 'Customer Checkout'),
             description: shadow.getElementById('cp-online-desc').value.trim() || 'Online Payment',
             prefill: {
               name: name,
