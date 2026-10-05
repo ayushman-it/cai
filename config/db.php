@@ -34,9 +34,9 @@
 // Database credentials (supports dynamic environment variables in production)
 define('DB_HOST', getenv('DB_HOST') ?: '127.0.0.1');
 define('DB_PORT', getenv('DB_PORT') ?: '3306');
-define('DB_USER', getenv('DB_USER') ?: 'root');
-define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : '');
-define('DB_NAME', getenv('DB_NAME') ?: 'cuboidpolit_db');
+define('DB_USER', getenv('DB_USER') ?: 'u325640649_cai');
+define('DB_PASS', getenv('DB_PASS') !== false ? getenv('DB_PASS') : 'AyushmanIndia@2026');
+define('DB_NAME', getenv('DB_NAME') ?: 'u325640649_cai');
 
 // Groq AI Engine Key (Configure in .env)
 define('GROQ_API_KEY', getenv('GROQ_API_KEY') ?: '');
