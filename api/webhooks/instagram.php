@@ -9,15 +9,23 @@ require_once __DIR__ . '/../../config/db.php';
 
 $pdo = getDbConnection();
 
-// 1. Webhook Verification (GET)
+// 1. Webhook Verification (GET request from Meta)
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $mode        = $_GET['hub_mode'] ?? '';
-    $token       = $_GET['hub_verify_token'] ?? '';
-    $challenge   = $_GET['hub_challenge'] ?? '';
+    $mode        = $_GET['hub_mode'] ?? $_GET['hub.mode'] ?? '';
+    $token       = $_GET['hub_verify_token'] ?? $_GET['hub.verify_token'] ?? '';
+    $challenge   = $_GET['hub_challenge'] ?? $_GET['hub.challenge'] ?? '';
     $companyKey  = trim($_GET['company_key'] ?? '');
 
-    if ($mode === 'subscribe' && !empty($token)) {
-        if (!empty($companyKey)) {
+    if ($mode === 'subscribe' && !empty($challenge)) {
+        $isMatched = false;
+
+        // 1. Allow standard user-specified or env verify tokens
+        if ($token === 'cuboid_ig_verify' || $token === 'cuboid_instagram_secret' || (!empty(getenv('INSTAGRAM_VERIFY_TOKEN')) && hash_equals(getenv('INSTAGRAM_VERIFY_TOKEN'), (string)$token))) {
+            $isMatched = true;
+        }
+
+        // 2. Check company-specific configuration if company_key is provided
+        if (!$isMatched && !empty($companyKey)) {
             $stmt = $pdo->prepare("
                 SELECT c.id FROM `companies` c
                 JOIN `company_instagram_configs` ig ON ig.company_id = c.id
@@ -26,16 +34,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             ");
             $stmt->execute([$companyKey, $companyKey, $token]);
             if ($stmt->fetch()) {
-                http_response_code(200);
-                echo $challenge;
-                exit;
+                $isMatched = true;
             }
         }
 
-        // Global check across all tenant configs
-        $stmt = $pdo->prepare("SELECT company_id FROM `company_instagram_configs` WHERE `webhook_verify_token` = ? LIMIT 1");
-        $stmt->execute([$token]);
-        if ($stmt->fetch()) {
+        // 3. Global check across all tenant configs
+        if (!$isMatched && !empty($token)) {
+            $stmt = $pdo->prepare("SELECT company_id FROM `company_instagram_configs` WHERE `webhook_verify_token` = ? LIMIT 1");
+            $stmt->execute([$token]);
+            if ($stmt->fetch()) {
+                $isMatched = true;
+            }
+        }
+
+        if ($isMatched) {
+            header("Content-Type: text/plain; charset=UTF-8");
             http_response_code(200);
             echo $challenge;
             exit;
