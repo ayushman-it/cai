@@ -35,18 +35,15 @@ class CustomerIdentityResolver {
 
         // 2. Direct Conversation lookup
         if (!$customer && $conversationId) {
-            $stmt = $pdo->prepare("SELECT customer_id, lead_id FROM `conversations` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
+            $stmt = $pdo->prepare("SELECT `customer_id` FROM `conversations` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
             $stmt->execute([$conversationId, $companyId]);
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($row && !empty($row['customer_id'])) {
+            $cId = $stmt->fetchColumn();
+            if ($cId) {
                 $cStmt = $pdo->prepare("SELECT * FROM `customers` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
-                $cStmt->execute([(int)$row['customer_id'], $companyId]);
+                $cStmt->execute([(int)$cId, $companyId]);
                 $customer = $cStmt->fetch(PDO::FETCH_ASSOC);
                 if ($customer) {
                     $customerId = (int)$customer['id'];
-                    if (empty($leadId) && !empty($row['lead_id'])) {
-                        $leadId = (int)$row['lead_id'];
-                    }
                 }
             }
         }

@@ -126,8 +126,8 @@ try {
         $cleanContent = preg_replace('/[ \t]+/', ' ', $cleanContent);
         $cleanContent = preg_replace('/\n\s*\n+/', "\n", $cleanContent);
         $cleanContent = trim($cleanContent);
-        if (mb_strlen($cleanContent) > 3500) {
-            $cleanContent = mb_substr($cleanContent, 0, 3500) . "...";
+        if (mb_strlen($cleanContent) > 15000) {
+            $cleanContent = mb_substr($cleanContent, 0, 15000) . "\n... [truncated for token efficiency]";
         }
         $compiledFacts[] = "[Source: {$src['title']}]\n{$cleanContent}";
     }
@@ -799,8 +799,12 @@ try {
                 $meta['interest'] = $matchedSource['title'];
                 
                 $snippet = trim($matchedSource['content']);
-                if (mb_strlen($snippet) > 850) {
-                    $snippet = mb_substr($snippet, 0, 850) . '...';
+                // Remove raw h1/h2 markdown headers from beginning of snippet for clean conversational flow
+                $snippet = preg_replace('/^#+\s+[^\n]+\n+/m', '', $snippet);
+                $snippet = preg_replace('/^##+\s+[^\n]+\n+/m', '', $snippet);
+                $snippet = trim($snippet);
+                if (mb_strlen($snippet) > 650) {
+                    $snippet = mb_substr($snippet, 0, 650) . '...';
                 }
 
                 $proactiveOffer = '';
@@ -811,7 +815,9 @@ try {
                     $meta['offered_asset_id'] = (int)$matchingAsset['id'];
                 }
 
-                $reply = "{$snippet}{$proactiveOffer}";
+                $reply = $isHindi 
+                    ? "Haan bilkul! Hamare verified platform details ke anusaar:\n\n{$snippet}{$proactiveOffer}"
+                    : "Certainly! According to our verified platform documentation:\n\n{$snippet}{$proactiveOffer}";
             } elseif ($isFeeInquiry || $isCourseInquiry) {
                 $meta['intent'] = 'purchase_interest';
                 $meta['stage'] = 'QUALIFIED';
@@ -889,7 +895,7 @@ try {
                 'pending_asset_id' => null,
                 'offered_assets'   => array_unique(array_merge($journey['offered_assets'] ?? [], [(int)$pendingAsset['id']]))
             ]);
-            $rawReply = "Maine **{$pendingAsset['title']}** aapki email (`{$targetEmail}`) par dispatch kar diya hai! ✉️ Kripya apna inbox/spam folder check karein.\n\nIske alawa aapko hamare courses ya programs ke baare mein aur kya jaanna hai?";
+            $rawReply = "Maine **{$pendingAsset['title']}** aapki email (`{$targetEmail}`) par dispatch kar diya hai! ✉️ Kripya apna inbox/spam folder check karein.\n\nIske alawa aapko hamare features, plans ya live demo ke baare mein aur kya jaanna hai?";
             $aiSuccess = true;
         } elseif ($isAffirmativeEmail) {
             $rawReply = "Zaroor! Kripya apna **email address** share karein taaki main turant **{$pendingAsset['title']}** aapke inbox me dispatch kar sakun. ✉️";
@@ -920,11 +926,12 @@ try {
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($groqPayload));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 12);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             $groqResponse = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr = curl_error($ch);
             curl_close($ch);
 
             if ($httpCode === 200 && !empty($groqResponse)) {
@@ -934,6 +941,8 @@ try {
                     $aiSuccess = true;
                     break;
                 }
+            } else {
+                error_log("[Groq API Error] Model: {$modelCandidate} | HTTP: {$httpCode} | Error: {$curlErr} | Body: " . substr($groqResponse, 0, 200));
             }
         }
     }

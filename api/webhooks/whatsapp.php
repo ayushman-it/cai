@@ -259,7 +259,7 @@ try {
     $customRules = !empty($aiCfg['custom_instructions']) ? $aiCfg['custom_instructions'] : '';
 
     // Fetch knowledge sources
-    $kbStmt = $pdo->prepare("SELECT title, content FROM `knowledge_sources` WHERE `company_id` = ? AND `is_active` = 1 LIMIT 5");
+    $kbStmt = $pdo->prepare("SELECT title, content FROM `knowledge_sources` WHERE `company_id` = ? AND `is_active` = 1 ORDER BY id DESC LIMIT 15");
     $kbStmt->execute([$resolvedCompanyId]);
     $docs = $kbStmt->fetchAll();
     $kbText = "";
