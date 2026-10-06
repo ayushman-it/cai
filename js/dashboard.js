@@ -4926,6 +4926,7 @@ window.CuboidDashboard = {
 
   loadKnowledge: async function() {
     this.loadAssets();
+    this.loadOfferings();
     const tbody = document.getElementById('knowledge-table-tbody');
     if (!tbody) return;
 
@@ -5051,6 +5052,130 @@ window.CuboidDashboard = {
     } catch (e) {
       console.warn('[CuboidDashboard] Error loading assets:', e);
     }
+  },
+
+  loadOfferings: async function() {
+    try {
+      const res = await fetch('../api/products.php?action=list');
+      const data = await res.json();
+      if (data && data.success) {
+        this.kbCurrentOfferings = data.products || [];
+        const countOfferings = document.getElementById('kb-tab-count-offerings');
+        if (countOfferings) countOfferings.textContent = this.kbCurrentOfferings.length;
+        const statOfferings = document.getElementById('kb-stat-offerings');
+        if (statOfferings) statOfferings.textContent = this.kbCurrentOfferings.length;
+
+        if (this.kbCurrentFilter === 'offerings') {
+          this.renderOfferingsTable();
+        }
+      }
+    } catch (e) {
+      console.warn('[CuboidDashboard] Error loading offerings:', e);
+    }
+  },
+
+  renderOfferingsTable: function() {
+    const thead = document.getElementById('knowledge-table-thead');
+    if (thead) {
+      thead.innerHTML = `
+        <tr>
+          <th>Offering / Course Name & Category</th>
+          <th>Duration / Audience</th>
+          <th>Pricing & Discount</th>
+          <th>EMI Options</th>
+          <th>AI Status</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      `;
+    }
+
+    const tbody = document.getElementById('knowledge-table-tbody');
+    if (!tbody) return;
+
+    let filtered = this.kbCurrentOfferings || [];
+
+    if (this.kbSearchQuery) {
+      const q = this.kbSearchQuery.toLowerCase();
+      filtered = filtered.filter(p =>
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.category && p.category.toLowerCase().includes(q)) ||
+        (p.description && p.description.toLowerCase().includes(q)) ||
+        (p.target_audience && p.target_audience.toLowerCase().includes(q))
+      );
+    }
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="p-10 text-center text-xs text-stone-500 bg-white">
+            <div class="w-10 h-10 rounded-full bg-stone-100 text-stone-600 flex items-center justify-center mx-auto mb-2.5">
+              <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            </div>
+            <div class="font-medium text-stone-800 text-sm">No Commercial Offerings In Catalog</div>
+            <p class="text-[11px] text-stone-400 mt-1 max-w-md mx-auto">Upload your courses, services, packages or coaching plans via bulk CSV. Cai AI will automatically recommend them, calculate EMIs, and generate instant payment orders.</p>
+            <button onclick="CuboidDashboard.openBulkUploadOfferingsModal()" class="btn-primary btn-sm inline-flex items-center gap-1.5 py-1.5 px-3 mt-3.5 text-xs bg-stone-900 hover:bg-black text-white">
+              <i data-lucide="package-plus" class="w-3.5 h-3.5"></i> Bulk Upload CSV
+            </button>
+          </td>
+        </tr>
+      `;
+      if (window.lucide) window.lucide.createIcons();
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(p => {
+      const price = Number(p.price || 0).toLocaleString();
+      const origPrice = p.original_price_inr ? Number(p.original_price_inr).toLocaleString() : null;
+      const discount = p.discount_percent ? `${p.discount_percent}% OFF` : (p.max_discount_allowed_percent ? `Max ${p.max_discount_allowed_percent}% neg.` : '');
+      const emiPlans = p.emi_plans || [];
+      const hasEmi = emiPlans.length > 0;
+      const emiText = hasEmi ? `${emiPlans.length} plans (from ₹${Number(emiPlans[0].monthly_amount || 0).toLocaleString()}/mo)` : 'One-time only';
+
+      return `
+        <tr class="hover:bg-stone-50/60 transition-colors">
+          <td class="max-w-md">
+            <div class="flex items-start gap-2.5">
+              <div class="mt-0.5 p-1.5 bg-stone-100 border border-stone-200 rounded text-stone-800 shrink-0">
+                <i data-lucide="package" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <div class="font-medium text-stone-900 text-xs">${escapeHtml(p.name)}</div>
+                ${p.description ? `<div class="text-[11px] text-stone-500 line-clamp-1 mt-0.5">${escapeHtml(p.description)}</div>` : ''}
+                <div class="flex flex-wrap items-center gap-1 mt-1">
+                  <span class="inline-block px-1.5 py-0.2 bg-stone-100 text-stone-600 rounded text-[10px] font-mono">${escapeHtml(p.category || 'General')}</span>
+                  ${p.subcategory ? `<span class="inline-block px-1.5 py-0.2 bg-stone-50 text-stone-500 rounded text-[10px]">${escapeHtml(p.subcategory)}</span>` : ''}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="text-xs text-stone-800 font-medium">${escapeHtml(p.duration || 'Flexible')}</div>
+            <div class="text-[10px] text-stone-400 mt-0.5 line-clamp-1">${escapeHtml(p.target_audience || 'All levels')}</div>
+          </td>
+          <td>
+            <div class="font-semibold text-xs text-stone-900">₹${price}</div>
+            ${origPrice ? `<div class="text-[10px] text-stone-400 line-through">₹${origPrice}</div>` : ''}
+            ${discount ? `<div class="text-[10px] text-emerald-700 font-medium mt-0.5">${discount}</div>` : ''}
+          </td>
+          <td>
+            <div class="text-xs text-stone-700 font-medium">${emiText}</div>
+            <div class="text-[10px] text-stone-400">Zero-cost financing</div>
+          </td>
+          <td>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-[3px] text-[10px] font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span> Active
+            </span>
+          </td>
+          <td class="text-right space-x-2 whitespace-nowrap">
+            <button onclick="CuboidDashboard.deleteOffering(${p.id}, '${escapeHtml(p.name)}')" class="text-xs text-stone-400 hover:text-red-700">
+              Delete
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    if (window.lucide) window.lucide.createIcons();
   },
 
   renderKnowledgeTable: function() {
@@ -5307,6 +5432,8 @@ window.CuboidDashboard = {
 
     if (type === 'assets') {
       this.renderAssetsTable();
+    } else if (type === 'offerings') {
+      this.renderOfferingsTable();
     } else {
       this.renderKnowledgeTable();
     }
@@ -5316,6 +5443,8 @@ window.CuboidDashboard = {
     this.kbSearchQuery = q;
     if (this.kbCurrentFilter === 'assets') {
       this.renderAssetsTable();
+    } else if (this.kbCurrentFilter === 'offerings') {
+      this.renderOfferingsTable();
     } else {
       this.renderKnowledgeTable();
     }
@@ -5453,6 +5582,103 @@ window.CuboidDashboard = {
         }
       }
     });
+  },
+
+  deleteOffering: async function(id, name) {
+    window.CuboidShell.confirm({
+      title: 'Delete Offering?',
+      message: `Are you sure you want to remove "${name}" from the offerings catalog? Cai AI will immediately stop recommending it in chat.`,
+      confirmText: 'Delete Offering',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          const res = await fetch('../api/products.php?action=delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+          });
+          const data = await res.json();
+          if (data && data.success) {
+            window.CuboidShell.toast('Offering removed from catalog', 'info');
+            await this.loadOfferings();
+          } else {
+            window.CuboidShell.toast(data.error || 'Failed to delete offering', 'error');
+          }
+        } catch (e) {
+          window.CuboidShell.toast('Network error deleting offering', 'error');
+        }
+      }
+    });
+  },
+
+  openBulkUploadOfferingsModal: function() {
+    const m = document.getElementById('bulk-upload-offerings-modal');
+    if (m) m.classList.add('open');
+  },
+
+  closeBulkUploadOfferingsModal: function() {
+    const m = document.getElementById('bulk-upload-offerings-modal');
+    if (m) m.classList.remove('open');
+  },
+
+  handleOfferingsFileSelect: function(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    const label = document.getElementById('offerings-file-selected-name');
+    if (label) {
+      const sizeStr = (file.size / 1024).toFixed(1) + ' KB';
+      label.textContent = `${file.name} (${sizeStr})`;
+    }
+  },
+
+  submitBulkUploadOfferings: async function(e) {
+    if (e) e.preventDefault();
+    const fileInput = document.getElementById('offerings-upload-file');
+    const file = fileInput && fileInput.files && fileInput.files[0];
+
+    if (!file) {
+      window.CuboidShell.toast('Please select a CSV file to upload', 'error');
+      return;
+    }
+
+    const submitBtn = document.getElementById('offerings-upload-submit-btn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin mr-1"></i> Importing Offerings...';
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('csv_file', file);
+
+      const res = await fetch('../api/products.php?action=bulk_upload_csv', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+
+      if (data && data.success) {
+        window.CuboidShell.toast(data.message || `Imported ${data.imported_count || 0} offerings successfully!`, 'success');
+        this.closeBulkUploadOfferingsModal();
+        const form = document.getElementById('bulk-upload-offerings-form');
+        if (form) form.reset();
+        const label = document.getElementById('offerings-file-selected-name');
+        if (label) label.textContent = 'Choose CSV file or drag & drop';
+        await this.loadOfferings();
+        this.setKnowledgeFilter('offerings');
+      } else {
+        window.CuboidShell.toast(data.error || 'Failed to import offerings CSV', 'error');
+      }
+    } catch (err) {
+      window.CuboidShell.toast('Network error importing offerings CSV', 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = 'Import Offerings';
+      }
+    }
   },
 
   copyAssetLink: function(filePath) {

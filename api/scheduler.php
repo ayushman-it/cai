@@ -164,6 +164,75 @@ try {
         $results['drops_detected']++;
     }
 
+    // -------------------------------------------------------------
+    // JOB 4: PROCESS UNIFIED REMINDERS & PROMISE-TO-PAY QUEUE
+    // -------------------------------------------------------------
+    $queueStmt = $pdo->query("
+        SELECT r.*, c.name as customer_name, c.phone as customer_phone, comp.name as company_name
+        FROM `reminders` r
+        JOIN `customers` c ON c.id = r.customer_id
+        JOIN `companies` comp ON comp.id = r.company_id
+        WHERE r.status IN ('PENDING', 'PROMISED')
+          AND r.due_date <= DATE_ADD(CURDATE(), INTERVAL 3 DAY)
+        ORDER BY r.due_date ASC
+        LIMIT 50
+    ");
+    $queuedReminders = $queueStmt->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($queuedReminders as $qRem) {
+        $cId = (int)$qRem['company_id'];
+        $custPhone = $qRem['customer_phone'];
+
+        // Respect Promise-To-Pay date: Never harass customer before promised date!
+        if (!empty($qRem['promise_to_pay_date']) && strtotime($qRem['promise_to_pay_date']) > time()) {
+            continue;
+        }
+
+        if (empty($custPhone)) continue;
+
+        $amtFmt = number_format($qRem['amount_inr']);
+        $dueFmt = !empty($qRem['due_date']) ? date('D, M j, Y', strtotime($qRem['due_date'])) : 'Soon';
+
+        $msgBody = !empty($qRem['message_template']) 
+            ? $qRem['message_template']
+            : "👋 Hello {$qRem['customer_name']},\n\nFriendly reminder from {$qRem['company_name']} regarding your pending fee:\n\n📌 {$qRem['title']}\n💰 Amount: ₹{$amtFmt}\n🗓️ Due Date: {$dueFmt}\n\nPlease let us know if you need any assistance or payment link details.";
+
+        // Dispatch to whatsapp_messages table
+        $pdo->prepare("
+            INSERT INTO `whatsapp_messages`
+            (`company_id`, `recipient_phone`, `recipient_name`, `message_type`, `content`, `status`, `metadata_json`, `created_at`)
+            VALUES (?, ?, ?, 'customer_message', ?, 'sent', ?, NOW())
+        ")->execute([
+            $cId,
+            $custPhone,
+            $qRem['customer_name'],
+            $msgBody,
+            json_encode(['reminder_id' => $qRem['id'], 'amount_inr' => $qRem['amount_inr']])
+        ]);
+
+        // Handle repeat frequency
+        $repeat = strtoupper($qRem['repeat_frequency'] ?? 'NONE');
+        if ($repeat === 'NONE') {
+            $pdo->prepare("UPDATE `reminders` SET `status` = 'SENT', `sent_at` = NOW(), `updated_at` = NOW() WHERE id = ?")
+                ->execute([$qRem['id']]);
+        } else {
+            $intervalDays = 7;
+            if ($repeat === 'DAILY') $intervalDays = 1;
+            elseif ($repeat === 'MONTHLY') $intervalDays = 30;
+            elseif ($repeat === 'QUARTERLY') $intervalDays = 90;
+
+            $pdo->prepare("
+                UPDATE `reminders`
+                SET `sent_at` = NOW(),
+                    `due_date` = DATE_ADD(`due_date`, INTERVAL ? DAY),
+                    `updated_at` = NOW()
+                WHERE id = ?
+            ")->execute([$intervalDays, $qRem['id']]);
+        }
+
+        $results['reminders_sent']++;
+    }
+
 } catch (Exception $e) {
     $results['errors'][] = $e->getMessage();
 }

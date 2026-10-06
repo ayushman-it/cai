@@ -267,6 +267,19 @@ try {
         $kbText .= "### " . $d['title'] . "\n" . $d['content'] . "\n\n";
     }
 
+    // Fetch active commercial offerings & courses
+    $pStmt = $pdo->prepare("SELECT name, category, price_inr, duration, emi_available, emi_starting_at_inr, description FROM `products` WHERE `company_id` = ? AND `is_active` = 1 LIMIT 10");
+    $pStmt->execute([$resolvedCompanyId]);
+    $waProds = $pStmt->fetchAll(PDO::FETCH_ASSOC);
+    if (!empty($waProds)) {
+        $kbText .= "### Verified Commercial Offerings & Courses\n";
+        foreach ($waProds as $wp) {
+            $emiInfo = $wp['emi_available'] ? "EMI starting at ₹" . number_format($wp['emi_starting_at_inr']) . "/mo" : "Full payment";
+            $kbText .= "• {$wp['name']} ({$wp['category']}, {$wp['duration']}): Fee ₹" . number_format($wp['price_inr']) . " | {$emiInfo} | {$wp['description']}\n";
+        }
+        $kbText .= "\n";
+    }
+
     // Load recent messages for conversational context
     $recentMsgs = [];
     if ($conversationId) {
@@ -289,47 +302,54 @@ try {
         $aiReply = "Welcome to {$company['name']}! I'm {$asstName}, your AI assistant. How can I assist you today?";
 
         if (defined('GROQ_API_KEY') && !empty(GROQ_API_KEY) && !empty($kbText)) {
-            $prompt = "You are {$asstName}, the dedicated AI counselor on WhatsApp for {$company['name']}.\n"
+            $prompt = "=== IDENTITY & PERSONA ===\n"
+                . "You are {$asstName}, the dedicated consultative AI counselor on WhatsApp for {$company['name']}.\n"
                 . "Customer Name: {$customerName}\n\n"
                 . (!empty($customRules) ? "CUSTOM COMPANY RULES:\n{$customRules}\n\n" : "")
                 . $memorySection
-                . "Verified Company Knowledge Base:\n" . $kbText . "\n"
+                . "=== VERIFIED COMPANY KNOWLEDGE (FACTUAL GROUNDING ONLY) ===\n" . $kbText . "\n\n"
                 . "CRITICAL WHATSAPP RULES:\n"
                 . $welcomeGuidance
-                . "- Answer accurately based ONLY on the verified company knowledge. Never invent pricing, discounts, guarantees, or delivery dates.\n"
+                . "- Answer accurately based ONLY on the verified company knowledge. NEVER invent pricing, discounts, guarantees, or delivery dates.\n"
+                . "- If requested info is not in the knowledge base, politely acknowledge the limitation and offer to connect with a team member.\n"
+                . "- Match the visitor's language (English, Hindi, or conversational Hinglish) naturally.\n"
                 . "- Keep your response natural, conversational, and nicely spaced for WhatsApp (under 120 words).\n";
 
-            $groqPayload = [
-                'model' => 'qwen/qwen3.8-27b',
-                'messages' => array_merge(
-                    [['role' => 'system', 'content' => $prompt]],
-                    $recentMsgs,
-                    [['role' => 'user', 'content' => $messageText]]
-                ),
-                'temperature' => 0.25,
-                'max_tokens' => 350
-            ];
+            $waModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+            foreach ($waModels as $wModel) {
+                $groqPayload = [
+                    'model' => $wModel,
+                    'messages' => array_merge(
+                        [['role' => 'system', 'content' => $prompt]],
+                        $recentMsgs,
+                        [['role' => 'user', 'content' => $messageText]]
+                    ),
+                    'temperature' => 0.25,
+                    'max_tokens' => 350
+                ];
 
-            $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST => true,
-                CURLOPT_POSTFIELDS => json_encode($groqPayload),
-                CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/json',
-                    'Authorization: Bearer ' . GROQ_API_KEY
-                ],
-                CURLOPT_TIMEOUT => 10,
-                CURLOPT_SSL_VERIFYPEER => false
-            ]);
-            $res = curl_exec($ch);
-            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
+                $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST => true,
+                    CURLOPT_POSTFIELDS => json_encode($groqPayload),
+                    CURLOPT_HTTPHEADER => [
+                        'Content-Type: application/json',
+                        'Authorization: Bearer ' . GROQ_API_KEY
+                    ],
+                    CURLOPT_TIMEOUT => 12,
+                    CURLOPT_SSL_VERIFYPEER => false
+                ]);
+                $res = curl_exec($ch);
+                $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
 
-            if ($code === 200 && !empty($res)) {
-                $json = json_decode($res, true);
-                if (!empty($json['choices'][0]['message']['content'])) {
-                    $aiReply = trim($json['choices'][0]['message']['content']);
+                if ($code === 200 && !empty($res)) {
+                    $json = json_decode($res, true);
+                    if (!empty($json['choices'][0]['message']['content'])) {
+                        $aiReply = trim($json['choices'][0]['message']['content']);
+                        break;
+                    }
                 }
             }
         }

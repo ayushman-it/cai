@@ -978,11 +978,14 @@
     .cp-messages {
       flex: 1;
       overflow-y: auto;
+      overflow-x: hidden !important;
       padding: 16px 14px 12px 14px;
       display: flex;
       flex-direction: column;
       gap: 12px;
       scroll-behavior: smooth;
+      box-sizing: border-box;
+      width: 100%;
     }
 
     .cp-messages::-webkit-scrollbar {
@@ -1000,6 +1003,9 @@
       flex-direction: column;
       gap: 12px;
       width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
     }
 
     /* Message Bubbles */
@@ -1008,6 +1014,8 @@
       flex-direction: column;
       gap: 4px;
       animation: msgPop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      box-sizing: border-box;
+      width: 100%;
     }
 
     @keyframes msgPop {
@@ -1019,6 +1027,12 @@
       align-items: flex-start;
       align-self: flex-start;
       max-width: 88%;
+      box-sizing: border-box;
+    }
+
+    .cp-msg-row.ai.has-cards {
+      max-width: 100% !important;
+      width: 100% !important;
     }
 
     .cp-msg-row.user {
@@ -1033,6 +1047,13 @@
       font-size: 13.5px;
       line-height: 1.45;
       word-break: break-word;
+      box-sizing: border-box;
+      max-width: 100%;
+    }
+
+    .cp-msg-row.ai.has-cards .cp-bubble {
+      max-width: 100% !important;
+      width: 100% !important;
     }
 
     .cp-msg-row.ai .cp-bubble {
@@ -4813,6 +4834,386 @@
     .cp-window.theme-light .cp-asset-email-badge.prompt {
       color: #64748b;
     }
+
+    /* ============================================================= */
+    /* INTERCOM-STYLE COMMERCE & PRODUCT CAROUSEL (Cai AI Commerce)  */
+    /* ============================================================= */
+    /* ============================================================= */
+    /* INTERCOM-STYLE COMMERCE & PRODUCT CAROUSEL (Cai AI Commerce)  */
+    /* Lightweight, sleek, and strictly contained within chat bounds */
+    /* ============================================================= */
+    .cp-product-carousel-box {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      padding: 8px 2px 10px 2px;
+      margin-top: 8px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+    .cp-product-carousel-box::-webkit-scrollbar {
+      height: 3px;
+    }
+    .cp-product-carousel-box::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+    }
+    :host([data-theme="light"]) .cp-product-carousel-box::-webkit-scrollbar-thumb,
+    .cp-window.cp-light-theme .cp-product-carousel-box::-webkit-scrollbar-thumb,
+    .cp-window.theme-light .cp-product-carousel-box::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.12);
+    }
+    .cp-product-card {
+      flex: 0 0 215px;
+      min-width: 200px;
+      max-width: 82%;
+      box-sizing: border-box;
+      scroll-snap-align: start;
+      background: var(--cp-options-bg, #181920);
+      border: 1px solid var(--cp-border-input, #282931);
+      border-radius: 10px;
+      padding: 11px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      transition: transform 0.16s ease, border-color 0.16s ease;
+      text-align: left;
+    }
+    .cp-product-card:hover {
+      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1.5px);
+    }
+    :host([data-theme="light"]) .cp-product-card,
+    .cp-window.cp-light-theme .cp-product-card,
+    .cp-window.theme-light .cp-product-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+    :host([data-theme="light"]) .cp-product-card:hover,
+    .cp-window.cp-light-theme .cp-product-card:hover,
+    .cp-window.theme-light .cp-product-card:hover {
+      border-color: #cbd5e1;
+    }
+    .cp-card-top-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .cp-prod-category-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.12);
+      padding: 2px 7px;
+      border-radius: 9999px;
+    }
+    .cp-prod-duration-pill {
+      font-size: 10px;
+      color: var(--cp-text-muted, #94a3b8);
+      font-weight: 500;
+    }
+    .cp-prod-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cp-text-primary, #ffffff);
+      line-height: 1.3;
+    }
+    :host([data-theme="light"]) .cp-prod-title,
+    .cp-window.cp-light-theme .cp-prod-title,
+    .cp-window.theme-light .cp-prod-title {
+      color: #0f172a;
+    }
+    .cp-prod-pricing-row {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      margin-top: 2px;
+    }
+    .cp-prod-price {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--cp-text-primary, #ffffff);
+    }
+    :host([data-theme="light"]) .cp-prod-price,
+    .cp-window.cp-light-theme .cp-prod-price,
+    .cp-window.theme-light .cp-prod-price {
+      color: #0f172a;
+    }
+    .cp-prod-orig-price {
+      font-size: 11px;
+      color: var(--cp-text-muted, #94a3b8);
+      text-decoration: line-through;
+    }
+    .cp-prod-discount-pill {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #10b981;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    .cp-prod-emi-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10.5px;
+      font-weight: 600;
+      color: #8b5cf6;
+      background: rgba(139, 92, 246, 0.1);
+      border: 1px solid rgba(139, 92, 246, 0.2);
+      padding: 2.5px 7px;
+      border-radius: 5px;
+      width: fit-content;
+    }
+    .cp-prod-features-list {
+      list-style: none;
+      padding: 0;
+      margin: 3px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .cp-prod-feature-item {
+      font-size: 11px;
+      color: var(--cp-text-secondary, #94a3b8);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      line-height: 1.3;
+    }
+    :host([data-theme="light"]) .cp-prod-feature-item,
+    .cp-window.cp-light-theme .cp-prod-feature-item,
+    .cp-window.theme-light .cp-prod-feature-item {
+      color: #475569;
+    }
+    .cp-prod-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 4px;
+    }
+    .cp-prod-btn-primary {
+      flex: 1;
+      background: #ffffff;
+      color: #0f172a;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+    .cp-prod-btn-primary:hover {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+    :host([data-theme="light"]) .cp-prod-btn-primary,
+    .cp-window.cp-light-theme .cp-prod-btn-primary,
+    .cp-window.theme-light .cp-prod-btn-primary {
+      background: #0f172a;
+      color: #ffffff;
+    }
+    :host([data-theme="light"]) .cp-prod-btn-primary:hover,
+    .cp-window.cp-light-theme .cp-prod-btn-primary:hover,
+    .cp-window.theme-light .cp-prod-btn-primary:hover {
+      background: #000000;
+    }
+    .cp-prod-btn-secondary {
+      background: transparent;
+      color: var(--cp-text-secondary, #94a3b8);
+      border: 1px solid var(--cp-border-input, #282931);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    :host([data-theme="light"]) .cp-prod-btn-secondary,
+    .cp-window.cp-light-theme .cp-prod-btn-secondary,
+    .cp-window.theme-light .cp-prod-btn-secondary {
+      border-color: #cbd5e1;
+      color: #475569;
+    }
+    .cp-prod-btn-secondary:hover {
+      color: var(--cp-text-primary, #ffffff);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    :host([data-theme="light"]) .cp-prod-btn-secondary:hover,
+    .cp-window.cp-light-theme .cp-prod-btn-secondary:hover,
+    .cp-window.theme-light .cp-prod-btn-secondary:hover {
+      color: #0f172a;
+      border-color: #94a3b8;
+    }
+
+    /* EMI Interactive Card */
+    .cp-emi-card {
+      background: var(--cp-options-bg, #181920);
+      border: 1px solid var(--cp-border-input, #282931);
+      border-radius: 10px;
+      padding: 12px 13px;
+      margin-top: 8px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      text-align: left;
+    }
+    :host([data-theme="light"]) .cp-emi-card,
+    .cp-window.cp-light-theme .cp-emi-card,
+    .cp-window.theme-light .cp-emi-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+    }
+    .cp-emi-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .cp-emi-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: var(--cp-text-primary, #ffffff);
+    }
+    :host([data-theme="light"]) .cp-emi-title,
+    .cp-window.cp-light-theme .cp-emi-title,
+    .cp-window.theme-light .cp-emi-title {
+      color: #0f172a;
+    }
+    .cp-emi-stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    :host([data-theme="light"]) .cp-emi-stat-grid,
+    .cp-window.cp-light-theme .cp-emi-stat-grid,
+    .cp-window.theme-light .cp-emi-stat-grid {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    .cp-emi-stat-label {
+      font-size: 10px;
+      color: var(--cp-text-muted, #94a3b8);
+      font-weight: 500;
+    }
+    .cp-emi-stat-value {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--cp-text-primary, #ffffff);
+      margin-top: 1px;
+    }
+    :host([data-theme="light"]) .cp-emi-stat-value,
+    .cp-window.cp-light-theme .cp-emi-stat-value,
+    .cp-window.theme-light .cp-emi-stat-value {
+      color: #0f172a;
+    }
+    .cp-emi-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      margin: 4px 0;
+    }
+    .cp-emi-timeline-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--cp-text-secondary, #94a3b8);
+      padding: 3px 0;
+      border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+    }
+    :host([data-theme="light"]) .cp-emi-timeline-row,
+    .cp-window.cp-light-theme .cp-emi-timeline-row,
+    .cp-window.theme-light .cp-emi-timeline-row {
+      border-bottom: 1px dashed #e2e8f0;
+      color: #475569;
+    }
+    .cp-emi-timeline-row:last-child {
+      border-bottom: none;
+    }
+
+    /* Instant Payment Link Card */
+    .cp-payment-link-card {
+      background: var(--cp-bg-surface, #15161b);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 3px 12px rgba(16, 185, 129, 0.08);
+      text-align: left;
+    }
+    :host([data-theme="light"]) .cp-payment-link-card,
+    .cp-window.cp-light-theme .cp-payment-link-card,
+    .cp-window.theme-light .cp-payment-link-card {
+      background: #ffffff;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      box-shadow: 0 3px 12px rgba(16, 185, 129, 0.06);
+    }
+    .cp-payment-card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10.5px;
+      font-weight: 700;
+      color: #10b981;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .cp-payment-card-amount {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--cp-text-primary, #ffffff);
+    }
+    :host([data-theme="light"]) .cp-payment-card-amount,
+    .cp-window.cp-light-theme .cp-payment-card-amount,
+    .cp-window.theme-light .cp-payment-card-amount {
+      color: #0f172a;
+    }
+    .cp-payment-checkout-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #10b981;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .cp-payment-checkout-btn:hover {
+      background: #059669;
+      transform: translateY(-1px);
+    }
   `;
 
   shadow.appendChild(styleEl);
@@ -6929,6 +7330,174 @@
           ${emailBadgeHtml}
         `;
         bubble.appendChild(assetCard);
+      }
+
+      // Interactive Quick Action Chips (e.g. "📊 Haan, plans dikhao")
+      if (data.action_chips && Array.isArray(data.action_chips) && data.action_chips.length > 0 && !data.chat_ended) {
+        const chipsBox = document.createElement('div');
+        chipsBox.className = 'cp-action-chips-container';
+        chipsBox.style.cssText = 'display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;';
+        data.action_chips.forEach(chip => {
+          const chipBtn = document.createElement('button');
+          chipBtn.type = 'button';
+          chipBtn.className = 'cp-action-chip-pill';
+          chipBtn.style.cssText = 'display:inline-flex; align-items:center; gap:6px; background:rgba(99,102,241,0.12); color:#6366f1; border:1px solid rgba(99,102,241,0.3); border-radius:20px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s ease; font-family:inherit;';
+          chipBtn.innerHTML = `<span>${escapeHtml(chip.label)}</span>`;
+          chipBtn.addEventListener('click', () => {
+            chipsBox.querySelectorAll('.cp-action-chip-pill').forEach(b => {
+              b.disabled = true;
+              b.style.opacity = '0.5';
+            });
+            handleSend(chip.text || chip.label);
+          });
+          chipsBox.appendChild(chipBtn);
+        });
+        bubble.appendChild(chipsBox);
+      }
+
+      // Interactive Intercom-Style Product Carousel (Cai AI Commerce)
+      if (data.product_cards && Array.isArray(data.product_cards) && data.product_cards.length > 0) {
+        row.classList.add('has-cards');
+        const carouselBox = document.createElement('div');
+        carouselBox.className = 'cp-product-carousel-box';
+
+        data.product_cards.forEach(prod => {
+          const card = document.createElement('div');
+          card.className = 'cp-product-card';
+
+          const catName = escapeHtml(prod.category ? prod.category.toUpperCase() : 'PLAN');
+          const durationText = prod.duration ? `<span class="cp-prod-duration-pill">${escapeHtml(prod.duration)}</span>` : '';
+          const origPriceHtml = (prod.original_price_inr && prod.original_price_inr > prod.price_inr)
+            ? `<span class="cp-prod-orig-price">₹${Number(prod.original_price_inr).toLocaleString('en-IN')}</span>`
+            : '';
+          const discBadgeHtml = (prod.discount_percent && prod.discount_percent > 0)
+            ? `<span class="cp-prod-discount-pill">${prod.discount_percent}% OFF</span>`
+            : '';
+          const emiBadgeHtml = (prod.emi_available && prod.emi_starting_at_inr > 0)
+            ? `<div class="cp-prod-emi-badge"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg> EMI from ₹${Number(prod.emi_starting_at_inr).toLocaleString('en-IN')}/mo</div>`
+            : '';
+
+          let featuresHtml = '';
+          if (prod.features && Array.isArray(prod.features) && prod.features.length > 0) {
+            featuresHtml = '<ul class="cp-prod-features-list">' + prod.features.slice(0, 3).map(f => `
+              <li class="cp-prod-feature-item">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                <span>${escapeHtml(f)}</span>
+              </li>
+            `).join('') + '</ul>';
+          }
+
+          card.innerHTML = `
+            <div>
+              <div class="cp-card-top-meta">
+                <span class="cp-prod-category-badge">${catName}</span>
+                ${durationText}
+              </div>
+              <div class="cp-prod-title" style="margin-top:6px;">${escapeHtml(prod.name)}</div>
+              <div class="cp-prod-pricing-row">
+                <span class="cp-prod-price">₹${Number(prod.price_inr).toLocaleString('en-IN')}</span>
+                ${origPriceHtml}
+                ${discBadgeHtml}
+              </div>
+              ${emiBadgeHtml}
+              ${featuresHtml}
+            </div>
+            <div class="cp-prod-actions">
+              <button type="button" class="cp-prod-btn-primary cp-select-prod-btn">Choose This</button>
+              <button type="button" class="cp-prod-btn-secondary cp-ask-prod-btn">Ask Cai</button>
+            </div>
+          `;
+
+          const selectBtn = card.querySelector('.cp-select-prod-btn');
+          if (selectBtn) {
+            selectBtn.addEventListener('click', () => {
+              handleSend(`I would like to choose ${prod.name}`);
+            });
+          }
+
+          const askBtn = card.querySelector('.cp-ask-prod-btn');
+          if (askBtn) {
+            askBtn.addEventListener('click', () => {
+              handleSend(`Can you tell me more about ${prod.name}?`);
+            });
+          }
+
+          carouselBox.appendChild(card);
+        });
+
+        bubble.appendChild(carouselBox);
+      }
+
+      // Interactive Zero-Cost EMI Calculator Card (Cai AI Commerce)
+      if (data.emi_plans && data.emi_plans.product_name) {
+        row.classList.add('has-cards');
+        const emi = data.emi_plans;
+        const emiCard = document.createElement('div');
+        emiCard.className = 'cp-emi-card';
+
+        let timelineRowsHtml = '';
+        if (emi.schedule && Array.isArray(emi.schedule)) {
+          timelineRowsHtml = '<div class="cp-emi-timeline">' + emi.schedule.map(s => `
+            <div class="cp-emi-timeline-row">
+              <span>${escapeHtml(s.title)} (${escapeHtml(s.due_date)})</span>
+              <strong>₹${Number(s.amount).toLocaleString('en-IN')}</strong>
+            </div>
+          `).join('') + '</div>';
+        }
+
+        emiCard.innerHTML = `
+          <div class="cp-emi-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <div class="cp-emi-title">Zero-Cost EMI Plan: ${escapeHtml(emi.product_name)}</div>
+          </div>
+          <div class="cp-emi-stat-grid">
+            <div>
+              <div class="cp-emi-stat-label">Down Payment (Upfront)</div>
+              <div class="cp-emi-stat-value">₹${Number(emi.down_payment).toLocaleString('en-IN')}</div>
+            </div>
+            <div>
+              <div class="cp-emi-stat-label">Monthly (${emi.num_splits} Months)</div>
+              <div class="cp-emi-stat-value">₹${Number(emi.per_month).toLocaleString('en-IN')}/mo</div>
+            </div>
+          </div>
+          ${timelineRowsHtml}
+          <button type="button" class="cp-prod-btn-primary cp-confirm-emi-btn" style="width:100%;padding:9px;margin-top:2px;">
+            Confirm & Pay Down Payment (₹${Number(emi.down_payment).toLocaleString('en-IN')})
+          </button>
+        `;
+
+        const confirmBtn = emiCard.querySelector('.cp-confirm-emi-btn');
+        if (confirmBtn) {
+          confirmBtn.addEventListener('click', () => {
+            handleSend(`I confirm the EMI plan for ${emi.product_name}. Please send payment link for ₹${emi.down_payment}.`);
+          });
+        }
+
+        bubble.appendChild(emiCard);
+      }
+
+      // Interactive Verified Payment Order Card (Cai AI Commerce)
+      if (data.payment_link && data.payment_link.order_id) {
+        row.classList.add('has-cards');
+        const pay = data.payment_link;
+        const payCard = document.createElement('div');
+        payCard.className = 'cp-payment-link-card';
+
+        const checkoutHref = pay.checkout_url || (pay.upi_intent_url || '#');
+        payCard.innerHTML = `
+          <div class="cp-payment-card-badge">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            <span>Verified Secure Checkout</span>
+          </div>
+          <div style="font-size:13px;color:var(--cp-text-secondary, #94a3b8);">${escapeHtml(pay.purpose || 'Enrollment Payment')}</div>
+          <div class="cp-payment-card-amount">₹${Number(pay.amount_inr).toLocaleString('en-IN')}</div>
+          <a class="cp-payment-checkout-btn" href="${escapeHtml(checkoutHref)}" target="_blank" rel="noopener noreferrer">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+            <span>Pay Now (UPI / Card / NetBanking)</span>
+          </a>
+        `;
+
+        bubble.appendChild(payCard);
       }
 
       row.appendChild(metaLine);

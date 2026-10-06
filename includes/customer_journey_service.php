@@ -253,18 +253,33 @@ class CustomerJourneyService {
             $appts = $apStmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
+        // Extract stated customer needs & constraints from history
+        $extractedNeeds = self::extractCustomerNeedsFromHistory($history);
+        if ($lead && !empty($lead['opportunity_value']) && empty($extractedNeeds['budget'])) {
+            $extractedNeeds['budget'] = '₹' . number_format((float)$lead['opportunity_value']);
+        }
+
         $lines = [];
-        $lines[] = "--- PERSISTENT CUSTOMER JOURNEY CONTEXT ---";
+        $lines[] = "=== CUSTOMER CONVERSATION CONTEXT & ACTIVE MEMORY ===";
         $lines[] = "Journey Stage: " . ($journey['state'] ?? 'NEW');
         $lines[] = "Current Channel: " . ($journey['current_channel'] ?? 'web');
         if (!empty($journey['previous_channel'])) {
             $lines[] = "Channel Continuity: Transitioned from " . $journey['previous_channel'] . " to " . $journey['current_channel'];
         }
         if ($customer) {
-            $custName = (!empty($customer['name']) && $customer['name'] !== 'Website Visitor') ? $customer['name'] : 'Not provided yet';
+            $custName = (!empty($customer['name']) && $customer['name'] !== 'Website Visitor' && $customer['name'] !== 'Prospect') ? $customer['name'] : 'Not provided yet';
             $custPhone = !empty($customer['phone']) ? $customer['phone'] : (!empty($customer['whatsapp_number']) ? $customer['whatsapp_number'] : 'None');
             $custEmail = !empty($customer['email']) ? $customer['email'] : 'None';
             $lines[] = "Customer Profile: Name={$custName} | Phone={$custPhone} | Email={$custEmail}";
+        }
+        if (!empty($extractedNeeds['budget'])) {
+            $lines[] = "Stated Customer Budget: " . $extractedNeeds['budget'];
+        }
+        if (!empty($extractedNeeds['profile'])) {
+            $lines[] = "Customer Profile / Team: " . $extractedNeeds['profile'];
+        }
+        if (!empty($extractedNeeds['specific_interests'])) {
+            $lines[] = "Specific Needs / Topics of Interest: " . implode(', ', $extractedNeeds['specific_interests']);
         }
         if ($lead) {
             $lines[] = "Lead Pipeline: Stage=" . ($lead['stage_name'] ?? 'New') . " | Priority=" . ($lead['priority'] ?? 'Medium') . " | Intent=" . ($lead['intent_level'] ?? 'Normal');
@@ -288,8 +303,46 @@ class CustomerJourneyService {
         if (!empty($journey['conversation_summary'])) {
             $lines[] = "Conversation Summary: " . $journey['conversation_summary'];
         }
-        $lines[] = "------------------------------------------\n";
+        $lines[] = "====================================================\n";
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * Extract key customer constraints, budget, team size, and goals from conversation history.
+     */
+    public static function extractCustomerNeedsFromHistory(array $history): array {
+        $budget = null;
+        $profile = null;
+        $interests = [];
+
+        foreach ($history as $msg) {
+            if (($msg['role'] ?? '') !== 'user') continue;
+            $text = $msg['content'] ?? '';
+            if (empty($text)) continue;
+
+            // Budget extraction (e.g. "budget is ₹150", "budget 10,000", "₹150 per seat", "budget ₹10,000")
+            if (preg_match('/(?:budget|fees?|paisa|kharcha|cost)\s*(?:is|hai|around|approx|of|pe|mein)?\s*[:=]?\s*(?:₹|rs\.?|inr|\$)?\s*([0-9,]+(?:\s*(?:k|lac|lakh|thousand))?)/i', $text, $bm)) {
+                $budget = trim($bm[0]);
+            } elseif (preg_match('/(?:₹|rs\.?|\$)\s*([0-9,]+(?:\s*(?:k|lac|lakh|thousand|per seat|seat)?)?)/i', $text, $bm2)) {
+                $budget = trim($bm2[0]);
+            }
+
+            // Profile / Role / Team Size
+            if (preg_match('/\b(solo founder|single founder|solopreneur|startup|small team|1 person|freelancer|beginner|fresher|college student|enterprise|team of \d+|\d+\s*people|\d+\s*seats|\d+\s*users)\b/i', $text, $pm)) {
+                $profile = trim($pm[0]);
+            }
+
+            // Key Requirements & Compliance
+            if (preg_match('/\b(hipaa|soc2|sso|custom plan|custom pricing|sla|api|webhook|whatsapp|mern|python|fullstack|data science|classroom|offline|hostel)\b/i', $text, $im)) {
+                $interests[] = trim($im[0]);
+            }
+        }
+
+        return [
+            'budget' => $budget,
+            'profile' => $profile,
+            'specific_interests' => array_unique($interests)
+        ];
     }
 }
