@@ -554,6 +554,41 @@ try {
             $errors = [];
             $rowNum = 0;
 
+            // Ensure schema integrity before bulk ingestion
+            try {
+                $chkCols = $pdo->query("SHOW COLUMNS FROM `products`")->fetchAll(PDO::FETCH_COLUMN);
+                if (!in_array('category', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `category` VARCHAR(50) NOT NULL DEFAULT 'service'");
+                }
+                if (!in_array('original_price_inr', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `original_price_inr` INT(11) NOT NULL DEFAULT 0");
+                }
+                if (!in_array('discount_percent', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `discount_percent` INT(11) NOT NULL DEFAULT 0");
+                }
+                if (!in_array('duration', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `duration` VARCHAR(100) DEFAULT NULL");
+                }
+                if (!in_array('target_audience', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `target_audience` VARCHAR(255) DEFAULT NULL");
+                }
+                if (!in_array('features_json', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `features_json` LONGTEXT DEFAULT NULL");
+                }
+                if (!in_array('emi_available', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `emi_available` TINYINT(1) DEFAULT 0");
+                }
+                if (!in_array('emi_starting_at_inr', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `emi_starting_at_inr` INT(11) DEFAULT 0");
+                }
+                if (!in_array('emi_plans_json', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `emi_plans_json` LONGTEXT DEFAULT NULL");
+                }
+                if (!in_array('payment_url', $chkCols)) {
+                    $pdo->exec("ALTER TABLE `products` ADD COLUMN `payment_url` VARCHAR(255) DEFAULT NULL");
+                }
+            } catch (Throwable $e) {}
+
             $insStmt = $pdo->prepare("
                 INSERT INTO `products` (
                     `company_id`, `name`, `category`, `price_inr`, `original_price_inr`,

@@ -641,12 +641,155 @@ Annual billing receives a 20% discount or 3-month zero-interest EMI financing."
         $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `assigned_user_id` INT NULL AFTER `lead_id`");
     }
 
-    // Ensure products table has brochure_asset_id
+    // Ensure products table has all modern commerce & lifecycle columns
     try {
         $pCols = $pdo->query("SHOW COLUMNS FROM `products`")->fetchAll(PDO::FETCH_COLUMN);
-        if (!in_array('brochure_asset_id', $pCols)) {
-            $pdo->exec("ALTER TABLE `products` ADD COLUMN `brochure_asset_id` INT(11) DEFAULT NULL");
+        if (!empty($pCols)) {
+            if (!in_array('category', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `category` VARCHAR(50) NOT NULL DEFAULT 'service'");
+            }
+            if (!in_array('subcategory', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `subcategory` VARCHAR(100) DEFAULT NULL");
+            }
+            if (!in_array('sku', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `sku` VARCHAR(100) DEFAULT NULL");
+            }
+            if (!in_array('duration', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `duration` VARCHAR(100) DEFAULT NULL");
+            }
+            if (!in_array('original_price_inr', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `original_price_inr` INT(11) NOT NULL DEFAULT 0");
+            }
+            if (!in_array('discount_percent', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `discount_percent` INT(11) NOT NULL DEFAULT 0");
+            }
+            if (!in_array('currency', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `currency` VARCHAR(10) NOT NULL DEFAULT 'INR'");
+            }
+            if (!in_array('features_json', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `features_json` LONGTEXT DEFAULT NULL");
+            }
+            if (!in_array('deliverables_json', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `deliverables_json` LONGTEXT DEFAULT NULL");
+            }
+            if (!in_array('prerequisites', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `prerequisites` TEXT DEFAULT NULL");
+            }
+            if (!in_array('target_audience', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `target_audience` VARCHAR(255) DEFAULT NULL");
+            }
+            if (!in_array('emi_available', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `emi_available` TINYINT(1) DEFAULT 0");
+            }
+            if (!in_array('emi_starting_at_inr', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `emi_starting_at_inr` INT(11) DEFAULT 0");
+            }
+            if (!in_array('emi_plans_json', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `emi_plans_json` LONGTEXT DEFAULT NULL");
+            }
+            if (!in_array('max_discount_allowed_percent', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `max_discount_allowed_percent` INT(11) NOT NULL DEFAULT 10");
+            }
+            if (!in_array('brochure_asset_id', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `brochure_asset_id` INT(11) DEFAULT NULL");
+            }
+            if (!in_array('thumbnail_url', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `thumbnail_url` VARCHAR(255) DEFAULT NULL");
+            }
+            if (!in_array('payment_url', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `payment_url` VARCHAR(255) DEFAULT NULL");
+            }
+            if (!in_array('faq_json', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `faq_json` LONGTEXT DEFAULT NULL");
+            }
+            if (!in_array('is_active', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `is_active` TINYINT(1) DEFAULT 1");
+            }
+            if (!in_array('updated_at', $pCols)) {
+                $pdo->exec("ALTER TABLE `products` ADD COLUMN `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP");
+            }
         }
+    } catch (Throwable $e) {}
+
+    // Ensure Commerce Tables exist: product_variants, payment_plans, reminders
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `product_variants` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `company_id` INT(11) NOT NULL,
+              `product_id` INT(11) NOT NULL,
+              `name` VARCHAR(150) NOT NULL,
+              `price_inr` INT(11) NOT NULL DEFAULT 0,
+              `original_price_inr` INT(11) NOT NULL DEFAULT 0,
+              `duration` VARCHAR(100) DEFAULT NULL,
+              `features_json` LONGTEXT DEFAULT NULL,
+              `is_default` TINYINT(1) NOT NULL DEFAULT 0,
+              `is_active` TINYINT(1) NOT NULL DEFAULT 1,
+              `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              KEY `idx_pv_company_prod` (`company_id`, `product_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `payment_plans` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `company_id` INT(11) NOT NULL,
+              `customer_id` INT(11) NOT NULL,
+              `lead_id` INT(11) DEFAULT NULL,
+              `product_id` INT(11) DEFAULT NULL,
+              `variant_id` INT(11) DEFAULT NULL,
+              `plan_type` ENUM('FULL', 'EMI', 'SUBSCRIPTION') NOT NULL DEFAULT 'FULL',
+              `total_amount` INT(11) NOT NULL DEFAULT 0,
+              `discount_amount` INT(11) NOT NULL DEFAULT 0,
+              `final_amount` INT(11) NOT NULL DEFAULT 0,
+              `down_payment` INT(11) NOT NULL DEFAULT 0,
+              `paid_amount` INT(11) NOT NULL DEFAULT 0,
+              `remaining_amount` INT(11) NOT NULL DEFAULT 0,
+              `num_installments` INT(11) NOT NULL DEFAULT 1,
+              `status` ENUM('DRAFT', 'ACCEPTED', 'PARTIALLY_PAID', 'PAID', 'OVERDUE', 'CANCELLED') NOT NULL DEFAULT 'DRAFT',
+              `payment_gateway` VARCHAR(50) DEFAULT 'razorpay',
+              `payment_link_url` VARCHAR(255) DEFAULT NULL,
+              `next_due_date` DATE DEFAULT NULL,
+              `metadata_json` LONGTEXT DEFAULT NULL,
+              `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              KEY `idx_pp_company_cust` (`company_id`, `customer_id`),
+              KEY `idx_pp_lead` (`lead_id`),
+              KEY `idx_pp_status` (`status`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `reminders` (
+              `id` INT(11) NOT NULL AUTO_INCREMENT,
+              `company_id` INT(11) NOT NULL,
+              `customer_id` INT(11) NOT NULL,
+              `lead_id` INT(11) DEFAULT NULL,
+              `installment_id` INT(11) DEFAULT NULL,
+              `reminder_type` ENUM('AUTOMATED_INSTALLMENT', 'MANUAL_COLLECTION', 'RENEWAL_UPSELL', 'PROMISE_TO_PAY') NOT NULL DEFAULT 'AUTOMATED_INSTALLMENT',
+              `title` VARCHAR(200) NOT NULL,
+              `message_template` TEXT DEFAULT NULL,
+              `amount_inr` INT(11) NOT NULL DEFAULT 0,
+              `due_date` DATE DEFAULT NULL,
+              `scheduled_at` DATETIME DEFAULT NULL,
+              `repeat_frequency` ENUM('NONE', 'DAILY', 'WEEKLY', 'MONTHLY', 'QUARTERLY') NOT NULL DEFAULT 'NONE',
+              `channels` VARCHAR(100) NOT NULL DEFAULT 'whatsapp',
+              `promise_to_pay_date` DATE DEFAULT NULL,
+              `status` ENUM('PENDING', 'SENT', 'DELAYED', 'PROMISED', 'RESOLVED', 'CANCELLED') NOT NULL DEFAULT 'PENDING',
+              `sent_at` DATETIME DEFAULT NULL,
+              `created_by_user_id` INT(11) DEFAULT NULL,
+              `notes` TEXT DEFAULT NULL,
+              `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`),
+              KEY `idx_rem_company_status` (`company_id`, `status`),
+              KEY `idx_rem_due` (`due_date`),
+              KEY `idx_rem_inst` (`installment_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ");
     } catch (Throwable $e) {}
 
     // 19. Widget Payments Table for tracking widget pay online / bank transfers / invoices
