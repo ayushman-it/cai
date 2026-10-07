@@ -4617,6 +4617,31 @@
       border-color: #52525b;
     }
 
+    .cp-chip-person {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+    .cp-chip-person:hover {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+    :host([data-theme="dark"]) .cp-chip-person,
+    .cp-dark-theme .cp-chip-person,
+    .theme-dark .cp-chip-person {
+      background: rgba(37, 99, 235, 0.15);
+      color: #60a5fa;
+      border-color: rgba(37, 99, 235, 0.35);
+    }
+    :host([data-theme="dark"]) .cp-chip-person:hover,
+    .cp-dark-theme .cp-chip-person:hover,
+    .theme-dark .cp-chip-person:hover {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
     /* Visitor Intake Card (Section 1: Intercom / Fin Minimalist Design) */
     .cp-visitor-intake-card {
       background: var(--cp-bg-bubble, #202228);
@@ -5933,6 +5958,25 @@
   let humanAttemptNumber = 1;
   let humanSecondsRemaining = 30;
   let isCopilotActive = false;
+  let humanInactivityTimer = null;
+
+  function stopHumanInactivityTimer() {
+    if (humanInactivityTimer) {
+      clearTimeout(humanInactivityTimer);
+      humanInactivityTimer = null;
+    }
+  }
+
+  function resetHumanInactivityTimer() {
+    stopHumanInactivityTimer();
+    if (!isHumanChatActive) return;
+    // 60-second bidirectional inactivity timer for human support
+    humanInactivityTimer = setTimeout(() => {
+      if (isHumanChatActive) {
+        closeConversationSession('inactivity');
+      }
+    }, 60000);
+  }
 
   function bindTap(el, fn) {
     if (!el) return;
@@ -6598,8 +6642,7 @@
   if (menuEndChat) {
     menuEndChat.addEventListener('click', () => {
       optionsMenu.classList.remove('show');
-      renderChatConcludedCard();
-      scrollToBottom();
+      closeConversationSession('user_exit');
     });
   }
 
@@ -7422,10 +7465,7 @@
     const humanBtn = endedDiv.querySelector('#cp-btn-ended-human');
     if (humanBtn) {
       humanBtn.addEventListener('click', () => {
-        if (inputField) {
-          inputField.value = "I would like to speak with a human specialist";
-          handleSend();
-        }
+        initiateHumanSupportHandoff();
       });
     }
 
@@ -7985,8 +8025,12 @@
     chipsRow.className = 'cp-inactivity-chips-container';
 
     chipsRow.innerHTML = `
-      <div class="cp-inactivity-chips-title">Need help or want to save this chat?</div>
+      <div class="cp-inactivity-chips-title">Need help or want to speak with our team?</div>
       <div class="cp-inactivity-chips-pills">
+        <button type="button" class="cp-inactivity-chip cp-chip-person" id="cp-btn-inactivity-person">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Talk to a Person</span>
+        </button>
         <button type="button" class="cp-inactivity-chip cp-chip-wa" id="cp-btn-inactivity-wa">
           <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.46 0 .1 5.36.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.27-1.64a11.9 11.9 0 0 0 5.77 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.47-8.42z"/></svg>
           <span>Continue on WhatsApp</span>
@@ -8001,6 +8045,14 @@
     chatStream.appendChild(chipsRow);
     scrollToBottom();
 
+    const personBtn = chipsRow.querySelector('#cp-btn-inactivity-person');
+    if (personBtn) {
+      personBtn.addEventListener('click', () => {
+        chipsRow.remove();
+        initiateHumanSupportHandoff();
+      });
+    }
+
     const waBtn = chipsRow.querySelector('#cp-btn-inactivity-wa');
     if (waBtn) {
       waBtn.addEventListener('click', () => {
@@ -8013,7 +8065,7 @@
     if (endBtn) {
       endBtn.addEventListener('click', () => {
         chipsRow.remove();
-        renderChatConcludedCard();
+        closeConversationSession('user_exit');
       });
     }
   }
@@ -8040,6 +8092,159 @@
     } catch(e) {
       window.location.href = url;
     }
+  }
+
+  async function closeConversationSession(reason = 'user_exit') {
+    stopHumanCountdown();
+    stopHumanInactivityTimer();
+    clearInactivityChips();
+    isHumanChatActive = false;
+
+    if (humanPollingInterval) {
+      clearInterval(humanPollingInterval);
+      humanPollingInterval = null;
+    }
+
+    const activePill = shadow.getElementById('cp-waiting-pill');
+    if (activePill) activePill.remove();
+
+    if (conversationId) {
+      try {
+        await fetch(`${baseUrl}/api/widget_actions.php?action=close_conversation`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
+          body: JSON.stringify({
+            conversation_id: conversationId,
+            reason: reason,
+            session_token: sessionId
+          })
+        });
+      } catch (err) {
+        console.warn('[CuboidPilot Widget] Error closing conversation:', err);
+      }
+    }
+
+    renderChatConcludedCard();
+    scrollToBottom();
+  }
+
+  function initiateHumanSupportHandoff(targetAgent = null) {
+    if (targetAgent) selectedAgent = targetAgent;
+
+    // Prefill known values from storage or memory
+    const knownName = (visitorName || widgetStorage.getItem(STORAGE_KEYS.VISITOR_NAME) || '').trim();
+    const knownEmail = (visitorEmail || widgetStorage.getItem(STORAGE_KEYS.VISITOR_EMAIL) || '').trim();
+    const knownPhone = (visitorPhone || widgetStorage.getItem(STORAGE_KEYS.VISITOR_PHONE) || '').trim();
+
+    // Check if missing any essential contact information
+    const needsName = !knownName || /^(hello|hi|hey|test|null|undefined)$/i.test(knownName);
+    const needsPhone = !knownPhone || knownPhone.replace(/[^0-9]/g, '').length < 7;
+    const needsEmail = !knownEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(knownEmail);
+
+    if (needsName || needsPhone || needsEmail) {
+      renderHumanDetailsIntakeCard({
+        name: needsName ? '' : knownName,
+        phone: needsPhone ? '' : knownPhone,
+        email: needsEmail ? '' : knownEmail,
+        needsName,
+        needsPhone,
+        needsEmail,
+        targetAgent
+      });
+      return;
+    }
+
+    // All details available, connect immediately without prompting again
+    startInstantHumanHelpSession(targetAgent || selectedAgent);
+  }
+
+  function renderHumanDetailsIntakeCard(opts) {
+    if (chatStream.querySelector('.cp-human-intake-card')) return;
+    if (currentScreen !== 'chat' && currentScreen !== 'human-chat') {
+      navigateTo('chat');
+    }
+
+    const card = document.createElement('div');
+    card.className = 'cp-msg-row ai cp-visitor-intake-row cp-human-intake-card';
+    card.innerHTML = `
+      <div class="cp-bubble cp-visitor-intake-card" style="box-shadow: 0 4px 14px rgba(37,99,235,0.12); border-left: 3px solid #2563eb;">
+        <div class="cp-intake-title" style="display:flex; align-items:center; gap:6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Connect with Support Specialist</span>
+        </div>
+        <div style="font-size:12px; color:var(--cp-text-secondary); margin-bottom:10px; line-height:1.4;">
+          Please confirm your details so our human team can reach you directly and review your request.
+        </div>
+        <form class="cp-intake-form" id="cp-human-intake-form">
+          <div class="cp-intake-field" style="${opts.needsName ? '' : 'display:none;'}">
+            <label>Full Name <span class="req">*</span></label>
+            <input type="text" id="cp-human-intake-name" placeholder="e.g. Rahul Sharma" value="${escapeHtml(opts.name || '')}" ${opts.needsName ? 'required' : ''} autocomplete="name" />
+          </div>
+          <div class="cp-intake-field" style="${opts.needsPhone ? '' : 'display:none;'}">
+            <label>Phone / WhatsApp Number <span class="req">*</span></label>
+            <input type="tel" id="cp-human-intake-phone" placeholder="e.g. 9876543210" value="${escapeHtml(opts.phone || '')}" ${opts.needsPhone ? 'required' : ''} autocomplete="tel" />
+          </div>
+          <div class="cp-intake-field" style="${opts.needsEmail ? '' : 'display:none;'}">
+            <label>Email Address <span class="req">*</span></label>
+            <input type="email" id="cp-human-intake-email" placeholder="e.g. rahul@example.com" value="${escapeHtml(opts.email || '')}" ${opts.needsEmail ? 'required' : ''} autocomplete="email" />
+          </div>
+          <div class="cp-intake-err" id="cp-human-intake-error" style="display:none; color:#ef4444; font-size:12px; margin-top:2px;"></div>
+          <button type="submit" class="cp-intake-submit-btn" id="cp-human-intake-submit" style="background:#2563eb; color:#ffffff; font-weight:600;">
+            <span>Connect to Team</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </button>
+        </form>
+      </div>
+    `;
+
+    chatStream.appendChild(card);
+    scrollToBottom();
+
+    const form = card.querySelector('#cp-human-intake-form');
+    const errEl = card.querySelector('#cp-human-intake-error');
+    const submitBtn = card.querySelector('#cp-human-intake-submit');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errEl.style.display = 'none';
+
+      const finalName = (opts.needsName ? card.querySelector('#cp-human-intake-name').value.trim() : opts.name).trim();
+      const finalPhone = (opts.needsPhone ? card.querySelector('#cp-human-intake-phone').value.trim() : opts.phone).trim();
+      const finalEmail = (opts.needsEmail ? card.querySelector('#cp-human-intake-email').value.trim() : opts.email).trim();
+
+      if (!finalName) {
+        errEl.textContent = 'Please enter your name.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (!finalPhone || finalPhone.replace(/[^0-9]/g, '').length < 7) {
+        errEl.textContent = 'Please enter a valid phone number.';
+        errEl.style.display = 'block';
+        return;
+      }
+      if (!finalEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(finalEmail)) {
+        errEl.textContent = 'Please enter a valid email address.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Connecting...</span>`;
+
+      // Save details to memory and storage
+      visitorName = finalName;
+      visitorPhone = finalPhone;
+      visitorEmail = finalEmail;
+      widgetStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
+      widgetStorage.setItem(STORAGE_KEYS.VISITOR_PHONE, visitorPhone);
+      widgetStorage.setItem(STORAGE_KEYS.VISITOR_EMAIL, visitorEmail);
+      isIdentified = true;
+      widgetStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
+
+      card.remove();
+
+      startInstantHumanHelpSession(opts.targetAgent || selectedAgent);
+    });
   }
 
   // 11. Send Message to Backend (Sections 7, 8, 9 & 10)
@@ -8141,6 +8346,7 @@
         console.warn('Send human message error:', e);
       } finally {
         isSending = false;
+        resetHumanInactivityTimer();
       }
       return;
     }
@@ -8411,6 +8617,7 @@
 
     if (screen !== 'human-chat') {
       isHumanChatActive = false;
+      stopHumanInactivityTimer();
       if (humanPollingInterval) {
         clearInterval(humanPollingInterval);
         humanPollingInterval = null;
@@ -8588,6 +8795,7 @@
 
   function handleBackNavigation() {
     stopHumanCountdown();
+    stopHumanInactivityTimer();
     isHumanChatActive = false;
     const stalePill = shadow.getElementById('cp-waiting-pill');
     if (stalePill) stalePill.remove();
@@ -9552,7 +9760,9 @@
           user_id: selectedAgent ? selectedAgent.id : 0,
           session_token: sessionId,
           conversation_id: conversationId,
-          name: visitorName
+          name: visitorName,
+          email: visitorEmail,
+          phone: visitorPhone
         })
       });
       const data = await res.json();
@@ -9604,7 +9814,9 @@
                 user_id: selectedAgent ? selectedAgent.id : 0,
                 session_token: sessionId,
                 conversation_id: conversationId,
-                name: visitorName
+                name: visitorName,
+                email: visitorEmail,
+                phone: visitorPhone
               })
             }).catch(() => {});
           } catch(e) {}
@@ -9631,7 +9843,7 @@
   }
 
   function startHumanChatWithAgent(agent) {
-    return startInstantHumanHelpSession(agent);
+    return initiateHumanSupportHandoff(agent);
   }
 
   function showIncomingAgentNotification(agentName, messageText, avatarUrl) {
@@ -9700,9 +9912,26 @@
             });
           }
 
+          if (data.status === 'closed') {
+            stopHumanCountdown();
+            stopHumanInactivityTimer();
+            isHumanChatActive = false;
+            if (humanPollingInterval) {
+              clearInterval(humanPollingInterval);
+              humanPollingInterval = null;
+            }
+            const activePill = shadow.getElementById('cp-waiting-pill');
+            if (activePill) activePill.remove();
+            if (!chatStream.querySelector('.cp-chat-ended-container')) {
+              renderChatConcludedCard();
+            }
+            return;
+          }
+
           if (agentReplied || data.ownership === 'human' || data.status === 'human_active') {
             stopHumanCountdown();
             isHumanChatActive = true;
+            resetHumanInactivityTimer();
             const activePill = shadow.getElementById('cp-waiting-pill');
             if (activePill && !activePill.classList.contains('connected')) {
               activePill.classList.add('connected');

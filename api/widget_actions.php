@@ -783,21 +783,23 @@ try {
     // ACTION: start_human_chat
     // -------------------------------------------------------------
     if ($action === 'start_human_chat') {
-        $userId       = (int)($data['user_id'] ?? $_POST['user_id'] ?? 0);
-        $sessionToken = trim($data['session_token'] ?? $_POST['session_token'] ?? '');
+        $userId         = (int)($data['user_id'] ?? $_POST['user_id'] ?? 0);
+        $sessionToken   = trim($data['session_token'] ?? $_POST['session_token'] ?? '');
         $conversationId = !empty($data['conversation_id']) ? (int)$data['conversation_id'] : null;
-        $visitorName  = trim($data['name'] ?? $_POST['name'] ?? '');
+        $visitorName    = trim($data['name'] ?? $_POST['name'] ?? '');
+        $visitorEmail   = trim($data['email'] ?? $_POST['email'] ?? '');
+        $visitorPhone   = trim($data['phone'] ?? $_POST['phone'] ?? '');
 
-        $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status FROM `users` WHERE id = ? AND company_id = ? LIMIT 1");
+        $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status, email, phone FROM `users` WHERE id = ? AND company_id = ? LIMIT 1");
         $agentStmt->execute([$userId, $companyId]);
         $agent = $agentStmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$agent) {
-            $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status FROM `users` WHERE company_id = ? AND availability_status = 'AVAILABLE' LIMIT 1");
+            $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status, email, phone FROM `users` WHERE company_id = ? AND availability_status = 'AVAILABLE' LIMIT 1");
             $agentStmt->execute([$companyId]);
             $agent = $agentStmt->fetch(PDO::FETCH_ASSOC);
             if (!$agent) {
-                $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status FROM `users` WHERE company_id = ? ORDER BY id ASC LIMIT 1");
+                $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status, email, phone FROM `users` WHERE company_id = ? ORDER BY id ASC LIMIT 1");
                 $agentStmt->execute([$companyId]);
                 $agent = $agentStmt->fetch(PDO::FETCH_ASSOC);
             }
@@ -808,13 +810,15 @@ try {
                     'job_title' => 'Advisor',
                     'department' => 'sales',
                     'avatar_url' => 'assets/uploads/avatars/avatar_default.svg',
-                    'availability_status' => 'AVAILABLE'
+                    'availability_status' => 'AVAILABLE',
+                    'email' => '',
+                    'phone' => ''
                 ];
             }
             $userId = (int)($agent['id'] ?? 0);
         }
 
-        $customer = $resolveCustomer($sessionToken, $visitorName);
+        $customer = $resolveCustomer($sessionToken, $visitorName, $visitorPhone, $visitorEmail);
         $customerId = (int)$customer['id'];
 
         if (!$conversationId) {
@@ -838,6 +842,14 @@ try {
             ")->execute([$userId ?: null, $conversationId, $companyId]);
         }
 
+        // Insert initial handoff log if human_handoffs exists
+        try {
+            $pdo->prepare("
+                INSERT INTO `human_handoffs` (`company_id`, `lead_id`, `conversation_id`, `requested_by`, `reason`, `assigned_to_user_id`, `status`, `created_at`)
+                VALUES (?, (SELECT id FROM leads WHERE conversation_id = ? OR customer_id = ? LIMIT 1), ?, 'visitor', 'Requested Talk to a Person via widget', ?, 'pending', NOW())
+            ")->execute([$companyId, $conversationId, $customerId, $conversationId, $userId ?: null]);
+        } catch (Exception $hEx) {}
+
         // Ensure visitor_sessions maps session_token to conversation and customer
         if (!empty($sessionToken)) {
             $vsCheck = $pdo->prepare("SELECT id FROM `visitor_sessions` WHERE (`session_token` = ? OR `session_id` = ?) AND `company_id` = ? LIMIT 1");
@@ -852,8 +864,130 @@ try {
             }
         }
 
-        // Dispatch alert notification to counselor / company
+        // Insert system handoff request note into messages stream if not recently added
+        $lastNoteStmt = $pdo->prepare("SELECT message_text FROM `messages` WHERE `conversation_id` = ? ORDER BY id DESC LIMIT 1");
+        $lastNoteStmt->execute([$conversationId]);
+        $lastNote = $lastNoteStmt->fetchColumn();
+        if ($lastNote !== "[System Event] Visitor requested human assistance.") {
+            $pdo->prepare("
+                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+                VALUES (?, ?, 'system', '[System Event] Visitor requested human assistance.', 'widget', NOW())
+            ")->execute([$companyId, $conversationId]);
+        }
+
+        // Dispatch alert notification to counselor / support team via WhatsApp (if connected) or fallback to Email
         try {
+            $custDispName = !empty($customer['name']) && $customer['name'] !== 'Website Visitor' ? $customer['name'] : (!empty($visitorName) ? $visitorName : 'Website Visitor');
+            $custDispPhone = !empty($customer['phone']) ? $customer['phone'] : ($visitorPhone ?: 'Not shared');
+            $custDispEmail = !empty($customer['email']) ? $customer['email'] : ($visitorEmail ?: 'Not shared');
+
+            $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $basePath = (strpos($_SERVER['REQUEST_URI'] ?? '', '/cuboidpilot') !== false) ? '/cuboidpilot' : '';
+            $dashConvoUrl = "{$scheme}://{$host}{$basePath}/app/conversations.html?id={$conversationId}";
+
+            // Check if WhatsApp is connected for this tenant
+            $waStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` = 'connected' LIMIT 1");
+            $waStmt->execute([$companyId]);
+            $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
+
+            $targetPhone = !empty($agent['phone']) ? $agent['phone'] : '';
+            if (empty($targetPhone)) {
+                $uStmt = $pdo->prepare("SELECT phone FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin', 'manager') AND `phone` IS NOT NULL AND `phone` != '' ORDER BY id ASC LIMIT 1");
+                $uStmt->execute([$companyId]);
+                $targetPhone = $uStmt->fetchColumn() ?: '';
+            }
+
+            $waSent = false;
+            if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token']) && !empty($targetPhone)) {
+                $cleanRecipient = preg_replace('/[^0-9]/', '', $targetPhone);
+                $waMsg = "🚨 *HUMAN SUPPORT REQUESTED* (Live Chat)\n\n"
+                    . "• Customer: *{$custDispName}*\n"
+                    . "• Phone: {$custDispPhone}\n"
+                    . "• Email: {$custDispEmail}\n"
+                    . "• Conversation ID: #{$conversationId}\n\n"
+                    . "👉 Join & Reply in Dashboard: {$dashConvoUrl}\n"
+                    . "Or reply directly here with:\n"
+                    . "`REPLY #{$conversationId} <your message>`";
+
+                $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
+                $payload = [
+                    'messaging_product' => 'whatsapp',
+                    'to'                => $cleanRecipient,
+                    'type'              => 'text',
+                    'text'              => ['body' => $waMsg]
+                ];
+                $ch = curl_init($endpoint);
+                curl_setopt_array($ch, [
+                    CURLOPT_POST           => true,
+                    CURLOPT_POSTFIELDS     => json_encode($payload),
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_HTTPHEADER     => [
+                        'Authorization: Bearer ' . $waAcc['whatsapp_access_token'],
+                        'Content-Type: application/json'
+                    ],
+                    CURLOPT_TIMEOUT        => 4
+                ]);
+                $wRes = @curl_exec($ch);
+                $wCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                if ($wCode >= 200 && $wCode < 300) {
+                    $waSent = true;
+                }
+            }
+
+            // If WhatsApp not sent or not connected, dispatch Email bridge
+            if (!$waSent) {
+                $supportEmail = !empty($agent['email']) ? $agent['email'] : '';
+                if (empty($supportEmail)) {
+                    $uStmt = $pdo->prepare("SELECT email FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND `is_active` = 1 ORDER BY id ASC LIMIT 1");
+                    $uStmt->execute([$companyId]);
+                    $supportEmail = $uStmt->fetchColumn() ?: '';
+                }
+
+                if (!empty($supportEmail) && filter_var($supportEmail, FILTER_VALIDATE_EMAIL)) {
+                    $emailSubject = "🚨 [Human Support Request] #CONV-{$conversationId} - {$custDispName}";
+                    $emailHtml = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f6f2; color: #1c1917; margin: 0; padding: 24px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e7e5de; border-radius: 8px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+    <div style="padding-bottom: 16px; border-bottom: 1px solid #e7e5de; margin-bottom: 20px;">
+      <span style="font-size: 11px; font-weight: 700; color: #b45309; text-transform: uppercase; background: #fef3c7; padding: 3px 8px; border-radius: 4px;">Human Handoff Alert</span>
+      <h2 style="font-size: 18px; margin: 12px 0 4px 0; color: #1c1917;">Visitor Requested Human Specialist</h2>
+      <p style="font-size: 12.5px; color: #78716c; margin: 0;">AI automated replies have been paused for this conversation.</p>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+      <tr>
+        <td style="padding: 6px 0; color: #78716c; width: 35%;">Customer Name:</td>
+        <td style="padding: 6px 0; font-weight: 600; color: #1c1917;">{$custDispName}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Phone:</td>
+        <td style="padding: 6px 0; font-weight: 600; color: #1c1917;">{$custDispPhone}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Email:</td>
+        <td style="padding: 6px 0; font-weight: 600; color: #1c1917;">{$custDispEmail}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Conversation ID:</td>
+        <td style="padding: 6px 0; font-weight: 600; color: #6366f1;">#CONV-{$conversationId}</td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin: 26px 0 10px 0;">
+      <a href="{$dashConvoUrl}" style="background-color: #111111; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block;">Join Conversation in Dashboard &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>
+HTML;
+                    CompanyMailer::send($pdo, $companyId, $supportEmail, $emailSubject, $emailHtml);
+                }
+            }
+
+            // Also trigger standard salesperson alert if lead exists
             require_once __DIR__ . '/alerts.php';
             $leadStmt = $pdo->prepare("SELECT id FROM `leads` WHERE `conversation_id` = ? OR `customer_id` = ? ORDER BY id DESC LIMIT 1");
             $leadStmt->execute([$conversationId, $customerId]);
@@ -962,9 +1096,10 @@ try {
         $messages = [];
         foreach ($rows as $r) {
             $isHuman = in_array($r['sender_type'], ['agent', 'human', 'user', 'support_agent'], true);
+            $isSys   = ($r['sender_type'] === 'system');
             $messages[] = [
                 'id'          => (int)$r['id'],
-                'sender'      => ($r['sender_type'] === 'visitor') ? 'user' : ($isHuman ? 'human_agent' : 'ai'),
+                'sender'      => ($r['sender_type'] === 'visitor') ? 'user' : ($isSys ? 'system' : ($isHuman ? 'human_agent' : 'ai')),
                 'text'        => $r['message_text'],
                 'metadata'    => json_decode($r['metadata_json'] ?? '', true),
                 'timestamp'   => date('g:i A', strtotime($r['created_at']))
@@ -972,16 +1107,107 @@ try {
         }
 
         echo json_encode([
-            'success'   => true,
-            'messages'  => $messages,
-            'ownership' => $conv['ownership'] ?? 'ai',
-            'status'    => $conv['status'] ?? 'active',
-            'agent'     => [
+            'success'        => true,
+            'messages'       => $messages,
+            'ownership'      => $conv['ownership'] ?? 'ai',
+            'status'         => $conv['status'] ?? 'active',
+            'closure_reason' => $conv['closure_reason'] ?? null,
+            'last_message_at'=> $conv['last_message_at'] ?? null,
+            'agent'          => [
                 'name'                => $conv['agent_name'] ?? 'Consultant',
                 'job_title'           => $conv['job_title'] ?? 'Advisor',
                 'avatar_url'          => $conv['avatar_url'] ?? '',
                 'availability_status' => $conv['availability_status'] ?? 'AVAILABLE'
             ]
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: close_conversation (Handles user exit and 1-minute inactivity)
+    // -------------------------------------------------------------
+    if ($action === 'close_conversation') {
+        $conversationId = (int)($data['conversation_id'] ?? $_POST['conversation_id'] ?? 0);
+        $reason         = trim($data['reason'] ?? $_POST['reason'] ?? 'user_exit');
+        $sessionToken   = trim($data['session_token'] ?? $_POST['session_token'] ?? '');
+
+        if (!$conversationId) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Missing conversation ID']);
+            exit;
+        }
+
+        $cStmt = $pdo->prepare("SELECT c.*, cust.name as customer_name, cust.email as customer_email, cust.phone as customer_phone FROM `conversations` c LEFT JOIN `customers` cust ON cust.id = c.customer_id WHERE c.id = ? AND c.company_id = ? LIMIT 1");
+        $cStmt->execute([$conversationId, $companyId]);
+        $conv = $cStmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$conv) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Conversation not found']);
+            exit;
+        }
+
+        $closureReasonText = ($reason === 'inactivity') ? 'Closed due to inactivity' : 'Closed by visitor';
+
+        $pdo->prepare("
+            UPDATE `conversations`
+            SET `status` = 'closed',
+                `closure_reason` = ?,
+                `closed_at` = NOW(),
+                `last_message_at` = NOW()
+            WHERE id = ? AND company_id = ?
+        ")->execute([$reason, $conversationId, $companyId]);
+
+        // Insert system message into stream
+        $pdo->prepare("
+            INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+            VALUES (?, ?, 'system', ?, 'widget', NOW())
+        ")->execute([$companyId, $conversationId, "[System Event] Conversation {$closureReasonText}."]);
+
+        // Update any pending human handoff to completed
+        try {
+            $pdo->prepare("
+                UPDATE `human_handoffs`
+                SET `status` = 'completed', `call_completed_at` = NOW()
+                WHERE `conversation_id` = ? AND `company_id` = ? AND `status` != 'completed'
+            ")->execute([$conversationId, $companyId]);
+        } catch (Exception $hEx) {}
+
+        // Dispatch closure notification alert via Email/WhatsApp
+        try {
+            $custName = !empty($conv['customer_name']) ? $conv['customer_name'] : 'Website Visitor';
+            $custEmail = !empty($conv['customer_email']) ? $conv['customer_email'] : '';
+            $custPhone = !empty($conv['customer_phone']) ? $conv['customer_phone'] : '';
+
+            // Notify company/agent
+            $alertStmt = $pdo->prepare("SELECT email FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND `is_active` = 1 LIMIT 1");
+            $alertStmt->execute([$companyId]);
+            $adminEmail = $alertStmt->fetchColumn();
+
+            if (!empty($adminEmail) && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                $subj = "📁 [Conversation Closed] #CONV-{$conversationId} - {$custName} ({$closureReasonText})";
+                $html = <<<HTML
+<!DOCTYPE html>
+<html>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f6f2; color: #1c1917; margin: 0; padding: 24px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e7e5de; border-radius: 8px; padding: 30px;">
+    <h3 style="margin-top: 0; color: #1c1917;">Conversation Closed</h3>
+    <p style="font-size: 13px; color: #44403c;">Conversation <strong>#CONV-{$conversationId}</strong> with <strong>{$custName}</strong> has been marked as <strong>Closed</strong>.</p>
+    <p style="font-size: 12px; color: #78716c;">Closure Reason: <strong>{$closureReasonText}</strong></p>
+    <p style="font-size: 12px; color: #78716c;">Status has been set to <strong>closed</strong> in your dashboard inbox.</p>
+  </div>
+</body>
+</html>
+HTML;
+                CompanyMailer::send($pdo, $companyId, $adminEmail, $subj, $html);
+            }
+        } catch (Exception $mEx) {}
+
+        echo json_encode([
+            'success'        => true,
+            'status'         => 'closed',
+            'closure_reason' => $reason,
+            'message'        => "Conversation {$closureReasonText}."
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
     }

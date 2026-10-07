@@ -2051,9 +2051,11 @@ window.CuboidDashboard = {
       // Filter by status tab if requested
       let conversations = data.conversations || [];
       if (this.currentStatusTab === 'open') {
-        conversations = conversations.filter(c => c.status !== 'resolved');
+        conversations = conversations.filter(c => c.status !== 'resolved' && c.status !== 'closed');
       } else if (this.currentStatusTab === 'resolved') {
         conversations = conversations.filter(c => c.status === 'resolved');
+      } else if (this.currentStatusTab === 'closed') {
+        conversations = conversations.filter(c => c.status === 'closed');
       }
 
       if (totalBadge) totalBadge.textContent = conversations.length;
@@ -2214,9 +2216,13 @@ window.CuboidDashboard = {
       }
 
       if (chatHeaderBadge) {
+        const isClosed = (conv.status === 'closed');
         const isResolved = (conv.status === 'resolved');
-        const isHuman = (conv.ownership === 'human');
-        if (isResolved) {
+        const isHuman = (conv.ownership === 'human' || conv.status === 'human_active' || conv.status === 'human_requested');
+        if (isClosed) {
+          chatHeaderBadge.textContent = 'Closed' + (conv.closure_reason ? ` (${conv.closure_reason})` : '');
+          chatHeaderBadge.className = 'crm-status-pill text-stone-600 bg-stone-100 border border-stone-200 text-[10px] py-0 px-2';
+        } else if (isResolved) {
           chatHeaderBadge.textContent = 'Resolved';
           chatHeaderBadge.className = 'crm-status-pill crm-status-completed text-[10px] py-0 px-2';
         } else if (isHuman) {

@@ -174,13 +174,46 @@ try {
     }
 
     if ($conversationId) {
+        $convCheckStmt = $pdo->prepare("SELECT ownership, status FROM `conversations` WHERE id = ? AND company_id = ? LIMIT 1");
+        $convCheckStmt->execute([$conversationId, $resolvedCompanyId]);
+        $activeConv = $convCheckStmt->fetch(PDO::FETCH_ASSOC);
+
         $pdo->prepare("
             UPDATE `conversations`
             SET `channel` = 'whatsapp',
                 `last_message_preview` = ?,
-                `last_message_at` = NOW()
+                `last_message_at` = NOW(),
+                `unread_human` = IF(`ownership` = 'human', unread_human + 1, unread_human)
             WHERE id = ? AND company_id = ?
         ")->execute([substr($messageText, 0, 150), $conversationId, $resolvedCompanyId]);
+
+        // If human is actively handling this conversation, silence AI and exit gracefully
+        if ($activeConv && ($activeConv['ownership'] === 'human' || in_array($activeConv['status'], ['human_requested', 'human_active'], true))) {
+            $pdo->prepare("
+                INSERT INTO `messages` 
+                (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+                VALUES (?, ?, 'visitor', ?, 'whatsapp', NOW())
+            ")->execute([$resolvedCompanyId, $conversationId, $messageText]);
+
+            $pdo->prepare("
+                INSERT INTO `whatsapp_messages`
+                (`company_id`, `recipient_phone`, `recipient_name`, `message_type`, `content`, `status`, `metadata_json`, `created_at`)
+                VALUES (?, ?, ?, 'customer_message', ?, 'delivered', ?, NOW())
+            ")->execute([
+                $resolvedCompanyId,
+                $senderPhone,
+                $customerName,
+                $messageText,
+                json_encode(['direction' => 'incoming', 'conversation_id' => $conversationId, 'human_handling' => true])
+            ]);
+
+            echo json_encode([
+                'status' => 'delivered_to_human_agent',
+                'conversation_id' => $conversationId,
+                'ownership' => 'human'
+            ]);
+            exit;
+        }
     } else {
         $convIns = $pdo->prepare("
             INSERT INTO `conversations`
@@ -210,6 +243,57 @@ try {
         $messageText,
         json_encode(['direction' => 'incoming', 'conversation_id' => $conversationId])
     ]);
+
+    // 4b. Check Remote Support Agent Reply via WhatsApp (Human Bridge)
+    // Supports patterns: "REPLY #123 Hello" or "#123 Hello" or if sender is an authorized team member replying to an active conversation
+    if (preg_match('/^(?:reply\s*#?|#)([0-9]+)\s+(.+)$/is', $messageText, $agentReplyMatch)) {
+        $targetConvId = (int)$agentReplyMatch[1];
+        $agentReplyBody = trim($agentReplyMatch[2]);
+
+        $tcStmt = $pdo->prepare("SELECT c.*, cust.name as customer_name FROM `conversations` c LEFT JOIN `customers` cust ON cust.id = c.customer_id WHERE c.id = ? AND c.company_id = ? LIMIT 1");
+        $tcStmt->execute([$targetConvId, $resolvedCompanyId]);
+        $targetConv = $tcStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($targetConv) {
+            // Find which agent this sender phone belongs to
+            $agStmt = $pdo->prepare("SELECT id, name, job_title FROM `users` WHERE `company_id` = ? AND REPLACE(REPLACE(phone, '+', ''), ' ', '') LIKE ? LIMIT 1");
+            $agStmt->execute([$resolvedCompanyId, '%' . substr($cleanSender, -10)]);
+            $matchedAgent = $agStmt->fetch(PDO::FETCH_ASSOC);
+            $agentUserId = $matchedAgent ? (int)$matchedAgent['id'] : null;
+            $agentName = $matchedAgent ? $matchedAgent['name'] : 'Support Specialist';
+
+            // Insert message as human
+            $pdo->prepare("
+                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `sender_id`, `message_text`, `channel`, `created_at`)
+                VALUES (?, ?, 'human', ?, ?, 'whatsapp', NOW())
+            ")->execute([$resolvedCompanyId, $targetConvId, $agentUserId, $agentReplyBody]);
+
+            // Update conversation to human active
+            $pdo->prepare("
+                UPDATE `conversations`
+                SET `ownership` = 'human',
+                    `status` = 'human_active',
+                    `assigned_user_id` = COALESCE(?, `assigned_user_id`),
+                    `last_message_preview` = ?,
+                    `last_message_at` = NOW()
+                WHERE id = ? AND company_id = ?
+            ")->execute([$agentUserId, substr($agentReplyBody, 0, 150), $targetConvId, $resolvedCompanyId]);
+
+            // If conversation originated on web widget, this is immediately visible via widget poll_messages!
+            $ackReply = "✅ *Reply delivered to #CONV-{$targetConvId}* ({$targetConv['customer_name']}):\n\"{$agentReplyBody}\"";
+            $pdo->prepare("
+                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+                VALUES (?, ?, 'ai', ?, 'whatsapp', NOW())
+            ")->execute([$resolvedCompanyId, $conversationId, $ackReply]);
+
+            echo json_encode([
+                'status' => 'agent_reply_delivered',
+                'target_conversation_id' => $targetConvId,
+                'message' => $agentReplyBody
+            ]);
+            exit;
+        }
+    }
 
     // 5. Check Remote Payment Confirmation via WhatsApp
     // e.g. "Confirm PRQ-202610-ABC123" or "Payment Done PRQ-202610-ABC123" or "PRQ-202610-ABC123 paid"

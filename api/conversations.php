@@ -604,15 +604,17 @@ try {
     } elseif ($filter === 'whatsapp') {
         $where[] = "conv.channel = 'whatsapp'";
     } elseif ($filter === 'ai') {
-        $where[] = "conv.ownership = 'ai' AND conv.status != 'resolved'";
+        $where[] = "conv.ownership = 'ai' AND conv.status NOT IN ('resolved', 'closed')";
     } elseif ($filter === 'human' || $filter === 'human_attention' || $filter === 'attention') {
-        $where[] = "(conv.ownership = 'human' OR conv.status = 'human_requested' OR l.human_attention_required = 1) AND conv.status != 'resolved'";
+        $where[] = "(conv.ownership = 'human' OR conv.status IN ('human_requested', 'human_active') OR l.human_attention_required = 1) AND conv.status NOT IN ('resolved', 'closed')";
     } elseif ($filter === 'high_intent') {
         $where[] = "(l.priority IN ('HIGH', 'URGENT') OR l.intent_level IN ('high', 'urgent'))";
     } elseif ($filter === 'open') {
-        $where[] = "conv.status != 'resolved'";
+        $where[] = "conv.status NOT IN ('resolved', 'closed')";
     } elseif ($filter === 'resolved') {
         $where[] = "conv.status = 'resolved'";
+    } elseif ($filter === 'closed') {
+        $where[] = "conv.status = 'closed'";
     }
 
     if (!empty($search)) {
@@ -646,11 +648,12 @@ try {
             COUNT(*) AS total,
             SUM(CASE WHEN conv.channel = 'widget' THEN 1 ELSE 0 END) AS widget_count,
             SUM(CASE WHEN conv.channel = 'whatsapp' THEN 1 ELSE 0 END) AS wa_count,
-            SUM(CASE WHEN conv.ownership = 'ai' AND conv.status != 'resolved' THEN 1 ELSE 0 END) AS ai_count,
-            SUM(CASE WHEN (conv.ownership = 'human' OR conv.status = 'human_requested' OR l.human_attention_required = 1) AND conv.status != 'resolved' THEN 1 ELSE 0 END) AS human_count,
-            SUM(CASE WHEN (l.human_attention_required = 1 OR conv.status = 'human_requested') AND conv.status != 'resolved' THEN 1 ELSE 0 END) AS attention_count,
-            SUM(CASE WHEN conv.status != 'resolved' THEN 1 ELSE 0 END) AS open_count,
+            SUM(CASE WHEN conv.ownership = 'ai' AND conv.status NOT IN ('resolved', 'closed') THEN 1 ELSE 0 END) AS ai_count,
+            SUM(CASE WHEN (conv.ownership = 'human' OR conv.status IN ('human_requested', 'human_active') OR l.human_attention_required = 1) AND conv.status NOT IN ('resolved', 'closed') THEN 1 ELSE 0 END) AS human_count,
+            SUM(CASE WHEN (l.human_attention_required = 1 OR conv.status = 'human_requested') AND conv.status NOT IN ('resolved', 'closed') THEN 1 ELSE 0 END) AS attention_count,
+            SUM(CASE WHEN conv.status NOT IN ('resolved', 'closed') THEN 1 ELSE 0 END) AS open_count,
             SUM(CASE WHEN conv.status = 'resolved' THEN 1 ELSE 0 END) AS resolved_count,
+            SUM(CASE WHEN conv.status = 'closed' THEN 1 ELSE 0 END) AS closed_count,
             SUM(CASE WHEN (l.priority IN ('HIGH', 'URGENT') OR l.intent_level IN ('high', 'urgent')) THEN 1 ELSE 0 END) AS high_intent_count
         FROM `conversations` conv
         LEFT JOIN `leads` l ON l.conversation_id = conv.id
@@ -671,6 +674,7 @@ try {
             'whatsapp'    => (int)($counts['wa_count'] ?? 0),
             'open'        => (int)($counts['open_count'] ?? 0),
             'resolved'    => (int)($counts['resolved_count'] ?? 0),
+            'closed'      => (int)($counts['closed_count'] ?? 0),
         ],
         'conversations' => array_map(function($row) {
             $name = $row['customer_name'] ?: 'Website Visitor';
