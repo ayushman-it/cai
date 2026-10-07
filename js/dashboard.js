@@ -35,6 +35,10 @@ window.CuboidDashboard = {
       this.loadAssistantSettings();
     } else if (page === 'billing') {
       this.loadBilling();
+    } else if (page === 'payments' && typeof window.loadPayments === 'function') {
+      window.loadPayments();
+    } else if (page === 'appointments' && typeof window.loadAppointments === 'function') {
+      window.loadAppointments();
     }
   },
 

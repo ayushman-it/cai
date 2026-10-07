@@ -431,12 +431,23 @@
       document.getElementById('confirm-info-display').textContent = `${name || 'Customer'} • ₹${Number(amt).toLocaleString('en-IN')}`;
       document.getElementById('confirm-utr').value = '';
       document.getElementById('confirm-notes').value = '';
-      document.getElementById('confirm-modal').classList.add('active');
+      const modal = document.getElementById('confirm-modal');
+      if (modal) {
+        modal.classList.add('open');
+        modal.classList.add('active');
+      }
+      if (window.lucide) window.lucide.createIcons();
     }
+    window.openConfirmModal = openConfirmModal;
 
     function closeConfirmModal() {
-      document.getElementById('confirm-modal').classList.remove('active');
+      const modal = document.getElementById('confirm-modal');
+      if (modal) {
+        modal.classList.remove('open');
+        modal.classList.remove('active');
+      }
     }
+    window.closeConfirmModal = closeConfirmModal;
 
     async function submitConfirmPayment() {
       const id = document.getElementById('confirm-request-id').value;
@@ -482,12 +493,23 @@
     }
 
     function openManualPaymentModal() {
-      document.getElementById('manual-modal').classList.add('active');
+      const modal = document.getElementById('manual-modal');
+      if (modal) {
+        modal.classList.add('open');
+        modal.classList.add('active');
+      }
+      if (window.lucide) window.lucide.createIcons();
     }
+    window.openManualPaymentModal = openManualPaymentModal;
 
     function closeManualPaymentModal() {
-      document.getElementById('manual-modal').classList.remove('active');
+      const modal = document.getElementById('manual-modal');
+      if (modal) {
+        modal.classList.remove('open');
+        modal.classList.remove('active');
+      }
     }
+    window.closeManualPaymentModal = closeManualPaymentModal;
 
     async function submitManualPayment() {
       const name = document.getElementById('man-name').value.trim();
@@ -544,6 +566,8 @@
         alert('Network error while recording manual payment.');
       }
     }
+    window.submitManualPayment = submitManualPayment;
+    window.loadPayments = loadPayments;
 
     function escapeHtml(str) {
       if (!str) return '';
