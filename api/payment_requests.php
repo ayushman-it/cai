@@ -233,47 +233,59 @@ if ($action === 'create') {
     $confirmActionUrl = "{$protocol}{$host}/api/payment_requests.php?action=verify_token_web&token={$confirmationToken}";
 
     // 1. Dispatch Customer Payment Instructions Email
-    dispatchCustomerPaymentInstructionsEmail($pdo, $companyId, $company, [
-        'request_code'  => $requestCode,
-        'item_title'    => $itemTitle,
-        'amount_inr'    => $amountInr,
-        'customer_name' => $visitorName,
-        'customer_email'=> $visitorEmail,
-        'customer_phone'=> $visitorPhone,
-        'upi_id'        => $upiId,
-        'upi_intent'    => $upiIntent,
-        'bank_name'     => $bankName,
-        'bank_acc'      => $bankAcc,
-        'bank_ifsc'     => $bankIfsc,
-        'bank_holder'   => $bankHolder,
-        'bank_qr_url'   => $bankQrUrl,
-        'razorpay_key'  => $rzpKey
-    ]);
+    try {
+        dispatchCustomerPaymentInstructionsEmail($pdo, $companyId, $company, [
+            'request_code'  => $requestCode,
+            'item_title'    => $itemTitle,
+            'amount_inr'    => $amountInr,
+            'customer_name' => $visitorName,
+            'customer_email'=> $visitorEmail,
+            'customer_phone'=> $visitorPhone,
+            'upi_id'        => $upiId,
+            'upi_intent'    => $upiIntent,
+            'bank_name'     => $bankName,
+            'bank_acc'      => $bankAcc,
+            'bank_ifsc'     => $bankIfsc,
+            'bank_holder'   => $bankHolder,
+            'bank_qr_url'   => $bankQrUrl,
+            'razorpay_key'  => $rzpKey
+        ]);
+    } catch (Throwable $mailEx) {
+        error_log('[PaymentRequests Customer Mailer Error] ' . $mailEx->getMessage());
+    }
 
     // 2. Dispatch Admin Notification Email
-    dispatchAdminPaymentAlertEmail($pdo, $companyId, $company, [
-        'request_code'       => $requestCode,
-        'item_title'         => $itemTitle,
-        'amount_inr'         => $amountInr,
-        'customer_name'      => $visitorName,
-        'customer_email'     => $visitorEmail,
-        'customer_phone'     => $visitorPhone,
-        'confirm_action_url' => $confirmActionUrl
-    ]);
+    try {
+        dispatchAdminPaymentAlertEmail($pdo, $companyId, $company, [
+            'request_code'       => $requestCode,
+            'item_title'         => $itemTitle,
+            'amount_inr'         => $amountInr,
+            'customer_name'      => $visitorName,
+            'customer_email'     => $visitorEmail,
+            'customer_phone'     => $visitorPhone,
+            'confirm_action_url' => $confirmActionUrl
+        ]);
+    } catch (Throwable $mailEx) {
+        error_log('[PaymentRequests Admin Mailer Error] ' . $mailEx->getMessage());
+    }
 
     // 3. Dispatch WhatsApp Notification (if company has connected WhatsApp)
-    dispatchWhatsAppPaymentNotifications($pdo, $companyId, [
-        'request_code'       => $requestCode,
-        'item_title'         => $itemTitle,
-        'amount_inr'         => $amountInr,
-        'customer_name'      => $visitorName,
-        'customer_phone'     => $visitorPhone,
-        'upi_id'             => $upiId,
-        'bank_name'          => $bankName,
-        'bank_acc'           => $bankAcc,
-        'bank_ifsc'          => $bankIfsc,
-        'confirm_action_url' => $confirmActionUrl
-    ]);
+    try {
+        dispatchWhatsAppPaymentNotifications($pdo, $companyId, [
+            'request_code'       => $requestCode,
+            'item_title'         => $itemTitle,
+            'amount_inr'         => $amountInr,
+            'customer_name'      => $visitorName,
+            'customer_phone'     => $visitorPhone,
+            'upi_id'             => $upiId,
+            'bank_name'          => $bankName,
+            'bank_acc'           => $bankAcc,
+            'bank_ifsc'          => $bankIfsc,
+            'confirm_action_url' => $confirmActionUrl
+        ]);
+    } catch (Throwable $waEx) {
+        error_log('[PaymentRequests WhatsApp Error] ' . $waEx->getMessage());
+    }
 
     // 4. If conversation exists, post prompt message in chat
     if ($convoId) {
