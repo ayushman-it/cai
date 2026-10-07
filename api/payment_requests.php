@@ -123,7 +123,7 @@ if ($action === 'create') {
         exit;
     }
 
-    $cStmt = $pdo->prepare("SELECT id, name, email, company_key FROM `companies` WHERE `company_key` = ? LIMIT 1");
+    $cStmt = $pdo->prepare("SELECT id, name, company_key FROM `companies` WHERE `company_key` = ? LIMIT 1");
     $cStmt->execute([$companyKey]);
     $company = $cStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -134,6 +134,11 @@ if ($action === 'create') {
     }
 
     $companyId = (int)$company['id'];
+
+    // Resolve company admin notification email
+    $uStmt = $pdo->prepare("SELECT email FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND email IS NOT NULL AND email != '' ORDER BY id ASC LIMIT 1");
+    $uStmt->execute([$companyId]);
+    $company['email'] = (string)($uStmt->fetchColumn() ?: '');
 
     if (empty($visitorName) || empty($visitorEmail) || empty($visitorPhone) || $amountInr <= 0) {
         http_response_code(400);
@@ -835,16 +840,13 @@ function dispatchCustomerReceiptEmail(PDO $pdo, int $companyId, array $pr): void
 }
 
 function dispatchAdminPaymentCompletedAlertEmail(PDO $pdo, int $companyId, array $pr): void {
-    $cStmt = $pdo->prepare("SELECT email, name FROM `companies` WHERE id = ? LIMIT 1");
+    $cStmt = $pdo->prepare("SELECT name FROM `companies` WHERE id = ? LIMIT 1");
     $cStmt->execute([$companyId]);
     $company = $cStmt->fetch(PDO::FETCH_ASSOC);
 
-    $adminEmail = $company['email'] ?? '';
-    if (empty($adminEmail)) {
-        $uStmt = $pdo->prepare("SELECT email FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND email IS NOT NULL AND email != '' ORDER BY id ASC LIMIT 1");
-        $uStmt->execute([$companyId]);
-        $adminEmail = (string)$uStmt->fetchColumn();
-    }
+    $uStmt = $pdo->prepare("SELECT email FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND email IS NOT NULL AND email != '' ORDER BY id ASC LIMIT 1");
+    $uStmt->execute([$companyId]);
+    $adminEmail = (string)$uStmt->fetchColumn();
 
     if (empty($adminEmail) || !filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
         return;
