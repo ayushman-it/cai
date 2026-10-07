@@ -2209,6 +2209,12 @@
         justify-content: center;
       }
 
+      /* Mobile: Completely remove expand window button and expand menu option */
+      #cp-expand-btn,
+      #cp-menu-expand {
+        display: none !important;
+      }
+
       .cp-back-btn {
         min-width: 28px !important;
         min-height: 28px !important;
@@ -2239,6 +2245,13 @@
         width: calc(100vw - 32px) !important;
         max-width: 400px !important;
         margin: 0 auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      #cp-expand-btn,
+      #cp-menu-expand {
+        display: none !important;
       }
     }
 
@@ -5826,6 +5839,11 @@
   let isExpanded = widgetStorage.getItem(EXPAND_STORAGE_KEY) === '1';
 
   function updateExpandState(expanded) {
+    if (window.innerWidth <= 768) {
+      isExpanded = false;
+      if (chatWindow) chatWindow.classList.remove('expanded');
+      return;
+    }
     isExpanded = Boolean(expanded);
     if (!chatWindow) return;
     
@@ -5877,6 +5895,7 @@
   }
 
   function toggleExpandWindow() {
+    if (window.innerWidth <= 768) return;
     isExpanded = !isExpanded;
     widgetStorage.setItem(EXPAND_STORAGE_KEY, isExpanded ? '1' : '0');
     updateExpandState(isExpanded);
@@ -5885,10 +5904,18 @@
     }
   }
 
-  // Restore previous expand preference if stored
-  if (isExpanded) {
+  // Restore previous expand preference if stored (only on desktop)
+  if (isExpanded && window.innerWidth > 768) {
     updateExpandState(true);
+  } else {
+    updateExpandState(false);
   }
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth <= 768 && isExpanded) {
+      updateExpandState(false);
+    }
+  });
   let currentScreen = 'home'; // 'home' | 'chat' | 'human-team' | 'human-chat' | 'book-team' | 'book-slots' | 'book-confirmed' | 'payment-options' | 'news'
   let screenStack = ['home'];
   let teamMembersCache = [];
@@ -8109,7 +8136,7 @@
 
     const postChatMessage = async (attempt = 1) => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 18000);
+      const timeoutId = setTimeout(() => controller.abort(), 25000);
       try {
         const url = `${baseUrl}/api/chat.php`;
         const res = await fetch(url, {

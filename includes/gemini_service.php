@@ -10,7 +10,7 @@ require_once __DIR__ . '/../config/db.php';
 
 class GeminiService {
     private static ?string $apiKey = null;
-    private static string $model = 'gemini-3.8-flash';
+    private static string $model = 'gemini-flash-lite-latest';
     private static string $apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models';
 
     public static function getApiKey(): string {
@@ -35,7 +35,7 @@ class GeminiService {
     /**
      * Executes a generateContent HTTP request to Gemini Generative Language API.
      */
-    public static function callGemini(array $payload, ?string $modelOverride = null, int $timeoutSeconds = 12): ?array {
+    public static function callGemini(array $payload, ?string $modelOverride = null, int $timeoutSeconds = 6): ?array {
         $key = self::getApiKey();
         if (empty($key)) {
             error_log("[GeminiService] Error: GEMINI_API_KEY is not defined.");
@@ -43,47 +43,36 @@ class GeminiService {
         }
 
         $model = $modelOverride ?: self::getModel();
-        $candidateModels = array_unique([$model, 'gemini-3.8-flash', 'gemini-flash-latest', 'gemini-3.5-flash', 'gemini-flash-lite-latest', 'gemini-3.7-flash']);
+        $candidateModels = array_unique([$model, 'gemini-flash-lite-latest', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-3.5-flash']);
 
         foreach ($candidateModels as $candidate) {
             $url = self::$apiEndpoint . '/' . urlencode($candidate) . ':generateContent?key=' . urlencode($key);
 
-            for ($attempt = 1; $attempt <= 2; $attempt++) {
-                if ($attempt > 1) {
-                    usleep(300000); // 300ms retry backoff
-                }
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => ['Content-Type: application/json; charset=UTF-8'],
+                CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                CURLOPT_TIMEOUT => $timeoutSeconds,
+                CURLOPT_CONNECTTIMEOUT => 3,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => false
+            ]);
 
-                $ch = curl_init($url);
-                curl_setopt_array($ch, [
-                    CURLOPT_POST => true,
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_HTTPHEADER => ['Content-Type: application/json; charset=UTF-8'],
-                    CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-                    CURLOPT_TIMEOUT => $timeoutSeconds,
-                    CURLOPT_CONNECTTIMEOUT => 8,
-                    CURLOPT_SSL_VERIFYPEER => false,
-                    CURLOPT_SSL_VERIFYHOST => false
-                ]);
+            $rawResponse = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
+            curl_close($ch);
 
-                $rawResponse = curl_exec($ch);
-                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                $curlError = curl_error($ch);
-                curl_close($ch);
-
-                if ($httpCode === 200 && !empty($rawResponse)) {
-                    $decoded = json_decode($rawResponse, true);
-                    if (is_array($decoded) && !empty($decoded['candidates'])) {
-                        return $decoded;
-                    }
-                }
-
-                error_log("[GeminiService Model: {$candidate} Attempt: {$attempt}] HTTP: {$httpCode} | Error: {$curlError} | Resp: " . substr((string)$rawResponse, 0, 200));
-
-                // If not 503 or 429, don't retry same model
-                if ($httpCode !== 503 && $httpCode !== 429) {
-                    break;
+            if ($httpCode === 200 && !empty($rawResponse)) {
+                $decoded = json_decode($rawResponse, true);
+                if (is_array($decoded) && !empty($decoded['candidates'])) {
+                    return $decoded;
                 }
             }
+
+            error_log("[GeminiService Model: {$candidate}] HTTP: {$httpCode} | Error: {$curlError} | Resp: " . substr((string)$rawResponse, 0, 200));
         }
 
         return null;
@@ -137,7 +126,7 @@ class GeminiService {
             ]
         ];
 
-        $res = self::callGemini($payload, $options['model'] ?? null, $options['timeout'] ?? 20);
+        $res = self::callGemini($payload, $options['model'] ?? null, $options['timeout'] ?? 6);
         return self::extractText($res);
     }
 
