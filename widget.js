@@ -124,6 +124,8 @@
     LEAD_ID: 'cp_lead_id_' + companyKey,
     CUSTOMER_ID: 'cp_customer_id_' + companyKey,
     VISITOR_NAME: 'cp_visitor_name_' + companyKey,
+    VISITOR_EMAIL: 'cp_visitor_email_' + companyKey,
+    VISITOR_PHONE: 'cp_visitor_phone_' + companyKey,
     IS_IDENTIFIED: 'cp_is_identified_' + companyKey,
     LEAD_STEP: 'cp_lead_step_' + companyKey,
     MESSAGES: 'cp_chat_history_' + companyKey,
@@ -159,6 +161,8 @@
     visitorName = '';
     widgetStorage.removeItem(STORAGE_KEYS.VISITOR_NAME);
   }
+  let visitorEmail = widgetStorage.getItem(STORAGE_KEYS.VISITOR_EMAIL) || '';
+  let visitorPhone = widgetStorage.getItem(STORAGE_KEYS.VISITOR_PHONE) || '';
   let isIdentified = widgetStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) === '1';
   let leadStep = 0;
 
@@ -6565,12 +6569,16 @@
     widgetStorage.removeItem(STORAGE_KEYS.LEAD_ID);
     widgetStorage.removeItem(STORAGE_KEYS.CUSTOMER_ID);
     widgetStorage.removeItem(STORAGE_KEYS.VISITOR_NAME);
+    widgetStorage.removeItem(STORAGE_KEYS.VISITOR_EMAIL);
+    widgetStorage.removeItem(STORAGE_KEYS.VISITOR_PHONE);
     widgetStorage.removeItem(STORAGE_KEYS.IS_IDENTIFIED);
     widgetStorage.removeItem(STORAGE_KEYS.LEAD_STEP);
     conversationId = null;
     leadId = null;
     customerId = null;
     visitorName = '';
+    visitorEmail = '';
+    visitorPhone = '';
     isIdentified = false;
     leadStep = 1;
     initVisitorState();
@@ -7309,7 +7317,11 @@
           widgetStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
         }
         visitorName = name;
+        visitorEmail = email || '';
+        visitorPhone = phone || '';
         widgetStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
+        if (visitorEmail) widgetStorage.setItem(STORAGE_KEYS.VISITOR_EMAIL, visitorEmail);
+        if (visitorPhone) widgetStorage.setItem(STORAGE_KEYS.VISITOR_PHONE, visitorPhone);
         isIdentified = true;
         widgetStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
 
@@ -7755,7 +7767,7 @@
               ${featuresHtml}
             </div>
             <div class="cp-prod-actions">
-              <button type="button" class="cp-prod-btn-primary cp-select-prod-btn">Choose This</button>
+              <button type="button" class="cp-prod-btn-primary cp-select-prod-btn">Enroll / Pay Now</button>
               <button type="button" class="cp-prod-btn-secondary cp-ask-prod-btn">Ask Cai</button>
             </div>
           `;
@@ -7763,7 +7775,11 @@
           const selectBtn = card.querySelector('.cp-select-prod-btn');
           if (selectBtn) {
             selectBtn.addEventListener('click', () => {
-              handleSend(`I would like to choose ${prod.name}`);
+              navigateTo('pay-online', {
+                title: prod.name,
+                item_title: prod.name,
+                amount: Math.round(Number(prod.price_inr) || 0)
+              });
             });
           }
 
@@ -8546,7 +8562,7 @@
       if (composerSection) composerSection.style.display = 'none';
       if (assistantNameEl) assistantNameEl.textContent = 'Pay Online';
       if (subtitleEl) subtitleEl.textContent = 'Instant & secure checkout';
-      renderPayOnline();
+      renderPayOnline(data);
     } else if (screen === 'pay-invoice') {
       if (composerSection) composerSection.style.display = 'none';
       if (assistantNameEl) assistantNameEl.textContent = 'Pay an Invoice';
@@ -9818,7 +9834,7 @@
 
     // Save any existing form values in case user already typed
     const existingName = (shadow.getElementById('cp-book-name')?.value) || visitorName || '';
-    const existingContact = (shadow.getElementById('cp-book-contact')?.value) || '';
+    const existingContact = (shadow.getElementById('cp-book-contact')?.value) || visitorPhone || visitorEmail || '';
     const existingNotes = (shadow.getElementById('cp-book-notes')?.value) || '';
 
     screensView.innerHTML = `
@@ -10101,27 +10117,31 @@
           <div class="cp-confirmed-card-row">
             <div class="cp-confirmed-row-label">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
+                <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
               </svg>
-              <span>With</span>
+              <span>Meeting</span>
             </div>
             <div class="cp-confirmed-row-val">
-              <strong>${escapeHtml(agentName)}</strong>
-              <div style="font-size:11.5px;color:var(--cp-text-secondary);margin-top:2px;">${escapeHtml(agentRole)}</div>
+              <a href="${escapeHtml(meetLink)}" target="_blank" style="color:#0284c7;text-decoration:none;font-weight:600;font-size:12px;">Join Video Room &rarr;</a>
             </div>
           </div>
         </div>
 
-        <a href="${icsUrl}" download="appointment.ics" class="cp-add-calendar-btn">
+        <div style="font-size:11.5px;color:var(--cp-text-muted);text-align:center;margin:6px 0 10px;line-height:1.4;">
+          A confirmation email with session details has been sent to your inbox.
+        </div>
+
+        ${icsUrl !== '#' ? `
+        <a href="${icsUrl}" class="cp-add-calendar-btn" style="text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
             <line x1="16" y1="2" x2="16" y2="6"></line>
             <line x1="8" y1="2" x2="8" y2="6"></line>
             <line x1="3" y1="10" x2="21" y2="10"></line>
           </svg>
-          Add to Calendar
-        </a>
+          Add to Calendar (Optional)
+        </a>` : ''}
 
         <div style="margin-top:12px;width:100%;">
           <button class="cp-btn-sm" id="cp-btn-back-chat" style="width:100%;padding:9px;justify-content:center;background:transparent;border:none;color:var(--cp-text-secondary);cursor:pointer;font-weight:500;">
@@ -10434,40 +10454,53 @@
   }
 
   // -------------------------------------------------------------
-  // SUB-SCREEN 8B: PAY ONLINE (RAZORPAY GATEWAY)
+  // SUB-SCREEN 8B: PAY ONLINE / CREATE PAYMENT REQUEST
   // -------------------------------------------------------------
-  function renderPayOnline() {
+  function renderPayOnline(opts) {
     if (!screensView) return;
+
+    opts = opts || {};
+    const defaultAmount = opts.amount || 10000;
+    const defaultTitle = opts.title || opts.item_title || 'Course Enrollment';
+    const initialName = (opts.name || visitorName || '').trim();
+    const initialEmail = (opts.email || visitorEmail || '').trim();
+    const initialPhone = (opts.phone || visitorPhone || '').trim();
 
     screensView.innerHTML = `
       <div class="cp-sub-screen-header">
-        <div class="cp-sub-screen-title">Pay Online (Razorpay)</div>
-        <div class="cp-sub-screen-desc">Cards, NetBanking, UPI & Wallets</div>
+        <div class="cp-sub-screen-title">Payment &amp; Enrollment</div>
+        <div class="cp-sub-screen-desc">Secure checkout with instant receipt and confirmation</div>
       </div>
 
       <div class="cp-form-group">
-        <label class="cp-form-label">Payment Amount (₹) *</label>
+        <label class="cp-form-label">Item / Service Title</label>
+        <input type="text" class="cp-form-input" id="cp-online-title" value="${escapeHtml(defaultTitle)}" placeholder="Course or service name" />
+      </div>
+
+      <div class="cp-form-group">
+        <label class="cp-form-label">Payable Amount (₹) *</label>
         <div class="cp-amount-chips">
-          <span class="cp-amount-chip" data-amt="2500">₹2,500</span>
-          <span class="cp-amount-chip active" data-amt="10000">₹10,000</span>
-          <span class="cp-amount-chip" data-amt="25000">₹25,000</span>
+          <span class="cp-amount-chip ${defaultAmount === 2500 ? 'active' : ''}" data-amt="2500">₹2,500</span>
+          <span class="cp-amount-chip ${defaultAmount === 10000 ? 'active' : ''}" data-amt="10000">₹10,000</span>
+          <span class="cp-amount-chip ${defaultAmount === 25000 ? 'active' : ''}" data-amt="25000">₹25,000</span>
+          ${(defaultAmount !== 2500 && defaultAmount !== 10000 && defaultAmount !== 25000) ? `<span class="cp-amount-chip active" data-amt="${defaultAmount}">₹${Number(defaultAmount).toLocaleString('en-IN')}</span>` : ''}
         </div>
-        <input type="number" class="cp-form-input" id="cp-online-amount" placeholder="Amount in ₹" value="10000" />
+        <input type="number" class="cp-form-input" id="cp-online-amount" placeholder="Amount in ₹" value="${defaultAmount}" />
       </div>
 
       <div class="cp-form-group">
-        <label class="cp-form-label">Payer Name *</label>
-        <input type="text" class="cp-form-input" id="cp-online-name" placeholder="Full name" value="${escapeHtml(visitorName)}" />
+        <label class="cp-form-label">Full Name *</label>
+        <input type="text" class="cp-form-input" id="cp-online-name" placeholder="Full name" value="${escapeHtml(initialName)}" />
       </div>
 
       <div class="cp-form-group">
-        <label class="cp-form-label">Phone or Email *</label>
-        <input type="text" class="cp-form-input" id="cp-online-contact" placeholder="+91 98765 43210 or email" />
+        <label class="cp-form-label">Email Address *</label>
+        <input type="email" class="cp-form-input" id="cp-online-email" placeholder="name@example.com" value="${escapeHtml(initialEmail)}" />
       </div>
 
       <div class="cp-form-group">
-        <label class="cp-form-label">Description / Purpose (Optional)</label>
-        <input type="text" class="cp-form-input" id="cp-online-desc" placeholder="e.g. Consultation booking or advance" />
+        <label class="cp-form-label">WhatsApp / Phone Number *</label>
+        <input type="tel" class="cp-form-input" id="cp-online-phone" placeholder="+91 98765 43210" value="${escapeHtml(initialPhone)}" />
       </div>
 
       <div class="cp-sticky-booking-footer">
@@ -10476,7 +10509,7 @@
         </button>
       </div>
 
-      <div id="cp-online-status-box" style="display:none;margin-top:10px;"></div>
+      <div id="cp-online-status-box" style="display:none;margin-top:14px;"></div>
     `;
 
     screensView.querySelectorAll('.cp-amount-chip').forEach(chip => {
@@ -10489,55 +10522,170 @@
 
     const initBtn = shadow.getElementById('cp-btn-initiate-online');
     if (initBtn) {
-      initBtn.addEventListener('click', () => {
+      initBtn.addEventListener('click', async () => {
         const amt = parseInt(shadow.getElementById('cp-online-amount').value, 10);
         const name = shadow.getElementById('cp-online-name').value.trim();
-        const contact = shadow.getElementById('cp-online-contact').value.trim();
-        if (!amt || amt <= 0 || !name || !contact) {
-          alert('Please enter amount, name, and contact information.');
+        const email = shadow.getElementById('cp-online-email').value.trim();
+        const phone = shadow.getElementById('cp-online-phone').value.trim();
+        const itemTitle = shadow.getElementById('cp-online-title').value.trim() || 'Course Enrollment';
+
+        if (!amt || amt <= 0) {
+          alert('Please enter a valid payment amount.');
+          return;
+        }
+        if (!name) {
+          alert('Please enter your full name.');
+          return;
+        }
+        if (!email || !email.includes('@')) {
+          alert('Please enter a valid email address to receive your payment instructions.');
+          return;
+        }
+        if (!phone || phone.replace(/[^0-9]/g, '').length < 7) {
+          alert('Please enter a valid phone number.');
           return;
         }
 
-        const rzpKey = widgetConfig.razorpay_key_id;
-        if (rzpKey && window.Razorpay) {
-          const options = {
-            key: rzpKey,
-            amount: amt * 100,
-            currency: 'INR',
-            name: widgetConfig.brand_name || (widgetConfig.company ? widgetConfig.company.name : 'Customer Checkout'),
-            description: shadow.getElementById('cp-online-desc').value.trim() || 'Online Payment',
-            prefill: {
-              name: name,
-              email: contact.includes('@') ? contact : '',
-              contact: contact.includes('@') ? '' : contact
+        // Save visitor credentials for session continuity
+        visitorName = name;
+        visitorEmail = email;
+        visitorPhone = phone;
+        widgetStorage.setItem(STORAGE_KEYS.VISITOR_NAME, visitorName);
+        widgetStorage.setItem(STORAGE_KEYS.VISITOR_EMAIL, visitorEmail);
+        widgetStorage.setItem(STORAGE_KEYS.VISITOR_PHONE, visitorPhone);
+
+        initBtn.disabled = true;
+        initBtn.textContent = 'Generating Payment Request...';
+
+        try {
+          const res = await fetch(`${baseUrl}/api/payment_requests.php?action=create`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Company-Key': companyKey
             },
-            theme: { color: '#0f172a' },
-            handler: function (response) {
-              alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
-              navigateTo('chat');
-            }
-          };
-          const rzp = new window.Razorpay(options);
-          rzp.open();
-        } else {
-          // Clean checkout response / simulation
-          initBtn.disabled = true;
-          initBtn.textContent = 'Redirecting to payment...';
-          setTimeout(() => {
-            const statusBox = shadow.getElementById('cp-online-status-box');
-            statusBox.style.display = 'block';
-            statusBox.innerHTML = `
-              <div style="background:rgba(2,132,199,0.1);border:1px solid rgba(2,132,199,0.3);border-radius:10px;padding:14px;text-align:center;">
-                <div style="font-weight:700;color:#0284c7;font-size:14px;">Checkout Session Created</div>
-                <div style="font-size:12px;color:var(--cp-text-secondary);margin-top:4px;">
-                  Amount: <strong>₹${amt.toLocaleString('en-IN')}</strong><br/>
-                  ${rzpKey ? 'Opening Razorpay checkout...' : 'Razorpay Gateway is in Test/Verification mode.'}
-                </div>
-                <button class="cp-btn-sm" id="cp-online-done-btn" style="margin-top:10px;width:100%;justify-content:center;">Back to menu</button>
+            body: JSON.stringify({
+              company_key: companyKey,
+              name: name,
+              email: email,
+              phone: phone,
+              amount: amt,
+              item_title: itemTitle,
+              session_id: sessionId,
+              conversation_id: conversationId
+            })
+          });
+
+          const result = await res.json();
+          if (!result.success) {
+            alert(result.error || 'Failed to create payment request.');
+            initBtn.disabled = false;
+            initBtn.textContent = 'Proceed to Pay Securely';
+            return;
+          }
+
+          // Payment request successfully created! Render instructions & options view
+          const details = result.payment_details || {};
+          const statusBox = shadow.getElementById('cp-online-status-box');
+          statusBox.style.display = 'block';
+
+          let bankHtml = '';
+          if (details.account_number) {
+            bankHtml = `
+              <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin:10px 0;text-align:left;font-size:12px;">
+                <div style="font-weight:700;color:#0f172a;margin-bottom:6px;text-transform:uppercase;font-size:11px;">Bank Transfer (NEFT / IMPS):</div>
+                <div>A/C Holder: <strong>${escapeHtml(details.holder_name || '')}</strong></div>
+                <div>Bank: <strong>${escapeHtml(details.bank_name || '')}</strong></div>
+                <div>A/C No: <code style="font-weight:700;">${escapeHtml(details.account_number || '')}</code></div>
+                <div>IFSC: <code style="font-weight:700;">${escapeHtml(details.ifsc || '')}</code></div>
+                <div style="margin-top:4px;">UPI ID: <strong style="color:#0284c7;">${escapeHtml(details.upi_id || '')}</strong></div>
               </div>
             `;
-            shadow.getElementById('cp-online-done-btn').addEventListener('click', () => navigateTo('payment-options'));
-          }, 800);
+          }
+
+          let qrHtml = '';
+          if (details.qr_code_url) {
+            const qrSrc = details.qr_code_url.startsWith('http') ? details.qr_code_url : `${baseUrl}/${details.qr_code_url.replace(/^\/+/, '')}`;
+            qrHtml = `
+              <div style="text-align:center;margin:12px 0;">
+                <div style="font-size:11px;color:var(--cp-text-secondary);margin-bottom:6px;">Scan UPI QR Code:</div>
+                <img src="${qrSrc}" alt="UPI QR" style="max-width:140px;border-radius:6px;border:1px solid #e2e8f0;display:inline-block;" />
+              </div>
+            `;
+          }
+
+          let razorpayBtnHtml = '';
+          if (details.razorpay_key && window.Razorpay) {
+            razorpayBtnHtml = `
+              <button class="cp-submit-btn" id="cp-btn-rzp-checkout" style="width:100%;margin-top:8px;background:#0284c7;">
+                Pay Online via Razorpay (UPI / Card / NetBanking)
+              </button>
+            `;
+          }
+
+          statusBox.innerHTML = `
+            <div style="background:rgba(2,132,199,0.06);border:1px solid rgba(2,132,199,0.25);border-radius:10px;padding:16px;text-align:center;">
+              <div style="display:inline-flex;align-items:center;gap:6px;background:#0284c7;color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;margin-bottom:8px;">
+                Request Generated
+              </div>
+              <div style="font-weight:800;color:var(--cp-text-title);font-size:16px;">
+                #${escapeHtml(result.request_code)}
+              </div>
+              <div style="font-size:12.5px;color:var(--cp-text-secondary);margin-top:4px;">
+                Payable: <strong>₹${Number(amt).toLocaleString('en-IN')}</strong> for <em>${escapeHtml(itemTitle)}</em>
+              </div>
+              <div style="font-size:11px;color:var(--cp-text-muted);margin-top:6px;background:rgba(255,255,255,0.7);padding:8px;border-radius:6px;border:1px dashed #cbd5e1;">
+                Payment instructions and company bank details have been sent to <strong>${escapeHtml(email)}</strong>.
+              </div>
+
+              ${qrHtml}
+              ${bankHtml}
+              ${razorpayBtnHtml}
+
+              <button class="cp-btn-sm" id="cp-btn-payment-done" style="margin-top:10px;width:100%;justify-content:center;background:var(--cp-button-bg, #0f172a);color:#fff;padding:8px;border-radius:6px;">
+                Back to conversation
+              </button>
+            </div>
+          `;
+
+          // Hide initiate button once request is generated
+          initBtn.style.display = 'none';
+
+          const rzpBtn = shadow.getElementById('cp-btn-rzp-checkout');
+          if (rzpBtn) {
+            rzpBtn.addEventListener('click', () => {
+              const options = {
+                key: details.razorpay_key,
+                amount: amt * 100,
+                currency: 'INR',
+                name: widgetConfig.brand_name || (widgetConfig.company ? widgetConfig.company.name : 'CuboidPilot'),
+                description: `${itemTitle} - ${result.request_code}`,
+                prefill: {
+                  name: name,
+                  email: email,
+                  contact: phone
+                },
+                theme: { color: '#0f172a' },
+                handler: function (response) {
+                  alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
+                  navigateTo('chat');
+                }
+              };
+              const rzp = new window.Razorpay(options);
+              rzp.open();
+            });
+          }
+
+          const doneBtn = shadow.getElementById('cp-btn-payment-done');
+          if (doneBtn) {
+            doneBtn.addEventListener('click', () => navigateTo('chat'));
+          }
+
+        } catch (e) {
+          console.error(e);
+          alert('Network error while creating payment request.');
+          initBtn.disabled = false;
+          initBtn.textContent = 'Proceed to Pay Securely';
         }
       });
     }

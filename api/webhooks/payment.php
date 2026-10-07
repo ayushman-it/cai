@@ -88,6 +88,29 @@ try {
     // 4. Settle Payment Idempotently
     $settleRes = PaymentProvider::settlePayment($pdo, $companyId, $orderId, $paymentId, $amountInr, $provider);
 
+    // 4.1 Sync matching Payment Request if pending
+    try {
+        $prStmt = $pdo->prepare("
+            SELECT * FROM `payment_requests` 
+            WHERE `company_id` = ? AND `customer_id` = ? AND `status` = 'pending'
+            ORDER BY id DESC LIMIT 1
+        ");
+        $prStmt->execute([$companyId, (int)$existingPay['customer_id']]);
+        $prPending = $prStmt->fetch(PDO::FETCH_ASSOC);
+        if ($prPending) {
+            require_once __DIR__ . '/../payment_requests.php';
+            if (function_exists('settlePaymentRequest')) {
+                settlePaymentRequest($pdo, $prPending, [
+                    'utr'    => $paymentId,
+                    'method' => 'razorpay',
+                    'notes'  => "Auto-settled via Razorpay webhook ({$orderId})"
+                ]);
+            }
+        }
+    } catch (Throwable $prEx) {
+        error_log("[Webhook PaymentRequest Sync Note] " . $prEx->getMessage());
+    }
+
     // 5. Post AI payment confirmation into customer conversation
     $convStmt = $pdo->prepare("SELECT id FROM `conversations` WHERE `company_id` = ? AND `customer_id` = ? ORDER BY id DESC LIMIT 1");
     $convStmt->execute([$companyId, (int)$existingPay['customer_id']]);

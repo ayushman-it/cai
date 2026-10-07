@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
+require_once __DIR__ . '/../includes/mailer.php';
 
 // If downloading .ics, header will be set accordingly
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
@@ -538,14 +539,18 @@ try {
 
         $insApp = $pdo->prepare("
             INSERT INTO `appointments`
-            (`company_id`, `customer_id`, `lead_id`, `assigned_user_id`, `title`, `appointment_type`, `slot_datetime`, `status`, `notes`, `meet_link`, `created_at`, `updated_at`)
-            VALUES (?, ?, ?, ?, ?, 'consultation', ?, 'scheduled', ?, ?, NOW(), NOW())
+            (`company_id`, `customer_id`, `lead_id`, `conversation_id`, `assigned_user_id`, `customer_name`, `customer_phone`, `customer_email`, `title`, `appointment_type`, `slot_datetime`, `status`, `notes`, `meet_link`, `created_at`, `updated_at`)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'consultation', ?, 'scheduled', ?, ?, NOW(), NOW())
         ");
         $insApp->execute([
             $companyId,
             $customerId,
             $leadId,
+            $conversationId,
             $userId,
+            $visitorName,
+            $visitorPhone,
+            $visitorEmail,
             $appTitle,
             $slotDatetime,
             $notes,
@@ -575,6 +580,113 @@ try {
                 ]);
             } catch (Throwable $e) {
                 error_log('[WidgetActions] ChannelSync dispatch error: ' . $e->getMessage());
+            }
+        }
+
+        // Automated Email Notifications: Customer Confirmation & Admin Alert
+        $compName = htmlspecialchars($company['name'] ?? 'CuboidPilot');
+        $cNameEsc = htmlspecialchars($visitorName);
+        $agentNameEsc = htmlspecialchars($agent['name'] ?? 'Advisor');
+        $formattedDate = date('l, F j, Y', strtotime($slotDatetime));
+        $formattedTime = date('g:i A', strtotime($slotDatetime));
+
+        // 1. Send Customer Confirmation Email
+        if (!empty($visitorEmail) && filter_var($visitorEmail, FILTER_VALIDATE_EMAIL)) {
+            $custSubj = "Appointment Confirmed: {$appTitle} ({$compName})";
+            $custHtml = "
+            <div style='font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;'>
+                <div style='border-bottom:2px solid #0f172a;padding-bottom:12px;margin-bottom:18px;'>
+                    <h2 style='margin:0;font-size:20px;color:#0f172a;'>{$compName}</h2>
+                    <div style='font-size:12px;color:#64748b;margin-top:4px;'>Appointment Booking Confirmation</div>
+                </div>
+                <p style='font-size:14px;color:#1e293b;'>Dear <strong>{$cNameEsc}</strong>,</p>
+                <p style='font-size:13px;color:#334155;line-height:1.6;'>
+                    Your 1-on-1 consultation session with <strong>{$agentNameEsc}</strong> has been successfully confirmed.
+                </p>
+                <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:16px;margin:16px 0;'>
+                    <table style='width:100%;font-size:13px;color:#334155;border-collapse:collapse;'>
+                        <tr><td style='padding:4px 0;width:120px;color:#64748b;'>Booking ID:</td><td style='font-family:monospace;font-weight:700;'>#APT-{$appointmentId}</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Date:</td><td style='font-weight:600;'>{$formattedDate}</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Time:</td><td style='font-weight:600;'>{$formattedTime} (IST / 30 mins)</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Advisor:</td><td style='font-weight:600;'>{$agentNameEsc} ({$agent['job_title']})</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Meeting Room:</td><td><a href='{$meetLink}' style='color:#0284c7;font-weight:600;text-decoration:none;'>Join Video Room &rarr;</a></td></tr>
+                    </table>
+                </div>
+                <div style='text-align:center;margin:20px 0;'>
+                    <a href='{$meetLink}' style='background:#0f172a;color:#ffffff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600;display:inline-block;'>Join Google Meet Room</a>
+                </div>
+                <p style='font-size:12px;color:#64748b;line-height:1.5;'>
+                    Please keep this confirmation handy. A member of our team will join the call at the scheduled time.
+                </p>
+                <div style='border-top:1px solid #e2e8f0;padding-top:12px;margin-top:20px;font-size:11px;color:#94a3b8;'>
+                    © " . date('Y') . " {$compName}. Powered by CuboidPilot.
+                </div>
+            </div>";
+            CompanyMailer::send($pdo, $companyId, $visitorEmail, $custSubj, $custHtml);
+        }
+
+        // 2. Send Admin / Host Notification Email
+        $adminEmail = $company['email'] ?? '';
+        if (!empty($adminEmail)) {
+            $adminSubj = "New Appointment: {$visitorName} booked consultation with {$agent['name']}";
+            $adminHtml = "
+            <div style='font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;'>
+                <div style='border-bottom:2px solid #0f172a;padding-bottom:12px;margin-bottom:18px;'>
+                    <h2 style='margin:0;font-size:20px;color:#0f172a;'>CuboidPilot Lead Alert</h2>
+                    <div style='font-size:12px;color:#64748b;margin-top:4px;'>New Appointment Booked via Website Widget</div>
+                </div>
+                <p style='font-size:14px;color:#1e293b;'>Hello Admin,</p>
+                <p style='font-size:13px;color:#334155;line-height:1.6;'>
+                    <strong>{$cNameEsc}</strong> has booked a consultation session on your website widget.
+                </p>
+                <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:16px;margin:16px 0;'>
+                    <table style='width:100%;font-size:13px;color:#334155;border-collapse:collapse;'>
+                        <tr><td style='padding:4px 0;width:120px;color:#64748b;'>Client Name:</td><td style='font-weight:600;'>{$cNameEsc}</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Email:</td><td>{$visitorEmail}</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Phone:</td><td>{$visitorPhone}</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Assigned Host:</td><td style='font-weight:600;'>{$agentNameEsc}</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Date & Time:</td><td style='font-weight:600;'>{$formattedDate} at {$formattedTime}</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Notes:</td><td>" . htmlspecialchars($notes) . "</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Meeting Link:</td><td><a href='{$meetLink}' style='color:#0284c7;font-weight:600;'>{$meetLink}</a></td></tr>
+                    </table>
+                </div>
+                <div style='border-top:1px solid #e2e8f0;padding-top:12px;margin-top:20px;font-size:11px;color:#94a3b8;'>
+                    This appointment is synced with your dashboard's Scheduled Meetings section.
+                </div>
+            </div>";
+            CompanyMailer::send($pdo, $companyId, $adminEmail, $adminSubj, $adminHtml);
+        }
+
+        // 3. Dispatch WhatsApp Notification if company has connected WhatsApp
+        if (!empty($visitorPhone)) {
+            try {
+                $waStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` = 'connected' LIMIT 1");
+                $waStmt->execute([$companyId]);
+                $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
+                if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token'])) {
+                    $cleanPhone = preg_replace('/[^0-9]/', '', $visitorPhone);
+                    if (strlen($cleanPhone) === 10) $cleanPhone = '91' . $cleanPhone;
+                    $waMsg = "📅 *Appointment Confirmed!*\n\nHello {$visitorName},\nYour consultation with *{$agent['name']}* is confirmed for *{$formattedDate} at {$formattedTime}*.\n\nMeeting link: {$meetLink}\n\nWe look forward to speaking with you!";
+                    $payload = [
+                        'messaging_product' => 'whatsapp',
+                        'to'                => $cleanPhone,
+                        'type'              => 'text',
+                        'text'              => ['body' => $waMsg]
+                    ];
+                    $ch = curl_init("https://graph.facebook.com/v19.0/{$waAcc['phone_number_id']}/messages");
+                    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                        'Authorization: Bearer ' . $waAcc['whatsapp_access_token'],
+                        'Content-Type: application/json'
+                    ]);
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+                    curl_exec($ch);
+                    curl_close($ch);
+                }
+            } catch (Throwable $waEx) {
+                error_log('[WidgetActions WA Appointment Alert Error] ' . $waEx->getMessage());
             }
         }
 

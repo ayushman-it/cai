@@ -211,7 +211,45 @@ try {
         json_encode(['direction' => 'incoming', 'conversation_id' => $conversationId])
     ]);
 
-    // 5. Check Omnichannel Pending Action: SEND_ASSET_EMAIL
+    // 5. Check Remote Payment Confirmation via WhatsApp
+    // e.g. "Confirm PRQ-202610-ABC123" or "Payment Done PRQ-202610-ABC123" or "PRQ-202610-ABC123 paid"
+    if (preg_match('/(?:confirm|payment\s*done|paid|approved|verify)\s*(PRQ-[0-9]{6}-[A-Za-z0-9]+)/i', $messageText, $prMatch) ||
+        preg_match('/(PRQ-[0-9]{6}-[A-Za-z0-9]+)\s*(?:done|paid|confirm|verified)/i', $messageText, $prMatch)) {
+        $targetPrCode = strtoupper(trim($prMatch[1]));
+        $prStmt = $pdo->prepare("SELECT * FROM `payment_requests` WHERE `request_code` = ? AND `company_id` = ? LIMIT 1");
+        $prStmt->execute([$targetPrCode, $resolvedCompanyId]);
+        $prFound = $prStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($prFound) {
+            if ($prFound['status'] === 'completed') {
+                $replyText = "ℹ️ Payment Request *{$targetPrCode}* is already marked as *Completed*.";
+            } else {
+                require_once __DIR__ . '/../payment_requests.php';
+                settlePaymentRequest($pdo, $prFound, [
+                    'confirmed_by' => "WhatsApp User ({$senderPhone})",
+                    'notes'        => "Confirmed via WhatsApp chat reply",
+                    'utr'          => 'WA-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 8)),
+                    'method'       => 'whatsapp_verified'
+                ]);
+                $replyText = "✅ *Payment Request {$targetPrCode} Confirmed!*\n\n"
+                    . "• Customer: {$prFound['customer_name']}\n"
+                    . "• Amount: ₹" . number_format($prFound['amount_inr']) . "\n"
+                    . "• Status: Completed\n\n"
+                    . "Official tax receipt email has been dispatched to `{$prFound['customer_email']}` and CRM lead updated to WON.";
+            }
+
+            // Send confirmation WhatsApp message back to sender
+            $pdo->prepare("
+                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+                VALUES (?, ?, 'ai', ?, 'whatsapp', NOW())
+            ")->execute([$resolvedCompanyId, $conversationId, $replyText]);
+
+            echo json_encode(['status' => 'payment_confirmed', 'request_code' => $targetPrCode]);
+            exit;
+        }
+    }
+
+    // 6. Check Omnichannel Pending Action: SEND_ASSET_EMAIL
     $pendingAsset = null;
     if (!empty($journey['pending_asset_id'])) {
         $paStmt = $pdo->prepare("SELECT * FROM `company_assets` WHERE `id` = ? AND `company_id` = ? LIMIT 1");

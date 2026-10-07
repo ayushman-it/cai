@@ -568,6 +568,10 @@ window.CuboidShell = {
               <span class="flex items-center gap-2"><i data-lucide="layout-grid" class="w-3.5 h-3.5 text-stone-400"></i> Executive Reports</span>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-stone-400"></i>
             </a>
+            <a href="payments.html" class="flex items-center justify-between text-[11.5px] font-medium text-stone-700 px-2 py-1.5 hover:bg-stone-100 rounded transition-colors no-underline">
+              <span class="flex items-center gap-2"><i data-lucide="receipt" class="w-3.5 h-3.5 text-stone-400"></i> Payment Requests</span>
+              <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-stone-400"></i>
+            </a>
             <a href="conversations.html" class="flex items-center justify-between text-[11.5px] font-medium text-stone-700 px-2 py-1.5 hover:bg-stone-100 rounded transition-colors no-underline">
               <span class="flex items-center gap-2"><i data-lucide="message-square" class="w-3.5 h-3.5 text-stone-400"></i> Inbox &amp; Chats</span>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-stone-400"></i>
@@ -736,6 +740,9 @@ window.CuboidShell = {
           </a>
           <a href="appointments.html" class="sub-nav-item ${active === 'appointments' ? 'active' : ''}">
             <span class="flex items-center gap-2"><i data-lucide="calendar" class="w-3.5 h-3.5 text-stone-600"></i> Appointments</span>
+          </a>
+          <a href="payments.html" class="sub-nav-item ${active === 'payments' ? 'active' : ''}">
+            <span class="flex items-center gap-2"><i data-lucide="receipt" class="w-3.5 h-3.5 text-stone-600"></i> Payment Requests</span>
           </a>
           <a href="billing.html" class="sub-nav-item ${active === 'billing' ? 'active' : ''}">
             <span class="flex items-center gap-2"><i data-lucide="credit-card" class="w-3.5 h-3.5 text-stone-600"></i> Billing & Plans</span>

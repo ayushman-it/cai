@@ -133,8 +133,8 @@ function getDbConnection() {
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
     static $schemaChecked = false;
     if (!$schemaChecked) {
-        $localLock = __DIR__ . '/.schema_installed_v18';
-        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v18.lock';
+        $localLock = __DIR__ . '/.schema_installed_v19';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v19.lock';
         if (!file_exists($localLock) || !file_exists($tempLock)) {
             initDbSchemaAndUsers($pdo);
             ensureExtendedSchema($pdo);
@@ -1430,6 +1430,39 @@ HTML;
                 `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
                 KEY `idx_exec` (`execution_id`),
                 KEY `idx_comp` (`company_id`, `automation_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+
+        // 21. Payment Requests & Multichannel Settlement Table
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `payment_requests` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `company_id` INT NOT NULL,
+                `request_code` VARCHAR(50) NOT NULL UNIQUE,
+                `customer_id` INT NOT NULL,
+                `lead_id` INT NULL,
+                `conversation_id` INT NULL,
+                `item_type` ENUM('course', 'product', 'service', 'custom') NOT NULL DEFAULT 'course',
+                `item_title` VARCHAR(200) NOT NULL,
+                `amount_inr` INT NOT NULL DEFAULT 0,
+                `customer_name` VARCHAR(150) NOT NULL,
+                `customer_email` VARCHAR(150) NOT NULL,
+                `customer_phone` VARCHAR(30) NOT NULL,
+                `status` ENUM('pending', 'completed', 'cancelled') NOT NULL DEFAULT 'pending',
+                `payment_method` VARCHAR(50) NULL DEFAULT 'upi',
+                `transaction_reference` VARCHAR(100) NULL,
+                `confirmation_token` VARCHAR(64) NULL,
+                `confirmed_by_user_id` INT NULL,
+                `confirmed_at` DATETIME NULL,
+                `receipt_sent_at` DATETIME NULL,
+                `notes` TEXT NULL,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                KEY `idx_pr_company_status` (`company_id`, `status`),
+                KEY `idx_pr_code` (`request_code`),
+                KEY `idx_pr_customer` (`customer_id`),
+                KEY `idx_pr_lead` (`lead_id`),
+                KEY `idx_pr_token` (`confirmation_token`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
     } catch (Exception $e) {}
