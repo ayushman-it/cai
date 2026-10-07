@@ -133,9 +133,9 @@ function getDbConnection() {
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
     static $schemaChecked = false;
     if (!$schemaChecked) {
-        $localLock = __DIR__ . '/.schema_installed_v16';
-        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v16.lock';
-        if (!file_exists($localLock) && !file_exists($tempLock)) {
+        $localLock = __DIR__ . '/.schema_installed_v18';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v18.lock';
+        if (!file_exists($localLock) || !file_exists($tempLock)) {
             initDbSchemaAndUsers($pdo);
             ensureExtendedSchema($pdo);
             @file_put_contents($localLock, time());

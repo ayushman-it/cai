@@ -170,14 +170,42 @@ try {
             }
 
             $sql .= " ORDER BY p.`id` ASC";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute($params);
-            $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            $products = [];
+            try {
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Throwable $e) {
+                $fallbackSql = "SELECT p.* FROM `products` p WHERE p.`company_id` = ?";
+                $fParams = [$companyId];
+                if ($activeOnly) {
+                    $fallbackSql .= " AND p.`is_active` = 1";
+                }
+                if (!empty($search)) {
+                    $fallbackSql .= " AND (p.`name` LIKE ? OR p.`description` LIKE ?)";
+                    $fParams[] = "%{$search}%";
+                    $fParams[] = "%{$search}%";
+                }
+                $fallbackSql .= " ORDER BY p.`id` ASC";
+                try {
+                    $stmt = $pdo->prepare($fallbackSql);
+                    $stmt->execute($fParams);
+                    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                } catch (Throwable $e2) {
+                    $products = [];
+                }
+            }
 
             // Fetch variants for each product
-            $vStmt = $pdo->prepare("SELECT * FROM `product_variants` WHERE `company_id` = ? AND `is_active` = 1 ORDER BY `price_inr` ASC");
-            $vStmt->execute([$companyId]);
-            $allVariants = $vStmt->fetchAll(PDO::FETCH_ASSOC);
+            $allVariants = [];
+            try {
+                $vStmt = $pdo->prepare("SELECT * FROM `product_variants` WHERE `company_id` = ? AND `is_active` = 1 ORDER BY `price_inr` ASC");
+                $vStmt->execute([$companyId]);
+                $allVariants = $vStmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Throwable $e) {
+                $allVariants = [];
+            }
             $variantsByProd = [];
             foreach ($allVariants as $v) {
                 $variantsByProd[$v['product_id']][] = $v;
@@ -239,15 +267,26 @@ try {
                 exit;
             }
 
-            $stmt = $pdo->prepare("
-                SELECT p.*, a.file_name as brochure_file_name, a.title as brochure_title, a.file_size as brochure_file_size
-                FROM `products` p
-                LEFT JOIN `company_assets` a ON a.id = p.brochure_asset_id
-                WHERE p.`id` = ? AND p.`company_id` = ?
-                LIMIT 1
-            ");
-            $stmt->execute([$id, $companyId]);
-            $p = $stmt->fetch(PDO::FETCH_ASSOC);
+            $p = null;
+            try {
+                $stmt = $pdo->prepare("
+                    SELECT p.*, a.file_name as brochure_file_name, a.title as brochure_title, a.file_size as brochure_file_size
+                    FROM `products` p
+                    LEFT JOIN `company_assets` a ON a.id = p.brochure_asset_id
+                    WHERE p.`id` = ? AND p.`company_id` = ?
+                    LIMIT 1
+                ");
+                $stmt->execute([$id, $companyId]);
+                $p = $stmt->fetch(PDO::FETCH_ASSOC);
+            } catch (Throwable $e) {
+                try {
+                    $stmt = $pdo->prepare("SELECT p.* FROM `products` p WHERE p.`id` = ? AND p.`company_id` = ? LIMIT 1");
+                    $stmt->execute([$id, $companyId]);
+                    $p = $stmt->fetch(PDO::FETCH_ASSOC);
+                } catch (Throwable $e2) {
+                    $p = null;
+                }
+            }
 
             if (!$p) {
                 http_response_code(404);
@@ -255,9 +294,14 @@ try {
                 exit;
             }
 
-            $vStmt = $pdo->prepare("SELECT * FROM `product_variants` WHERE `product_id` = ? AND `company_id` = ? ORDER BY `price_inr` ASC");
-            $vStmt->execute([$id, $companyId]);
-            $variants = $vStmt->fetchAll(PDO::FETCH_ASSOC);
+            $variants = [];
+            try {
+                $vStmt = $pdo->prepare("SELECT * FROM `product_variants` WHERE `product_id` = ? AND `company_id` = ? ORDER BY `price_inr` ASC");
+                $vStmt->execute([$id, $companyId]);
+                $variants = $vStmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Throwable $e) {
+                $variants = [];
+            }
 
             $features = !empty($p['features_json']) ? json_decode($p['features_json'], true) : [];
             $deliverables = !empty($p['deliverables_json']) ? json_decode($p['deliverables_json'], true) : [];
