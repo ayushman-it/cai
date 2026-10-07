@@ -91,15 +91,15 @@ if ($action === 'verify_token_web' || $action === 'confirm_by_token') {
 // PUBLIC WIDGET ACTION: create (Visitor proceeds with Payment)
 // -------------------------------------------------------------
 if ($action === 'create') {
-    $companyKey   = trim($data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
-    $visitorName  = trim($data['name'] ?? $data['customer_name'] ?? '');
-    $visitorEmail = trim($data['email'] ?? $data['customer_email'] ?? '');
-    $visitorPhone = trim($data['phone'] ?? $data['customer_phone'] ?? '');
-    $amountInr    = (int)($data['amount'] ?? $data['amount_inr'] ?? 0);
-    $itemTitle    = trim($data['item_title'] ?? $data['title'] ?? 'Course Enrollment');
-    $itemType     = trim($data['item_type'] ?? 'course');
-    $sessionToken = trim($data['session_id'] ?? $data['session_token'] ?? '');
-    $convoId      = !empty($data['conversation_id']) ? (int)$data['conversation_id'] : null;
+    $companyKey   = trim($data['company_key'] ?? $_POST['company_key'] ?? $_GET['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    $visitorName  = trim($data['name'] ?? $data['customer_name'] ?? $_POST['name'] ?? $_GET['name'] ?? '');
+    $visitorEmail = trim($data['email'] ?? $data['customer_email'] ?? $_POST['email'] ?? $_GET['email'] ?? '');
+    $visitorPhone = trim($data['phone'] ?? $data['customer_phone'] ?? $_POST['phone'] ?? $_GET['phone'] ?? '');
+    $amountInr    = (int)($data['amount'] ?? $data['amount_inr'] ?? $_POST['amount'] ?? $_GET['amount'] ?? 0);
+    $itemTitle    = trim($data['item_title'] ?? $data['title'] ?? $_POST['item_title'] ?? $_GET['item_title'] ?? 'Course Enrollment');
+    $itemType     = trim($data['item_type'] ?? $_POST['item_type'] ?? $_GET['item_type'] ?? 'course');
+    $sessionToken = trim($data['session_id'] ?? $data['session_token'] ?? $_POST['session_id'] ?? $_GET['session_id'] ?? '');
+    $convoId      = !empty($data['conversation_id']) ? (int)$data['conversation_id'] : (!empty($_GET['conversation_id']) ? (int)$_GET['conversation_id'] : null);
 
     if (empty($companyKey)) {
         http_response_code(400);
