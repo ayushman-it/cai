@@ -22,11 +22,23 @@ require_once __DIR__ . '/../includes/mailer.php';
 $pdo = getDbConnection();
 
 // Allow public action for token confirmation landing page or webhooks
-$action = $_GET['action'] ?? ($_POST['action'] ?? 'list');
+$action = $_GET['action'] ?? ($_POST['action'] ?? '');
 $rawInput = file_get_contents('php://input');
-$data = json_decode($rawInput, true) ?? $_POST;
+$data = [];
+if (!empty($rawInput)) {
+    $decoded = json_decode($rawInput, true);
+    if (is_array($decoded)) {
+        $data = $decoded;
+    }
+}
+if (empty($data)) {
+    $data = $_POST;
+}
 if (!empty($data['action'])) {
     $action = $data['action'];
+}
+if (empty($action)) {
+    $action = 'list';
 }
 
 // -------------------------------------------------------------
