@@ -10,6 +10,9 @@
  * 6. CRM Lead progression to WON & automated customer tax receipt email.
  */
 
+ini_set('display_errors', '0');
+error_reporting(E_ALL);
+
 if (php_sapi_name() !== 'cli' && !headers_sent()) {
     header("Content-Type: application/json; charset=UTF-8");
     header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -19,7 +22,8 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/payment_provider.php';
 require_once __DIR__ . '/../includes/mailer.php';
 
-$pdo = getDbConnection();
+try {
+    $pdo = getDbConnection();
 
 // Allow public action for token confirmation landing page or webhooks
 $action = $_GET['action'] ?? ($_POST['action'] ?? '');
@@ -546,6 +550,17 @@ if ($action === 'manual_entry') {
         'request_code' => $requestCode,
         'payment_id'   => $prId
     ]);
+    exit;
+}
+
+} catch (Throwable $mainEx) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error'   => 'Payment Requests Server Error: ' . $mainEx->getMessage(),
+        'file'    => basename($mainEx->getFile()),
+        'line'    => $mainEx->getLine()
+    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
     exit;
 }
 
