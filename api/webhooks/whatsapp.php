@@ -249,6 +249,82 @@ try {
         }
     }
 
+    // 5b. Check Remote Appointment Management via WhatsApp
+    // e.g. "Confirm APT-12" or "Cancel APT-12" or "Complete APT-12" or "Appointment 12 confirmed"
+    if (preg_match('/(confirm|cancel|complete|completed|reschedule)\s*(?:apt|appointment)?\s*#?([0-9]+)/i', $messageText, $aptMatch) ||
+        preg_match('/(?:apt|appointment)\s*#?([0-9]+)\s*(confirm|cancel|complete|completed|reschedule)/i', $messageText, $aptMatchRev)) {
+        
+        $actionCmd = !empty($aptMatch[1]) ? strtolower($aptMatch[1]) : strtolower($aptMatchRev[2] ?? '');
+        $targetAptId = !empty($aptMatch[2]) ? (int)$aptMatch[2] : (int)($aptMatchRev[1] ?? 0);
+
+        if ($targetAptId > 0) {
+            $aStmt = $pdo->prepare("SELECT a.*, c.name as company_name FROM `appointments` a JOIN `companies` c ON c.id = a.company_id WHERE a.id = ? AND a.company_id = ? LIMIT 1");
+            $aStmt->execute([$targetAptId, $resolvedCompanyId]);
+            $aptFound = $aStmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($aptFound) {
+                $newStatus = 'scheduled';
+                $replyText = '';
+                $custName = $aptFound['customer_name'] ?: 'Prospect';
+
+                if ($actionCmd === 'confirm') {
+                    $newStatus = 'scheduled';
+                    $pdo->prepare("UPDATE `appointments` SET `status` = 'scheduled', `updated_at` = NOW() WHERE id = ?")->execute([$targetAptId]);
+                    
+                    try {
+                        $pdo->prepare("
+                            INSERT INTO `appointment_activities`
+                            (`appointment_id`, `company_id`, `action`, `actor_type`, `actor_name`, `channel`, `details`, `created_at`)
+                            VALUES (?, ?, 'confirmed_by_whatsapp', 'admin', ?, 'whatsapp', 'Confirmed via WhatsApp remote command', NOW())
+                        ")->execute([$targetAptId, $resolvedCompanyId, "WhatsApp User ({$senderPhone})"]);
+                    } catch (Exception $actEx) {}
+
+                    $replyText = "✅ *Appointment #APT-{$targetAptId} Confirmed!*\n\n"
+                        . "• Client: {$custName}\n"
+                        . "• Slot: " . date('l, M j \a\t g:i A', strtotime($aptFound['slot_datetime'])) . "\n"
+                        . "• Meeting: {$aptFound['meet_link']}\n"
+                        . "• Status: Scheduled & Active";
+                } elseif ($actionCmd === 'cancel') {
+                    $newStatus = 'cancelled';
+                    $pdo->prepare("UPDATE `appointments` SET `status` = 'cancelled', `updated_at` = NOW() WHERE id = ?")->execute([$targetAptId]);
+
+                    try {
+                        $pdo->prepare("
+                            INSERT INTO `appointment_activities`
+                            (`appointment_id`, `company_id`, `action`, `actor_type`, `actor_name`, `channel`, `details`, `created_at`)
+                            VALUES (?, ?, 'cancelled_by_whatsapp', 'admin', ?, 'whatsapp', 'Cancelled via WhatsApp remote command', NOW())
+                        ")->execute([$targetAptId, $resolvedCompanyId, "WhatsApp User ({$senderPhone})"]);
+                    } catch (Exception $actEx) {}
+
+                    $replyText = "❌ *Appointment #APT-{$targetAptId} Cancelled.*\n\nClient: {$custName}\nThe status has been updated in your Scheduled Meetings dashboard.";
+                } elseif ($actionCmd === 'complete' || $actionCmd === 'completed') {
+                    $newStatus = 'completed';
+                    $pdo->prepare("UPDATE `appointments` SET `status` = 'completed', `updated_at` = NOW() WHERE id = ?")->execute([$targetAptId]);
+
+                    try {
+                        $pdo->prepare("
+                            INSERT INTO `appointment_activities`
+                            (`appointment_id`, `company_id`, `action`, `actor_type`, `actor_name`, `channel`, `details`, `created_at`)
+                            VALUES (?, ?, 'completed_by_whatsapp', 'admin', ?, 'whatsapp', 'Marked completed via WhatsApp remote command', NOW())
+                        ")->execute([$targetAptId, $resolvedCompanyId, "WhatsApp User ({$senderPhone})"]);
+                    } catch (Exception $actEx) {}
+
+                    $replyText = "🎉 *Appointment #APT-{$targetAptId} Marked Completed!*\n\nClient: {$custName}\nGreat job wrapping up the consultation!";
+                }
+
+                if (!empty($replyText)) {
+                    $pdo->prepare("
+                        INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+                        VALUES (?, ?, 'ai', ?, 'whatsapp', NOW())
+                    ")->execute([$resolvedCompanyId, $conversationId, $replyText]);
+
+                    echo json_encode(['status' => 'appointment_updated', 'appointment_id' => $targetAptId, 'new_status' => $newStatus]);
+                    exit;
+                }
+            }
+        }
+    }
+
     // 6. Check Omnichannel Pending Action: SEND_ASSET_EMAIL
     $pendingAsset = null;
     if (!empty($journey['pending_asset_id'])) {

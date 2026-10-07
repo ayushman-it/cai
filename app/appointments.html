@@ -114,13 +114,14 @@
                   <th>Consultant (Host)</th>
                   <th>Date & Time Slot</th>
                   <th>Meeting Session</th>
+                  <th>GCal Sync</th>
                   <th>Status</th>
                   <th class="text-right">Actions</th>
                 </tr>
               </thead>
               <tbody id="appointments-tbody">
                 <tr>
-                  <td colspan="6" class="p-8 text-center text-xs text-stone-400">Loading appointments...</td>
+                  <td colspan="7" class="p-8 text-center text-xs text-stone-400">Loading appointments...</td>
                 </tr>
               </tbody>
             </table>
@@ -283,6 +284,29 @@
     </div>
   </div>
 
+  <!-- Activity History Modal -->
+  <div id="activity-modal" class="app-modal-overlay">
+    <div class="app-modal p-6 max-w-lg w-full">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-4">
+        <div>
+          <h3 class="text-sm font-semibold text-stone-900" id="activity-title">Appointment Activity History</h3>
+          <p class="text-[11px] text-stone-500 mt-0.5" id="activity-subtitle">Complete chronological audit trail</p>
+        </div>
+        <button onclick="closeActivityModal()" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="activity-list" class="space-y-3 max-h-[360px] overflow-y-auto pr-1 text-xs">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div class="pt-4 border-t border-[#e7e5de] flex justify-end mt-4">
+        <button type="button" onclick="closeActivityModal()" class="btn-secondary btn-sm py-1.5 px-4">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../js/components.js?v=5.0.0"></script>
   <script src="../js/dashboard.js?v=5.0.0"></script>
   <script>
@@ -433,6 +457,26 @@
                 </div>
               </td>
               <td class="p-3.5">
+                ${a.gcal_sync_status === 'synced' ? `
+                  <span class="inline-flex items-center gap-1 text-[10.5px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded" title="Google Calendar Event ID: ${escapeHtml(a.calendar_event_id || 'synced')}">
+                    <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i> Synced
+                  </span>
+                ` : a.gcal_sync_status === 'failed' ? `
+                  <div class="flex items-center gap-1">
+                    <span class="inline-flex items-center gap-1 text-[10.5px] font-medium text-rose-700 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded" title="${escapeHtml(a.gcal_sync_error || 'Sync failed')}">
+                      <i data-lucide="alert-circle" class="w-3 h-3 text-rose-500"></i> Failed
+                    </span>
+                    <button onclick="retryGcalSync(${a.id}, this)" class="p-1 text-stone-500 hover:text-stone-900 rounded hover:bg-stone-100" title="Retry Calendar Sync">
+                      <i data-lucide="rotate-cw" class="w-3 h-3"></i>
+                    </button>
+                  </div>
+                ` : `
+                  <span class="inline-flex items-center text-[10.5px] text-stone-400 bg-stone-50 border border-stone-200 px-1.5 py-0.5 rounded">
+                    Unlinked
+                  </span>
+                `}
+              </td>
+              <td class="p-3.5">
                 <span class="inline-block text-[11px] uppercase tracking-wider px-2 py-0.5 rounded border font-medium ${statusBadge}">
                   ${escapeHtml(a.status)}
                 </span>
@@ -441,6 +485,9 @@
                 <div class="flex items-center justify-end gap-1.5">
                   <button onclick="openDetailsModal(${a.id})" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-stone-700" title="View Full Details">
                     <i data-lucide="eye" class="w-3 h-3 mr-1"></i> Details
+                  </button>
+                  <button onclick="openActivityModal(${a.id})" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-purple-700 hover:bg-purple-50" title="Activity History">
+                    <i data-lucide="history" class="w-3 h-3 mr-1"></i> History
                   </button>
                   ${a.status !== 'cancelled' ? `
                     <button onclick="openRescheduleModal(${a.id})" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-blue-700 hover:bg-blue-50" title="Reschedule Slot">
@@ -763,6 +810,97 @@
         navigator.clipboard.writeText(link);
         CuboidShell.toast('Meeting room link copied to clipboard!', 'info');
       }
+    }
+
+    async function retryGcalSync(id, btn) {
+      if (btn) {
+        btn.classList.add('animate-spin');
+        btn.disabled = true;
+      }
+      try {
+        const res = await fetch(`../api/appointments.php?action=retry_gcal_sync&id=${id}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data && data.synced) {
+          CuboidShell.toast('Google Calendar event synced successfully!', 'success');
+        } else {
+          CuboidShell.toast(data.message || data.error || 'Sync retry failed. Check Calendar credentials in Settings.', 'error');
+        }
+        loadAppointments();
+      } catch (err) {
+        CuboidShell.toast('Error connecting to calendar server', 'error');
+      } finally {
+        if (btn) {
+          btn.classList.remove('animate-spin');
+          btn.disabled = false;
+        }
+      }
+    }
+
+    async function openActivityModal(id) {
+      const a = appointmentsData.find(item => item.id == id);
+      const modal = document.getElementById('activity-modal');
+      const titleEl = document.getElementById('activity-title');
+      const subtitleEl = document.getElementById('activity-subtitle');
+      const listEl = document.getElementById('activity-list');
+
+      titleEl.textContent = `Activity History: #${id}`;
+      subtitleEl.textContent = a ? `${a.customer_name} • ${a.title}` : `Audit trail for Appointment #${id}`;
+      listEl.innerHTML = '<div class="p-6 text-center text-stone-400">Loading audit trail...</div>';
+
+      modal.classList.add('open');
+      if (window.lucide) window.lucide.createIcons();
+
+      try {
+        const res = await fetch(`../api/appointments.php?action=get_activities&id=${id}`);
+        const data = await res.json();
+        if (!data || !data.success || !data.activities || data.activities.length === 0) {
+          listEl.innerHTML = `
+            <div class="p-6 text-center text-stone-400">
+              <i data-lucide="info" class="w-6 h-6 mx-auto mb-1 text-stone-300"></i>
+              <div>No activity history recorded yet.</div>
+            </div>
+          `;
+          if (window.lucide) window.lucide.createIcons();
+          return;
+        }
+
+        let html = '';
+        data.activities.forEach(act => {
+          let badgeColor = 'bg-stone-100 text-stone-700';
+          if (act.action.includes('created')) badgeColor = 'bg-blue-50 text-blue-700 border border-blue-200';
+          else if (act.action.includes('confirm')) badgeColor = 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+          else if (act.action.includes('cancel')) badgeColor = 'bg-rose-50 text-rose-700 border border-rose-200';
+          else if (act.action.includes('gcal')) badgeColor = 'bg-purple-50 text-purple-700 border border-purple-200';
+          else if (act.action.includes('email')) badgeColor = 'bg-amber-50 text-amber-700 border border-amber-200';
+
+          html += `
+            <div class="p-3 bg-stone-50 rounded border border-stone-200 flex flex-col gap-1">
+              <div class="flex items-center justify-between">
+                <span class="inline-block text-[10px] uppercase font-bold px-2 py-0.5 rounded ${badgeColor}">${escapeHtml(act.action)}</span>
+                <span class="text-[10.5px] text-stone-400">${escapeHtml(act.formatted_date || '')}</span>
+              </div>
+              <div class="text-xs text-stone-800 font-medium mt-0.5">${escapeHtml(act.details || '')}</div>
+              <div class="text-[10.5px] text-stone-500 flex items-center gap-2 mt-0.5">
+                <span>By: <strong>${escapeHtml(act.actor_name || act.actor_type)}</strong></span>
+                <span>•</span>
+                <span>Via: <strong class="capitalize">${escapeHtml(act.channel)}</strong></span>
+              </div>
+            </div>
+          `;
+        });
+        listEl.innerHTML = html;
+        if (window.lucide) window.lucide.createIcons();
+      } catch (e) {
+        listEl.innerHTML = '<div class="p-6 text-center text-rose-500">Error loading activity history.</div>';
+      }
+    }
+
+    function closeActivityModal() {
+      const modal = document.getElementById('activity-modal');
+      if (modal) modal.classList.remove('open');
     }
 
     function escapeHtml(str) {

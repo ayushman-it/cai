@@ -141,9 +141,22 @@ function syncAppointmentToGoogleCalendar(PDO $pdo, int $companyId, int $appointm
                     if (!empty($meetLink)) {
                         $pdo->prepare("
                             UPDATE `appointments`
-                            SET `google_event_id` = ?, `meet_link` = ?, `updated_at` = NOW()
+                            SET `google_event_id` = ?, `meet_link` = ?, `gcal_sync_status` = 'synced', `gcal_sync_error` = NULL, `updated_at` = NOW()
                             WHERE id = ? AND company_id = ?
                         ")->execute([$eventId, $meetLink, $appointmentId, $companyId]);
+
+                        // Log activity
+                        try {
+                            $pdo->prepare("
+                                INSERT INTO `appointment_activities`
+                                (`appointment_id`, `company_id`, `action`, `actor_type`, `actor_name`, `channel`, `details`, `created_at`)
+                                VALUES (?, ?, 'gcal_synced', 'system', 'Google Calendar API', 'system', ?, NOW())
+                            ")->execute([
+                                $appointmentId,
+                                $companyId,
+                                "Synced to Google Calendar event ID: {$eventId}"
+                            ]);
+                        } catch (Exception $actEx) {}
 
                         return [
                             'success'        => true,
@@ -153,7 +166,38 @@ function syncAppointmentToGoogleCalendar(PDO $pdo, int $companyId, int $appointm
                             'provider'       => 'google_calendar'
                         ];
                     }
+                } else {
+                    $errorMsg = "HTTP {$httpCode}: " . substr($response, 0, 200);
+                    $pdo->prepare("
+                        UPDATE `appointments`
+                        SET `gcal_sync_status` = 'failed', `gcal_sync_error` = ?, `updated_at` = NOW()
+                        WHERE id = ? AND company_id = ?
+                    ")->execute([$errorMsg, $appointmentId, $companyId]);
+
+                    try {
+                        $pdo->prepare("
+                            INSERT INTO `appointment_activities`
+                            (`appointment_id`, `company_id`, `action`, `actor_type`, `actor_name`, `channel`, `details`, `created_at`)
+                            VALUES (?, ?, 'gcal_sync_failed', 'system', 'Google Calendar API', 'system', ?, NOW())
+                        ")->execute([
+                            $appointmentId,
+                            $companyId,
+                            "Google Calendar sync failed: {$errorMsg}"
+                        ]);
+                    } catch (Exception $actEx) {}
+
+                    return [
+                        'success' => false,
+                        'synced'  => false,
+                        'error'   => $errorMsg
+                    ];
                 }
+            } else {
+                $pdo->prepare("
+                    UPDATE `appointments`
+                    SET `gcal_sync_status` = 'failed', `gcal_sync_error` = 'Unable to obtain valid Google access token', `updated_at` = NOW()
+                    WHERE id = ? AND company_id = ?
+                ")->execute([$appointmentId, $companyId]);
             }
         }
 
@@ -178,6 +222,13 @@ function syncAppointmentToGoogleCalendar(PDO $pdo, int $companyId, int $appointm
 
     } catch (Exception $e) {
         error_log('[Google Calendar Sync Error] ' . $e->getMessage());
+        try {
+            $pdo->prepare("
+                UPDATE `appointments`
+                SET `gcal_sync_status` = 'failed', `gcal_sync_error` = ?, `updated_at` = NOW()
+                WHERE id = ? AND company_id = ?
+            ")->execute([$e->getMessage(), $appointmentId, $companyId]);
+        } catch (Exception $ignore) {}
         return ['success' => false, 'error' => $e->getMessage()];
     }
 }

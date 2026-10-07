@@ -10,12 +10,165 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
+require_once __DIR__ . '/../includes/mailer.php';
+require_once __DIR__ . '/google_calendar.php';
+
+$pdo = getDbConnection();
+
+// Allow public token actions from Admin 1-Click Emails
+$action = $_GET['action'] ?? ($_POST['action'] ?? '');
+$rawInput = file_get_contents('php://input');
+$data = json_decode($rawInput, true) ?? $_POST;
+if (!empty($data['action'])) {
+    $action = $data['action'];
+}
+
+// -------------------------------------------------------------
+// PUBLIC ACTION: token_action (1-Click Action from Admin Email)
+// -------------------------------------------------------------
+if ($action === 'token_action') {
+    $token = trim($_GET['token'] ?? $data['token'] ?? '');
+    $actionType = strtolower(trim($_GET['action_type'] ?? $data['action_type'] ?? 'confirm'));
+
+    if (empty($token)) {
+        header("Content-Type: text/html; charset=UTF-8");
+        echo renderAppointmentHtmlFeedback("Invalid Token", "Missing appointment security token.", "error");
+        exit;
+    }
+
+    $stmt = $pdo->prepare("SELECT a.*, c.name as company_name, c.company_key FROM `appointments` a JOIN `companies` c ON c.id = a.company_id WHERE a.`action_token` = ? LIMIT 1");
+    $stmt->execute([$token]);
+    $appt = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$appt) {
+        header("Content-Type: text/html; charset=UTF-8");
+        echo renderAppointmentHtmlFeedback("Not Found", "Appointment not found or link has expired.", "error");
+        exit;
+    }
+
+    $companyId = (int)$appt['company_id'];
+    $appId = (int)$appt['id'];
+    $custEmail = $appt['customer_email'];
+    $custName = $appt['customer_name'] ?: 'Prospect';
+    $slotTime = date('l, F j, Y \a\t g:i A', strtotime($appt['slot_datetime']));
+
+    if ($actionType === 'confirm') {
+        $pdo->prepare("UPDATE `appointments` SET `status` = 'scheduled', `updated_at` = NOW() WHERE id = ?")->execute([$appId]);
+        
+        // Log activity
+        $pdo->prepare("
+            INSERT INTO `appointment_activities`
+            (`appointment_id`, `company_id`, `action`, `actor_type`, `actor_name`, `channel`, `details`, `created_at`)
+            VALUES (?, ?, 'confirmed_by_token', 'admin', 'Admin Email Action', 'email', 'Confirmed via 1-click email action', NOW())
+        ")->execute([$appId, $companyId]);
+
+        // Send confirmation email to customer
+        if (!empty($custEmail) && filter_var($custEmail, FILTER_VALIDATE_EMAIL)) {
+            $subj = "Appointment Confirmed: #APT-{$appId} ({$appt['company_name']})";
+            $html = "
+            <div style='font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;'>
+                <div style='border-bottom:2px solid #10b981;padding-bottom:12px;margin-bottom:18px;'>
+                    <h2 style='margin:0;font-size:20px;color:#0f172a;'>{$appt['company_name']}</h2>
+                    <div style='font-size:12px;color:#64748b;margin-top:4px;'>Appointment Confirmed</div>
+                </div>
+                <p style='font-size:14px;color:#1e293b;'>Dear <strong>{$custName}</strong>,</p>
+                <p style='font-size:13px;color:#334155;line-height:1.6;'>
+                    Your scheduled appointment has been officially confirmed by our team.
+                </p>
+                <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:16px;margin:16px 0;font-size:13px;'>
+                    <p style='margin:0 0 6px;'><strong>Date & Time:</strong> {$slotTime} (IST)</p>
+                    <p style='margin:0;'><strong>Meeting Link:</strong> <a href='{$appt['meet_link']}' style='color:#0284c7;font-weight:600;'>Join Video Room &rarr;</a></p>
+                </div>
+                <p style='font-size:12px;color:#64748b;'>We look forward to speaking with you!</p>
+            </div>";
+            CompanyMailer::send($pdo, $companyId, $custEmail, $subj, $html);
+        }
+
+        header("Content-Type: text/html; charset=UTF-8");
+        echo renderAppointmentHtmlFeedback("Appointment Confirmed!", "Appointment <strong>#APT-{$appId}</strong> with <strong>{$custName}</strong> has been marked as <strong>Confirmed</strong>.<br>The client has been notified via email.", "success");
+        exit;
+    } elseif ($actionType === 'cancel') {
+        $pdo->prepare("UPDATE `appointments` SET `status` = 'cancelled', `updated_at` = NOW() WHERE id = ?")->execute([$appId]);
+        
+        $pdo->prepare("
+            INSERT INTO `appointment_activities`
+            (`appointment_id`, `company_id`, `action`, `actor_type`, `actor_name`, `channel`, `details`, `created_at`)
+            VALUES (?, ?, 'cancelled_by_token', 'admin', 'Admin Email Action', 'email', 'Cancelled via 1-click email action', NOW())
+        ")->execute([$appId, $companyId]);
+
+        // Customer notification
+        if (!empty($custEmail) && filter_var($custEmail, FILTER_VALIDATE_EMAIL)) {
+            $subj = "Appointment Cancelled: #APT-{$appId} ({$appt['company_name']})";
+            $html = "
+            <div style='font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;'>
+                <div style='border-bottom:2px solid #ef4444;padding-bottom:12px;margin-bottom:18px;'>
+                    <h2 style='margin:0;font-size:20px;color:#0f172a;'>{$appt['company_name']}</h2>
+                    <div style='font-size:12px;color:#64748b;margin-top:4px;'>Appointment Cancellation Notice</div>
+                </div>
+                <p style='font-size:14px;color:#1e293b;'>Dear <strong>{$custName}</strong>,</p>
+                <p style='font-size:13px;color:#334155;line-height:1.6;'>
+                    Your scheduled appointment for <strong>{$slotTime}</strong> has been cancelled. If you would like to reschedule, please visit our website widget.
+                </p>
+            </div>";
+            CompanyMailer::send($pdo, $companyId, $custEmail, $subj, $html);
+        }
+
+        header("Content-Type: text/html; charset=UTF-8");
+        echo renderAppointmentHtmlFeedback("Appointment Cancelled", "Appointment <strong>#APT-{$appId}</strong> has been marked as <strong>Cancelled</strong>.<br>The client has been notified.", "error");
+        exit;
+    } elseif ($actionType === 'complete') {
+        $pdo->prepare("UPDATE `appointments` SET `status` = 'completed', `updated_at` = NOW() WHERE id = ?")->execute([$appId]);
+        
+        $pdo->prepare("
+            INSERT INTO `appointment_activities`
+            (`appointment_id`, `company_id`, `action`, `actor_type`, `actor_name`, `channel`, `details`, `created_at`)
+            VALUES (?, ?, 'completed_by_token', 'admin', 'Admin Email Action', 'email', 'Marked completed via 1-click email action', NOW())
+        ")->execute([$appId, $companyId]);
+
+        header("Content-Type: text/html; charset=UTF-8");
+        echo renderAppointmentHtmlFeedback("Appointment Completed!", "Appointment <strong>#APT-{$appId}</strong> has been successfully marked as <strong>Completed</strong>.", "success");
+        exit;
+    } else {
+        header("Location: /app/appointments.html?id={$appId}");
+        exit;
+    }
+}
+
+function renderAppointmentHtmlFeedback(string $title, string $desc, string $type = 'success'): string {
+    $color = $type === 'success' ? '#10b981' : '#ef4444';
+    $icon = $type === 'success' ? '✓' : '✗';
+    return <<<HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{$title} — CuboidPilot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; max-width: 480px; width: 100%; padding: 32px; text-align: center; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05); }
+    .badge { width: 54px; height: 54px; border-radius: 50%; background: rgba(16, 185, 129, 0.12); color: {$color}; display: inline-flex; align-items: center; justify-content: center; font-size: 26px; margin-bottom: 16px; font-weight: bold; }
+    h1 { font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 10px; }
+    p { font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 24px; }
+    .btn { display: inline-block; padding: 10px 22px; background: #0f172a; color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge" style="color: {$color};">{$icon}</div>
+    <h1>{$title}</h1>
+    <p>{$desc}</p>
+    <a href="/app/appointments.html" class="btn">Go to Scheduled Meetings</a>
+  </div>
+</body>
+</html>
+HTML;
+}
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-
-$pdo = getDbConnection();
 
 if (empty($_SESSION['user_id']) || empty($_SESSION['company_id'])) {
     http_response_code(401);
@@ -134,6 +287,8 @@ try {
                         'notes'            => $r['notes'] ?? '',
                         'meet_link'        => $r['meet_link'] ?? 'https://meet.google.com/cp-consult',
                         'calendar_event_id'=> $r['calendar_event_id'] ?? ($r['google_event_id'] ?? null),
+                        'gcal_sync_status' => $r['gcal_sync_status'] ?? 'none',
+                        'gcal_sync_error'  => $r['gcal_sync_error'] ?? null,
                         'consultant'       => [
                             'id'         => $r['assigned_user_id'] ? (int)$r['assigned_user_id'] : null,
                             'name'       => $r['consultant_name'] ?? 'Company Consultant',
@@ -463,6 +618,57 @@ try {
                     'created_at'       => $appt['created_at']
                 ]
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            break;
+
+        // 6. Retry Google Calendar Synchronization
+        case 'retry_gcal_sync':
+            $appId = (int)($data['id'] ?? $_GET['id'] ?? 0);
+            if (!$appId) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Appointment ID required']);
+                exit;
+            }
+
+            $res = syncAppointmentToGoogleCalendar($pdo, $companyId, $appId);
+            $appStmt = $pdo->prepare("SELECT gcal_sync_status, gcal_sync_error, google_event_id, meet_link FROM `appointments` WHERE id = ? AND company_id = ? LIMIT 1");
+            $appStmt->execute([$appId, $companyId]);
+            $updatedApp = $appStmt->fetch(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'success'          => (bool)($res['success'] ?? false),
+                'synced'           => (bool)($res['synced'] ?? false),
+                'gcal_sync_status' => $updatedApp['gcal_sync_status'] ?? 'none',
+                'gcal_sync_error'  => $updatedApp['gcal_sync_error'] ?? null,
+                'google_event_id'  => $updatedApp['google_event_id'] ?? null,
+                'meet_link'        => $updatedApp['meet_link'] ?? null,
+                'message'          => ($res['synced'] ?? false) ? 'Successfully synced with Google Calendar' : ($res['error'] ?? 'Google Calendar not connected or failed')
+            ]);
+            break;
+
+        // 7. Get Activity History
+        case 'get_activities':
+        case 'activities':
+            $appId = (int)($_GET['id'] ?? $data['id'] ?? 0);
+            if (!$appId) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Appointment ID required']);
+                exit;
+            }
+
+            $actStmt = $pdo->prepare("
+                SELECT id, action, actor_type, actor_name, channel, details, DATE_FORMAT(created_at, '%b %e, %Y at %l:%i %p') as formatted_date
+                FROM `appointment_activities`
+                WHERE `appointment_id` = ? AND `company_id` = ?
+                ORDER BY id ASC
+            ");
+            $actStmt->execute([$appId, $companyId]);
+            $activities = $actStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'success'    => true,
+                'count'      => count($activities),
+                'activities' => $activities
+            ]);
             break;
 
         default:

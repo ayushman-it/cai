@@ -9834,7 +9834,8 @@
 
     // Save any existing form values in case user already typed
     const existingName = (shadow.getElementById('cp-book-name')?.value) || visitorName || '';
-    const existingContact = (shadow.getElementById('cp-book-contact')?.value) || visitorPhone || visitorEmail || '';
+    const existingPhone = (shadow.getElementById('cp-book-phone')?.value) || visitorPhone || '';
+    const existingEmail = (shadow.getElementById('cp-book-email')?.value) || visitorEmail || '';
     const existingNotes = (shadow.getElementById('cp-book-notes')?.value) || '';
 
     screensView.innerHTML = `
@@ -9866,8 +9867,12 @@
         <input type="text" class="cp-form-input" id="cp-book-name" placeholder="Your name" value="${escapeHtml(existingName)}" />
       </div>
       <div class="cp-form-group">
-        <label class="cp-form-label">Phone or Email *</label>
-        <input type="text" class="cp-form-input" id="cp-book-contact" placeholder="+91 98765 43210 or email" value="${escapeHtml(existingContact)}" />
+        <label class="cp-form-label">Phone Number *</label>
+        <input type="tel" class="cp-form-input" id="cp-book-phone" placeholder="+91 98765 43210" value="${escapeHtml(existingPhone)}" />
+      </div>
+      <div class="cp-form-group">
+        <label class="cp-form-label">Email Address *</label>
+        <input type="email" class="cp-form-input" id="cp-book-email" placeholder="you@example.com" value="${escapeHtml(existingEmail)}" />
       </div>
       <div class="cp-form-group">
         <label class="cp-form-label">Topic or Notes (Optional)</label>
@@ -9981,24 +9986,26 @@
     if (confirmBtn) {
       confirmBtn.addEventListener('click', async () => {
         const nameVal = shadow.getElementById('cp-book-name').value.trim();
-        const contactVal = shadow.getElementById('cp-book-contact').value.trim();
+        const phoneVal = shadow.getElementById('cp-book-phone').value.trim();
+        const emailVal = shadow.getElementById('cp-book-email').value.trim();
         const notesVal = shadow.getElementById('cp-book-notes').value.trim();
 
         if (!selectedSlot) {
           alert('Please select an available time slot.');
           return;
         }
-        if (!nameVal || !contactVal) {
-          alert('Please provide your name and phone/email.');
+        if (!nameVal || (!phoneVal && !emailVal)) {
+          alert('Please provide your name and phone number or email.');
           return;
         }
 
+        // Update local memory and storage
+        if (nameVal) { visitorName = nameVal; try { localStorage.setItem(STORAGE_KEYS.VISITOR_NAME, nameVal); } catch(e){} }
+        if (phoneVal) { visitorPhone = phoneVal; try { localStorage.setItem(STORAGE_KEYS.VISITOR_PHONE, phoneVal); } catch(e){} }
+        if (emailVal) { visitorEmail = emailVal; try { localStorage.setItem(STORAGE_KEYS.VISITOR_EMAIL, emailVal); } catch(e){} }
+
         confirmBtn.disabled = true;
         confirmBtn.textContent = 'Scheduling...';
-
-        const isEmail = contactVal.includes('@');
-        const phone = isEmail ? '' : contactVal;
-        const email = isEmail ? contactVal : '';
 
         try {
           const res = await fetch(`${baseUrl}/api/widget_actions.php?action=book_appointment`, {
@@ -10009,8 +10016,8 @@
               user_id: currentAgent.id,
               slot_datetime: selectedSlot,
               name: nameVal,
-              phone: phone,
-              email: email,
+              phone: phoneVal,
+              email: emailVal,
               notes: notesVal,
               session_token: sessionId,
               conversation_id: conversationId

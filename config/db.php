@@ -1465,6 +1465,34 @@ HTML;
                 KEY `idx_pr_token` (`confirmation_token`)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         ");
+
+        // 22. Appointments Migration & Activity History Audit Trail
+        $apptCols = $pdo->query("SHOW COLUMNS FROM `appointments`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('action_token', $apptCols)) {
+            $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `action_token` VARCHAR(64) NULL AFTER `status`, ADD KEY `idx_action_token` (`action_token`)");
+        }
+        if (!in_array('gcal_sync_status', $apptCols)) {
+            $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `gcal_sync_status` ENUM('none','synced','failed') NOT NULL DEFAULT 'none' AFTER `google_event_id`");
+        }
+        if (!in_array('gcal_sync_error', $apptCols)) {
+            $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `gcal_sync_error` TEXT NULL AFTER `gcal_sync_status`");
+        }
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `appointment_activities` (
+                `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+                `appointment_id` INT NOT NULL,
+                `company_id` INT NOT NULL,
+                `action` VARCHAR(64) NOT NULL,
+                `actor_type` ENUM('customer','admin','system','ai') NOT NULL DEFAULT 'system',
+                `actor_name` VARCHAR(150) NULL,
+                `channel` VARCHAR(32) NOT NULL DEFAULT 'web',
+                `details` TEXT NULL,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                KEY `idx_act_appt` (`appointment_id`),
+                KEY `idx_act_comp` (`company_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
     } catch (Exception $e) {}
 }
 

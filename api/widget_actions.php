@@ -536,11 +536,12 @@ try {
         $appTitle = "1-on-1 Consultation: {$visitorName} & {$agent['name']}";
         $customMeet = trim($widget['calendar_meet_url'] ?? '');
         $meetLink = !empty($customMeet) ? $customMeet : ("https://meet.google.com/cp-" . bin2hex(random_bytes(4)));
+        $actionToken = bin2hex(random_bytes(24));
 
         $insApp = $pdo->prepare("
             INSERT INTO `appointments`
-            (`company_id`, `customer_id`, `lead_id`, `conversation_id`, `assigned_user_id`, `customer_name`, `customer_phone`, `customer_email`, `title`, `appointment_type`, `slot_datetime`, `status`, `notes`, `meet_link`, `created_at`, `updated_at`)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'consultation', ?, 'scheduled', ?, ?, NOW(), NOW())
+            (`company_id`, `customer_id`, `lead_id`, `conversation_id`, `assigned_user_id`, `customer_name`, `customer_phone`, `customer_email`, `title`, `appointment_type`, `slot_datetime`, `status`, `action_token`, `notes`, `meet_link`, `created_at`, `updated_at`)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'consultation', ?, 'scheduled', ?, ?, ?, NOW(), NOW())
         ");
         $insApp->execute([
             $companyId,
@@ -553,10 +554,25 @@ try {
             $visitorEmail,
             $appTitle,
             $slotDatetime,
+            $actionToken,
             $notes,
             $meetLink
         ]);
         $appointmentId = (int)$pdo->lastInsertId();
+
+        // Record initial creation activity
+        try {
+            $pdo->prepare("
+                INSERT INTO `appointment_activities`
+                (`appointment_id`, `company_id`, `action`, `actor_type`, `actor_name`, `channel`, `details`, `created_at`)
+                VALUES (?, ?, 'created', 'customer', ?, 'widget', ?, NOW())
+            ")->execute([
+                $appointmentId,
+                $companyId,
+                $visitorName,
+                "Booked 30-min consultation slot for {$slotDatetime}"
+            ]);
+        } catch (Exception $actEx) {}
 
         // Sync with Google Calendar v3 API if configured
         try {
@@ -622,18 +638,44 @@ try {
                     © " . date('Y') . " {$compName}. Powered by CuboidPilot.
                 </div>
             </div>";
-            CompanyMailer::send($pdo, $companyId, $visitorEmail, $custSubj, $custHtml);
+            try {
+                CompanyMailer::send($pdo, $companyId, $visitorEmail, $custSubj, $custHtml);
+                $pdo->prepare("
+                    INSERT INTO `appointment_activities`
+                    (`appointment_id`, `company_id`, `action`, `actor_type`, `channel`, `details`, `created_at`)
+                    VALUES (?, ?, 'email_sent', 'system', 'email', 'Customer confirmation email sent', NOW())
+                ")->execute([$appointmentId, $companyId]);
+            } catch (Exception $mEx) {}
         }
 
-        // 2. Send Admin / Host Notification Email
+        // 2. Send Admin / Host Notification Email with 1-Click Action Links
         $adminEmail = $company['email'] ?? '';
-        if (!empty($adminEmail)) {
-            $adminSubj = "New Appointment: {$visitorName} booked consultation with {$agent['name']}";
+        if (empty($adminEmail)) {
+            $uStmt = $pdo->prepare("SELECT email FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND email IS NOT NULL AND email != '' ORDER BY id ASC LIMIT 1");
+            $uStmt->execute([$companyId]);
+            $adminEmail = (string)$uStmt->fetchColumn();
+        }
+
+        if (!empty($adminEmail) && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+            $host = $_SERVER['HTTP_HOST'] ?? 'cai.cuboidsoft.in';
+            $baseAppUrl = $protocol . $host;
+            if (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) {
+                $baseAppUrl .= '/cuboidpilot';
+            }
+
+            $confirmActionUrl = "{$baseAppUrl}/api/appointments.php?action=token_action&token={$actionToken}&action_type=confirm";
+            $cancelActionUrl  = "{$baseAppUrl}/api/appointments.php?action=token_action&token={$actionToken}&action_type=cancel";
+            $completeActionUrl= "{$baseAppUrl}/api/appointments.php?action=token_action&token={$actionToken}&action_type=complete";
+            $rescheduleUrl    = "{$baseAppUrl}/app/appointments.html?id={$appointmentId}&action=reschedule";
+
+            $adminSubj = "📅 [New Appointment] {$visitorName} booked consultation with {$agent['name']}";
             $adminHtml = "
             <div style='font-family:-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#ffffff;border:1px solid #e2e8f0;border-radius:8px;'>
                 <div style='border-bottom:2px solid #0f172a;padding-bottom:12px;margin-bottom:18px;'>
-                    <h2 style='margin:0;font-size:20px;color:#0f172a;'>CuboidPilot Lead Alert</h2>
-                    <div style='font-size:12px;color:#64748b;margin-top:4px;'>New Appointment Booked via Website Widget</div>
+                    <div style='display:inline-block;padding:3px 8px;background:#eff6ff;color:#1e40af;border-radius:4px;font-size:11px;font-weight:700;'>NEW APPOINTMENT BOOKED</div>
+                    <h2 style='margin:8px 0 0;font-size:20px;color:#0f172a;'>{$visitorName} with {$agent['name']}</h2>
+                    <div style='font-size:12px;color:#64748b;margin-top:4px;'>Booking ID: #APT-{$appointmentId}</div>
                 </div>
                 <p style='font-size:14px;color:#1e293b;'>Hello Admin,</p>
                 <p style='font-size:13px;color:#334155;line-height:1.6;'>
@@ -642,19 +684,37 @@ try {
                 <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:16px;margin:16px 0;'>
                     <table style='width:100%;font-size:13px;color:#334155;border-collapse:collapse;'>
                         <tr><td style='padding:4px 0;width:120px;color:#64748b;'>Client Name:</td><td style='font-weight:600;'>{$cNameEsc}</td></tr>
-                        <tr><td style='padding:4px 0;color:#64748b;'>Email:</td><td>{$visitorEmail}</td></tr>
-                        <tr><td style='padding:4px 0;color:#64748b;'>Phone:</td><td>{$visitorPhone}</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Email:</td><td><a href='mailto:{$visitorEmail}' style='color:#0284c7;'>{$visitorEmail}</a></td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Phone:</td><td><a href='tel:{$visitorPhone}' style='color:#0f172a;'>{$visitorPhone}</a> · <a href='https://wa.me/" . preg_replace('/[^0-9]/', '', $visitorPhone) . "' style='color:#10b981;font-weight:600;text-decoration:none;'>WhatsApp &rarr;</a></td></tr>
                         <tr><td style='padding:4px 0;color:#64748b;'>Assigned Host:</td><td style='font-weight:600;'>{$agentNameEsc}</td></tr>
                         <tr><td style='padding:4px 0;color:#64748b;'>Date & Time:</td><td style='font-weight:600;'>{$formattedDate} at {$formattedTime}</td></tr>
-                        <tr><td style='padding:4px 0;color:#64748b;'>Notes:</td><td>" . htmlspecialchars($notes) . "</td></tr>
+                        <tr><td style='padding:4px 0;color:#64748b;'>Notes:</td><td>" . htmlspecialchars($notes ?: 'None') . "</td></tr>
                         <tr><td style='padding:4px 0;color:#64748b;'>Meeting Link:</td><td><a href='{$meetLink}' style='color:#0284c7;font-weight:600;'>{$meetLink}</a></td></tr>
                     </table>
                 </div>
+
+                <div style='background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:14px;margin:20px 0;text-align:center;'>
+                    <div style='font-size:12px;font-weight:700;color:#334155;margin-bottom:10px;text-transform:uppercase;'>Remote 1-Click Management:</div>
+                    <div style='display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;'>
+                        <a href='{$confirmActionUrl}' style='background:#10b981;color:#ffffff;text-decoration:none;padding:8px 14px;border-radius:4px;font-size:12px;font-weight:600;'>✓ Confirm</a>
+                        <a href='{$completeActionUrl}' style='background:#0f172a;color:#ffffff;text-decoration:none;padding:8px 14px;border-radius:4px;font-size:12px;font-weight:600;'>Mark Completed</a>
+                        <a href='{$cancelActionUrl}' style='background:#ef4444;color:#ffffff;text-decoration:none;padding:8px 14px;border-radius:4px;font-size:12px;font-weight:600;'>✗ Cancel</a>
+                        <a href='{$rescheduleUrl}' style='background:#64748b;color:#ffffff;text-decoration:none;padding:8px 14px;border-radius:4px;font-size:12px;font-weight:600;'>Reschedule</a>
+                    </div>
+                </div>
+
                 <div style='border-top:1px solid #e2e8f0;padding-top:12px;margin-top:20px;font-size:11px;color:#94a3b8;'>
                     This appointment is synced with your dashboard's Scheduled Meetings section.
                 </div>
             </div>";
-            CompanyMailer::send($pdo, $companyId, $adminEmail, $adminSubj, $adminHtml);
+            try {
+                CompanyMailer::send($pdo, $companyId, $adminEmail, $adminSubj, $adminHtml);
+                $pdo->prepare("
+                    INSERT INTO `appointment_activities`
+                    (`appointment_id`, `company_id`, `action`, `actor_type`, `channel`, `details`, `created_at`)
+                    VALUES (?, ?, 'admin_alert_sent', 'system', 'email', 'Admin alert email sent with 1-click action links', NOW())
+                ")->execute([$appointmentId, $companyId]);
+            } catch (Exception $mEx) {}
         }
 
         // 3. Dispatch WhatsApp Notification if company has connected WhatsApp
