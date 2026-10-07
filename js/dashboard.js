@@ -2188,7 +2188,12 @@ window.CuboidDashboard = {
     try {
       const res = await fetch(`../api/conversations.php?id=${convId}`);
       const data = await res.json();
-      if (!data || !data.success) return;
+      if (!data || !data.success) {
+        if (streamContainer) {
+          streamContainer.innerHTML = `<div class="text-xs text-stone-400 py-8 text-center">No conversation history found.</div>`;
+        }
+        return;
+      }
 
       const conv = data.conversation;
       this.currentConversationData = conv;
@@ -2483,6 +2488,9 @@ window.CuboidDashboard = {
 
     } catch (err) {
       console.warn('[CuboidDashboard] Conv messages fetch error:', err);
+      if (streamContainer) {
+        streamContainer.innerHTML = `<div class="text-xs text-rose-500 py-8 text-center">Failed to load conversation history. <button class="underline ml-1 cursor-pointer" onclick="CuboidDashboard.selectConversation(${convId})">Retry</button></div>`;
+      }
     }
   },
 
@@ -5424,9 +5432,9 @@ window.CuboidDashboard = {
     const tabs = document.querySelectorAll('.kb-tab-btn');
     tabs.forEach(t => {
       if (t.getAttribute('data-filter') === type) {
-        t.className = 'kb-tab-btn px-3 py-1.5 font-medium rounded-[4px] bg-stone-900 text-white flex items-center gap-1';
+        t.className = 'kb-tab-btn whitespace-nowrap flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 font-medium rounded-[4px] bg-stone-900 text-white';
       } else {
-        t.className = 'kb-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100 flex items-center gap-1';
+        t.className = 'kb-tab-btn whitespace-nowrap flex-shrink-0 inline-flex items-center gap-1 px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100';
       }
     });
 

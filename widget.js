@@ -245,8 +245,8 @@
       --cp-toolbar-border: rgba(255, 255, 255, 0.04);
       --cp-tool-btn: #727684;
       --cp-tool-btn-hover: #ffffff;
-      --cp-tool-btn-hover-bg: rgba(255, 255, 255, 0.06);
-      --cp-shadow-window: 0 24px 50px -10px rgba(0, 0, 0, 0.75), 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      --cp-shadow-window: 0 20px 48px -12px rgba(0, 0, 0, 0.4), 0 8px 24px -6px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      --cp-shadow-window-expanded: 0 24px 54px -12px rgba(0, 0, 0, 0.45), 0 10px 26px -6px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(255, 255, 255, 0.08);
       --cp-options-bg: #181920;
       --cp-options-border: #2d2f3b;
       --cp-options-hover: #232530;
@@ -312,8 +312,8 @@
       --cp-toolbar-border: #f1f5f9;
       --cp-tool-btn: #64748b;
       --cp-tool-btn-hover: #0f172a;
-      --cp-tool-btn-hover-bg: rgba(0, 0, 0, 0.05);
-      --cp-shadow-window: 0 24px 50px -10px rgba(0, 0, 0, 0.16), 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+      --cp-shadow-window: 0 18px 42px -10px rgba(0, 0, 0, 0.12), 0 6px 18px -4px rgba(0, 0, 0, 0.06), 0 0 0 1px rgba(0, 0, 0, 0.06);
+      --cp-shadow-window-expanded: 0 22px 48px -12px rgba(0, 0, 0, 0.14), 0 8px 22px -6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.07);
       --cp-options-bg: #ffffff;
       --cp-options-border: #e2e8f0;
       --cp-options-hover: #f8fafc;
@@ -770,6 +770,8 @@
 
     :host(.cp-embedded) #cp-close-btn,
     .cp-embedded #cp-close-btn,
+    :host(.cp-embedded) #cp-expand-btn,
+    .cp-embedded #cp-expand-btn,
     :host(.cp-embedded) .cp-header-btn.close,
     .cp-embedded .cp-header-btn.close {
       display: none !important;
@@ -795,7 +797,12 @@
       pointer-events: none;
       transform-origin: bottom right;
       transform: translateY(18px) scale(0.96);
-      transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                  height 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                  max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                  max-width 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+                  opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+                  transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 2147483646;
     }
 
@@ -803,6 +810,51 @@
       opacity: 1;
       pointer-events: auto;
       transform: translateY(0) scale(1);
+    }
+
+    /* Expanded Window Mode (Intercom Fin Spacious Desktop View) */
+    .cp-window.expanded {
+      width: 780px;
+      height: 800px;
+      max-width: calc(100vw - 32px);
+      max-height: calc(100vh - 84px);
+      max-height: calc(100dvh - 84px);
+      box-shadow: var(--cp-shadow-window-expanded, var(--cp-shadow-window));
+    }
+
+    .cp-window.expanded .cp-header-subtitle {
+      max-width: 480px;
+    }
+
+    .cp-window.expanded .cp-messages {
+      padding: 18px 24px;
+    }
+
+    .cp-window.expanded .cp-msg-row.user .cp-bubble {
+      max-width: 580px;
+    }
+
+    .cp-window.expanded .cp-msg-row.ai .cp-bubble {
+      max-width: 660px;
+    }
+
+    .cp-window.expanded .cp-composer-section {
+      padding: 12px 20px 14px 20px;
+    }
+
+    .cp-window.expanded .cp-screens-view {
+      padding: 18px 24px;
+    }
+
+    @media (max-width: 840px) {
+      .cp-window.expanded {
+        width: calc(100vw - 20px) !important;
+        right: 10px !important;
+        bottom: 74px !important;
+        height: calc(100vh - 84px) !important;
+        height: calc(100dvh - 84px) !important;
+        max-height: calc(100vh - 84px) !important;
+      }
     }
 
     /* Window Header */
@@ -945,7 +997,7 @@
       box-shadow: var(--cp-shadow-window);
       z-index: 100;
       display: none;
-      width: 185px;
+      width: 200px;
     }
 
     .cp-options-menu.show {
@@ -997,7 +1049,7 @@
       border-radius: 10px;
     }
 
-    /* Stream container ensures full width and flex alignment */
+    /* Stream container flows naturally inside single scrollable .cp-messages */
     #cp-chat-stream {
       display: flex;
       flex-direction: column;
@@ -1005,7 +1057,15 @@
       width: 100%;
       max-width: 100%;
       box-sizing: border-box;
-      overflow-x: hidden;
+      overflow: visible !important;
+    }
+
+    #cp-welcome-row,
+    .cp-msg-row.cp-welcome-row {
+      position: static !important;
+      top: auto !important;
+      flex-shrink: 0;
+      margin: 0;
     }
 
     /* Message Bubbles */
@@ -1239,6 +1299,131 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
+    }
+
+    /* Intercom Fin AI Skeleton Loading Bubble & Typing Indicator */
+    .cp-skeleton-bubble {
+      background: var(--cp-bg-bubble);
+      border: 1px solid var(--cp-border-bubble);
+      padding: 12px 14px;
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: fit-content;
+      min-width: 240px;
+      max-width: 340px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cp-skeleton-header {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .cp-skeleton-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      width: 100%;
+    }
+
+    .cp-skeleton-line {
+      height: 9px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    :host([data-theme="light"]) .cp-skeleton-line,
+    .theme-light .cp-skeleton-line,
+    .cp-light-theme .cp-skeleton-line {
+      background: rgba(0, 0, 0, 0.07);
+    }
+
+    .cp-skeleton-line::after,
+    .cp-skeleton-box::after,
+    .cp-skeleton-circle::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.14) 50%, transparent 100%);
+      transform: translateX(-100%);
+      animation: cpSkeletonShimmer 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    :host([data-theme="light"]) .cp-skeleton-line::after,
+    :host([data-theme="light"]) .cp-skeleton-box::after,
+    :host([data-theme="light"]) .cp-skeleton-circle::after,
+    .theme-light .cp-skeleton-line::after,
+    .theme-light .cp-skeleton-box::after,
+    .theme-light .cp-skeleton-circle::after,
+    .cp-light-theme .cp-skeleton-line::after,
+    .cp-light-theme .cp-skeleton-box::after,
+    .cp-light-theme .cp-skeleton-circle::after {
+      background: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.08) 50%, transparent 100%);
+    }
+
+    @keyframes cpSkeletonShimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Screen View Skeleton Placeholders */
+    .cp-skeleton-card-item {
+      background: var(--cp-bg-surface);
+      border: 1px solid var(--cp-border-input);
+      border-radius: 12px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cp-skeleton-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    :host([data-theme="light"]) .cp-skeleton-circle,
+    .theme-light .cp-skeleton-circle,
+    .cp-light-theme .cp-skeleton-circle {
+      background: rgba(0, 0, 0, 0.07);
+    }
+
+    .cp-skeleton-card-body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    .cp-skeleton-box {
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    :host([data-theme="light"]) .cp-skeleton-box,
+    .theme-light .cp-skeleton-box,
+    .cp-light-theme .cp-skeleton-box {
+      background: rgba(0, 0, 0, 0.07);
     }
 
     .cp-typing-bubble {
@@ -3658,10 +3843,15 @@
       border-top: 1px solid #e5e7eb;
     }
 
-    /* Persistent Intercom Bottom Navigation across all screens & flows */
-    .cp-bottom-nav {
-      display: flex !important;
-      visibility: visible !important;
+    /* Hide Bottom Navigation inside active chat screens (controlled via top back button) */
+    .cp-window.screen-chat .cp-bottom-nav,
+    .cp-window.screen-human-chat .cp-bottom-nav,
+    .screen-chat .cp-bottom-nav,
+    .screen-human-chat .cp-bottom-nav,
+    :host([data-screen="chat"]) .cp-bottom-nav,
+    :host([data-screen="human-chat"]) .cp-bottom-nav {
+      display: none !important;
+      visibility: hidden !important;
     }
 
     .cp-nav-item {
@@ -5253,7 +5443,7 @@
         </div>
         <div class="cp-teaser-body">
           <div class="cp-teaser-header">
-            Hi there <span>👋</span>
+            Hi there
           </div>
           <div class="cp-teaser-msg" id="cp-teaser-msg">
             You are now speaking with Cai. How can I help?
@@ -5309,6 +5499,15 @@
               <circle cx="19" cy="12" r="2"></circle>
             </svg>
           </button>
+
+          <button class="cp-icon-btn" id="cp-expand-btn" aria-label="Expand window" title="Expand window">
+            <svg id="cp-expand-header-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+          </button>
           
           <button class="cp-icon-btn" id="cp-close-btn" aria-label="Close Chat">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
@@ -5320,6 +5519,15 @@
 
         <!-- Options Dropdown Menu -->
         <div class="cp-options-menu" id="cp-options-menu">
+          <div class="cp-option-item" id="cp-menu-expand">
+            <svg id="cp-expand-menu-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>
+            <span id="cp-expand-menu-label">Expand window</span>
+          </div>
           <div class="cp-option-item" id="cp-menu-theme">
             <svg id="cp-theme-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="5"></circle>
@@ -5367,9 +5575,9 @@
       <main class="cp-messages" id="cp-messages-container" style="display: none;">
         
         <!-- Welcome Message Bubble (media_1790678123351.png) -->
-        <div class="cp-msg-row ai">
+        <div class="cp-msg-row ai cp-welcome-row" id="cp-welcome-row">
           <div class="cp-bubble" id="cp-welcome-text">
-            Hi there 👋<br/><br/>You are now speaking with Cai. How can I help?
+            Hi there<br/><br/>You are now speaking with Cai. How can I help?
           </div>
           <div class="cp-meta-line">
             <span id="cp-welcome-author">Cai</span>
@@ -5383,18 +5591,25 @@
         <!-- Dynamic Conversation Stream inserted here -->
         <div id="cp-chat-stream"></div>
 
-        <!-- Typing & Thinking Indicator -->
-        <div class="cp-typing-row" id="cp-typing-indicator" style="display: none;">
+        <!-- Intercom Fin AI Skeleton Loading Bubble -->
+        <div class="cp-typing-row cp-skeleton-row" id="cp-typing-indicator" style="display: none;">
           <div class="cp-typing-avatar">
             <img src="${baseUrl}/assets/logo-white.png" alt="Cai" class="cp-typing-avatar-img">
           </div>
-          <div class="cp-typing-bubble">
-            <div class="cp-typing-dots">
-              <span class="cp-typing-dot"></span>
-              <span class="cp-typing-dot"></span>
-              <span class="cp-typing-dot"></span>
+          <div class="cp-skeleton-bubble">
+            <div class="cp-skeleton-header">
+              <div class="cp-typing-dots">
+                <span class="cp-typing-dot"></span>
+                <span class="cp-typing-dot"></span>
+                <span class="cp-typing-dot"></span>
+              </div>
+              <span class="cp-typing-label" id="cp-typing-label">Cai is thinking...</span>
             </div>
-            <span class="cp-typing-label" id="cp-typing-label">Cai is thinking...</span>
+            <div class="cp-skeleton-lines">
+              <div class="cp-skeleton-line" style="width: 82%;"></div>
+              <div class="cp-skeleton-line" style="width: 95%;"></div>
+              <div class="cp-skeleton-line" style="width: 58%;"></div>
+            </div>
           </div>
         </div>
 
@@ -5432,13 +5647,13 @@
           </div>
           <div class="cp-gif-tags" id="cp-gif-tags">
             <button type="button" class="cp-gif-tag active" data-tag="all">All</button>
-            <button type="button" class="cp-gif-tag" data-tag="thumbs up">👍 Thumbs Up</button>
-            <button type="button" class="cp-gif-tag" data-tag="hello">👋 Hello</button>
-            <button type="button" class="cp-gif-tag" data-tag="party">🎉 Party</button>
-            <button type="button" class="cp-gif-tag" data-tag="thinking">🤔 Thinking</button>
-            <button type="button" class="cp-gif-tag" data-tag="thanks">🙏 Thanks</button>
-            <button type="button" class="cp-gif-tag" data-tag="applause">👏 Clap</button>
-            <button type="button" class="cp-gif-tag" data-tag="deal">🤝 Deal</button>
+            <button type="button" class="cp-gif-tag" data-tag="thumbs up">Thumbs Up</button>
+            <button type="button" class="cp-gif-tag" data-tag="hello">Hello</button>
+            <button type="button" class="cp-gif-tag" data-tag="party">Party</button>
+            <button type="button" class="cp-gif-tag" data-tag="thinking">Thinking</button>
+            <button type="button" class="cp-gif-tag" data-tag="thanks">Thanks</button>
+            <button type="button" class="cp-gif-tag" data-tag="applause">Clap</button>
+            <button type="button" class="cp-gif-tag" data-tag="deal">Deal</button>
           </div>
           <div class="cp-gif-grid" id="cp-gif-grid"></div>
         </div>
@@ -5603,8 +5818,77 @@
   const welcomeTextEl = shadow.getElementById('cp-welcome-text');
   const screensView = shadow.getElementById('cp-screens-view');
   const composerSection = shadow.querySelector('.cp-composer-section');
+  const expandBtn = shadow.getElementById('cp-expand-btn');
+  const menuExpand = shadow.getElementById('cp-menu-expand');
+  const menuExpandLabel = shadow.getElementById('cp-expand-menu-label');
 
-  // w-up Screen State Machine
+  const EXPAND_STORAGE_KEY = 'cp_widget_expanded_' + companyKey;
+  let isExpanded = widgetStorage.getItem(EXPAND_STORAGE_KEY) === '1';
+
+  function updateExpandState(expanded) {
+    isExpanded = Boolean(expanded);
+    if (!chatWindow) return;
+    
+    if (isExpanded) {
+      chatWindow.classList.add('expanded');
+    } else {
+      chatWindow.classList.remove('expanded');
+    }
+
+    if (expandBtn) {
+      expandBtn.setAttribute('title', isExpanded ? 'Collapse window' : 'Expand window');
+      expandBtn.setAttribute('aria-label', isExpanded ? 'Collapse window' : 'Expand window');
+      expandBtn.innerHTML = isExpanded 
+        ? `<svg id="cp-expand-header-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="4 14 10 14 10 20"></polyline>
+            <polyline points="20 10 14 10 14 4"></polyline>
+            <line x1="14" y1="10" x2="21" y2="3"></line>
+            <line x1="10" y1="14" x2="3" y2="21"></line>
+          </svg>`
+        : `<svg id="cp-expand-header-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <polyline points="9 21 3 21 3 15"></polyline>
+            <line x1="21" y1="3" x2="14" y2="10"></line>
+            <line x1="3" y1="21" x2="10" y2="14"></line>
+          </svg>`;
+    }
+
+    if (menuExpand) {
+      const menuIcon = menuExpand.querySelector('svg');
+      if (menuIcon) {
+        menuIcon.outerHTML = isExpanded
+          ? `<svg id="cp-expand-menu-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 14 10 14 10 20"></polyline>
+              <polyline points="20 10 14 10 14 4"></polyline>
+              <line x1="14" y1="10" x2="21" y2="3"></line>
+              <line x1="10" y1="14" x2="3" y2="21"></line>
+            </svg>`
+          : `<svg id="cp-expand-menu-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9"></polyline>
+              <polyline points="9 21 3 21 3 15"></polyline>
+              <line x1="21" y1="3" x2="14" y2="10"></line>
+              <line x1="3" y1="21" x2="10" y2="14"></line>
+            </svg>`;
+      }
+      if (menuExpandLabel) {
+        menuExpandLabel.textContent = isExpanded ? 'Collapse window' : 'Expand window';
+      }
+    }
+  }
+
+  function toggleExpandWindow() {
+    isExpanded = !isExpanded;
+    widgetStorage.setItem(EXPAND_STORAGE_KEY, isExpanded ? '1' : '0');
+    updateExpandState(isExpanded);
+    if (currentScreen === 'chat') {
+      setTimeout(scrollToBottom, 150);
+    }
+  }
+
+  // Restore previous expand preference if stored
+  if (isExpanded) {
+    updateExpandState(true);
+  }
   let currentScreen = 'home'; // 'home' | 'chat' | 'human-team' | 'human-chat' | 'book-team' | 'book-slots' | 'book-confirmed' | 'payment-options' | 'news'
   let screenStack = ['home'];
   let teamMembersCache = [];
@@ -5712,7 +5996,7 @@
   let widgetConfig = {
     brand_name: 'Cai',
     assistant_name: 'Cai',
-    greeting_heading: 'Hi there 👋 Welcome to CuboidPilot!\n\nI am Cai, your AI assistant. How can I help your business today?',
+    greeting_heading: 'Hi there! Welcome to CuboidPilot.\n\nI am Cai, your AI assistant. How can I help your business today?',
     greeting_subheading: 'Powered By CuboidPilot',
     whatsapp_enabled: true,
     whatsapp_number: '',
@@ -6232,6 +6516,21 @@
     });
   }
 
+  if (expandBtn) {
+    bindTap(expandBtn, (e) => {
+      e.stopPropagation();
+      toggleExpandWindow();
+    });
+  }
+
+  if (menuExpand) {
+    bindTap(menuExpand, (e) => {
+      e.stopPropagation();
+      toggleExpandWindow();
+      optionsMenu.classList.remove('show');
+    });
+  }
+
   function resetConversationState() {
     chatStream.innerHTML = '';
     widgetStorage.removeItem(STORAGE_KEYS.MESSAGES);
@@ -6412,7 +6711,7 @@
         };
         reader.readAsDataURL(file);
       } else {
-        if (attachThumb) attachThumb.innerHTML = `📄`;
+        if (attachThumb) attachThumb.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>`;
       }
 
       if (attachBar) attachBar.style.display = 'flex';
@@ -6898,7 +7197,7 @@
     card.className = 'cp-msg-row ai cp-visitor-intake-row';
     card.innerHTML = `
       <div class="cp-bubble cp-visitor-intake-card">
-        <div class="cp-intake-title">👋 Welcome! Please introduce yourself to get started:</div>
+        <div class="cp-intake-title">Welcome! Please introduce yourself to get started:</div>
         <form class="cp-intake-form" id="cp-visitor-intake-form">
           <div class="cp-intake-field">
             <label>Your Name <span class="req">*</span></label>
@@ -7309,7 +7608,15 @@
               ? `<div class="cp-asset-email-badge pending"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> Email copy sent to ${escapeHtml(asset.recipient_email)}</div>` 
               : `<div class="cp-asset-email-badge prompt"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg> Reply with your email to receive a copy</div>`);
 
-        assetCard.innerHTML = `
+          let directDlUrl = asset.download_url || '';
+          if (directDlUrl) {
+            if (!directDlUrl.startsWith('http://') && !directDlUrl.startsWith('https://')) {
+              const cleanPath = directDlUrl.replace(/^(\.\.\/|\/)+/, '');
+              directDlUrl = `${baseUrl}/${cleanPath}`;
+            }
+          }
+
+          assetCard.innerHTML = `
           <div class="cp-asset-header">
             <div class="cp-asset-icon-box">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -7322,13 +7629,31 @@
           </div>
           ${asset.description ? `<div class="cp-asset-desc">${escapeHtml(asset.description)}</div>` : ''}
           <div class="cp-asset-actions">
-            <a class="cp-asset-download-btn" href="${escapeHtml(asset.download_url)}" target="_blank" rel="noopener noreferrer">
+            <a class="cp-asset-download-btn" href="${escapeHtml(directDlUrl)}" target="_blank" download="${escapeHtml(asset.file_name || 'document.pdf')}" rel="noopener noreferrer">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
               <span>Download Document</span>
             </a>
           </div>
           ${emailBadgeHtml}
         `;
+
+        const dlBtn = assetCard.querySelector('.cp-asset-download-btn');
+        if (dlBtn && directDlUrl) {
+          dlBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const tempA = document.createElement('a');
+            tempA.href = directDlUrl;
+            tempA.download = asset.file_name || 'document.pdf';
+            tempA.target = '_blank';
+            tempA.rel = 'noopener noreferrer';
+            document.body.appendChild(tempA);
+            tempA.click();
+            setTimeout(() => {
+              if (tempA.parentNode) tempA.parentNode.removeChild(tempA);
+            }, 600);
+          });
+        }
         bubble.appendChild(assetCard);
       }
 
@@ -7432,6 +7757,11 @@
       if (data.emi_plans && data.emi_plans.product_name) {
         row.classList.add('has-cards');
         const emi = data.emi_plans;
+        const totalAmt = Number(emi.total_amount || 0);
+        const numSplits = Number(emi.num_splits || emi.duration_months || 3);
+        const downPayment = Number(emi.down_payment || emi.starting_at_inr || (totalAmt > 0 ? Math.round(totalAmt / numSplits) : 0));
+        const perMonth = Number(emi.per_month || (totalAmt > 0 ? Math.round((totalAmt - downPayment) / Math.max(1, numSplits - 1)) : downPayment));
+
         const emiCard = document.createElement('div');
         emiCard.className = 'cp-emi-card';
 
@@ -7439,8 +7769,8 @@
         if (emi.schedule && Array.isArray(emi.schedule)) {
           timelineRowsHtml = '<div class="cp-emi-timeline">' + emi.schedule.map(s => `
             <div class="cp-emi-timeline-row">
-              <span>${escapeHtml(s.title)} (${escapeHtml(s.due_date)})</span>
-              <strong>₹${Number(s.amount).toLocaleString('en-IN')}</strong>
+              <span>${escapeHtml(s.title || 'Installment')} (${escapeHtml(s.due_date || 'Due')})</span>
+              <strong>₹${Number(s.amount || perMonth).toLocaleString('en-IN')}</strong>
             </div>
           `).join('') + '</div>';
         }
@@ -7453,23 +7783,23 @@
           <div class="cp-emi-stat-grid">
             <div>
               <div class="cp-emi-stat-label">Down Payment (Upfront)</div>
-              <div class="cp-emi-stat-value">₹${Number(emi.down_payment).toLocaleString('en-IN')}</div>
+              <div class="cp-emi-stat-value">₹${downPayment.toLocaleString('en-IN')}</div>
             </div>
             <div>
-              <div class="cp-emi-stat-label">Monthly (${emi.num_splits} Months)</div>
-              <div class="cp-emi-stat-value">₹${Number(emi.per_month).toLocaleString('en-IN')}/mo</div>
+              <div class="cp-emi-stat-label">Monthly (${numSplits} Months)</div>
+              <div class="cp-emi-stat-value">₹${perMonth.toLocaleString('en-IN')}/mo</div>
             </div>
           </div>
           ${timelineRowsHtml}
           <button type="button" class="cp-prod-btn-primary cp-confirm-emi-btn" style="width:100%;padding:9px;margin-top:2px;">
-            Confirm & Pay Down Payment (₹${Number(emi.down_payment).toLocaleString('en-IN')})
+            Confirm & Pay Down Payment (₹${downPayment.toLocaleString('en-IN')})
           </button>
         `;
 
         const confirmBtn = emiCard.querySelector('.cp-confirm-emi-btn');
         if (confirmBtn) {
           confirmBtn.addEventListener('click', () => {
-            handleSend(`I confirm the EMI plan for ${emi.product_name}. Please send payment link for ₹${emi.down_payment}.`);
+            handleSend(`I confirm the EMI plan for ${emi.product_name}. Please send payment link for ₹${downPayment}.`);
           });
         }
 
@@ -8058,8 +8388,13 @@
 
     const bottomNav = shadow.getElementById('cp-bottom-nav');
     if (bottomNav) {
-      bottomNav.style.display = 'flex';
-      bottomNav.style.visibility = 'visible';
+      if (screen === 'chat' || screen === 'human-chat') {
+        bottomNav.style.display = 'none';
+        bottomNav.style.visibility = 'hidden';
+      } else {
+        bottomNav.style.display = 'flex';
+        bottomNav.style.visibility = 'visible';
+      }
     }
 
     // Update Bottom Navigation active tab
@@ -8446,7 +8781,7 @@
     if (subtitleEl) subtitleEl.textContent = '● Live Workspace Telemetry';
 
     // 1. Inject Clean Markdown Welcome message
-    const welcomeMarkdown = `👋 **Namaste! Main aapka Workspace Copilot hoon.**\n\nAap mujhse apne workspace ki live details aur CRM stats pooch sakte hain:\n• Kitni leads aayi hain aur kisko gayi hain?\n• Kitni convert hui hain aur total revenue kitna hai?\n• Upcoming appointments aur schedule status\n• Reminder setup karne ke liye direct bol sakte hain!`;
+    const welcomeMarkdown = `**Namaste! Main aapka Workspace Copilot hoon.**\n\nAap mujhse apne workspace ki live details aur CRM stats pooch sakte hain:\n• Kitni leads aayi hain aur kisko gayi hain?\n• Kitni convert hui hain aur total revenue kitna hai?\n• Upcoming appointments aur schedule status\n• Reminder setup karne ke liye direct bol sakte hain!`;
 
     appendAIMessage({
       reply: welcomeMarkdown,
@@ -8922,7 +9257,20 @@
       </div>
 
       <div class="cp-news-list" id="cp-dynamic-news-list">
-        <div class="cp-news-loading" style="padding: 24px; text-align: center; color: var(--cp-text-muted); font-size: 12px;">Loading latest updates...</div>
+        <div class="cp-skeleton-card-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+          <div class="cp-skeleton-box" style="width: 100%; height: 110px; border-radius: 8px;"></div>
+          <div class="cp-skeleton-card-body" style="width: 100%; margin-top: 4px;">
+            <div class="cp-skeleton-line" style="width: 70%; height: 12px;"></div>
+            <div class="cp-skeleton-line" style="width: 90%; height: 9px;"></div>
+          </div>
+        </div>
+        <div class="cp-skeleton-card-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
+          <div class="cp-skeleton-box" style="width: 100%; height: 110px; border-radius: 8px;"></div>
+          <div class="cp-skeleton-card-body" style="width: 100%; margin-top: 4px;">
+            <div class="cp-skeleton-line" style="width: 65%; height: 12px;"></div>
+            <div class="cp-skeleton-line" style="width: 85%; height: 9px;"></div>
+          </div>
+        </div>
       </div>
       <a href="${baseUrl}/blog.html" target="_blank" class="cp-news-all-link">Visit Blog &amp; All Articles &rarr;</a>
     `;
@@ -8995,7 +9343,27 @@
         <span class="cp-pill ${filter === 'all' ? 'active' : ''}" data-filter="all">All</span>
       </div>
       <div id="cp-team-list-container" style="display:flex;flex-direction:column;gap:8px;">
-        <div style="font-size:12px;color:var(--cp-text-muted);text-align:center;padding:24px 0;">Loading team members...</div>
+        <div class="cp-skeleton-card-item">
+          <div class="cp-skeleton-circle"></div>
+          <div class="cp-skeleton-card-body">
+            <div class="cp-skeleton-line" style="width: 55%; height: 11px;"></div>
+            <div class="cp-skeleton-line" style="width: 80%; height: 9px;"></div>
+          </div>
+        </div>
+        <div class="cp-skeleton-card-item">
+          <div class="cp-skeleton-circle"></div>
+          <div class="cp-skeleton-card-body">
+            <div class="cp-skeleton-line" style="width: 45%; height: 11px;"></div>
+            <div class="cp-skeleton-line" style="width: 70%; height: 9px;"></div>
+          </div>
+        </div>
+        <div class="cp-skeleton-card-item">
+          <div class="cp-skeleton-circle"></div>
+          <div class="cp-skeleton-card-body">
+            <div class="cp-skeleton-line" style="width: 60%; height: 11px;"></div>
+            <div class="cp-skeleton-line" style="width: 75%; height: 9px;"></div>
+          </div>
+        </div>
       </div>
     `;
 
@@ -9345,7 +9713,20 @@
         Select an advisor or consultant for your personalized consultation:
       </div>
       <div id="cp-book-team-list" style="display:flex;flex-direction:column;gap:8px;">
-        <div style="font-size:12px;color:var(--cp-text-muted);text-align:center;padding:24px 0;">Loading advisors...</div>
+        <div class="cp-skeleton-card-item">
+          <div class="cp-skeleton-circle"></div>
+          <div class="cp-skeleton-card-body">
+            <div class="cp-skeleton-line" style="width: 55%; height: 11px;"></div>
+            <div class="cp-skeleton-line" style="width: 80%; height: 9px;"></div>
+          </div>
+        </div>
+        <div class="cp-skeleton-card-item">
+          <div class="cp-skeleton-circle"></div>
+          <div class="cp-skeleton-card-body">
+            <div class="cp-skeleton-line" style="width: 45%; height: 11px;"></div>
+            <div class="cp-skeleton-line" style="width: 70%; height: 9px;"></div>
+          </div>
+        </div>
       </div>
     `;
 

@@ -484,9 +484,9 @@ window.CuboidShell = {
             </a>
           </div>
           <div class="pt-3 pb-1 border-t border-[#f0ede6] mt-2">
-            <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pb-1">Integrations</div>
+            <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pb-1">Channels</div>
             <a href="channels.html" class="sub-nav-item text-stone-600 hover:text-stone-900 transition-colors">
-              <span class="flex items-center gap-2"><i data-lucide="layers" class="w-3.5 h-3.5 text-stone-500"></i> Channels &amp; Integrations</span>
+              <span class="flex items-center gap-2"><i data-lucide="layers" class="w-3.5 h-3.5 text-stone-500"></i> Channels</span>
               <span class="text-[9.5px] font-mono px-1 py-0.2 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 ml-auto">11 APPS</span>
             </a>
           </div>
@@ -712,13 +712,22 @@ window.CuboidShell = {
           <a href="knowledge.html" class="sub-nav-item ${active === 'knowledge' ? 'active' : ''}">
             <span class="flex items-center gap-2"><i data-lucide="book-marked" class="w-3.5 h-3.5 text-stone-600"></i> Knowledge Grounding</span>
           </a>
-          <a href="channels.html" class="sub-nav-item ${active === 'channels' ? 'active font-medium' : ''}">
-            <span class="flex items-center gap-2"><i data-lucide="layers" class="w-3.5 h-3.5 text-stone-600"></i> Channels &amp; Integrations</span>
-            <span class="text-[9px] font-mono px-1 py-0.2 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 ml-auto">NEW</span>
-          </a>
-          <a href="whatsapp.html" class="sub-nav-item ${active === 'whatsapp' ? 'active' : ''}">
-            <span class="flex items-center gap-2"><i data-lucide="phone-forwarded" class="w-3.5 h-3.5 text-stone-600"></i> WhatsApp Channel</span>
-          </a>
+          <!-- Expandable Channels Accordion -->
+          <div class="nav-accordion-item">
+            <button type="button" onclick="CuboidShell.toggleChannelsNav(this)" class="sub-nav-item w-full flex items-center justify-between text-left cursor-pointer transition-colors ${active === 'channels' || active === 'whatsapp' ? 'font-medium text-stone-900 bg-stone-100/70' : 'text-stone-600 hover:text-stone-900'}">
+              <span class="flex items-center gap-2"><i data-lucide="layers" class="w-3.5 h-3.5 text-stone-600"></i> Channels</span>
+              <i data-lucide="chevron-down" id="shell-channels-chevron" class="w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${active === 'channels' || active === 'whatsapp' ? 'rotate-180' : ''}"></i>
+            </button>
+            <div id="shell-channels-submenu" class="pl-4 pr-1 space-y-0.5 pt-1 pb-1 transition-all ${active === 'channels' || active === 'whatsapp' ? '' : 'hidden'}">
+              <a href="whatsapp.html" class="sub-nav-item text-xs py-1.5 ${active === 'whatsapp' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
+                <span class="flex items-center gap-2"><i data-lucide="phone-forwarded" class="w-3 h-3 text-[#25D366]"></i> WhatsApp Channel</span>
+              </a>
+              <a href="channels.html" class="sub-nav-item text-xs py-1.5 ${active === 'channels' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
+                <span class="flex items-center gap-2"><i data-lucide="layout-grid" class="w-3 h-3 text-stone-500"></i> Integrations Hub</span>
+                <span class="text-[9px] font-mono px-1 py-0.2 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 ml-auto">11 APPS</span>
+              </a>
+            </div>
+          </div>
           <a href="automations.html" class="sub-nav-item ${active === 'automations' ? 'active' : ''}">
             <span class="flex items-center gap-2"><i data-lucide="zap" class="w-3.5 h-3.5 text-stone-600"></i> Automations</span>
           </a>
@@ -1562,6 +1571,20 @@ window.CuboidShell = {
       };
       document.addEventListener('click', dismiss);
     }, 10);
+  },
+
+  toggleChannelsNav: function(btn) {
+    const sub = document.getElementById('shell-channels-submenu');
+    const chev = document.getElementById('shell-channels-chevron');
+    if (!sub) return;
+    const isHidden = sub.classList.toggle('hidden');
+    if (chev) {
+      chev.classList.toggle('rotate-180', !isHidden);
+    }
+    if (window.lucide) window.lucide.createIcons();
+    try {
+      localStorage.setItem('cp_channels_expanded', isHidden ? '0' : '1');
+    } catch(e) {}
   },
 
   openOutcomeModal: function() {

@@ -15,6 +15,7 @@ require_once __DIR__ . '/../../includes/customer_identity_resolver.php';
 require_once __DIR__ . '/../../includes/customer_journey_service.php';
 require_once __DIR__ . '/../../includes/channel_handoff_service.php';
 require_once __DIR__ . '/../../includes/asset_helper.php';
+require_once __DIR__ . '/../../includes/gemini_service.php';
 
 $pdo = getDbConnection();
 
@@ -301,7 +302,7 @@ try {
     if (empty($aiReply)) {
         $aiReply = "Welcome to {$company['name']}! I'm {$asstName}, your AI assistant. How can I assist you today?";
 
-        if (defined('GROQ_API_KEY') && !empty(GROQ_API_KEY) && !empty($kbText)) {
+        if (!empty($kbText)) {
             $prompt = "=== IDENTITY & PERSONA ===\n"
                 . "You are {$asstName}, the dedicated consultative AI counselor on WhatsApp for {$company['name']}.\n"
                 . "Customer Name: {$customerName}\n\n"
@@ -315,7 +316,16 @@ try {
                 . "- Match the visitor's language (English, Hindi, or conversational Hinglish) naturally.\n"
                 . "- Keep your response natural, conversational, and nicely spaced for WhatsApp (under 120 words).\n";
 
-            $waModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
+            // Primary: Google Gemini 3.8 Flash
+            $geminiReply = GeminiService::generateResponse($prompt, array_merge(
+                $recentMsgs,
+                [['role' => 'user', 'content' => $messageText]]
+            ), ['temperature' => 0.25, 'max_tokens' => 350]);
+
+            if (!empty($geminiReply)) {
+                $aiReply = $geminiReply;
+            } elseif (defined('GROQ_API_KEY') && !empty(GROQ_API_KEY)) {
+                $waModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
             foreach ($waModels as $wModel) {
                 $groqPayload = [
                     'model' => $wModel,
@@ -354,6 +364,8 @@ try {
             }
         }
     }
+}
+
 
     // Sync Lead Artifact with WhatsApp channel
     $leadIdForArtifact = $leadId ?: (int)($journey['lead_id'] ?? 0);

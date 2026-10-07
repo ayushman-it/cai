@@ -147,8 +147,8 @@ class AssetHelper {
                 // Fallback: try PHP mail() if company SMTP isn't configured yet
                 $headers  = "MIME-Version: 1.0\r\n";
                 $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-                $headers .= "From: {$brandName} <no-reply@cuboidsoft.in>\r\n";
-                $headers .= "Reply-To: no-reply@cuboidsoft.in\r\n";
+                $headers .= "From: {$brandName} <thecodemunk@gmail.com>\r\n";
+                $headers .= "Reply-To: thecodemunk@gmail.com\r\n";
                 $isSent = (bool)@mail($toEmail, $subject, $htmlBody, $headers);
                 // If local CLI / localhost / sandbox without mail server, treat simulation as dispatched
                 if (!$isSent && (php_sapi_name() === 'cli' || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false || empty($_SERVER['HTTP_HOST']))) {
@@ -249,7 +249,7 @@ class AssetHelper {
               <table role="presentation" width="100%" style="background-color:#fafaf9;border:1px solid #e7e5de;border-radius:6px;margin-bottom:28px;">
                 <tr>
                   <td style="padding:16px 20px;">
-                    <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:4px;">📄 {$title}</div>
+                    <div style="font-size:13px;font-weight:600;color:#0f172a;margin-bottom:4px;">{$title}</div>
                     <div style="font-size:11px;color:#78716c;margin-bottom:8px;">{$desc}</div>
                     <div style="font-size:10px;font-family:monospace;color:#a8a29e;">{$fileName} • {$fileSizeStr}</div>
                   </td>

@@ -60,6 +60,10 @@ if (!$isLocal || (!empty($httpHost) && !in_array(strtolower(explode(':', $httpHo
 // Groq AI Engine Key (Configure in .env)
 define('GROQ_API_KEY', getenv('GROQ_API_KEY') ?: '');
 
+// Google Gemini AI Engine Key & Model (Primary AI Engine)
+define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: '');
+define('GEMINI_MODEL', getenv('GEMINI_MODEL') ?: 'gemini-3.8-flash');
+
 if (!defined('ENCRYPTION_KEY')) {
     define('ENCRYPTION_KEY', getenv('CP_ENCRYPTION_KEY') ?: '');
 }
@@ -129,8 +133,8 @@ function getDbConnection() {
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
     static $schemaChecked = false;
     if (!$schemaChecked) {
-        $localLock = __DIR__ . '/.schema_installed_v15';
-        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v15.lock';
+        $localLock = __DIR__ . '/.schema_installed_v16';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v16.lock';
         if (!file_exists($localLock) && !file_exists($tempLock)) {
             initDbSchemaAndUsers($pdo);
             ensureExtendedSchema($pdo);
@@ -1201,6 +1205,82 @@ HTML;
         if (!in_array('channel', $msgCols)) {
             $pdo->exec("ALTER TABLE `messages` ADD COLUMN `channel` VARCHAR(32) NOT NULL DEFAULT 'web' AFTER `message_text`");
         }
+    } catch (Exception $e) {}
+
+    // 35. Visual AI Workflows & Automation Builder Schema
+    try {
+        $autoCols = $pdo->query("SHOW COLUMNS FROM `automations`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('description', $autoCols)) {
+            $pdo->exec("ALTER TABLE `automations` ADD COLUMN `description` TEXT NULL AFTER `name`");
+        }
+        if (!in_array('status', $autoCols)) {
+            $pdo->exec("ALTER TABLE `automations` ADD COLUMN `status` VARCHAR(30) NOT NULL DEFAULT 'active' AFTER `description`");
+        }
+        if (!in_array('workflow_data', $autoCols)) {
+            $pdo->exec("ALTER TABLE `automations` ADD COLUMN `workflow_data` LONGTEXT NULL AFTER `secondary_action`");
+        }
+        if (!in_array('version', $autoCols)) {
+            $pdo->exec("ALTER TABLE `automations` ADD COLUMN `version` INT NOT NULL DEFAULT 1 AFTER `workflow_data`");
+        }
+        if (!in_array('trigger_type', $autoCols)) {
+            $pdo->exec("ALTER TABLE `automations` ADD COLUMN `trigger_type` VARCHAR(100) NOT NULL DEFAULT 'chat_start' AFTER `version`");
+        }
+        if (!in_array('execution_count', $autoCols)) {
+            $pdo->exec("ALTER TABLE `automations` ADD COLUMN `execution_count` INT NOT NULL DEFAULT 0 AFTER `trigger_type`");
+        }
+        if (!in_array('last_executed_at', $autoCols)) {
+            $pdo->exec("ALTER TABLE `automations` ADD COLUMN `last_executed_at` DATETIME NULL AFTER `execution_count`");
+        }
+        if (!in_array('updated_at', $autoCols)) {
+            $pdo->exec("ALTER TABLE `automations` ADD COLUMN `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`");
+        }
+    } catch (Exception $e) {}
+
+    // 36. Automation Executions & Logs Tables
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `automation_executions` (
+                `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+                `company_id` INT NOT NULL,
+                `automation_id` INT NOT NULL,
+                `version` INT NOT NULL DEFAULT 1,
+                `session_id` VARCHAR(64) NULL,
+                `customer_id` INT NULL,
+                `lead_id` INT NULL,
+                `conversation_id` INT NULL,
+                `trigger_type` VARCHAR(100) NOT NULL,
+                `status` ENUM('running', 'waiting', 'completed', 'failed', 'paused') NOT NULL DEFAULT 'running',
+                `current_node_id` VARCHAR(100) NULL,
+                `completed_nodes_json` LONGTEXT NULL,
+                `variables_json` LONGTEXT NULL,
+                `error_details` TEXT NULL,
+                `is_simulation` TINYINT(1) NOT NULL DEFAULT 0,
+                `started_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                `completed_at` DATETIME NULL,
+                KEY `idx_comp_status` (`company_id`, `status`),
+                KEY `idx_session` (`session_id`),
+                KEY `idx_automation` (`automation_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
+
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `automation_logs` (
+                `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+                `execution_id` BIGINT NOT NULL,
+                `company_id` INT NOT NULL,
+                `automation_id` INT NOT NULL,
+                `node_id` VARCHAR(100) NOT NULL,
+                `node_type` VARCHAR(100) NOT NULL,
+                `node_title` VARCHAR(255) NULL,
+                `status` ENUM('success', 'failed', 'waiting', 'skipped') NOT NULL DEFAULT 'success',
+                `input_data_json` LONGTEXT NULL,
+                `output_data_json` LONGTEXT NULL,
+                `duration_ms` INT NOT NULL DEFAULT 0,
+                `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+                KEY `idx_exec` (`execution_id`),
+                KEY `idx_comp` (`company_id`, `automation_id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
     } catch (Exception $e) {}
 }
 

@@ -1285,3 +1285,11 @@ body.sidebar-mobile-open .app-sidebar-backdrop {
   }
 }
 
+/* Knowledge Base Tab Non-Wrapping Rule */
+.kb-tab-btn {
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+

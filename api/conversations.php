@@ -5,6 +5,8 @@
  * Strictly multi-tenant isolated.
  */
 
+error_reporting(0);
+ini_set('display_errors', '0');
 header("Content-Type: application/json; charset=UTF-8");
 header("Cache-Control: no-cache, no-store, must-revalidate");
 
@@ -47,7 +49,7 @@ if ($companyId === 0) {
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
     session_write_close();
 }
 
@@ -158,26 +160,26 @@ try {
                 'last_message_at'          => $conversation['last_message_at'],
                 'human_attention_required' => (bool)($conversation['human_attention_required'] ?? false) || $conversation['status'] === 'human_requested',
                 'human_attention_reason'   => $conversation['human_attention_reason'] ?? '',
-                'lead_score'               => $artRow ? (int)$artRow['lead_score'] : 0,
-                'priority_reason'          => $artRow ? $artRow['priority_reason'] : '',
+                'lead_score'               => $artRow ? (int)($artRow['lead_score'] ?? 0) : 0,
+                'priority_reason'          => $artRow ? ($artRow['priority_reason'] ?? '') : '',
                 'journey'                  => $journeyRow ? [
                     'id'               => (int)$journeyRow['id'],
-                    'journey_stage'    => $journeyRow['journey_stage'],
-                    'intent_summary'   => $journeyRow['intent_summary'],
-                    'current_channel'  => $journeyRow['current_channel'],
-                    'pending_action'   => $journeyRow['pending_action'],
+                    'journey_stage'    => $journeyRow['state'] ?? ($journeyRow['journey_stage'] ?? 'NEW'),
+                    'intent_summary'   => $journeyRow['conversation_summary'] ?? ($journeyRow['intent_summary'] ?? ''),
+                    'current_channel'  => $journeyRow['current_channel'] ?? 'web',
+                    'pending_action'   => $journeyRow['pending_action'] ?? null,
                     'offered_assets'   => !empty($journeyRow['offered_assets_json']) ? json_decode($journeyRow['offered_assets_json'], true) : []
                 ] : null,
                 'artifact'                 => $artRow ? [
-                    'score'               => (int)$artRow['lead_score'],
-                    'priority'            => $artRow['priority'],
-                    'priority_reason'     => $artRow['priority_reason'],
+                    'score'               => (int)($artRow['lead_score'] ?? 0),
+                    'priority'            => $artRow['priority'] ?? 'MEDIUM',
+                    'priority_reason'     => $artRow['priority_reason'] ?? '',
                     'buying_signals'      => !empty($artRow['buying_signals_json']) ? json_decode($artRow['buying_signals_json'], true) : [],
                     'objections'          => !empty($artRow['objections_json']) ? json_decode($artRow['objections_json'], true) : [],
                     'missing_information' => !empty($artRow['missing_information_json']) ? json_decode($artRow['missing_information_json'], true) : [],
-                    'recommended_action'  => $artRow['recommended_action'],
-                    'summary'             => $artRow['conversation_summary'],
-                    'human_attention'     => $artRow['human_attention_status']
+                    'recommended_action'  => $artRow['recommended_action'] ?? '',
+                    'summary'             => $artRow['conversation_summary'] ?? '',
+                    'human_attention'     => $artRow['human_attention_status'] ?? 'none'
                 ] : null,
                 'appointments'             => $appointments
             ],

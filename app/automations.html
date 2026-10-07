@@ -11,6 +11,120 @@
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="../css/theme.css">
   <link rel="stylesheet" href="../css/dashboard.css?v=5.0.0">
+  <style>
+    /* Native Canvas & Visual Node Builder Styles */
+    .canvas-viewport {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 120px);
+      overflow: hidden;
+      background-color: #faf9f5;
+      background-image: radial-gradient(#d6d3d1 1px, transparent 1px);
+      background-size: 16px 16px;
+      cursor: grab;
+      user-select: none;
+    }
+    .canvas-viewport:active {
+      cursor: grabbing;
+    }
+    .cai-nodes-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+    }
+    .cai-svg-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 10000px;
+      height: 10000px;
+      pointer-events: none;
+      transform-origin: 0 0;
+      z-index: 5;
+    }
+    .cai-node {
+      position: absolute;
+      width: 250px;
+      background: #ffffff;
+      border: 1px solid #e7e5de;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      cursor: move;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      z-index: 10;
+    }
+    .cai-node:hover {
+      border-color: #a8a29e;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .cai-node.selected {
+      border-color: #1c1917;
+      box-shadow: 0 0 0 2px rgba(28, 25, 23, 0.15), 0 4px 12px rgba(0, 0, 0, 0.08);
+      z-index: 20;
+    }
+    .cai-node.executing-highlight {
+      border-color: #10b981 !important;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25), 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+      animation: pulseGreen 1.8s infinite;
+      z-index: 30;
+    }
+    @keyframes pulseGreen {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3); }
+      50% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.5); }
+    }
+    .canvas-port {
+      width: 10px;
+      height: 10px;
+      background: #ffffff;
+      border: 2px solid #78716c;
+      border-radius: 50%;
+      position: absolute;
+      cursor: crosshair;
+      transition: transform 0.15s, border-color 0.15s;
+      z-index: 25;
+    }
+    .canvas-port:hover {
+      transform: scale(1.35);
+      border-color: #1c1917;
+      background: #1c1917;
+    }
+    .canvas-port-input {
+      top: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .canvas-port-output {
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    .cai-edge-group {
+      pointer-events: auto;
+    }
+    .cai-edge-path {
+      fill: none;
+      stroke: #78716c;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+    .cai-edge-path-bg {
+      fill: none;
+      stroke: transparent;
+      stroke-width: 14;
+      cursor: pointer;
+    }
+    .cai-edge-path-bg:hover + .cai-edge-path {
+      stroke: #ef4444;
+      stroke-width: 2.5;
+    }
+    .cai-edge-label {
+      font-size: 10px;
+      font-family: monospace;
+      fill: #57534e;
+      background: white;
+    }
+  </style>
 </head>
 <body class="app-body">
 
@@ -20,7 +134,8 @@
     <div class="app-main">
       <div id="topbar-container"></div>
 
-      <div class="app-content-scroll">
+      <!-- VIEW 1: WORKFLOW MANAGEMENT HOME -->
+      <div id="view-workflow-list" class="app-content-scroll">
         <div class="w-full space-y-6">
           
           <!-- Executive Header (Intercom Minimal Style) -->
@@ -29,19 +144,39 @@
               <div class="flex items-center gap-2.5">
                 <h1 class="app-page-title">Automations</h1>
                 <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-stone-100 text-stone-800 border border-stone-300 rounded-[3px] text-[11px] font-medium">
-                  <span class="w-1.5 h-1.5 rounded-full bg-stone-900 animate-pulse"></span> Active
+                  <span class="w-1.5 h-1.5 rounded-full bg-stone-900 animate-pulse"></span> Visual AI Workflows
                 </span>
               </div>
-              <p class="text-xs text-stone-500 mt-1">Automated conversation follow-ups and internal team notifications.</p>
+              <p class="text-xs text-stone-500 mt-1">Design intelligent customer journeys with Cai.</p>
             </div>
             
             <div class="flex items-center gap-2">
-              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CuboidDashboard.testWhatsAppNotification('general')">
-                <i data-lucide="bell" class="w-3.5 h-3.5 mr-1 text-stone-500"></i> Test Alert
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CaiWorkflowBuilder.openTemplatesModal()">
+                <i data-lucide="layout-template" class="w-3.5 h-3.5 mr-1 text-stone-600"></i> Browse Templates
               </button>
-              <button class="btn-primary btn-sm text-xs py-1.5 px-3" onclick="CuboidDashboard.openNewAutomationModal()">
-                <i data-lucide="plus" class="w-3.5 h-3.5 mr-1"></i> New Workflow
+              <button class="btn-primary btn-sm text-xs py-1.5 px-3" onclick="CaiWorkflowBuilder.switchView('editor')">
+                <i data-lucide="plus" class="w-3.5 h-3.5 mr-1"></i> Create Workflow
               </button>
+            </div>
+          </div>
+
+          <!-- Summary Metrics Strip -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-3.5 bg-white border border-[#e7e5de] rounded-[6px] space-y-1">
+              <span class="text-[11px] text-stone-500 font-medium">Total Workflows</span>
+              <div class="text-xl font-bold text-stone-900" id="metric-total-workflows">0</div>
+            </div>
+            <div class="p-3.5 bg-white border border-[#e7e5de] rounded-[6px] space-y-1">
+              <span class="text-[11px] text-stone-500 font-medium">Active Automations</span>
+              <div class="text-xl font-bold text-emerald-700" id="metric-active-workflows">0</div>
+            </div>
+            <div class="p-3.5 bg-white border border-[#e7e5de] rounded-[6px] space-y-1">
+              <span class="text-[11px] text-stone-500 font-medium">Total Executions</span>
+              <div class="text-xl font-bold text-stone-900 font-mono" id="metric-total-executions">0</div>
+            </div>
+            <div class="p-3.5 bg-white border border-[#e7e5de] rounded-[6px] space-y-1">
+              <span class="text-[11px] text-stone-500 font-medium">Success Rate</span>
+              <div class="text-xl font-bold text-stone-900 font-mono">99.4%</div>
             </div>
           </div>
 
@@ -49,11 +184,11 @@
           <div class="p-3.5 bg-white border border-[#e7e5de] rounded-[6px] space-y-2.5">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#f0eee8]">
               <div>
-                <h3 class="text-xs font-semibold text-stone-900">Alert Recipients</h3>
-                <p class="text-[11px] text-stone-500">Team members receiving automated WhatsApp notifications.</p>
+                <h3 class="text-xs font-semibold text-stone-900">Alert Recipients & Handoff Phones</h3>
+                <p class="text-[11px] text-stone-500">Team members receiving automated WhatsApp escalation briefs and high-intent alerts.</p>
               </div>
               <a href="team.html" class="text-xs text-stone-600 hover:text-black font-medium underline flex items-center gap-1">
-                <i data-lucide="edit-3" class="w-3 h-3"></i> Manage Phones
+                <i data-lucide="edit-3" class="w-3 h-3"></i> Manage Team Phones
               </a>
             </div>
 
@@ -85,14 +220,17 @@
           <!-- Filter Tabs -->
           <div class="flex items-center justify-between gap-3 border-b border-[#e7e5de] pb-3 text-xs">
             <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 no-scrollbar" id="auto-filter-tabs">
-              <button class="auto-tab-btn px-3 py-1.5 font-medium rounded-[4px] bg-stone-900 text-white" data-filter="all" onclick="CuboidDashboard.filterAutomations('all')">
+              <button class="auto-tab-btn px-3 py-1.5 font-medium rounded-[4px] bg-stone-900 text-white" data-filter="all" onclick="CaiWorkflowBuilder.loadWorkflowsList('all')">
                 All Workflows (<span id="auto-tab-count-all">0</span>)
               </button>
-              <button class="auto-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100" data-filter="customer" onclick="CuboidDashboard.filterAutomations('customer')">
-                Customer Follow-ups (<span id="auto-tab-count-customer">0</span>)
+              <button class="auto-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100" data-filter="active" onclick="CaiWorkflowBuilder.loadWorkflowsList('active')">
+                Active (<span id="auto-tab-count-active">0</span>)
               </button>
-              <button class="auto-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100" data-filter="team" onclick="CuboidDashboard.filterAutomations('team')">
-                Team Alerts (<span id="auto-tab-count-team">0</span>)
+              <button class="auto-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100" data-filter="draft" onclick="CaiWorkflowBuilder.loadWorkflowsList('draft')">
+                Drafts (<span id="auto-tab-count-draft">0</span>)
+              </button>
+              <button class="auto-tab-btn px-3 py-1.5 font-medium rounded-[4px] text-stone-600 hover:text-stone-900 hover:bg-stone-100" data-filter="paused" onclick="CaiWorkflowBuilder.loadWorkflowsList('paused')">
+                Paused (<span id="auto-tab-count-paused">0</span>)
               </button>
             </div>
           </div>
@@ -107,459 +245,320 @@
 
         </div>
       </div>
+
+      <!-- VIEW 2: FULL-SCREEN VISUAL WORKFLOW CANVAS EDITOR -->
+      <div id="view-workflow-editor" class="hidden flex flex-col h-[calc(100vh-64px)] overflow-hidden bg-white">
+        
+        <!-- Top Toolbar -->
+        <div class="h-14 border-b border-[#e7e5de] px-4 flex items-center justify-between bg-white z-30">
+          <div class="flex items-center gap-3">
+            <button onclick="CaiWorkflowBuilder.switchView('list')" class="btn-secondary btn-sm text-xs py-1.5 px-2.5 flex items-center gap-1 text-stone-600">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i>
+              <span>Workflows</span>
+            </button>
+            <div class="h-4 w-px bg-stone-300"></div>
+            <div class="flex items-center gap-2">
+              <input type="text" id="canvas-workflow-title" value="Course Enrollment Journey" class="font-semibold text-xs text-stone-900 bg-transparent hover:bg-stone-50 focus:bg-white border border-transparent focus:border-stone-300 px-2 py-1 rounded w-64 transition-all">
+              <span id="canvas-workflow-status" class="px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-[10.5px] rounded font-medium">ACTIVE</span>
+              <span id="canvas-workflow-version" class="text-[10px] text-stone-500 font-mono">v1</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="CaiWorkflowBuilder.autoArrangeNodes()" class="btn-secondary btn-sm text-xs py-1.5 px-2.5" title="Auto arrange canvas layout">
+              <i data-lucide="layout" class="w-3.5 h-3.5 mr-1 text-stone-500"></i> Auto Arrange
+            </button>
+            <button onclick="CaiWorkflowBuilder.openSimulatorModal()" class="btn-secondary btn-sm text-xs py-1.5 px-3 text-emerald-700 hover:text-emerald-900" title="Test workflow in live chat simulator">
+              <i data-lucide="play" class="w-3.5 h-3.5 mr-1"></i> Test Workflow
+            </button>
+            <div class="h-4 w-px bg-stone-300"></div>
+            <button onclick="CaiWorkflowBuilder.saveWorkflow('draft')" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+              Save Draft
+            </button>
+            <button onclick="CaiWorkflowBuilder.publishWorkflow()" class="btn-primary btn-sm text-xs py-1.5 px-3.5 flex items-center gap-1.5">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span>Publish</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas Body (Left Library + Center Infinite Canvas + Right Inspector) -->
+        <div class="flex-1 flex overflow-hidden relative">
+          
+          <!-- Left Panel: Node Library (Expandable & Collapsible) -->
+          <div id="wf-node-palette" class="w-64 border-r border-[#e7e5de] bg-white flex flex-col z-20 overflow-y-auto transition-all duration-200 shrink-0">
+            <!-- Palette Header with Collapse Button -->
+            <div class="p-2.5 border-b border-[#e7e5de] flex items-center justify-between bg-stone-50/70">
+              <span class="font-semibold text-xs text-stone-900 tracking-tight flex items-center gap-1.5">
+                <i data-lucide="layers" class="w-3.5 h-3.5 text-stone-600"></i> Node Library
+              </span>
+              <button type="button" onclick="CaiWorkflowBuilder.toggleNodePalette()" class="p-1 text-stone-400 hover:text-stone-900 rounded hover:bg-stone-200 transition-colors" title="Close Library (Click to Collapse)">
+                <i data-lucide="panel-left-close" class="w-4 h-4"></i>
+              </button>
+            </div>
+
+            <!-- Search input -->
+            <div class="p-2.5 border-b border-[#e7e5de]">
+              <div class="relative">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
+                <input type="text" id="node-library-search" placeholder="Search nodes..." class="app-input w-full text-xs pl-8 py-1.5">
+              </div>
+            </div>
+
+            <!-- Categories with Accordions -->
+            <div class="p-3 space-y-3 text-xs">
+              
+              <!-- CATEGORY A: TRIGGERS -->
+              <div class="palette-category">
+                <button type="button" onclick="CaiWorkflowBuilder.togglePaletteSection(this)" class="w-full flex items-center justify-between text-left py-1 text-[10.5px] font-semibold text-stone-500 uppercase tracking-wider hover:text-stone-900 cursor-pointer">
+                  <span>Triggers</span>
+                  <i data-lucide="chevron-down" class="w-3 h-3 text-stone-400 transition-transform duration-150"></i>
+                </button>
+                <div class="palette-items-group space-y-1.5 pt-1">
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('trigger_chat_start')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="message-square" class="w-3.5 h-3.5 text-amber-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">New Chat Started</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('trigger_new_visitor')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="user-plus" class="w-3.5 h-3.5 text-amber-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">New Visitor / Lead</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('trigger_payment_confirmed')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Payment Confirmed</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('trigger_scheduled')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="clock" class="w-3.5 h-3.5 text-stone-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Scheduled Trigger</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CATEGORY B: AI INTELLIGENCE -->
+              <div class="palette-category">
+                <button type="button" onclick="CaiWorkflowBuilder.togglePaletteSection(this)" class="w-full flex items-center justify-between text-left py-1 text-[10.5px] font-semibold text-stone-500 uppercase tracking-wider hover:text-stone-900 cursor-pointer">
+                  <span>AI Intelligence (Gemini)</span>
+                  <i data-lucide="chevron-down" class="w-3 h-3 text-stone-400 transition-transform duration-150"></i>
+                </button>
+                <div class="palette-items-group space-y-1.5 pt-1">
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('ai_response_generator')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">AI Response Generator</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('ai_intent_detection')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="git-branch" class="w-3.5 h-3.5 text-purple-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">AI Intent Detection</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('ai_product_recommendation')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="compass" class="w-3.5 h-3.5 text-purple-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">AI Recommendation</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('ai_qualification')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="clipboard-check" class="w-3.5 h-3.5 text-purple-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">AI Lead Qualification</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CATEGORY C: CUSTOMER MESSAGES -->
+              <div class="palette-category">
+                <button type="button" onclick="CaiWorkflowBuilder.togglePaletteSection(this)" class="w-full flex items-center justify-between text-left py-1 text-[10.5px] font-semibold text-stone-500 uppercase tracking-wider hover:text-stone-900 cursor-pointer">
+                  <span>Customer Messages & Cards</span>
+                  <i data-lucide="chevron-down" class="w-3 h-3 text-stone-400 transition-transform duration-150"></i>
+                </button>
+                <div class="palette-items-group space-y-1.5 pt-1">
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('msg_plain_text')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="align-left" class="w-3.5 h-3.5 text-blue-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Plain Text Message</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('msg_quick_replies')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="list" class="w-3.5 h-3.5 text-blue-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Quick Reply Buttons</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('msg_course_carousel')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-blue-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Course Carousel</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('msg_emi_card')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="calculator" class="w-3.5 h-3.5 text-blue-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">0% EMI Options Card</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('msg_payment_link')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="credit-card" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Payment Link Card</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('msg_appointment_card')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5 text-blue-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Appointment Booking</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('msg_brochure_download')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5 text-blue-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Brochure Download</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CATEGORY D: CONDITIONS -->
+              <div class="palette-category">
+                <button type="button" onclick="CaiWorkflowBuilder.togglePaletteSection(this)" class="w-full flex items-center justify-between text-left py-1 text-[10.5px] font-semibold text-stone-500 uppercase tracking-wider hover:text-stone-900 cursor-pointer">
+                  <span>Conditions & Logic</span>
+                  <i data-lucide="chevron-down" class="w-3 h-3 text-stone-400 transition-transform duration-150"></i>
+                </button>
+                <div class="palette-items-group space-y-1.5 pt-1">
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('logic_if_else')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="git-commit" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">If / Else Condition</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('logic_emi_availability')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="percent" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">EMI Availability Check</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('logic_response_match')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-emerald-600"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Response Match</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CATEGORY E & G: CRM & ACTIONS -->
+              <div class="palette-category">
+                <button type="button" onclick="CaiWorkflowBuilder.togglePaletteSection(this)" class="w-full flex items-center justify-between text-left py-1 text-[10.5px] font-semibold text-stone-500 uppercase tracking-wider hover:text-stone-900 cursor-pointer">
+                  <span>Actions & Workflow Control</span>
+                  <i data-lucide="chevron-down" class="w-3 h-3 text-stone-400 transition-transform duration-150"></i>
+                </button>
+                <div class="palette-items-group space-y-1.5 pt-1">
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('crm_update_lead')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="user-check" class="w-3.5 h-3.5 text-stone-700"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Update Lead Stage</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('crm_request_handoff')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="headphones" class="w-3.5 h-3.5 text-stone-700"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Human Handoff</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('comm_schedule_reminder')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="bell" class="w-3.5 h-3.5 text-stone-700"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Schedule Reminder</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('control_wait_reply')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="pause" class="w-3.5 h-3.5 text-stone-500"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">Wait for Reply</span>
+                  </div>
+                  <div onclick="CaiWorkflowBuilder.addNodeToCanvas('control_end')" class="lib-node-item p-2 border border-stone-200 hover:border-stone-900 rounded-[4px] cursor-pointer flex items-center gap-2 bg-white transition-colors">
+                    <i data-lucide="stop-circle" class="w-3.5 h-3.5 text-stone-500"></i>
+                    <span class="text-[11.5px] text-stone-900 font-medium">End Workflow</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Floating Expand Palette Button (Visible when left palette is closed) -->
+          <button id="wf-palette-expand-btn" type="button" onclick="CaiWorkflowBuilder.toggleNodePalette()" class="hidden absolute left-3 top-3 z-30 px-2.5 py-1.5 bg-white hover:bg-stone-50 border border-stone-300 shadow-sm rounded-[5px] text-stone-700 flex items-center gap-1.5 text-xs font-medium cursor-pointer transition-all" title="Open Node Library">
+            <i data-lucide="panel-left-open" class="w-3.5 h-3.5 text-stone-700"></i>
+            <span>Node Library</span>
+          </button>
+
+          <!-- Center: Infinite Visual Canvas -->
+          <div id="canvas-viewport" class="canvas-viewport flex-1">
+            <svg id="canvas-svg" class="cai-svg-layer"></svg>
+            <div id="canvas-nodes-container" class="cai-nodes-layer"></div>
+
+            <!-- Bottom Canvas Controls Bar -->
+            <div class="canvas-controls-bar absolute bottom-4 left-4 z-30 bg-white border border-[#e7e5de] shadow-sm rounded-[6px] p-1 flex items-center gap-1">
+              <button onclick="CaiWorkflowBuilder.zoomIn()" class="p-1.5 hover:bg-stone-100 rounded text-stone-600 hover:text-stone-900" title="Zoom In">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="CaiWorkflowBuilder.zoomOut()" class="p-1.5 hover:bg-stone-100 rounded text-stone-600 hover:text-stone-900" title="Zoom Out">
+                <i data-lucide="minus" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="CaiWorkflowBuilder.resetZoom()" class="p-1.5 hover:bg-stone-100 rounded text-stone-600 hover:text-stone-900 text-xs font-mono px-2" title="Reset View">
+                100%
+              </button>
+              <button onclick="CaiWorkflowBuilder.fitToScreen()" class="p-1.5 hover:bg-stone-100 rounded text-stone-600 hover:text-stone-900" title="Fit to Screen">
+                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+              </button>
+              <div class="h-3 w-px bg-stone-200"></div>
+              <button onclick="CaiWorkflowBuilder.autoArrangeNodes()" class="p-1.5 hover:bg-stone-100 rounded text-stone-600 hover:text-stone-900" title="Auto Align Nodes">
+                <i data-lucide="align-justify" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Panel: Node Configuration Inspector -->
+          <div id="canvas-inspector-panel" class="hidden w-80 border-l border-[#e7e5de] bg-white z-20 flex flex-col">
+            <!-- Dynamically populated on node select -->
+          </div>
+
+        </div>
+      </div>
+
     </div>
   </div>
 
-  <!-- New Workflow Modal (Intercom Style with Custom Select Dropdowns) -->
-  <div id="new-automation-modal" class="app-modal-overlay">
-    <div class="app-modal p-6 max-w-xl w-full">
-      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-4">
-        <div>
-          <div class="flex items-center gap-2">
-            <h3 class="text-sm font-semibold text-stone-900">Create Custom Workflow</h3>
-            <span class="text-[10px] px-2 py-0.5 bg-stone-100 text-stone-700 font-mono rounded border border-stone-200">Builder</span>
+  <!-- INTERACTIVE SIMULATOR (TEST WORKFLOW DRAWER / MODAL) -->
+  <div id="workflow-simulator-modal" class="hidden fixed inset-0 z-50 bg-black/30 backdrop-blur-2xs flex justify-end">
+    <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col border-l border-[#e7e5de]">
+      <div class="p-4 border-b border-[#e7e5de] flex items-center justify-between bg-stone-50">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center">
+            <i data-lucide="play" class="w-3 h-3"></i>
           </div>
-          <p class="text-[11px] text-stone-500 mt-0.5">Automate WhatsApp follow-ups, internal notifications, lead routing, and pipeline actions.</p>
+          <div>
+            <h3 class="text-xs font-semibold text-stone-900">Workflow Simulator</h3>
+            <p class="text-[10.5px] text-stone-500">Live chat testing with active node highlighting.</p>
+          </div>
         </div>
-        <button onclick="CuboidDashboard.closeNewAutomationModal()" class="text-stone-400 hover:text-stone-700">
+        <button onclick="CaiWorkflowBuilder.closeSimulatorModal()" class="text-stone-400 hover:text-stone-700">
           <i data-lucide="x" class="w-4 h-4"></i>
         </button>
       </div>
 
-      <form id="new-automation-form" onsubmit="CuboidDashboard.submitNewAutomation(event)" class="space-y-4 text-xs">
-        
-        <!-- Workflow Target Cards -->
-        <div>
-          <label class="block font-medium text-stone-700 mb-1.5">Destination Category</label>
-          <div class="grid grid-cols-3 gap-2">
-            <label class="p-2.5 border border-stone-900 bg-stone-50 rounded-[4px] cursor-pointer auto-target-option flex flex-col gap-1 transition-all">
-              <div class="flex items-center justify-between">
-                <span class="font-semibold text-stone-900 text-xs">Customer</span>
-                <input type="radio" name="auto_target_type" value="customer" checked class="text-stone-900" onchange="CuboidDashboard.onAutoTargetChange('customer')">
-              </div>
-              <div class="text-[10.5px] text-stone-500 leading-tight">WhatsApp follow-up to prospect</div>
-            </label>
-            <label class="p-2.5 border border-stone-200 hover:border-stone-400 rounded-[4px] cursor-pointer auto-target-option flex flex-col gap-1 transition-all">
-              <div class="flex items-center justify-between">
-                <span class="font-semibold text-stone-900 text-xs">Team Alert</span>
-                <input type="radio" name="auto_target_type" value="team" class="text-stone-900" onchange="CuboidDashboard.onAutoTargetChange('team')">
-              </div>
-              <div class="text-[10.5px] text-stone-500 leading-tight">WhatsApp alert to counselor/founder</div>
-            </label>
-            <label class="p-2.5 border border-stone-200 hover:border-stone-400 rounded-[4px] cursor-pointer auto-target-option flex flex-col gap-1 transition-all">
-              <div class="flex items-center justify-between">
-                <span class="font-semibold text-stone-900 text-xs">Automation</span>
-                <input type="radio" name="auto_target_type" value="crm" class="text-stone-900" onchange="CuboidDashboard.onAutoTargetChange('crm')">
-              </div>
-              <div class="text-[10.5px] text-stone-500 leading-tight">Pipeline shift, routing, or webhook</div>
-            </label>
-          </div>
+      <!-- Chat Messages Container -->
+      <div id="sim-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3 bg-[#faf9f5]"></div>
+
+      <!-- Step Execution Logs Inspector Strip -->
+      <div class="border-t border-[#e7e5de] p-3 bg-white max-h-36 overflow-y-auto space-y-1.5">
+        <div class="text-[10px] font-semibold text-stone-400 uppercase tracking-wider">Live Execution Logs</div>
+        <div id="sim-step-logs" class="space-y-1">
+          <div class="text-[11px] text-stone-400">Ready to test workflow...</div>
         </div>
+      </div>
 
-        <!-- Workflow Name -->
-        <div>
-          <label class="block font-medium text-stone-700 mb-1">Workflow Name</label>
-          <input type="text" id="auto-input-name" required placeholder="e.g. Stalled Checkout 15m WhatsApp Reminder" class="app-input w-full text-xs">
-        </div>
-
-        <!-- Row: Custom Trigger Dropdown & Audience Filter Dropdown -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          
-          <!-- Custom Trigger Dropdown -->
-          <div>
-            <label class="block font-medium text-stone-700 mb-1 flex items-center justify-between">
-              <span>1. When this happens (Trigger)</span>
-              <span class="text-[10px] text-stone-400 font-mono">Event</span>
-            </label>
-            
-            <div class="custom-select-container" id="cs-trigger-container">
-              <button type="button" class="custom-select-btn" onclick="CuboidDashboard.toggleCustomSelect('cs-trigger-container')">
-                <div class="flex items-center gap-2 truncate">
-                  <i data-lucide="zap" class="w-3.5 h-3.5 text-stone-600 shrink-0"></i>
-                  <span id="cs-trigger-label" class="font-medium text-stone-900 truncate">Customer Stops at Payment Page</span>
-                </div>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-stone-400 shrink-0"></i>
-              </button>
-              
-              <div class="custom-select-menu">
-                <div class="custom-select-group-header">🎯 Ingestion & Captures</div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'lead_capture', 'New Website Lead Captured', 'Prospect submitted form or chat info')">
-                  <div>
-                    <div class="font-medium text-stone-900">New Website Lead Captured</div>
-                    <div class="text-[11px] text-stone-500">Prospect submitted form or chat info</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'whatsapp_inbound', 'Inbound WhatsApp Inquiry Received', 'Visitor sends incoming WhatsApp chat')">
-                  <div>
-                    <div class="font-medium text-stone-900">Inbound WhatsApp Inquiry Received</div>
-                    <div class="text-[11px] text-stone-500">Visitor sends incoming WhatsApp chat</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'first_touch_lead', 'Prospect Enters Phone Number', 'Instant brochure / syllabus delivery')">
-                  <div>
-                    <div class="font-medium text-stone-900">Prospect Enters Phone Number</div>
-                    <div class="text-[11px] text-stone-500">Instant brochure / syllabus delivery</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-
-                <div class="custom-select-group-header">📊 Pipeline & Deals</div>
-                <div class="custom-select-item selected" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'lead_stage_payment', 'Customer Stops at Payment Page', 'Visited payment link without purchase')">
-                  <div>
-                    <div class="font-medium text-stone-900">Customer Stops at Payment Page</div>
-                    <div class="text-[11px] text-stone-500">Visited payment link without purchase</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'stage_demo_booked', 'Demo / Counseling Session Booked', 'Scheduled meeting / counseling call')">
-                  <div>
-                    <div class="font-medium text-stone-900">Demo / Counseling Session Booked</div>
-                    <div class="text-[11px] text-stone-500">Scheduled meeting / counseling call</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'deal_won', 'Deal Won & Payment Confirmed', 'Full fee or advance confirmed')">
-                  <div>
-                    <div class="font-medium text-stone-900">Deal Won & Payment Confirmed</div>
-                    <div class="text-[11px] text-stone-500">Full fee or advance confirmed</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-
-                <div class="custom-select-group-header">🔥 High Intent & Objections</div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'deal_value_high', 'High-Value Opportunity (> ₹50,000)', 'High-ticket deal worth priority close')">
-                  <div>
-                    <div class="font-medium text-stone-900">High-Value Opportunity (> ₹50,000)</div>
-                    <div class="text-[11px] text-stone-500">High-ticket deal worth priority close</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'objection_trust_detected', 'Trust / Guarantee / Refund Objection', 'AI detects hesitation or request for counselor')">
-                  <div>
-                    <div class="font-medium text-stone-900">Trust / Guarantee / Refund Objection</div>
-                    <div class="text-[11px] text-stone-500">AI detects hesitation or request for counselor</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-
-                <div class="custom-select-group-header">⏳ Inactivity & SLA</div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'chat_idle_15m', 'Customer Silent in Chat (15m+)', 'Visitor left conversation without closing')">
-                  <div>
-                    <div class="font-medium text-stone-900">Customer Silent in Chat (15m+)</div>
-                    <div class="text-[11px] text-stone-500">Visitor left conversation without closing</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'lead_no_reply_24h', 'Prospect Uncontacted for 24 Hours', 'Breach of response SLA')">
-                  <div>
-                    <div class="font-medium text-stone-900">Prospect Uncontacted for 24 Hours</div>
-                    <div class="text-[11px] text-stone-500">Breach of response SLA</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'installment_overdue', 'Fee / Installment Reminder Due', 'Upcoming or overdue payment cycle')">
-                  <div>
-                    <div class="font-medium text-stone-900">Fee / Installment Reminder Due</div>
-                    <div class="text-[11px] text-stone-500">Upcoming or overdue payment cycle</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-
-                <div class="custom-select-group-header">⚙️ Custom Trigger</div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-trigger', 'custom_event', 'Custom Event Trigger', 'Define your own custom event key')">
-                  <div>
-                    <div class="font-medium text-stone-900">Custom Event Trigger</div>
-                    <div class="text-[11px] text-stone-500">Define your own custom event key</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-              </div>
-            </div>
-
-            <input type="hidden" id="auto-input-trigger" value="lead_stage_payment">
-            
-            <!-- Conditional Custom Trigger Key Input -->
-            <div id="custom-trigger-key-box" class="mt-2 hidden">
-              <input type="text" id="auto-input-custom-trigger" placeholder="e.g. webinar_registered, brochure_downloaded" class="app-input w-full text-xs font-mono">
-            </div>
-          </div>
-
-          <!-- Custom Audience / Condition Dropdown -->
-          <div>
-            <label class="block font-medium text-stone-700 mb-1 flex items-center justify-between">
-              <span>2. Target Audience</span>
-              <span class="text-[10px] text-stone-400 font-mono">Filter</span>
-            </label>
-
-            <div class="custom-select-container" id="cs-condition-container">
-              <button type="button" class="custom-select-btn" onclick="CuboidDashboard.toggleCustomSelect('cs-condition-container')">
-                <div class="flex items-center gap-2 truncate">
-                  <i data-lucide="users" class="w-3.5 h-3.5 text-stone-600 shrink-0"></i>
-                  <span id="cs-condition-label" class="font-medium text-stone-900 truncate">All Prospects & Opportunities</span>
-                </div>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-stone-400 shrink-0"></i>
-              </button>
-
-              <div class="custom-select-menu">
-                <div class="custom-select-item selected" onclick="CuboidDashboard.selectCustomOption('cs-condition', 'all', 'All Prospects & Opportunities', 'Run across all incoming contacts')">
-                  <div>
-                    <div class="font-medium text-stone-900">All Prospects & Opportunities</div>
-                    <div class="text-[11px] text-stone-500">Run across all incoming contacts</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-condition', 'hot_leads', 'High-Intent Leads (Score > 70)', 'Warm or hot prospects only')">
-                  <div>
-                    <div class="font-medium text-stone-900">High-Intent Leads (Score > 70)</div>
-                    <div class="text-[11px] text-stone-500">Warm or hot prospects only</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-condition', 'unassigned', 'Unassigned Inquiries Only', 'Leads without an assigned counselor')">
-                  <div>
-                    <div class="font-medium text-stone-900">Unassigned Inquiries Only</div>
-                    <div class="text-[11px] text-stone-500">Leads without an assigned counselor</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-condition', 'fee_pending', 'Fee / Installment Pending', 'Leads with pending balance')">
-                  <div>
-                    <div class="font-medium text-stone-900">Fee / Installment Pending</div>
-                    <div class="text-[11px] text-stone-500">Leads with pending balance</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-condition', 'high_value', 'High-Value Deals (> ₹50,000)', 'High-ticket prospects only')">
-                  <div>
-                    <div class="font-medium text-stone-900">High-Value Deals (> ₹50,000)</div>
-                    <div class="text-[11px] text-stone-500">High-ticket prospects only</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-              </div>
-            </div>
-
-            <input type="hidden" id="auto-input-condition" value="all">
-          </div>
-        </div>
-
-        <!-- Row: Custom Action Dropdown & Custom Delay Dropdown -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          
-          <!-- Custom Action Dropdown -->
-          <div>
-            <label class="block font-medium text-stone-700 mb-1 flex items-center justify-between">
-              <span>3. Then do this (Action)</span>
-              <span class="text-[10px] text-stone-400 font-mono">Execution</span>
-            </label>
-
-            <div class="custom-select-container" id="cs-action-container">
-              <button type="button" class="custom-select-btn" onclick="CuboidDashboard.toggleCustomSelect('cs-action-container')">
-                <div class="flex items-center gap-2 truncate">
-                  <i data-lucide="send" class="w-3.5 h-3.5 text-stone-600 shrink-0"></i>
-                  <span id="cs-action-label" class="font-medium text-stone-900 truncate">Send WhatsApp Follow-up to Customer</span>
-                </div>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-stone-400 shrink-0"></i>
-              </button>
-
-              <div class="custom-select-menu">
-                <div class="custom-select-group-header">💬 Communication</div>
-                <div class="custom-select-item selected" onclick="CuboidDashboard.selectCustomOption('cs-action', 'send_whatsapp_reminder', 'Send WhatsApp Follow-up to Customer', 'Deliver template message via WhatsApp API')">
-                  <div>
-                    <div class="font-medium text-stone-900">Send WhatsApp Follow-up to Customer</div>
-                    <div class="text-[11px] text-stone-500">Deliver template message via WhatsApp API</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-action', 'notify_founder_whatsapp', 'Dispatch WhatsApp Alert to Team / Founder', 'Ping counselor or founder phone with lead link')">
-                  <div>
-                    <div class="font-medium text-stone-900">Dispatch WhatsApp Alert to Team / Founder</div>
-                    <div class="text-[11px] text-stone-500">Ping counselor or founder phone with lead link</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-
-                <div class="custom-select-group-header">🔄 CRM Operations</div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-action', 'assign_agent', 'Round-Robin Lead Assignment', 'Auto-assign lead to active counselor')">
-                  <div>
-                    <div class="font-medium text-stone-900">Round-Robin Lead Assignment</div>
-                    <div class="text-[11px] text-stone-500">Auto-assign lead to active counselor</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-action', 'move_pipeline_stage', 'Auto-Advance Pipeline Stage', 'Shift deal to Demo / Proposal / Payment stage')">
-                  <div>
-                    <div class="font-medium text-stone-900">Auto-Advance Pipeline Stage</div>
-                    <div class="text-[11px] text-stone-500">Shift deal to Demo / Proposal / Payment stage</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-action', 'tag_high_priority', 'Tag as High Priority in Radar', 'Add Hot Deal flag to closing dashboard')">
-                  <div>
-                    <div class="font-medium text-stone-900">Tag as High Priority in Radar</div>
-                    <div class="text-[11px] text-stone-500">Add Hot Deal flag to closing dashboard</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-action', 'send_webhook', 'Dispatch Webhook POST (Zapier/Make)', 'Send JSON data to external HTTP endpoint')">
-                  <div>
-                    <div class="font-medium text-stone-900">Dispatch Webhook POST (Zapier/Make)</div>
-                    <div class="text-[11px] text-stone-500">Send JSON data to external HTTP endpoint</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-              </div>
-            </div>
-
-            <input type="hidden" id="auto-input-action" value="send_whatsapp_reminder">
-
-            <!-- Conditional Pipeline Stage Target -->
-            <div id="custom-stage-select-box" class="mt-2 hidden">
-              <select id="auto-input-target-stage" class="app-select w-full text-xs">
-                <option value="Demo Scheduled">Move to: Demo Scheduled</option>
-                <option value="Proposal Sent">Move to: Proposal Sent</option>
-                <option value="Payment Pending">Move to: Payment Pending</option>
-                <option value="Closed Won">Move to: Closed Won</option>
-              </select>
-            </div>
-
-            <!-- Conditional Webhook URL Input -->
-            <div id="custom-webhook-url-box" class="mt-2 hidden">
-              <input type="url" id="auto-input-webhook-url" placeholder="https://hooks.zapier.com/hooks/catch/..." class="app-input w-full text-xs font-mono">
-            </div>
-          </div>
-
-          <!-- Custom Wait Delay Dropdown -->
-          <div>
-            <label class="block font-medium text-stone-700 mb-1 flex items-center justify-between">
-              <span>4. Execution Delay</span>
-              <span class="text-[10px] text-stone-400 font-mono">Timing</span>
-            </label>
-
-            <div class="custom-select-container" id="cs-wait-container">
-              <button type="button" class="custom-select-btn" onclick="CuboidDashboard.toggleCustomSelect('cs-wait-container')">
-                <div class="flex items-center gap-2 truncate">
-                  <i data-lucide="clock" class="w-3.5 h-3.5 text-stone-600 shrink-0"></i>
-                  <span id="cs-wait-label" class="font-medium text-stone-900 truncate">15 minutes delay</span>
-                </div>
-                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-stone-400 shrink-0"></i>
-              </button>
-
-              <div class="custom-select-menu">
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-wait', '0', 'Immediate (0s real-time)', 'Trigger instant action upon event')">
-                  <div>
-                    <div class="font-medium text-stone-900">Immediate (0s real-time)</div>
-                    <div class="text-[11px] text-stone-500">Trigger instant action upon event</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-wait', '5', '5 minutes delay', 'Polite pause before dispatch')">
-                  <div>
-                    <div class="font-medium text-stone-900">5 minutes delay</div>
-                    <div class="text-[11px] text-stone-500">Polite pause before dispatch</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item selected" onclick="CuboidDashboard.selectCustomOption('cs-wait', '15', '15 minutes delay', 'Recommended for checkout stall')">
-                  <div>
-                    <div class="font-medium text-stone-900">15 minutes delay</div>
-                    <div class="text-[11px] text-stone-500">Recommended for checkout stall</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-wait', '30', '30 minutes delay', 'Half hour follow-up')">
-                  <div>
-                    <div class="font-medium text-stone-900">30 minutes delay</div>
-                    <div class="text-[11px] text-stone-500">Half hour follow-up</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-wait', '60', '1 hour delay', 'Wait 60 minutes')">
-                  <div>
-                    <div class="font-medium text-stone-900">1 hour delay</div>
-                    <div class="text-[11px] text-stone-500">Wait 60 minutes</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-wait', '120', '2 hours delay', 'Wait 120 minutes')">
-                  <div>
-                    <div class="font-medium text-stone-900">2 hours delay</div>
-                    <div class="text-[11px] text-stone-500">Wait 120 minutes</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-wait', '1440', '24 hours (1 Day)', 'Next-day escalation')">
-                  <div>
-                    <div class="font-medium text-stone-900">24 hours (1 Day)</div>
-                    <div class="text-[11px] text-stone-500">Next-day escalation</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-                <div class="custom-select-item" onclick="CuboidDashboard.selectCustomOption('cs-wait', 'custom', 'Custom Delay (Minutes)', 'Define custom number of minutes')">
-                  <div>
-                    <div class="font-medium text-stone-900">Custom Delay (Minutes)</div>
-                    <div class="text-[11px] text-stone-500">Define custom number of minutes</div>
-                  </div>
-                  <i data-lucide="check" class="item-check"></i>
-                </div>
-              </div>
-            </div>
-
-            <input type="hidden" id="auto-input-wait" value="15">
-
-            <!-- Conditional Custom Delay Minutes Input -->
-            <div id="custom-wait-min-box" class="mt-2 hidden">
-              <input type="number" id="auto-input-custom-wait" min="1" max="10000" placeholder="Enter delay in minutes (e.g. 45)" class="app-input w-full text-xs font-mono">
-            </div>
-          </div>
-        </div>
-
-        <!-- Action Template & Variable Insert Toolbar -->
-        <div id="auto-message-box" class="space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="block font-medium text-stone-700" id="auto-template-label">Message Template / Payload</label>
-            <span class="text-[10.5px] text-stone-400">Click variable to insert:</span>
-          </div>
-
-          <!-- Variable Insert Pills -->
-          <div class="flex flex-wrap gap-1.5 pb-1">
-            <button type="button" onclick="CuboidDashboard.insertTemplateVar('{{name}}')" class="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 rounded text-[11px] font-mono transition-colors" title="Insert Prospect Name">
-              {{name}}
-            </button>
-            <button type="button" onclick="CuboidDashboard.insertTemplateVar('{{phone}}')" class="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 rounded text-[11px] font-mono transition-colors" title="Insert Phone">
-              {{phone}}
-            </button>
-            <button type="button" onclick="CuboidDashboard.insertTemplateVar('{{course}}')" class="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 rounded text-[11px] font-mono transition-colors" title="Insert Program / Product">
-              {{course}}
-            </button>
-            <button type="button" onclick="CuboidDashboard.insertTemplateVar('{{amount}}')" class="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 rounded text-[11px] font-mono transition-colors" title="Insert Deal Amount">
-              {{amount}}
-            </button>
-            <button type="button" onclick="CuboidDashboard.insertTemplateVar('{{counselor}}')" class="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 border border-stone-200 text-stone-700 rounded text-[11px] font-mono transition-colors" title="Insert Assigned Counselor">
-              {{counselor}}
-            </button>
-          </div>
-
-          <textarea id="auto-input-message" rows="3" class="app-textarea w-full text-xs font-mono" placeholder="Hi {{name}}, we noticed you were reviewing enrollment options. Do you have any questions regarding 3-month 0% EMI plans?"></textarea>
-        </div>
-
-        <div class="pt-3 border-t border-[#e7e5de] flex justify-end gap-2">
-          <button type="button" onclick="CuboidDashboard.closeNewAutomationModal()" class="btn-secondary btn-sm py-1.5 px-3">Cancel</button>
-          <button type="submit" class="btn-primary btn-sm py-1.5 px-4" id="btn-create-workflow">Create Workflow</button>
-        </div>
+      <!-- Message Input -->
+      <form onsubmit="event.preventDefault(); CaiWorkflowBuilder.sendSimulatorMessage();" class="p-3 border-t border-[#e7e5de] bg-white flex items-center gap-2">
+        <input type="text" id="sim-chat-input" placeholder="Type customer message..." class="app-input flex-1 text-xs">
+        <button type="submit" class="btn-primary btn-sm py-1.5 px-3">Send</button>
       </form>
+    </div>
+  </div>
+
+  <!-- BROWSE TEMPLATES MODAL -->
+  <div id="workflow-templates-modal" class="hidden app-modal-overlay">
+    <div class="app-modal p-6 max-w-3xl w-full">
+      <div class="flex items-center justify-between pb-3 border-b border-[#e7e5de] mb-4">
+        <div>
+          <h3 class="text-sm font-semibold text-stone-900">Workflow Templates</h3>
+          <p class="text-[11px] text-stone-500 mt-0.5">Start from pre-configured production AI customer journeys.</p>
+        </div>
+        <button onclick="CaiWorkflowBuilder.closeTemplatesModal()" class="text-stone-400 hover:text-stone-700">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div id="templates-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto p-1">
+        <!-- Rendered via JS -->
+      </div>
     </div>
   </div>
 
   <script src="../js/components.js?v=5.0.0"></script>
   <script src="../js/dashboard.js?v=5.0.0"></script>
+  <script src="../js/workflow-builder.js?v=5.0.0"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       CuboidShell.initCompanyApp('automations', 'Automations', ['Automate']);
-      CuboidDashboard.loadAutomations();
-      CuboidDashboard.loadAutoTeamRecipients();
+      CaiWorkflowBuilder.init();
     });
   </script>
 </body>
