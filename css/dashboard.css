@@ -1293,3 +1293,139 @@ body.sidebar-mobile-open .app-sidebar-backdrop {
   align-items: center !important;
 }
 
+/* ==========================================================================
+   GOOGLE WORKSPACE STYLE SPLASH LOADING SCREEN
+   Pure clean white backdrop, centered crisp logo with subtle breathing pulse,
+   linear indeterminate progress bar, and elegant workspace branding footer.
+   ========================================================================== */
+#cp-app-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.35s ease;
+  pointer-events: auto;
+  user-select: none;
+}
+
+#cp-app-splash.splash-hidden {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+.cp-splash-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: -30px;
+}
+
+.cp-splash-logo-wrap {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: cpSplashPulse 1.8s ease-in-out infinite;
+}
+
+.cp-splash-logo-img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.04));
+}
+
+.cp-splash-bar-wrap {
+  width: 140px;
+  height: 3px;
+  background-color: #f1f0ea;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 24px;
+  position: relative;
+}
+
+.cp-splash-bar-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background-color: #111111;
+  border-radius: 999px;
+  width: 40%;
+  animation: cpSplashProgress 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.cp-splash-brand-title {
+  margin-top: 20px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: #1c1917;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cp-splash-brand-title span {
+  font-weight: 400;
+  color: #78716c;
+}
+
+.cp-splash-footer {
+  position: absolute;
+  bottom: 24px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 11.5px;
+  color: #a8a29e;
+}
+
+.cp-splash-footer a {
+  color: #2563eb;
+  text-decoration: none;
+  margin-left: 4px;
+}
+
+.cp-splash-footer a:hover {
+  text-decoration: underline;
+}
+
+@keyframes cpSplashPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.95;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes cpSplashProgress {
+  0% {
+    left: -40%;
+    width: 30%;
+  }
+  50% {
+    left: 30%;
+    width: 60%;
+  }
+  100% {
+    left: 100%;
+    width: 30%;
+  }
+}
+
+

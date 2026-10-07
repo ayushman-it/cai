@@ -48,6 +48,9 @@ window.CuboidShell = {
 
   // Render Company App Shell (Sidebar + Topbar) with Real Session
   initCompanyApp: function(activePage, pageTitle, breadcrumbs = []) {
+    // Show Google Workspace minimalist splash loading screen
+    this.renderSplashScreen();
+
     const hasCache = this.hydrateFromCache();
 
     this.renderCompanySidebar(activePage);
@@ -58,6 +61,8 @@ window.CuboidShell = {
 
     if (hasCache) {
       this.syncRealWorkspaceDom(activePage, pageTitle, breadcrumbs);
+      // If we have cached session, quickly reveal after smooth render
+      this.dismissSplashScreen(380);
     }
     if (window.lucide) window.lucide.createIcons();
 
@@ -105,9 +110,12 @@ window.CuboidShell = {
 
           this.syncRealWorkspaceDom(activePage, pageTitle, breadcrumbs);
         }
+        // Always dismiss splash screen once authentication/workspace verification completes
+        this.dismissSplashScreen(300);
       })
       .catch(e => {
         console.warn('[CuboidShell] Auth sync notice:', e);
+        this.dismissSplashScreen(200);
       });
   },
 
@@ -377,12 +385,19 @@ window.CuboidShell = {
       }
     }
 
-    // 5. Sidebar Rail Logo (Clean white rail prefers light-surface/black logo, no box background)
+    // 5. Sidebar Rail Logo & Splash Screen Logo
     const railLogoEl = document.getElementById('shell-rail-logo');
-    if (railLogoEl && this.company) {
+    const splashLogoEl = document.getElementById('cp-splash-logo');
+    const splashBrandEl = document.getElementById('cp-splash-brand-name');
+    if (this.company) {
       const railLogo = this.company.logo_light_url || this.company.logo_url || this.company.logo_dark_url;
       if (railLogo) {
-        railLogoEl.src = this.resolveAssetUrl(railLogo, '../assets/logo-black.png');
+        const resolved = this.resolveAssetUrl(railLogo, '../assets/logo-black.png');
+        if (railLogoEl) railLogoEl.src = resolved;
+        if (splashLogoEl) splashLogoEl.src = resolved;
+      }
+      if (splashBrandEl && this.company.name) {
+        splashBrandEl.textContent = this.company.name;
       }
     }
 
@@ -699,8 +714,51 @@ window.CuboidShell = {
           </div>
         </div>
       `;
+    } else if (active === 'payments') {
+      // 5. Dedicated Payments & Collections Contextual Pane
+      subNavHtml = `
+        <div class="sub-sidebar-header flex items-center justify-between">
+          <span class="font-semibold text-xs text-stone-900 tracking-tight">Payments &amp; Finance</span>
+          <div class="flex items-center gap-1">
+            <button class="p-1 hover:bg-stone-100 rounded text-stone-600 transition-colors" onclick="window.openManualPaymentModal ? window.openManualPaymentModal() : null" title="Record Payment"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
+            <button class="p-1 hover:bg-stone-100 rounded text-stone-400 transition-colors" onclick="window.loadPayments ? window.loadPayments() : null" title="Refresh"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
+            <button type="button" class="shell-mobile-close lg:hidden p-1 text-stone-400 hover:text-stone-900 rounded transition-colors" title="Close menu"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+        <div class="sub-sidebar-nav flex-1 overflow-y-auto space-y-0.5">
+          <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pt-1 pb-1">Payment Queues</div>
+          <a href="payments.html" onclick="window.filterTab ? window.filterTab('all', this) : null" class="sub-nav-item active font-medium">
+            <span class="flex items-center gap-2"><i data-lucide="receipt" class="w-3.5 h-3.5 text-stone-900"></i> All Requests</span>
+          </a>
+          <a href="javascript:void(0)" onclick="window.filterTab ? window.filterTab('pending', this) : null" class="sub-nav-item text-stone-600 hover:text-stone-900">
+            <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending Dues</span>
+          </a>
+          <a href="javascript:void(0)" onclick="window.filterTab ? window.filterTab('completed', this) : null" class="sub-nav-item text-stone-600 hover:text-stone-900">
+            <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Confirmed &amp; Paid</span>
+          </a>
+          <a href="javascript:void(0)" onclick="window.filterTab ? window.filterTab('cancelled', this) : null" class="sub-nav-item text-stone-600 hover:text-stone-900">
+            <span class="flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-stone-400"></span> Cancelled / Expired</span>
+          </a>
+
+          <div class="pt-3 pb-1 border-t border-[#f0ede6] mt-2">
+            <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pb-1">Operations</div>
+            <a href="settings.html" class="sub-nav-item text-stone-600 hover:text-stone-900">
+              <span class="flex items-center gap-2"><i data-lucide="qr-code" class="w-3.5 h-3.5 text-stone-400"></i> Payment QR &amp; UPI Setup</span>
+            </a>
+            <a href="billing.html" class="sub-nav-item text-stone-600 hover:text-stone-900">
+              <span class="flex items-center gap-2"><i data-lucide="credit-card" class="w-3.5 h-3.5 text-stone-400"></i> Subscription Plans</span>
+            </a>
+          </div>
+        </div>
+        <div class="p-3 border-t border-[#e7e5de] bg-[#fbfaf8]">
+          <div class="flex items-center justify-between text-xs text-stone-500">
+            <span id="shell-company-name" class="font-medium text-stone-800">${this.company ? this.escapeHtml(this.company.name) : 'CuboidSoft'}</span>
+            <span class="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 font-mono font-medium">Secured</span>
+          </div>
+        </div>
+      `;
     } else {
-      // 4. Default / Settings Contextual Pane
+      // 6. Default / Settings Contextual Pane
       subNavHtml = `
         <div class="sub-sidebar-header flex items-center justify-between">
           <span>Settings</span>
@@ -789,6 +847,9 @@ window.CuboidShell = {
               </a>
               <a href="channels.html" class="rail-item ${active === 'channels' ? 'active' : ''}" title="Channels &amp; Integrations">
                 <i data-lucide="layers" class="w-5 h-5"></i>
+              </a>
+              <a href="payments.html" class="rail-item ${active === 'payments' ? 'active' : ''}" title="Payment Requests">
+                <i data-lucide="receipt" class="w-5 h-5"></i>
               </a>
               <a href="overview.html" class="rail-item ${active === 'analytics' ? 'active' : ''}" title="Reports">
                 <i data-lucide="bar-chart-2" class="w-5 h-5"></i>
@@ -1376,6 +1437,51 @@ window.CuboidShell = {
       console.warn('[CuboidShell SPA Navigation Fallback]', err);
       window.location.href = url;
     }
+  },
+
+  // -------------------------------------------------------------
+  // GOOGLE WORKSPACE STYLE SPLASH LOADING SCREEN
+  // Pure white, centered pulsing logo, indeterminate progress bar, and workspace footer
+  // -------------------------------------------------------------
+  renderSplashScreen: function() {
+    let splash = document.getElementById('cp-app-splash');
+    if (!splash) {
+      splash = document.createElement('div');
+      splash.id = 'cp-app-splash';
+
+      const logoSrc = this.resolveAssetUrl(this.company ? (this.company.logo_light_url || this.company.logo_url || this.company.logo_dark_url) : null, '../assets/logo-black.png');
+      const companyName = (this.company && this.company.name) ? this.escapeHtml(this.company.name) : 'CuboidPilot';
+
+      splash.innerHTML = `
+        <div class="cp-splash-center">
+          <div class="cp-splash-logo-wrap">
+            <img src="${logoSrc}" id="cp-splash-logo" alt="Logo" class="cp-splash-logo-img" onerror="this.onerror=null; this.src='../assets/logo-black.png';">
+          </div>
+          <div class="cp-splash-brand-title">
+            <span id="cp-splash-brand-name">${companyName}</span> <span>Workspace</span>
+          </div>
+          <div class="cp-splash-bar-wrap">
+            <div class="cp-splash-bar-indicator"></div>
+          </div>
+        </div>
+        <div class="cp-splash-footer">
+          If you're having trouble loading, visit the <a href="https://cuboidsoft.in" target="_blank">Help Center</a>.
+        </div>
+      `;
+
+      document.body.appendChild(splash);
+    }
+  },
+
+  dismissSplashScreen: function(delayMs = 400) {
+    const splash = document.getElementById('cp-app-splash');
+    if (!splash) return;
+    setTimeout(() => {
+      splash.classList.add('splash-hidden');
+      setTimeout(() => {
+        if (splash.parentNode) splash.remove();
+      }, 400);
+    }, delayMs);
   },
 
   showSpaLoader: function(show) {

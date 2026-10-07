@@ -268,7 +268,8 @@
     </div>
   </div>
 
-  <script src="../js/components.js"></script>
+  <script src="../js/components.js?v=5.0.0"></script>
+  <script src="../js/dashboard.js?v=5.0.0"></script>
   <script>
     let currentTab = 'all';
     let currentSearch = '';
@@ -276,11 +277,7 @@
     let searchTimeout = null;
 
     document.addEventListener('DOMContentLoaded', async () => {
-      CuboidShell.init({
-        activePage: 'payments',
-        pageTitle: 'Payment Requests',
-        breadcrumbs: ['Finance', 'Payments']
-      });
+      CuboidShell.initCompanyApp('payments', 'Payment Requests & Collections', ['Finance', 'Payments']);
 
       await loadPayments();
     });
@@ -408,9 +405,17 @@
       document.querySelectorAll('.tab-btn').forEach(b => {
         b.className = 'tab-btn px-3 py-1 text-xs rounded-full bg-stone-100 text-stone-600 hover:bg-stone-200 font-medium';
       });
-      btn.className = 'tab-btn px-3 py-1 text-xs rounded-full bg-stone-900 text-white font-medium';
+      if (btn) {
+        btn.className = 'tab-btn px-3 py-1 text-xs rounded-full bg-stone-900 text-white font-medium';
+      } else {
+        const matchingBtn = document.querySelector(`.tab-btn[onclick*="'${tab}'"]`);
+        if (matchingBtn) matchingBtn.className = 'tab-btn px-3 py-1 text-xs rounded-full bg-stone-900 text-white font-medium';
+      }
       loadPayments();
     }
+    window.filterTab = function(tab, el) {
+      setTab(tab, null);
+    };
 
     function handleSearch(val) {
       clearTimeout(searchTimeout);
