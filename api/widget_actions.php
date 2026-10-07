@@ -579,11 +579,15 @@ try {
         }
 
         if ($conversationId) {
-            $msgText = "📅 **Appointment Confirmed!**\nWith **{$agent['name']}** ({$agent['job_title']})\nDate & Time: **" . date('l, F j, Y \a\t g:i A', strtotime($slotDatetime)) . "**\nGoogle Meet: {$meetLink}";
-            $pdo->prepare("
-                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `created_at`)
-                VALUES (?, ?, 'ai', ?, NOW())
-            ")->execute([$companyId, $conversationId, $msgText]);
+            $cCheck = $pdo->prepare("SELECT id FROM `conversations` WHERE id = ? AND company_id = ? LIMIT 1");
+            $cCheck->execute([$conversationId, $companyId]);
+            if ($cCheck->fetch()) {
+                $msgText = "📅 **Appointment Confirmed!**\nWith **{$agent['name']}** ({$agent['job_title']})\nDate & Time: **" . date('l, F j, Y \a\t g:i A', strtotime($slotDatetime)) . "**\nGoogle Meet: {$meetLink}";
+                $pdo->prepare("
+                    INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `created_at`)
+                    VALUES (?, ?, 'ai', ?, NOW())
+                ")->execute([$companyId, $conversationId, $msgText]);
+            }
         }
 
         echo json_encode([
@@ -821,6 +825,15 @@ try {
         if (!$conversationId || empty($messageText)) {
             http_response_code(400);
             echo json_encode(['success' => false, 'error' => 'Missing conversation ID or message text.']);
+            exit;
+        }
+
+        // Validate conversation exists
+        $cCheck = $pdo->prepare("SELECT id FROM `conversations` WHERE id = ? AND company_id = ? LIMIT 1");
+        $cCheck->execute([$conversationId, $companyId]);
+        if (!$cCheck->fetch()) {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'error' => 'Conversation not found', 'reset_conversation' => true]);
             exit;
         }
 

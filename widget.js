@@ -8220,6 +8220,9 @@
 
     } catch (err) {
       console.warn('[CuboidPilot Widget Alert] Network pause, offering human assistance:', err);
+      // Clear stale conversation ID so subsequent attempt self-heals immediately
+      conversationId = null;
+      try { widgetStorage.removeItem(STORAGE_KEYS.CONVO_ID); } catch(e){}
       setTimeout(() => {
         hideTyping();
         appendAIMessage({

@@ -394,8 +394,15 @@ try {
         $sessionId = 'CP-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 7));
     }
 
-    // Ensure conversation exists and is unified
-    if (!$conversationId) {
+    // Ensure conversation exists and is unified (validate against database)
+    $validConv = null;
+    if (!empty($conversationId)) {
+        $cStmt = $pdo->prepare("SELECT id FROM `conversations` WHERE id = ? AND company_id = ? LIMIT 1");
+        $cStmt->execute([$conversationId, $companyId]);
+        $validConv = $cStmt->fetchColumn();
+    }
+
+    if (!$validConv) {
         $insConv = $pdo->prepare("
             INSERT INTO `conversations` 
             (`company_id`, `customer_id`, `channel`, `session_id`, `status`, `ownership`, `last_message_preview`, `last_message_at`, `created_at`)
@@ -404,8 +411,18 @@ try {
         $insConv->execute([$companyId, $customerId, $sessionId, substr($messageText, 0, 150)]);
         $conversationId = (int)$pdo->lastInsertId();
     } else {
+        $conversationId = (int)$validConv;
         $pdo->prepare("UPDATE `conversations` SET `session_id` = COALESCE(NULLIF(session_id, ''), ?), `channel` = 'web' WHERE id = ? AND company_id = ?")
             ->execute([$sessionId, $conversationId, $companyId]);
+    }
+
+    // Validate lead exists for this company
+    if (!empty($leadId)) {
+        $lStmt = $pdo->prepare("SELECT id FROM `leads` WHERE id = ? AND company_id = ? LIMIT 1");
+        $lStmt->execute([$leadId, $companyId]);
+        if (!$lStmt->fetchColumn()) {
+            $leadId = null;
+        }
     }
 
     // Resolve or Create Omnichannel Customer Journey
