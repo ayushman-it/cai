@@ -128,15 +128,30 @@ try {
     $companyAssetsList = $assetStmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Fetch Active Products & Offerings for Catalog Grounding
-    $prodStmt = $pdo->prepare("
-        SELECT p.*, a.file_name as brochure_file_name, a.title as brochure_title 
-        FROM `products` p
-        LEFT JOIN `company_assets` a ON a.id = p.brochure_asset_id
-        WHERE p.`company_id` = ? AND p.`is_active` = 1
-        ORDER BY p.`id` ASC
-    ");
-    $prodStmt->execute([$companyId]);
-    $companyProductsList = $prodStmt->fetchAll(PDO::FETCH_ASSOC);
+    $companyProductsList = [];
+    try {
+        $prodStmt = $pdo->prepare("
+            SELECT p.*, a.file_name as brochure_file_name, a.title as brochure_title 
+            FROM `products` p
+            LEFT JOIN `company_assets` a ON a.id = p.brochure_asset_id
+            WHERE p.`company_id` = ? AND p.`is_active` = 1
+            ORDER BY p.`id` ASC
+        ");
+        $prodStmt->execute([$companyId]);
+        $companyProductsList = $prodStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {
+        try {
+            $prodStmt = $pdo->prepare("
+                SELECT p.* FROM `products` p
+                WHERE p.`company_id` = ? AND p.`is_active` = 1
+                ORDER BY p.`id` ASC
+            ");
+            $prodStmt->execute([$companyId]);
+            $companyProductsList = $prodStmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (Throwable $e2) {
+            $companyProductsList = [];
+        }
+    }
 
     /**
      * Intelligent Semantic Knowledge Retrieval & Context Ranker (RAG)

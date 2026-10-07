@@ -641,6 +641,14 @@ Annual billing receives a 20% discount or 3-month zero-interest EMI financing."
         $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `assigned_user_id` INT NULL AFTER `lead_id`");
     }
 
+    // Ensure products table has brochure_asset_id
+    try {
+        $pCols = $pdo->query("SHOW COLUMNS FROM `products`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('brochure_asset_id', $pCols)) {
+            $pdo->exec("ALTER TABLE `products` ADD COLUMN `brochure_asset_id` INT(11) DEFAULT NULL");
+        }
+    } catch (Throwable $e) {}
+
     // 19. Widget Payments Table for tracking widget pay online / bank transfers / invoices
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS `widget_payments` (
