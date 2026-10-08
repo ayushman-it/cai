@@ -998,6 +998,32 @@ window.CaiWorkflowBuilder = {
     }
   },
 
+  restoreDefaultTemplate: async function() {
+    if (!confirm('Restore the default 5-Phase Universal Customer Journey for your company? This will set up the knowledge-grounded flagship workflow.')) {
+      return;
+    }
+    try {
+      const res = await fetch('../api/automations.php?action=restore_default', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (this.activeView === 'editor') {
+          this.loadWorkflow(data.id);
+        } else {
+          this.loadWorkflowsList();
+        }
+        alert(data.message || 'Universal Customer Journey restored successfully!');
+      } else {
+        alert(data.error || 'Failed to restore default template');
+      }
+    } catch (e) {
+      alert('Error restoring default template: ' + e.message);
+    }
+  },
+
   // 8. Canvas Controls (Zoom / Pan / Auto-Layout)
   zoomIn: function() {
     this.zoom = Math.min(2.0, this.zoom + 0.15);

@@ -151,6 +151,9 @@
             </div>
             
             <div class="flex items-center gap-2">
+              <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CaiWorkflowBuilder.restoreDefaultTemplate()" title="Restore the 5-Phase Universal Customer Journey">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 mr-1 text-stone-600"></i> Restore Default
+              </button>
               <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CaiWorkflowBuilder.openTemplatesModal()">
                 <i data-lucide="layout-template" class="w-3.5 h-3.5 mr-1 text-stone-600"></i> Browse Templates
               </button>
@@ -265,6 +268,9 @@
           </div>
 
           <div class="flex items-center gap-2">
+            <button onclick="CaiWorkflowBuilder.restoreDefaultTemplate()" class="btn-secondary btn-sm text-xs py-1.5 px-2.5 text-stone-600 hover:text-stone-900" title="Restore Universal Default Customer Journey">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 mr-1 text-stone-500"></i> Restore Default Template
+            </button>
             <button onclick="CaiWorkflowBuilder.autoArrangeNodes()" class="btn-secondary btn-sm text-xs py-1.5 px-2.5" title="Auto arrange canvas layout">
               <i data-lucide="layout" class="w-3.5 h-3.5 mr-1 text-stone-500"></i> Auto Arrange
             </button>

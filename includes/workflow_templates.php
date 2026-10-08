@@ -8,6 +8,7 @@ class WorkflowTemplates {
 
     public static function getAll(): array {
         return [
+            self::getUniversalCustomerJourneyTemplate(),
             self::getMasterAutonomousJourneyTemplate(),
             self::getCourseEnrollmentTemplate(),
             self::getAiSalesAssistantTemplate(),
@@ -24,6 +25,188 @@ class WorkflowTemplates {
             if ($t['id'] === $id) return $t;
         }
         return null;
+    }
+
+    /**
+     * Flagship 5-Phase Universal AI Customer Journey
+     * Grounded in multi-tenant knowledge store, offerings catalog, and digital assets.
+     */
+    public static function getUniversalCustomerJourneyTemplate(): array {
+        return [
+            'id' => 'template_universal_customer_journey',
+            'name' => 'Universal AI Customer Journey (Cai AI)',
+            'description' => 'Complete 5-Phase Knowledge-Grounded Journey: Welcome & Discovery, Intent Understanding, Grounded Knowledge Recommendations, Progressive Action Engine, and Resolution.',
+            'category' => 'Flagship Journey',
+            'trigger_type' => 'trigger_chat_start',
+            'mode' => 'guided',
+            'nodes' => [
+                [
+                    'id' => 'node_1',
+                    'type' => 'trigger_chat_start',
+                    'category' => 'triggers',
+                    'position' => ['x' => 60, 'y' => 60],
+                    'data' => [
+                        'label' => '1. Visitor Arrives / Chat Start',
+                        'description' => 'Triggered when visitor opens widget or starts conversation'
+                    ]
+                ],
+                [
+                    'id' => 'node_2',
+                    'type' => 'ai_response_generator',
+                    'category' => 'ai',
+                    'position' => ['x' => 360, 'y' => 60],
+                    'data' => [
+                        'label' => 'Phase 1: Welcome & Context',
+                        'description' => 'Personalized brand greeting with 3 contextual quick chips',
+                        'prompt' => 'Welcome the visitor warmly to {{company.name}}. Introduce yourself as Cai, their consultative AI advisor. Ask how you can assist them today, and offer to explore offerings, review pricing/EMI plans, or connect with a specialist.',
+                        'wait_for_reply' => true,
+                        'action_chips' => [
+                            ['label' => 'Explore Offerings', 'text' => 'Tell me about your offerings and programs'],
+                            ['label' => 'Pricing & EMI', 'text' => 'What are the pricing and payment options?'],
+                            ['label' => 'Talk to Specialist', 'text' => 'I would like to speak with a human counselor']
+                        ]
+                    ]
+                ],
+                [
+                    'id' => 'node_3',
+                    'type' => 'ai_intent_detection',
+                    'category' => 'ai',
+                    'position' => ['x' => 660, 'y' => 60],
+                    'data' => [
+                        'label' => 'Phase 2: Intent Classification',
+                        'description' => 'Understands intent: discovery, pricing, brochure, booking, payment, or human assistance',
+                        'intents' => [
+                            'discovery' => 'Looking for programs, courses, or solutions',
+                            'pricing' => 'Asking about fees, pricing, discounts, or EMI plans',
+                            'brochure' => 'Requesting syllabus, brochure, or documentation',
+                            'booking' => 'Wants consultation, demo, or 1-on-1 appointment',
+                            'payment' => 'Ready to pay, enroll, or checkout',
+                            'human_support' => 'Requests to speak to counselor or real human'
+                        ]
+                    ]
+                ],
+                [
+                    'id' => 'node_4',
+                    'type' => 'ai_response_generator',
+                    'category' => 'ai',
+                    'position' => ['x' => 960, 'y' => 60],
+                    'data' => [
+                        'label' => 'Phase 2: Grounded Knowledge Guidance',
+                        'description' => 'Accurately answers inquiries strictly grounded in verified company documents and catalog',
+                        'prompt' => 'Consult the verified company knowledge and offerings catalog. Provide a concise, helpful, and 100% accurate answer to the user\'s requirement. NEVER guess prices or unlisted features. If information is not on file, politely disclose this and offer human assistance.',
+                        'wait_for_reply' => true
+                    ]
+                ],
+                [
+                    'id' => 'node_5',
+                    'type' => 'msg_course_carousel',
+                    'category' => 'messages',
+                    'position' => ['x' => 60, 'y' => 280],
+                    'data' => [
+                        'label' => 'Phase 3: Offering & Solution Carousel',
+                        'description' => 'Displays matching offerings with pricing, duration, and features',
+                        'title' => 'Here are our verified offerings matching your requirement:',
+                        'limit' => 4,
+                        'wait_for_reply' => true
+                    ]
+                ],
+                [
+                    'id' => 'node_6',
+                    'type' => 'crm_create_lead',
+                    'category' => 'crm',
+                    'position' => ['x' => 360, 'y' => 280],
+                    'data' => [
+                        'label' => 'Phase 4: Progressive CRM Lead Capture',
+                        'description' => 'Captures lead in CRM and marks stage as QUALIFIED',
+                        'stage' => 'QUALIFIED',
+                        'tags' => 'website_visitor,ai_grounded,high_intent'
+                    ]
+                ],
+                [
+                    'id' => 'node_7',
+                    'type' => 'msg_emi_card',
+                    'category' => 'messages',
+                    'position' => ['x' => 660, 'y' => 280],
+                    'data' => [
+                        'label' => 'Phase 4: 0% Interest EMI Breakdown',
+                        'description' => 'Presents transparent 3-Month installment options',
+                        'wait_for_reply' => true
+                    ]
+                ],
+                [
+                    'id' => 'node_8',
+                    'type' => 'msg_brochure_download',
+                    'category' => 'messages',
+                    'position' => ['x' => 960, 'y' => 280],
+                    'data' => [
+                        'label' => 'Phase 4: Brochure & Syllabus Delivery',
+                        'description' => 'Delivers verified curriculum documents and brochure',
+                        'wait_for_reply' => true
+                    ]
+                ],
+                [
+                    'id' => 'node_9',
+                    'type' => 'msg_payment_link',
+                    'category' => 'messages',
+                    'position' => ['x' => 60, 'y' => 500],
+                    'data' => [
+                        'label' => 'Phase 4: Verified Payment Checkout',
+                        'description' => 'Delivers secure instant payment checkout link',
+                        'wait_for_reply' => true
+                    ]
+                ],
+                [
+                    'id' => 'node_10',
+                    'type' => 'crm_request_handoff',
+                    'category' => 'crm',
+                    'position' => ['x' => 360, 'y' => 500],
+                    'data' => [
+                        'label' => 'Phase 4: Real Human Counselor Escalation',
+                        'description' => 'Connects customer with human counselor if requested'
+                    ]
+                ],
+                [
+                    'id' => 'node_11',
+                    'type' => 'comm_channel_dispatch',
+                    'category' => 'reminders',
+                    'position' => ['x' => 660, 'y' => 500],
+                    'data' => [
+                        'label' => 'Phase 5: Multi-Channel Dispatch & Confirmation',
+                        'description' => 'Dispatches complete details to Email or WhatsApp',
+                        'message' => 'Would you like us to email you the complete curriculum and invoice, or send it directly on WhatsApp?',
+                        'options' => [
+                            ['label' => 'Send via Email', 'text' => 'Please email me the details'],
+                            ['label' => 'Send on WhatsApp', 'text' => 'Please send on WhatsApp'],
+                            ['label' => 'Talk to Counselor', 'text' => 'I want to speak with a counselor']
+                        ],
+                        'wait_for_reply' => true
+                    ]
+                ],
+                [
+                    'id' => 'node_12',
+                    'type' => 'control_end',
+                    'category' => 'control',
+                    'position' => ['x' => 960, 'y' => 500],
+                    'data' => [
+                        'label' => 'Phase 5: Journey Complete & Resolution',
+                        'description' => 'Autonomous customer journey successfully completed'
+                    ]
+                ]
+            ],
+            'edges' => [
+                ['id' => 'e1_2', 'source' => 'node_1', 'target' => 'node_2'],
+                ['id' => 'e2_3', 'source' => 'node_2', 'target' => 'node_3'],
+                ['id' => 'e3_4', 'source' => 'node_3', 'target' => 'node_4'],
+                ['id' => 'e4_5', 'source' => 'node_4', 'target' => 'node_5'],
+                ['id' => 'e5_6', 'source' => 'node_5', 'target' => 'node_6'],
+                ['id' => 'e6_7', 'source' => 'node_6', 'target' => 'node_7'],
+                ['id' => 'e7_8', 'source' => 'node_7', 'target' => 'node_8'],
+                ['id' => 'e8_9', 'source' => 'node_8', 'target' => 'node_9'],
+                ['id' => 'e9_10', 'source' => 'node_9', 'target' => 'node_10'],
+                ['id' => 'e10_11', 'source' => 'node_10', 'target' => 'node_11'],
+                ['id' => 'e11_12', 'source' => 'node_11', 'target' => 'node_12']
+            ]
+        ];
     }
 
     /**

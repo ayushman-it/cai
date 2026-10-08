@@ -49,9 +49,9 @@ try {
             $stmt->execute([$companyId]);
             $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // If empty, auto-seed the Flagship Course Enrollment workflow and starter recipes
+            // If empty, auto-seed the Flagship Universal AI Customer Journey and starter recipes
             if (empty($rows)) {
-                $sampleCourseWf = WorkflowTemplates::getCourseEnrollmentTemplate();
+                $universalWf = WorkflowTemplates::getUniversalCustomerJourneyTemplate();
                 $insCourse = $pdo->prepare("
                     INSERT INTO `automations`
                     (company_id, name, description, status, trigger_event, action_type, wait_minutes, workflow_data, version, trigger_type, execution_count, is_active, created_at)
@@ -59,9 +59,9 @@ try {
                 ");
                 $insCourse->execute([
                     $companyId,
-                    $sampleCourseWf['name'],
-                    $sampleCourseWf['description'],
-                    json_encode($sampleCourseWf, JSON_UNESCAPED_UNICODE)
+                    $universalWf['name'],
+                    $universalWf['description'],
+                    json_encode($universalWf, JSON_UNESCAPED_UNICODE)
                 ]);
 
                 // Also seed default legacy recipes
@@ -433,6 +433,56 @@ try {
                 'id' => (int)$pdo->lastInsertId(),
                 'workflow' => $tpl,
                 'message' => 'Template applied successfully'
+            ]);
+            break;
+
+        // 9b. Restore Default Universal AI Customer Journey Template
+        case 'restore_default':
+            $universalTpl = WorkflowTemplates::getUniversalCustomerJourneyTemplate();
+            $wfJson = json_encode($universalTpl, JSON_UNESCAPED_UNICODE);
+
+            $findStmt = $pdo->prepare("
+                SELECT id FROM `automations`
+                WHERE company_id = ? AND (trigger_event = 'chat_start' OR trigger_type = 'trigger_chat_start')
+                ORDER BY id ASC LIMIT 1
+            ");
+            $findStmt->execute([$companyId]);
+            $existingId = $findStmt->fetchColumn();
+
+            if ($existingId) {
+                $upd = $pdo->prepare("
+                    UPDATE `automations`
+                    SET name = ?, description = ?, workflow_data = ?, status = 'active', is_active = 1, trigger_type = 'trigger_chat_start', version = version + 1, updated_at = NOW()
+                    WHERE id = ? AND company_id = ?
+                ");
+                $upd->execute([
+                    $universalTpl['name'],
+                    $universalTpl['description'],
+                    $wfJson,
+                    (int)$existingId,
+                    $companyId
+                ]);
+                $targetId = (int)$existingId;
+            } else {
+                $ins = $pdo->prepare("
+                    INSERT INTO `automations`
+                    (company_id, name, description, status, trigger_event, action_type, wait_minutes, workflow_data, version, trigger_type, execution_count, is_active, created_at)
+                    VALUES (?, ?, ?, 'active', 'chat_start', 'guided_ai_journey', 0, ?, 1, 'trigger_chat_start', 0, 1, NOW())
+                ");
+                $ins->execute([
+                    $companyId,
+                    $universalTpl['name'],
+                    $universalTpl['description'],
+                    $wfJson
+                ]);
+                $targetId = (int)$pdo->lastInsertId();
+            }
+
+            echo json_encode([
+                'success' => true,
+                'id' => $targetId,
+                'workflow' => $universalTpl,
+                'message' => 'Default Universal AI Customer Journey restored and activated successfully'
             ]);
             break;
 

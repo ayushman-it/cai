@@ -513,9 +513,10 @@ class WorkflowEngine {
                 $prompt = $data['prompt'] ?? "Answer the customer's inquiry helpfully and informatively.";
                 $prompt = self::interpolateVariables($prompt, $variables);
 
-                // Fetch grounded knowledge
-                $kbContext = self::getGroundedKnowledge($pdo, $companyId, $data['knowledge_source_ids'] ?? []);
-                $sysPrompt = "You are Cai, the consultative AI assistant for this company.
+                // Fetch grounded knowledge with RAG relevance scoring
+                $kbContext = self::getGroundedKnowledge($pdo, $companyId, $data['knowledge_source_ids'] ?? [], $messageText);
+                $companyName = $variables['company']['name'] ?? 'our company';
+                $sysPrompt = "You are Cai, the consultative AI assistant for {$companyName}.
 Company Knowledge:
 {$kbContext}
 
@@ -846,10 +847,11 @@ Instruction:
         array $currentNode,
         array $variables
     ): string {
-        $kbContext = self::getGroundedKnowledge($pdo, $companyId);
+        $kbContext = self::getGroundedKnowledge($pdo, $companyId, [], $messageText);
         $stagePrompt = $currentNode['data']['label'] ?? ($currentNode['data']['prompt'] ?? 'continuing customer journey');
 
-        $sysPrompt = "You are Cai, an intelligent AI counselor and customer success guide for CuboidSoft.
+        $compName = $variables['company']['name'] ?? 'our company';
+        $sysPrompt = "You are Cai, an intelligent AI counselor and customer success guide for {$compName}.
 The customer sent a message or asked a question while in this workflow stage: '{$stagePrompt}'.
 Verified Company Knowledge:
 {$kbContext}
@@ -933,21 +935,117 @@ CRITICAL INSTRUCTIONS:
         ];
     }
 
-    public static function getGroundedKnowledge(PDO $pdo, int $companyId, array $sourceIds = []): string {
+    public static function getGroundedKnowledge(PDO $pdo, int $companyId, array $sourceIds = [], string $query = ''): string {
+        // 1. Company Profile
+        $compStmt = $pdo->prepare("SELECT name, slug, industry, city, country FROM `companies` WHERE id = ? LIMIT 1");
+        $compStmt->execute([$companyId]);
+        $comp = $compStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+        $companyName = !empty($comp['name']) ? $comp['name'] : 'Our Company';
+
+        $contextBlocks = [];
+        $contextBlocks[] = "=== SECTION 1: COMPANY IDENTITY ===\n"
+            . "- Business Name: {$companyName}\n"
+            . (!empty($comp['industry']) ? "- Industry: {$comp['industry']}\n" : "")
+            . (!empty($comp['city']) ? "- Location: {$comp['city']}, " . ($comp['country'] ?? 'India') . "\n" : "");
+
+        // 2. Verified Knowledge Sources (Documents, Web Crawls, FAQs, Policies)
         if (!empty($sourceIds)) {
             $placeholders = implode(',', array_fill(0, count($sourceIds), '?'));
-            $stmt = $pdo->prepare("SELECT title, content FROM `knowledge_sources` WHERE `company_id` = ? AND `id` IN ($placeholders) AND `is_active` = 1");
+            $stmt = $pdo->prepare("SELECT id, title, type, category, content FROM `knowledge_sources` WHERE `company_id` = ? AND `id` IN ($placeholders) AND `is_active` = 1");
             $stmt->execute(array_merge([$companyId], $sourceIds));
         } else {
-            $stmt = $pdo->prepare("SELECT title, content FROM `knowledge_sources` WHERE `company_id` = ? AND `is_active` = 1 LIMIT 8");
+            $stmt = $pdo->prepare("SELECT id, title, type, category, content FROM `knowledge_sources` WHERE `company_id` = ? AND `is_active` = 1 ORDER BY id DESC LIMIT 15");
             $stmt->execute([$companyId]);
         }
         $sources = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        $out = '';
-        foreach ($sources as $s) {
-            $out .= "=== " . $s['title'] . " ===\n" . substr($s['content'], 0, 800) . "\n\n";
+
+        if (!empty($sources)) {
+            // Intelligent token-based relevance scoring if query is provided
+            $q = mb_strtolower(trim($query));
+            $tokens = array_filter(preg_split('/[\s,\.\?!_\-]+/u', $q), fn($w) => mb_strlen($w) >= 3);
+
+            $scored = [];
+            foreach ($sources as $s) {
+                $score = 1;
+                $tLower = mb_strtolower($s['title'] ?? '');
+                $catLower = mb_strtolower($s['category'] ?? '');
+                $cLower = mb_strtolower($s['content'] ?? '');
+
+                foreach ($tokens as $tok) {
+                    if (strpos($tLower, $tok) !== false) $score += 10;
+                    if (strpos($catLower, $tok) !== false) $score += 6;
+                    if (strpos($cLower, $tok) !== false) $score += 2;
+                }
+
+                $clean = preg_replace('/[\x{FFFD}\x{0000}-\x{001F}\x{007F}]/u', ' ', $s['content'] ?? '');
+                $clean = preg_replace('/[ \t]+/', ' ', $clean);
+                $clean = trim($clean);
+
+                $scored[] = [
+                    'title' => $s['title'],
+                    'clean' => $clean,
+                    'score' => $score
+                ];
+            }
+
+            usort($scored, fn($a, $b) => $b['score'] <=> $a['score']);
+
+            $kbDocs = [];
+            foreach (array_slice($scored, 0, 4) as $item) {
+                $body = $item['clean'];
+                if (mb_strlen($body) > 4500) {
+                    $body = mb_substr($body, 0, 4500) . "\n... [truncated for concise reasoning]";
+                }
+                $kbDocs[] = "<verified_document title=\"{$item['title']}\">\n{$body}\n</verified_document>";
+            }
+            if (!empty($kbDocs)) {
+                $contextBlocks[] = "=== SECTION 2: VERIFIED KNOWLEDGE DOCUMENTS ===\n" . implode("\n\n", $kbDocs);
+            }
         }
-        return $out;
+
+        // 3. Active Commercial Offerings & Catalog (Products / Courses / Services)
+        $products = self::getCompanyProducts($pdo, $companyId);
+        if (!empty($products)) {
+            $catLines = [];
+            foreach ($products as $cp) {
+                $features = !empty($cp['features']) ? (is_array($cp['features']) ? $cp['features'] : json_decode($cp['features'], true)) : [];
+                $featStr = is_array($features) ? implode(', ', $features) : '';
+                $emiStarting = (int)($cp['emi_starting_at_inr'] ?? ceil((int)$cp['price_inr'] / 3));
+                $emiText = !empty($cp['emi_available'])
+                    ? "Available (Starting ₹" . number_format($emiStarting) . "/mo, 3-Month EMI available)"
+                    : "Not Available";
+                $origStr = ((int)($cp['original_price_inr'] ?? 0) > (int)$cp['price_inr'])
+                    ? " (Original: ₹" . number_format((int)$cp['original_price_inr']) . ", " . ($cp['discount_percent'] ?? 0) . "% OFF)"
+                    : "";
+
+                $catLines[] = "- [{$cp['category']}] \"{$cp['name']}\" (ID: {$cp['id']}):\n"
+                    . "  • Fee: ₹" . number_format((int)$cp['price_inr']) . "{$origStr}\n"
+                    . (!empty($cp['duration']) ? "  • Duration: {$cp['duration']}\n" : "")
+                    . (!empty($featStr) ? "  • Highlights: {$featStr}\n" : "")
+                    . "  • 0% EMI: {$emiText}";
+            }
+            $contextBlocks[] = "=== SECTION 3: COMMERCIAL OFFERINGS & CATALOG ===\n" . implode("\n", $catLines);
+        }
+
+        // 4. Downloadable Assets & Brochures
+        $assets = self::getCompanyAssets($pdo, $companyId);
+        if (!empty($assets)) {
+            $assetLines = [];
+            foreach ($assets as $ca) {
+                $catLabel = ucfirst(str_replace('_', ' ', $ca['category'] ?? 'Document'));
+                $assetLines[] = "- [{$catLabel}] \"{$ca['title']}\"" . (!empty($ca['description']) ? " — {$ca['description']}" : "");
+            }
+            $contextBlocks[] = "=== SECTION 4: DOWNLOADABLE BROCHURES & ASSETS ===\n" . implode("\n", $assetLines);
+        }
+
+        // 5. Strict Zero-Hallucination Guardrails
+        $contextBlocks[] = "=== CRITICAL ZERO-HALLUCINATION & ACCURACY GUARDRAILS ===\n"
+            . "1. STRICT GROUNDING: Answer using ONLY the verified facts from Sections 1, 2, 3, and 4 above.\n"
+            . "2. ZERO SPECULATION: NEVER guess, extrapolate, or invent prices, fees, discounts, durations, or unlisted policies.\n"
+            . "3. UNVERIFIED TOPICS: If an inquiry cannot be answered from this verified company knowledge base, explicitly and politely state that this information is not on file, and offer to connect them with a human advisor or explore our verified offerings.\n"
+            . "4. TONE: Professional, consultative, concise, empathetic, and conversion-oriented.";
+
+        return implode("\n\n", $contextBlocks);
     }
 
     public static function getCompanyProducts(PDO $pdo, int $companyId, ?string $category = null): array {
