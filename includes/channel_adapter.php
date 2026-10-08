@@ -48,11 +48,14 @@ class WebChannelAdapter implements ChannelAdapterInterface {
  */
 class WhatsAppChannelAdapter implements ChannelAdapterInterface {
     public function sendTextMessage(PDO $pdo, int $companyId, string $recipientId, string $text): bool {
-        $accStmt = $pdo->prepare("SELECT phone_number_id, access_token_encrypted FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` != 'disconnected' LIMIT 1");
+        $accStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token, access_token_encrypted FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` != 'disconnected' LIMIT 1");
         $accStmt->execute([$companyId]);
         $acc = $accStmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$acc || empty($acc['phone_number_id']) || empty($acc['access_token_encrypted'])) {
+        $phoneId = $acc['phone_number_id'] ?? (getenv('WHATSAPP_PHONE_NUMBER_ID') ?: '');
+        $token   = $acc['whatsapp_access_token'] ?? ($acc['access_token_encrypted'] ?? (getenv('WHATSAPP_ACCESS_TOKEN') ?: ''));
+
+        if (empty($phoneId) || empty($token)) {
             return false;
         }
 
@@ -62,18 +65,21 @@ class WhatsAppChannelAdapter implements ChannelAdapterInterface {
             'recipient_type'    => 'individual',
             'to'                => $cleanPhone,
             'type'              => 'text',
-            'text'              => ['preview_url' => true, 'body' => $text]
+            'text'              => ['preview_url' => false, 'body' => $text]
         ];
 
-        return self::dispatchMetaPost($acc['phone_number_id'], $acc['access_token_encrypted'], $payload);
+        return self::dispatchMetaPost($phoneId, $token, $payload);
     }
 
     public function sendDocument(PDO $pdo, int $companyId, string $recipientId, string $docUrl, string $docTitle, string $caption = ''): bool {
-        $accStmt = $pdo->prepare("SELECT phone_number_id, access_token_encrypted FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` != 'disconnected' LIMIT 1");
+        $accStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token, access_token_encrypted FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` != 'disconnected' LIMIT 1");
         $accStmt->execute([$companyId]);
         $acc = $accStmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$acc || empty($acc['phone_number_id']) || empty($acc['access_token_encrypted'])) {
+        $phoneId = $acc['phone_number_id'] ?? (getenv('WHATSAPP_PHONE_NUMBER_ID') ?: '');
+        $token   = $acc['whatsapp_access_token'] ?? ($acc['access_token_encrypted'] ?? (getenv('WHATSAPP_ACCESS_TOKEN') ?: ''));
+
+        if (empty($phoneId) || empty($token)) {
             return false;
         }
 
@@ -90,15 +96,18 @@ class WhatsAppChannelAdapter implements ChannelAdapterInterface {
             ]
         ];
 
-        return self::dispatchMetaPost($acc['phone_number_id'], $acc['access_token_encrypted'], $payload);
+        return self::dispatchMetaPost($phoneId, $token, $payload);
     }
 
     public function sendQuickReplies(PDO $pdo, int $companyId, string $recipientId, string $text, array $options): bool {
-        $accStmt = $pdo->prepare("SELECT phone_number_id, access_token_encrypted FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` != 'disconnected' LIMIT 1");
+        $accStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token, access_token_encrypted FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` != 'disconnected' LIMIT 1");
         $accStmt->execute([$companyId]);
         $acc = $accStmt->fetch(PDO::FETCH_ASSOC);
 
-        if (!$acc || empty($acc['phone_number_id']) || empty($acc['access_token_encrypted'])) {
+        $phoneId = $acc['phone_number_id'] ?? (getenv('WHATSAPP_PHONE_NUMBER_ID') ?: '');
+        $token   = $acc['whatsapp_access_token'] ?? ($acc['access_token_encrypted'] ?? (getenv('WHATSAPP_ACCESS_TOKEN') ?: ''));
+
+        if (empty($phoneId) || empty($token)) {
             return false;
         }
 
@@ -127,11 +136,11 @@ class WhatsAppChannelAdapter implements ChannelAdapterInterface {
             ]
         ];
 
-        return self::dispatchMetaPost($acc['phone_number_id'], $acc['access_token_encrypted'], $payload);
+        return self::dispatchMetaPost($phoneId, $token, $payload);
     }
 
     private static function dispatchMetaPost(string $phoneId, string $token, array $payload): bool {
-        $ch = curl_init("https://graph.facebook.com/v19.0/{$phoneId}/messages");
+        $ch = curl_init("https://graph.facebook.com/v20.0/{$phoneId}/messages");
         curl_setopt_array($ch, [
             CURLOPT_POST           => true,
             CURLOPT_POSTFIELDS     => json_encode($payload),
@@ -140,8 +149,8 @@ class WhatsAppChannelAdapter implements ChannelAdapterInterface {
                 "Content-Type: application/json"
             ],
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_TIMEOUT        => 8,
-            CURLOPT_SSL_VERIFYPEER => false
+            CURLOPT_TIMEOUT        => 10,
+            CURLOPT_SSL_VERIFYPEER => true
         ]);
         $res = curl_exec($ch);
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);

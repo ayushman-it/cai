@@ -701,16 +701,77 @@ try {
         VALUES (?, ?, 'ai', ?, 'whatsapp', NOW())
     ")->execute([$resolvedCompanyId, $conversationId, $aiReply]);
 
+    // Live Outbound Meta Cloud API Dispatch
+    $metaSent = false;
+    $metaError = null;
+    $metaMessageId = null;
+
+    try {
+        $waAccStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` != 'disconnected' LIMIT 1");
+        $waAccStmt->execute([$resolvedCompanyId]);
+        $waAcc = $waAccStmt->fetch(PDO::FETCH_ASSOC);
+
+        $outPhoneId = $waAcc['phone_number_id'] ?? (getenv('WHATSAPP_PHONE_NUMBER_ID') ?: '');
+        $outToken   = $waAcc['whatsapp_access_token'] ?? (getenv('WHATSAPP_ACCESS_TOKEN') ?: '');
+
+        if (!empty($outPhoneId) && !empty($outToken) && !empty($cleanSender)) {
+            $endpoint = "https://graph.facebook.com/v20.0/{$outPhoneId}/messages";
+            $postPayload = [
+                'messaging_product' => 'whatsapp',
+                'recipient_type'    => 'individual',
+                'to'                => $cleanSender,
+                'type'              => 'text',
+                'text'              => [
+                    'preview_url' => false,
+                    'body'        => $aiReply
+                ]
+            ];
+
+            $ch = curl_init($endpoint);
+            curl_setopt_array($ch, [
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => json_encode($postPayload),
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER     => [
+                    'Authorization: Bearer ' . $outToken,
+                    'Content-Type: application/json'
+                ],
+                CURLOPT_TIMEOUT        => 8,
+                CURLOPT_SSL_VERIFYPEER => true
+            ]);
+            $res = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            $metaSent = ($httpCode >= 200 && $httpCode < 300);
+            if ($metaSent && !empty($res)) {
+                $metaJson = json_decode($res, true);
+                $metaMessageId = $metaJson['messages'][0]['id'] ?? null;
+            } elseif (!$metaSent) {
+                $metaError = "HTTP {$httpCode}: {$res}";
+            }
+        }
+    } catch (Throwable $dispatchEx) {
+        $metaError = $dispatchEx->getMessage();
+    }
+
     $pdo->prepare("
         INSERT INTO `whatsapp_messages`
         (`company_id`, `recipient_phone`, `recipient_name`, `message_type`, `content`, `status`, `metadata_json`, `created_at`)
-        VALUES (?, ?, ?, 'customer_message', ?, 'sent', ?, NOW())
+        VALUES (?, ?, ?, 'customer_message', ?, ?, ?, NOW())
     ")->execute([
         $resolvedCompanyId,
         $senderPhone,
         $customerName,
         $aiReply,
-        json_encode(['direction' => 'outgoing', 'conversation_id' => $conversationId])
+        $metaSent ? 'delivered' : ($metaError ? 'failed' : 'sent'),
+        json_encode([
+            'direction' => 'outgoing',
+            'conversation_id' => $conversationId,
+            'meta_sent' => $metaSent,
+            'meta_message_id' => $metaMessageId,
+            'meta_error' => $metaError
+        ])
     ]);
 
     // Update conversation preview
@@ -730,7 +791,9 @@ try {
         'status' => 'ok',
         'company_id' => $resolvedCompanyId,
         'conversation_id' => $conversationId,
-        'reply' => $aiReply
+        'reply' => $aiReply,
+        'dispatched' => $metaSent,
+        'meta_message_id' => $metaMessageId
     ]);
 
 } catch (Exception $e) {
