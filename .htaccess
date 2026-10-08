@@ -48,3 +48,12 @@ Options -Indexes
     php_value session.use_only_cookies 1
     php_value session.cookie_samesite "Lax"
 </IfModule>
+
+# 5. URL Rewriting for Clean API & Callback Routes
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^api/auth/meta/callback/?$ api/auth/meta/callback.php [QSA,L]
+</IfModule>
+
