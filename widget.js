@@ -62,7 +62,10 @@
     }
   }
 
-  const companyKey = (currentScript && currentScript.getAttribute('data-company')) || 
+  const urlCompanyParam = (typeof window !== 'undefined' && window.location) ? (new URLSearchParams(window.location.search).get('company') || new URLSearchParams(window.location.search).get('company_key')) : null;
+  const companyKey = urlCompanyParam ||
+                     (typeof window !== 'undefined' && window.__CP_COMPANY_KEY__) ||
+                     (currentScript && currentScript.getAttribute('data-company')) || 
                      (currentScript && currentScript.getAttribute('data-key')) || 
                      'cp_live_cuboidsoft';
 
@@ -5616,8 +5619,8 @@
       <!-- Message History Container (Clean minimal Intercom Cai style) -->
       <main class="cp-messages" id="cp-messages-container" style="display: none;">
         
-        <!-- Welcome Message Bubble (media_1790678123351.png) -->
-        <div class="cp-msg-row ai cp-welcome-row" id="cp-welcome-row">
+        <!-- Welcome Message Bubble (Hidden in favor of dynamic starter greeting with chips) -->
+        <div class="cp-msg-row ai cp-welcome-row" id="cp-welcome-row" style="display: none;">
           <div class="cp-bubble" id="cp-welcome-text">
             Hi there<br/><br/>You are now speaking with Cai. How can I help?
           </div>
@@ -7166,6 +7169,16 @@
 
     if (currentScreen === 'home' && typeof renderActionHome === 'function') {
       renderActionHome();
+    } else if (currentScreen === 'chat') {
+      const starterRow = chatStream ? chatStream.querySelector('.cp-starter-welcome-row') : null;
+      if (starterRow && !chatStream.querySelector('.cp-msg-row.user')) {
+        const oldChips = starterRow.querySelector('.cp-action-chips-container');
+        if (oldChips) oldChips.remove();
+        const bubble = starterRow.querySelector('.cp-bubble');
+        if (bubble && typeof attachChipsToBubble === 'function') attachChipsToBubble(bubble);
+      } else {
+        ensureStarterQuickActionChips();
+      }
     }
   }
 
@@ -7418,10 +7431,7 @@
       welcomeTextEl.innerHTML = formatMarkdown(widgetConfig.greeting_heading);
     }
     if (inputField) {
-      inputField.placeholder = isIdentified ? "Ask a question..." : "Enter your details above to begin...";
-    }
-    if (!isIdentified && widgetStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) !== '1') {
-      renderVisitorIdentificationPrompt();
+      inputField.placeholder = "Ask a question...";
     }
   }
 
@@ -7940,7 +7950,7 @@
       }
 
       scrollToBottom();
-      saveHistory('ai', fullText, data.whatsapp_cta, data.chat_ended);
+      saveHistory('ai', fullText, data.whatsapp_cta, data.chat_ended, null, data.action_chips);
       if (!data.skipSound) {
         playReceivedSound();
       }
@@ -7957,6 +7967,7 @@
       bubble.innerHTML = formatMarkdown(fullText);
       finishMessage();
     }
+    return row;
   }
 
   async function confirmSlotBooking(slotDatetime) {
@@ -8481,10 +8492,10 @@
   }
 
   // 12. Local Storage Persistence
-  function saveHistory(sender, text, whatsappCta, chatEnded, attachment = null) {
+  function saveHistory(sender, text, whatsappCta, chatEnded, attachment = null, actionChips = null) {
     try {
       const history = JSON.parse(widgetStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
-      history.push({ sender, text, whatsappCta, chatEnded, attachment, timestamp: 'Just now' });
+      history.push({ sender, text, whatsappCta, chatEnded, attachment, action_chips: actionChips, timestamp: 'Just now' });
       widgetStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(history.slice(-30)));
     } catch (e) {}
   }
@@ -8511,7 +8522,8 @@
               timestamp: 'Recent',
               skipSound: true,
               whatsapp_cta: item.whatsappCta,
-              chat_ended: item.chatEnded
+              chat_ended: item.chatEnded,
+              action_chips: item.action_chips
             });
           }
         });
@@ -8621,31 +8633,118 @@
   }
 
 
+  function getActiveStarterChips() {
+    const brandName = widgetConfig.brand_name || 'CuboidPilot';
+    if (widgetConfig.quick_actions && Array.isArray(widgetConfig.quick_actions) && widgetConfig.quick_actions.length > 0) {
+      return widgetConfig.quick_actions;
+    }
+    return [
+      { label: 'Courses & Programs', text: `What courses and programs does ${brandName} offer?` },
+      { label: 'Course Fees', text: 'What is the fee structure for your courses?' },
+      { label: '0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
+      { label: 'About ' + brandName, text: `Tell me about ${brandName}.` },
+      { label: 'Talk to Counselor', text: 'I would like to speak with a human counselor.' }
+    ];
+  }
+
+  function attachChipsToBubble(bubble) {
+    if (!bubble || bubble.querySelector('.cp-action-chips-container')) return;
+    const starterChips = getActiveStarterChips();
+    if (!starterChips || starterChips.length === 0) return;
+
+    const chipsBox = document.createElement('div');
+    chipsBox.className = 'cp-action-chips-container';
+    chipsBox.style.cssText = 'display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;';
+    starterChips.forEach(chip => {
+      let cleanLabel = (chip.label || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '').trim();
+      if (!cleanLabel) cleanLabel = chip.label || '';
+
+      const chipBtn = document.createElement('button');
+      chipBtn.type = 'button';
+      chipBtn.className = 'cp-action-chip-pill';
+      const isDark = currentTheme === 'dark';
+      const bgNormal = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f8fafc';
+      const borderNormal = isDark ? 'rgba(255, 255, 255, 0.18)' : '#e2e8f0';
+      const textNormal = isDark ? '#f1f5f9' : '#0f172a';
+      chipBtn.style.cssText = `display:inline-flex; align-items:center; background:${bgNormal}; color:${textNormal}; border:1px solid ${borderNormal}; border-radius:18px; padding:6px 13px; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.15s ease; font-family:inherit; letter-spacing:0.01em;`;
+
+      chipBtn.addEventListener('mouseenter', () => {
+        chipBtn.style.background = isDark ? 'rgba(255, 255, 255, 0.15)' : '#f1f5f9';
+        chipBtn.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.35)' : '#cbd5e1';
+      });
+      chipBtn.addEventListener('mouseleave', () => {
+        chipBtn.style.background = bgNormal;
+        chipBtn.style.borderColor = borderNormal;
+      });
+
+      chipBtn.innerHTML = `<span>${escapeHtml(cleanLabel)}</span>`;
+      chipBtn.addEventListener('click', () => {
+        chipsBox.querySelectorAll('.cp-action-chip-pill').forEach(b => {
+          b.disabled = true;
+          b.style.opacity = '0.5';
+          b.style.pointerEvents = 'none';
+        });
+        handleSend(chip.text || cleanLabel);
+      });
+      chipsBox.appendChild(chipBtn);
+    });
+    bubble.appendChild(chipsBox);
+  }
+
   function ensureStarterQuickActionChips() {
     if (!chatStream) return;
-    const existingRows = chatStream.querySelectorAll('.cp-msg-row');
-    if (existingRows.length > 0) return;
+
+    // If user has already spoken, don't show starter greeting
+    const userMsg = chatStream.querySelector('.cp-msg-row.user');
+    if (userMsg) return;
+
+    // Check if starter message row already exists
+    const existingStarter = chatStream.querySelector('.cp-starter-welcome-row');
+    if (existingStarter) {
+      const existingChips = existingStarter.querySelector('.cp-action-chips-container');
+      if (!existingChips) {
+        const bubble = existingStarter.querySelector('.cp-bubble');
+        if (bubble) attachChipsToBubble(bubble);
+      }
+      return;
+    }
+
+    // Hide the static template welcome row if present
+    const staticWelcome = shadow.getElementById('cp-welcome-row');
+    if (staticWelcome) staticWelcome.style.display = 'none';
+
+    // If chatStream has any AI message(s) from restored history:
+    const aiRows = chatStream.querySelectorAll('.cp-msg-row.ai');
+    if (aiRows.length > 0) {
+      const chipsInStream = chatStream.querySelector('.cp-action-chips-container');
+      if (chipsInStream) return;
+      const lastAiBubble = aiRows[aiRows.length - 1].querySelector('.cp-bubble');
+      if (lastAiBubble) {
+        attachChipsToBubble(lastAiBubble);
+        return;
+      }
+    }
 
     const brandName = widgetConfig.brand_name || 'CuboidPilot';
     const asstName = widgetConfig.assistant_name || 'Cai';
-    const greeting = `Hello! I am **${asstName}**, the AI advisor for **${brandName}**.\n\nHow can I help you today? Tap any quickest action below or ask any question:`;
 
-    const starterChips = (widgetConfig.quick_actions && Array.isArray(widgetConfig.quick_actions) && widgetConfig.quick_actions.length > 0)
-      ? widgetConfig.quick_actions
-      : [
-          { label: 'Courses & Programs', text: `What courses and programs does ${brandName} offer?` },
-          { label: 'Course Fees', text: 'What is the fee structure for your courses?' },
-          { label: '0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
-          { label: 'About ' + brandName, text: `Tell me about ${brandName}.` },
-          { label: 'Talk to Counselor', text: 'I would like to speak with a human counselor.' }
-        ];
+    let greetingText = widgetConfig.greeting_heading || '';
+    greetingText = greetingText.replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '').trim();
+    if (!greetingText || greetingText.length < 5) {
+      greetingText = `Hello! I am **${asstName}**, the AI advisor for **${brandName}**.\n\nHow can I help you today? Tap any option below or ask any question:`;
+    }
 
-    appendAIMessage({
-      reply: greeting,
+    const starterChips = getActiveStarterChips();
+
+    const starterRow = appendAIMessage({
+      reply: greetingText,
       action_chips: starterChips,
       timestamp: 'Just now',
       skipSound: true
     });
+    if (starterRow) {
+      starterRow.classList.add('cp-starter-welcome-row');
+    }
   }
 
   // =========================================================================
@@ -8740,9 +8839,6 @@
         if (inputField) inputField.placeholder = "Ask a question...";
       }
       if (brandLogo) updateWidgetLogo();
-      if (!isIdentified && widgetStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) !== '1') {
-        renderVisitorIdentificationPrompt();
-      }
       if (conversationId) {
         startHumanPolling();
       }
@@ -9483,6 +9579,18 @@
     const askPill = shadow.getElementById('cp-ask-question-pill');
     if (askPill) {
       bindTap(askPill, () => {
+        navigateTo('chat');
+        setTimeout(() => {
+          if (inputField) inputField.focus();
+        }, 120);
+      });
+    }
+
+    const heroSec = screensView.querySelector('.cp-hero-section');
+    if (heroSec) {
+      heroSec.style.cursor = 'pointer';
+      heroSec.title = 'Start conversation';
+      bindTap(heroSec, () => {
         navigateTo('chat');
         setTimeout(() => {
           if (inputField) inputField.focus();
