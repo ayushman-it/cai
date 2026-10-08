@@ -198,27 +198,27 @@
           <!-- PANE 3: Live Chat Stream & Rich Composer (Flex-1) -->
           <main id="convo-pane-chat" class="flex-1 flex flex-col bg-[#fcfbfa] overflow-hidden">
             
-            <!-- Conversation Header -->
-            <div id="chat-header" class="px-4 py-2.5 border-b border-[#e7e5de] bg-white flex items-center justify-between shrink-0">
+            <!-- Conversation Header (Authentic WhatsApp Web Header) -->
+            <div id="chat-header" class="px-4 py-2.5 border-b border-[#e7e5de] bg-[#f0f2f5] flex items-center justify-between shrink-0">
               <div class="flex items-center gap-3">
                 <!-- Mobile Back Button -->
-                <button onclick="returnToThreadList()" class="md:hidden p-1.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-md transition" title="Back to Inquiries">
+                <button onclick="returnToThreadList()" class="md:hidden p-1.5 text-stone-600 hover:text-stone-900 hover:bg-stone-200 rounded-md transition" title="Back to Inquiries">
                   <i data-lucide="arrow-left" class="w-4 h-4"></i>
                 </button>
 
-                <div class="w-9 h-9 rounded-full bg-stone-900 text-white font-semibold text-xs flex items-center justify-center font-mono shrink-0 shadow-2xs">
+                <div class="w-10 h-10 rounded-full bg-[#128C7E] text-white font-semibold text-xs flex items-center justify-center font-mono shrink-0 shadow-2xs">
                   <span id="chat-avatar">WA</span>
                 </div>
                 <div>
                   <div class="flex items-center gap-2">
                     <span id="chat-title" class="font-semibold text-stone-900 text-sm">Select a Conversation</span>
-                    <span id="chat-stage-badge" class="px-1.5 py-0.5 bg-stone-100 text-stone-700 rounded text-[10px] font-medium font-mono">Prospect</span>
+                    <span id="chat-stage-badge" class="px-1.5 py-0.5 bg-white text-stone-700 rounded text-[10px] font-medium font-mono border border-stone-200">Prospect</span>
                   </div>
                   <div class="flex items-center gap-2 text-xs text-stone-500">
                     <span id="chat-phone" class="font-mono">--</span>
                     <span>•</span>
                     <span id="chat-channel-badge" class="inline-flex items-center gap-1 text-emerald-700 font-medium">
-                      <i data-lucide="check-check" class="w-3.5 h-3.5 text-emerald-600"></i> WhatsApp Business
+                      <i data-lucide="check-check" class="w-3.5 h-3.5 text-[#25D366]"></i> WhatsApp Business
                     </span>
                   </div>
                 </div>
