@@ -791,9 +791,6 @@ window.CuboidShell = {
               </a>
             </div>
           </div>
-          <a href="automations.html" class="sub-nav-item ${active === 'automations' ? 'active' : ''}">
-            <span class="flex items-center gap-2"><i data-lucide="zap" class="w-3.5 h-3.5 text-stone-600"></i> Automations</span>
-          </a>
           <a href="team.html" class="sub-nav-item ${active === 'team' ? 'active' : ''}">
             <span class="flex items-center gap-2"><i data-lucide="users" class="w-3.5 h-3.5 text-stone-600"></i> Team Members</span>
           </a>
@@ -839,9 +836,6 @@ window.CuboidShell = {
               </a>
               <a href="whatsapp.html" class="rail-item ${active === 'whatsapp' ? 'active' : ''}" title="Outbound">
                 <i data-lucide="send" class="w-5 h-5"></i>
-              </a>
-              <a href="automations.html" class="rail-item ${active === 'automations' ? 'active' : ''}" title="Automations">
-                <i data-lucide="zap" class="w-5 h-5"></i>
               </a>
               <a href="pipeline.html" class="rail-item ${active === 'leads' || active === 'pipeline' ? 'active' : ''}" title="Pipeline Kanban & Contacts">
                 <i data-lucide="kanban" class="w-5 h-5"></i>
