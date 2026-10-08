@@ -834,8 +834,8 @@ window.CuboidShell = {
               <a href="ai-assistant.html" class="rail-item ${active === 'ai-assistant' || active === 'knowledge' ? 'active' : ''}" title="AI Assistant">
                 <i data-lucide="sparkles" class="w-5 h-5"></i>
               </a>
-              <a href="whatsapp.html" class="rail-item ${active === 'whatsapp' ? 'active' : ''}" title="Outbound">
-                <i data-lucide="send" class="w-5 h-5"></i>
+              <a href="whatsapp.html" class="rail-item ${active === 'whatsapp' ? 'active' : ''}" title="WhatsApp Command Center">
+                <i data-lucide="message-square" class="w-5 h-5"></i>
               </a>
               <a href="pipeline.html" class="rail-item ${active === 'leads' || active === 'pipeline' ? 'active' : ''}" title="Pipeline Kanban & Contacts">
                 <i data-lucide="kanban" class="w-5 h-5"></i>
