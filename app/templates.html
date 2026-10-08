@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meta WhatsApp Templates Library — Cai AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=5.0.0">
+  <style>
+    body { font-family: 'Inter', -apple-system, sans-serif; }
+    .template-card { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); }
+    .wa-preview-bubble {
+      background-color: #dcf8c6;
+      border-radius: 8px 0px 8px 8px;
+      box-shadow: 0 1px 0.5px rgba(11,20,26,.13);
+    }
+    .var-tag {
+      background-color: #dbeafe;
+      color: #1e40af;
+      padding: 0 4px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body class="app-body overflow-hidden">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main h-screen flex flex-col overflow-hidden bg-[#faf9f7]">
+      <div id="topbar-container" class="block lg:hidden shrink-0"></div>
+
+      <!-- Top Header -->
+      <header class="px-6 py-4 border-b border-[#e7e5de] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
+        <div>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-lg bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 shadow-2xs">
+              <i data-lucide="layout-template" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h1 class="text-base font-bold text-stone-900 tracking-tight flex items-center gap-2">
+                <span>Meta WhatsApp Templates Library</span>
+                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-100/70 text-emerald-800 border border-emerald-200">Cloud API Verified</span>
+              </h1>
+              <p class="text-xs text-stone-500 mt-0.5">Author, preview, and test Meta pre-approved message templates for Utility, Authentication &amp; Marketing campaigns.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2.5 flex-wrap">
+          <a href="whatsapp.html" class="px-3 py-1.5 bg-white border border-stone-200 hover:border-stone-400 text-stone-700 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 transition">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-stone-500"></i>
+            <span>WhatsApp Hub</span>
+          </a>
+          <button onclick="openCreateTemplateModal()" class="px-3.5 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>Create Template</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Sub-Nav Pill Bar -->
+      <div class="px-6 py-2.5 bg-white border-b border-[#e7e5de] flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-2 text-xs">
+          <a href="whatsapp.html" class="px-2.5 py-1 text-stone-600 hover:text-stone-900 rounded font-medium flex items-center gap-1.5">
+            <i data-lucide="inbox" class="w-3.5 h-3.5"></i> Live Inbox
+          </a>
+          <a href="automations.html" class="px-2.5 py-1 text-stone-600 hover:text-stone-900 rounded font-medium flex items-center gap-1.5">
+            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i> Automations
+          </a>
+          <a href="contacts.html" class="px-2.5 py-1 text-stone-600 hover:text-stone-900 rounded font-medium flex items-center gap-1.5">
+            <i data-lucide="users" class="w-3.5 h-3.5 text-blue-500"></i> Contacts CRM
+          </a>
+          <a href="templates.html" class="px-2.5 py-1 bg-stone-100 text-stone-900 rounded font-semibold flex items-center gap-1.5">
+            <i data-lucide="layout-template" class="w-3.5 h-3.5 text-purple-500"></i> Meta Templates
+          </a>
+        </div>
+        <div class="text-[11px] text-stone-400 font-mono hidden md:block">
+          Official Meta WhatsApp Cloud API Category Compliance
+        </div>
+      </div>
+
+      <!-- Main Layout: Category Rail (Left) + Templates Grid (Right) -->
+      <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Category Rail (Screenshot 3: Utility, Authentication, Marketing) -->
+        <aside class="w-64 border-r border-[#e7e5de] bg-white p-4 space-y-4 shrink-0 overflow-y-auto">
+          <div>
+            <div class="text-[11px] font-bold text-stone-400 uppercase tracking-wider mb-2">Template Categories</div>
+            <div class="space-y-1">
+              <button onclick="setCategoryFilter('all')" id="cat-all" class="w-full text-left px-3 py-2 text-xs rounded-lg font-semibold bg-stone-900 text-white flex items-center justify-between transition">
+                <span>All Templates</span>
+                <span id="badge-cat-all" class="font-mono text-[11px]">3</span>
+              </button>
+              <button onclick="setCategoryFilter('MARKETING')" id="cat-marketing" class="w-full text-left px-3 py-2 text-xs rounded-lg text-stone-600 hover:bg-stone-50 flex items-center justify-between transition">
+                <span class="flex items-center gap-2"><i data-lucide="megaphone" class="w-3.5 h-3.5 text-purple-600"></i> Marketing</span>
+                <span id="badge-cat-marketing" class="font-mono text-[11px] text-stone-400">2</span>
+              </button>
+              <button onclick="setCategoryFilter('UTILITY')" id="cat-utility" class="w-full text-left px-3 py-2 text-xs rounded-lg text-stone-600 hover:bg-stone-50 flex items-center justify-between transition">
+                <span class="flex items-center gap-2"><i data-lucide="bell" class="w-3.5 h-3.5 text-blue-600"></i> Utility</span>
+                <span id="badge-cat-utility" class="font-mono text-[11px] text-stone-400">1</span>
+              </button>
+              <button onclick="setCategoryFilter('AUTHENTICATION')" id="cat-auth" class="w-full text-left px-3 py-2 text-xs rounded-lg text-stone-600 hover:bg-stone-50 flex items-center justify-between transition">
+                <span class="flex items-center gap-2"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i> Authentication</span>
+                <span id="badge-cat-auth" class="font-mono text-[11px] text-stone-400">0</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-3 border-t border-stone-100 space-y-2">
+            <div class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Language</div>
+            <select id="lang-filter" onchange="renderTemplates()" class="w-full p-2 bg-stone-50 border border-stone-200 rounded-lg text-xs outline-none">
+              <option value="all">All Languages</option>
+              <option value="en_US">English (en_US)</option>
+              <option value="en">English (en)</option>
+              <option value="hi">Hindi (hi)</option>
+            </select>
+          </div>
+
+          <div class="p-3 bg-purple-50/70 border border-purple-200/80 rounded-xl space-y-1.5 text-xs text-purple-900">
+            <div class="font-bold flex items-center gap-1.5">
+              <i data-lucide="info" class="w-4 h-4 text-purple-700"></i>
+              <span>Meta 24h Window</span>
+            </div>
+            <p class="text-[11px] text-purple-800/80 leading-relaxed">
+              Approved templates can be sent outside the 24-hour service window to re-engage leads and customers.
+            </p>
+          </div>
+        </aside>
+
+        <!-- Templates Grid (Right flex-1) -->
+        <main class="flex-1 overflow-y-auto p-6 space-y-6">
+          
+          <!-- Search & Filter bar -->
+          <div class="flex items-center justify-between gap-3">
+            <div class="relative flex-1 max-w-md">
+              <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3 top-3"></i>
+              <input type="text" id="tpl-search" oninput="renderTemplates()" placeholder="Search template by name or content..." class="w-full pl-9 pr-4 py-2 text-xs bg-white border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 shadow-2xs">
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button onclick="loadTemplates()" class="p-2 bg-white border border-[#e7e5de] hover:bg-stone-50 text-stone-600 rounded-lg shadow-2xs transition" title="Refresh Templates">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Cards Grid (Interactive Template Previews matching Screenshot 3) -->
+          <div id="templates-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div class="p-8 text-center text-stone-400 col-span-full">Loading Meta template library...</div>
+          </div>
+
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <!-- Create Template Modal -->
+  <div id="create-template-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+    <div class="bg-white border border-[#e7e5de] rounded-2xl w-full max-w-lg p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-stone-100">
+        <div>
+          <h3 class="font-bold text-stone-900 text-sm">Create Meta Message Template</h3>
+          <p class="text-xs text-stone-500">Define pre-approved content structure for outbound campaigns</p>
+        </div>
+        <button onclick="closeCreateTemplateModal()" class="text-stone-400 hover:text-stone-700 p-1">✕</button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Template Name (Lowercase &amp; Underscores) *</label>
+          <input type="text" id="tpl-form-name" placeholder="e.g. monthly_renewal_reminder" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-mono">
+          <p class="text-[10px] text-stone-400 mt-1">Allowed characters: a-z, 0-9, and underscores.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-stone-700 mb-1">Category *</label>
+            <select id="tpl-form-category" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium">
+              <option value="MARKETING">Marketing</option>
+              <option value="UTILITY">Utility</option>
+              <option value="AUTHENTICATION">Authentication</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-stone-700 mb-1">Language Code *</label>
+            <select id="tpl-form-lang" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium">
+              <option value="en_US">English (en_US)</option>
+              <option value="en">English (en)</option>
+              <option value="hi">Hindi (hi)</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Template Body (Use {{1}}, {{2}} for variables) *</label>
+          <textarea id="tpl-form-body" rows="4" placeholder="Hello {{1}}, your booking for {{2}} is confirmed. Click here for details." class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 leading-relaxed font-mono text-xs"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Sample Variable Values (Comma-separated)</label>
+          <input type="text" id="tpl-form-samples" placeholder="e.g. John Doe, Web Development Workshop" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900">
+        </div>
+
+        <div class="p-3 bg-stone-50 border border-stone-200 rounded-lg">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="tpl-form-submit-meta" checked class="rounded border-stone-300">
+            <span class="font-medium text-stone-800">Submit for Instant Local &amp; Meta Registry</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-stone-100">
+        <button onclick="closeCreateTemplateModal()" class="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900">Cancel</button>
+        <button id="save-tpl-btn" onclick="saveTemplate()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg shadow-2xs">Create &amp; Register</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Send Template Modal -->
+  <div id="send-template-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+    <div class="bg-white border border-[#e7e5de] rounded-2xl w-full max-w-md p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-stone-100">
+        <div>
+          <h3 class="font-bold text-stone-900 text-sm">Send Template Message</h3>
+          <p class="text-xs text-stone-500">Dispatch live via Meta Cloud API</p>
+        </div>
+        <button onclick="closeSendTemplateModal()" class="text-stone-400 hover:text-stone-700 p-1">✕</button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Selected Template</label>
+          <div id="send-tpl-name" class="p-2.5 bg-stone-100 rounded-lg font-mono text-stone-800 font-medium">--</div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Recipient Phone Number (with Country Code) *</label>
+          <input type="text" id="send-phone" placeholder="e.g. +91 98765 43210" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-mono">
+        </div>
+
+        <div id="send-variables-container" class="space-y-2">
+          <!-- Dynamically populated variable input fields -->
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-4 border-t border-stone-100">
+        <button onclick="closeSendTemplateModal()" class="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900">Cancel</button>
+        <button id="send-tpl-btn" onclick="executeSendTemplate()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-2xs flex items-center gap-1.5">
+          <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          <span>Dispatch Now</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js"></script>
+  <script>
+    let allTemplates = [];
+    let currentCategory = 'all';
+    let activeSendTemplate = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('templates', 'Meta WhatsApp Templates', [
+        { label: 'WhatsApp', href: 'whatsapp.html' },
+        { label: 'Templates', href: 'templates.html' }
+      ]);
+      loadTemplates();
+    });
+
+    async function loadTemplates() {
+      const grid = document.getElementById('templates-grid');
+      grid.innerHTML = '<div class="p-8 text-center text-stone-400 col-span-full">Loading Meta template library...</div>';
+
+      try {
+        const res = await fetch('../api/whatsapp_hub.php?action=get_templates_meta');
+        const data = await res.json();
+        if (!data.success) {
+          grid.innerHTML = '<div class="p-8 text-center text-rose-500 col-span-full">' + (data.message || 'Error loading templates') + '</div>';
+          return;
+        }
+
+        allTemplates = data.templates || [];
+        updateCategoryBadges();
+        renderTemplates();
+      } catch (e) {
+        grid.innerHTML = '<div class="p-8 text-center text-rose-500 col-span-full">Server communication error</div>';
+      }
+    }
+
+    function updateCategoryBadges() {
+      document.getElementById('badge-cat-all').textContent = allTemplates.length;
+      document.getElementById('badge-cat-marketing').textContent = allTemplates.filter(t => t.category === 'MARKETING').length;
+      document.getElementById('badge-cat-utility').textContent = allTemplates.filter(t => t.category === 'UTILITY').length;
+      document.getElementById('badge-cat-auth').textContent = allTemplates.filter(t => t.category === 'AUTHENTICATION').length;
+    }
+
+    function setCategoryFilter(cat) {
+      currentCategory = cat;
+      const btns = {
+        all: document.getElementById('cat-all'),
+        MARKETING: document.getElementById('cat-marketing'),
+        UTILITY: document.getElementById('cat-utility'),
+        AUTHENTICATION: document.getElementById('cat-auth')
+      };
+
+      Object.keys(btns).forEach(k => {
+        if (btns[k]) {
+          if (k === cat) {
+            btns[k].className = 'w-full text-left px-3 py-2 text-xs rounded-lg font-semibold bg-stone-900 text-white flex items-center justify-between transition';
+          } else {
+            btns[k].className = 'w-full text-left px-3 py-2 text-xs rounded-lg text-stone-600 hover:bg-stone-50 flex items-center justify-between transition';
+          }
+        }
+      });
+
+      renderTemplates();
+    }
+
+    function renderTemplates() {
+      const q = document.getElementById('tpl-search').value.toLowerCase().trim();
+      const lang = document.getElementById('lang-filter').value;
+      const grid = document.getElementById('templates-grid');
+
+      const filtered = allTemplates.filter(t => {
+        const matchesCat = currentCategory === 'all' || t.category === currentCategory;
+        const matchesLang = lang === 'all' || t.language === lang;
+        const matchesQ = !q || (t.name && t.name.toLowerCase().includes(q)) || (t.body_text && t.body_text.toLowerCase().includes(q));
+        return matchesCat && matchesLang && matchesQ;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="p-12 text-center text-stone-400 col-span-full"><div class="flex flex-col items-center justify-center space-y-2"><i data-lucide="bookmark" class="w-8 h-8 text-stone-300"></i><div class="font-medium text-stone-600">No matching templates found</div><div class="text-xs text-stone-400">Try adjusting your category or search filter.</div></div></div>';
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      grid.innerHTML = filtered.map(t => {
+        const catBadge = (t.category === 'MARKETING') 
+          ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">Marketing</span>'
+          : ((t.category === 'UTILITY') 
+            ? '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">Utility</span>'
+            : '<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Auth</span>');
+
+        const statusBadge = (t.status === 'APPROVED') 
+          ? '<span class="inline-flex items-center gap-1 text-emerald-700 font-semibold text-[11px]"><i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i> Approved</span>'
+          : '<span class="text-stone-500 font-mono text-[11px]">' + t.status + '</span>';
+
+        const bodyHtml = (t.body_text || '').replace(/{{(d+)}}/g, '<span class="var-tag">{{$1}}</span>');
+
+        return '<div class="bg-white border border-[#e7e5de] rounded-xl p-4 template-card flex flex-col justify-between space-y-4">' +
+          '<div class="space-y-3">' +
+            '<div class="flex items-center justify-between">' +
+              catBadge +
+              '<span class="font-mono text-[10px] text-stone-400">' + t.language + '</span>' +
+            '</div>' +
+            '<div>' +
+              '<div class="font-bold text-stone-900 text-sm font-mono truncate">' + t.name + '</div>' +
+              '<div class="mt-1">' + statusBadge + '</div>' +
+            '</div>' +
+            '<!-- WhatsApp Preview Bubble -->' +
+            '<div class="p-3 wa-preview-bubble text-xs text-stone-900 leading-relaxed font-sans">' +
+              bodyHtml +
+              '<div class="flex items-center justify-end gap-1 text-[10px] text-stone-500 mt-1 select-none font-mono">' +
+                '<span>12:45 PM</span>' +
+                '<span class="text-[#53bdeb] font-bold">✓✓</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="pt-3 border-t border-stone-100 flex items-center justify-between">' +
+            '<button onclick="quickTestSend('' + t.name + '')" class="px-3 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md shadow-2xs inline-flex items-center gap-1.5 transition">' +
+              '<i data-lucide="send" class="w-3 h-3"></i>' +
+              '<span>Test Send</span>' +
+            '</button>' +
+            '<button onclick="copyTemplateName('' + t.name + '')" class="p-1.5 hover:bg-stone-100 text-stone-500 rounded transition" title="Copy template name">' +
+              '<i data-lucide="copy" class="w-3.5 h-3.5"></i>' +
+            '</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function openCreateTemplateModal() {
+      document.getElementById('tpl-form-name').value = '';
+      document.getElementById('tpl-form-body').value = '';
+      document.getElementById('tpl-form-samples').value = '';
+      document.getElementById('create-template-modal').classList.remove('hidden');
+    }
+
+    function closeCreateTemplateModal() {
+      document.getElementById('create-template-modal').classList.add('hidden');
+    }
+
+    async function saveTemplate() {
+      const name = document.getElementById('tpl-form-name').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_');
+      const category = document.getElementById('tpl-form-category').value;
+      const lang = document.getElementById('tpl-form-lang').value;
+      const body = document.getElementById('tpl-form-body').value.trim();
+      const samples = document.getElementById('tpl-form-samples').value.split(',').map(s => s.trim()).filter(Boolean);
+
+      if (!name || !body) {
+        alert('Please provide template name and body text.');
+        return;
+      }
+
+      const btn = document.getElementById('save-tpl-btn');
+      btn.disabled = true;
+      btn.textContent = 'Registering...';
+
+      try {
+        const res = await fetch('../api/whatsapp_hub.php?action=save_template_meta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, category, language: lang, body_text: body, sample_values: samples })
+        });
+        const data = await res.json();
+        if (data.success) {
+          closeCreateTemplateModal();
+          loadTemplates();
+        } else {
+          alert(data.message || 'Failed to register template');
+        }
+      } catch (e) {
+        alert('Communication error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create & Register';
+      }
+    }
+
+    function quickTestSend(tplName) {
+      const t = allTemplates.find(x => x.name === tplName);
+      if (!t) return;
+
+      activeSendTemplate = t;
+      document.getElementById('send-tpl-name').textContent = t.name + ' (' + t.category + ')';
+      document.getElementById('send-phone').value = '';
+
+      // Count variables
+      const matches = (t.body_text || '').match(/{{(d+)}}/g) || [];
+      const varContainer = document.getElementById('send-variables-container');
+      varContainer.innerHTML = '';
+
+      matches.forEach((m, idx) => {
+        const varNum = idx + 1;
+        const defaultVal = (t.sample_values && t.sample_values[idx]) ? t.sample_values[idx] : '';
+        const field = document.createElement('div');
+        field.innerHTML = '<label class="block text-stone-600 mb-0.5">Variable {{' + varNum + '}} Value</label>' +
+          '<input type="text" id="send-var-' + varNum + '" value="' + defaultVal + '" placeholder="e.g. Value for {{' + varNum + '}}" class="w-full p-2 bg-[#fbfaf8] border border-[#e7e5de] rounded-md outline-none text-xs font-mono">';
+        varContainer.appendChild(field);
+      });
+
+      document.getElementById('send-template-modal').classList.remove('hidden');
+    }
+
+    function closeSendTemplateModal() {
+      document.getElementById('send-template-modal').classList.add('hidden');
+    }
+
+    async function executeSendTemplate() {
+      const phone = document.getElementById('send-phone').value.trim();
+      if (!phone || !activeSendTemplate) {
+        alert('Please enter a recipient phone number.');
+        return;
+      }
+
+      const matches = (activeSendTemplate.body_text || '').match(/{{(d+)}}/g) || [];
+      const variables = [];
+      matches.forEach((m, idx) => {
+        const input = document.getElementById('send-var-' + (idx + 1));
+        variables.push(input ? input.value : '');
+      });
+
+      const btn = document.getElementById('send-tpl-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="animate-spin">⏳</span> Dispatching...';
+
+      try {
+        const res = await fetch('../api/whatsapp_hub.php?action=send_template_meta', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone,
+            template_name: activeSendTemplate.name,
+            language: activeSendTemplate.language,
+            variables
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Template successfully dispatched via WhatsApp Cloud API!');
+          closeSendTemplateModal();
+        } else {
+          alert(data.message || 'Failed to dispatch template');
+        }
+      } catch (e) {
+        alert('Dispatch error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i data-lucide="send" class="w-3.5 h-3.5"></i><span>Dispatch Now</span>';
+        if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    function copyTemplateName(name) {
+      navigator.clipboard.writeText(name);
+      alert('Copied template name: ' + name);
+    }
+  </script>
+</body>
+</html>

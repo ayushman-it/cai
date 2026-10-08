@@ -8155,14 +8155,37 @@
     }
   }
 
-  function openWhatsAppChannel(customText) {
+  async function openWhatsAppChannel(customText) {
     const cleanNumber = (widgetConfig.whatsapp_number || '').replace(/[^0-9]/g, '');
     if (!cleanNumber) {
       alert('WhatsApp support is not configured for this workspace.');
       return;
     }
-    const msg = encodeURIComponent(customText || 'Hi, I need assistance with Cai.');
-    const url = `https://api.whatsapp.com/send?phone=${cleanNumber}&text=${msg}`;
+
+    let url = '';
+    try {
+      const res = await fetch(`${baseUrl}/api/whatsapp_hub.php?action=create_widget_handoff`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          company_key: companyKey,
+          conversation_id: conversationId || 0,
+          lead_id: currentLeadId || 0
+        })
+      });
+      const data = await res.json();
+      if (data && data.success && data.redirect_url) {
+        url = data.redirect_url;
+      }
+    } catch (e) {
+      console.warn('[Cai] Handoff generation fallback:', e);
+    }
+
+    if (!url) {
+      const msg = encodeURIComponent(customText || 'Hi, I need assistance with Cai.');
+      url = `https://api.whatsapp.com/send?phone=${cleanNumber}&text=${msg}`;
+    }
+
     try {
       const win = window.open(url, '_blank');
       if (!win || win.closed || typeof win.closed === 'undefined') {

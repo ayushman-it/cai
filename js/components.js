@@ -781,9 +781,18 @@ window.CuboidShell = {
               <span class="flex items-center gap-2"><i data-lucide="layers" class="w-3.5 h-3.5 text-stone-600"></i> Channels</span>
               <i data-lucide="chevron-down" id="shell-channels-chevron" class="w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${active === 'channels' || active === 'whatsapp' ? 'rotate-180' : ''}"></i>
             </button>
-            <div id="shell-channels-submenu" class="pl-4 pr-1 space-y-0.5 pt-1 pb-1 transition-all ${active === 'channels' || active === 'whatsapp' ? '' : 'hidden'}">
+            <div id="shell-channels-submenu" class="pl-4 pr-1 space-y-0.5 pt-1 pb-1 transition-all ${active === 'channels' || active === 'whatsapp' || active === 'automations' || active === 'contacts' || active === 'templates' ? '' : 'hidden'}">
               <a href="whatsapp.html" class="sub-nav-item text-xs py-1.5 ${active === 'whatsapp' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
-                <span class="flex items-center gap-2"><i data-lucide="phone-forwarded" class="w-3 h-3 text-[#25D366]"></i> WhatsApp Channel</span>
+                <span class="flex items-center gap-2"><i data-lucide="phone-forwarded" class="w-3 h-3 text-[#25D366]"></i> WhatsApp Inbox</span>
+              </a>
+              <a href="automations.html" class="sub-nav-item text-xs py-1.5 ${active === 'automations' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
+                <span class="flex items-center gap-2"><i data-lucide="zap" class="w-3 h-3 text-amber-500"></i> Automations</span>
+              </a>
+              <a href="contacts.html" class="sub-nav-item text-xs py-1.5 ${active === 'contacts' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
+                <span class="flex items-center gap-2"><i data-lucide="users" class="w-3 h-3 text-blue-500"></i> Contacts CRM</span>
+              </a>
+              <a href="templates.html" class="sub-nav-item text-xs py-1.5 ${active === 'templates' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
+                <span class="flex items-center gap-2"><i data-lucide="layout-template" class="w-3 h-3 text-purple-500"></i> Meta Templates</span>
               </a>
               <a href="channels.html" class="sub-nav-item text-xs py-1.5 ${active === 'channels' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
                 <span class="flex items-center gap-2"><i data-lucide="layout-grid" class="w-3 h-3 text-stone-500"></i> Integrations Hub</span>
