@@ -558,6 +558,33 @@
                   </div>
 
                   <div class="pt-4 border-t border-[#e7e5de] space-y-3">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider flex items-center gap-1.5">
+                          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+                          <span>Instant Quick Action Chips</span>
+                        </h3>
+                        <p class="text-[11px] text-stone-500 mt-0.5">Quickest action buttons shown immediately when visitors open the chat widget. Visitors can tap these to get instant answers without typing.</p>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <button type="button" onclick="resetQuickActionsDefaults()" class="btn-secondary btn-sm text-[11px] py-1 px-2.5 text-stone-600 hover:text-stone-900 inline-flex items-center gap-1" title="Restore recommended starter chips">
+                          <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+                          <span>Reset Defaults</span>
+                        </button>
+                        <button type="button" onclick="addQuickActionRow()" class="btn-primary btn-sm text-[11px] py-1 px-3 bg-stone-900 text-white inline-flex items-center gap-1">
+                          <i data-lucide="plus" class="w-3 h-3"></i>
+                          <span>Add Action Chip</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div id="quick-actions-list-container" class="space-y-2 mt-2">
+                      <!-- Rendered by JavaScript -->
+                    </div>
+                    <p class="text-[10.5px] text-stone-400">💡 <strong>Label</strong> is what appears on the clickable pill button. <strong>Prompt</strong> is the exact question or directive answered by Cai.</p>
+                  </div>
+
+                  <div class="pt-4 border-t border-[#e7e5de] space-y-3">
                     <h3 class="text-xs font-semibold text-stone-900 uppercase tracking-wider">Payment & Banking Integration</h3>
                     <div class="p-3 bg-stone-50 rounded-lg border border-stone-200 text-xs text-stone-600 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                       <div>
@@ -1824,12 +1851,118 @@
           themeSelect.addEventListener('change', updateEmbedCodeSnippet);
         }
 
+        // Render Quick Action Chips
+        renderQuickActionsList(w.quick_actions || []);
+
         // Load Company Email (SMTP) and Instagram configuration
         loadEmailConfig();
         loadInstagramConfig();
       } catch (err) {
         console.warn('Could not load workspace settings:', err);
       }
+    }
+
+    let currentQuickActions = [];
+
+    function renderQuickActionsList(actions) {
+      if (!Array.isArray(actions) || actions.length === 0) {
+        actions = [
+          { label: '🎓 Courses & Programs', text: 'What courses and programs do you offer?' },
+          { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
+          { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
+          { label: '🏢 About Us', text: 'Tell me about the company and track record.' },
+          { label: '👤 Talk to Counselor', text: 'I would like to speak with a human counselor.' }
+        ];
+      }
+      currentQuickActions = JSON.parse(JSON.stringify(actions));
+      const container = document.getElementById('quick-actions-list-container');
+      if (!container) return;
+
+      container.innerHTML = '';
+      currentQuickActions.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'p-2.5 bg-stone-50 border border-stone-200 rounded-[4px] flex flex-col sm:flex-row sm:items-center gap-2 text-xs';
+        row.dataset.index = idx;
+        row.innerHTML = `
+          <div class="flex items-center gap-1.5 shrink-0">
+            <span class="w-5 h-5 rounded bg-stone-200 text-stone-600 font-mono text-[10px] flex items-center justify-center font-bold">${idx + 1}</span>
+            <div class="flex flex-col gap-0.5">
+              <button type="button" onclick="moveQuickAction(${idx}, -1)" ${idx === 0 ? 'disabled' : ''} class="text-stone-400 hover:text-stone-700 disabled:opacity-20 p-0.5">
+                <i data-lucide="chevron-up" class="w-3 h-3"></i>
+              </button>
+              <button type="button" onclick="moveQuickAction(${idx}, 1)" ${idx === currentQuickActions.length - 1 ? 'disabled' : ''} class="text-stone-400 hover:text-stone-700 disabled:opacity-20 p-0.5">
+                <i data-lucide="chevron-down" class="w-3 h-3"></i>
+              </button>
+            </div>
+          </div>
+          <div class="w-full sm:w-1/3">
+            <label class="block text-[10px] font-semibold text-stone-500 uppercase">Button Label</label>
+            <input type="text" class="app-input text-xs font-medium py-1 px-2 qa-input-label" value="${escapeHtmlAttr(item.label || '')}" placeholder="e.g. 🎓 Courses & Programs" oninput="currentQuickActions[${idx}].label = this.value">
+          </div>
+          <div class="flex-1">
+            <label class="block text-[10px] font-semibold text-stone-500 uppercase">Visitor Prompt to Cai</label>
+            <input type="text" class="app-input text-xs py-1 px-2 qa-input-text" value="${escapeHtmlAttr(item.text || '')}" placeholder="e.g. What courses and programs do you offer?" oninput="currentQuickActions[${idx}].text = this.value">
+          </div>
+          <div class="shrink-0 flex items-end sm:self-end pt-1 sm:pt-0">
+            <button type="button" onclick="deleteQuickAction(${idx})" class="p-1.5 text-stone-400 hover:text-red-600 rounded hover:bg-red-50 transition-colors" title="Delete chip">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+    }
+
+    function addQuickActionRow() {
+      currentQuickActions.push({
+        label: '⚡ Quick Action',
+        text: 'Tell me more about your offerings.'
+      });
+      renderQuickActionsList(currentQuickActions);
+    }
+
+    function deleteQuickAction(idx) {
+      currentQuickActions.splice(idx, 1);
+      renderQuickActionsList(currentQuickActions);
+    }
+
+    function moveQuickAction(idx, dir) {
+      const target = idx + dir;
+      if (target < 0 || target >= currentQuickActions.length) return;
+      const temp = currentQuickActions[idx];
+      currentQuickActions[idx] = currentQuickActions[target];
+      currentQuickActions[target] = temp;
+      renderQuickActionsList(currentQuickActions);
+    }
+
+    function resetQuickActionsDefaults() {
+      const defaults = [
+        { label: '🎓 Courses & Programs', text: 'What courses and programs do you offer?' },
+        { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
+        { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
+        { label: '🏢 About Us', text: 'Tell me about the company and track record.' },
+        { label: '👤 Talk to Counselor', text: 'I would like to speak with a human counselor.' }
+      ];
+      renderQuickActionsList(defaults);
+    }
+
+    function getQuickActionsData() {
+      return currentQuickActions.filter(c => c && c.label && c.label.trim().length > 0).map(c => ({
+        label: c.label.trim(),
+        text: (c.text && c.text.trim().length > 0) ? c.text.trim() : c.label.trim()
+      }));
+    }
+
+    function escapeHtmlAttr(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
     }
 
     let currentUploadedUserAvatarFile = null;
@@ -1955,6 +2088,7 @@
       
       const themeMode = document.getElementById('setting-theme-mode').value;
       formData.append('theme_mode', themeMode);
+      formData.append('quick_actions', JSON.stringify(getQuickActionsData()));
 
       const apptCheck = document.getElementById('setting-action-appointments');
       if (apptCheck) formData.append('enable_appointments', apptCheck.checked ? '1' : '0');

@@ -8602,6 +8602,33 @@
   }
 
 
+  function ensureStarterQuickActionChips() {
+    if (!chatStream) return;
+    const existingRows = chatStream.querySelectorAll('.cp-msg-row');
+    if (existingRows.length > 0) return;
+
+    const brandName = widgetConfig.brand_name || 'CuboidPilot';
+    const asstName = widgetConfig.assistant_name || 'Cai';
+    const greeting = `Hello! I am **${asstName}**, the AI advisor for **${brandName}**.\n\nHow can I help you today? Tap any quickest action below or ask any question:`;
+
+    const starterChips = (widgetConfig.quick_actions && Array.isArray(widgetConfig.quick_actions) && widgetConfig.quick_actions.length > 0)
+      ? widgetConfig.quick_actions
+      : [
+          { label: '🎓 Courses & Programs', text: `What courses and programs does ${brandName} offer?` },
+          { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
+          { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
+          { label: '🏢 About ' + brandName, text: `Tell me about ${brandName}.` },
+          { label: '👤 Talk to Counselor', text: 'I would like to speak with a human counselor.' }
+        ];
+
+    appendAIMessage({
+      reply: greeting,
+      action_chips: starterChips,
+      timestamp: 'Just now',
+      skipSound: true
+    });
+  }
+
   // =========================================================================
   // w-up: SCREEN NAVIGATION ENGINE & RENDERERS
   // =========================================================================
@@ -8700,6 +8727,7 @@
       if (conversationId) {
         startHumanPolling();
       }
+      ensureStarterQuickActionChips();
       scrollToBottom();
       return;
     }
@@ -9295,6 +9323,21 @@
         </div>
       </div>
 
+      <!-- Quickest Action Chips on Home Screen -->
+      <div class="cp-home-quick-chips" style="display:flex; gap:6px; overflow-x:auto; padding:2px 2px 6px 2px; margin-top:-4px; margin-bottom:4px; scrollbar-width:none; -ms-overflow-style:none;">
+        ${(widgetConfig.quick_actions && Array.isArray(widgetConfig.quick_actions) && widgetConfig.quick_actions.length > 0 ? widgetConfig.quick_actions : [
+          { label: '🎓 Courses & Programs', text: 'What courses and programs do you offer?' },
+          { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
+          { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
+          { label: '🏢 About Company', text: 'Tell me about the company.' },
+          { label: '👤 Talk to Counselor', text: 'I want to speak with a human counselor.' }
+        ]).map((chip, idx) => `
+          <button type="button" class="cp-home-action-chip" data-idx="${idx}" style="display:inline-flex; align-items:center; white-space:nowrap; background:rgba(99,102,241,0.08); color:#6366f1; border:1px solid rgba(99,102,241,0.24); border-radius:18px; padding:5px 12px; font-size:11.5px; font-weight:600; cursor:pointer; transition:all 0.15s ease; font-family:inherit;">
+            <span>${escapeHtml(chip.label)}</span>
+          </button>
+        `).join('')}
+      </div>
+
       <!-- 2. Book an appointment -->
       <div class="cp-action-card" id="cp-card-book" role="button" tabindex="0">
         <div class="cp-action-card-left">
@@ -9430,6 +9473,30 @@
         }, 80);
       });
     }
+
+    const homeActionChips = shadow.querySelectorAll('.cp-home-action-chip');
+    homeActionChips.forEach(chipBtn => {
+      bindTap(chipBtn, (e) => {
+        if (e && e.stopPropagation) e.stopPropagation();
+        const idx = parseInt(chipBtn.getAttribute('data-idx'), 10);
+        const chipsList = (widgetConfig.quick_actions && Array.isArray(widgetConfig.quick_actions) && widgetConfig.quick_actions.length > 0)
+          ? widgetConfig.quick_actions
+          : [
+              { label: '🎓 Courses & Programs', text: 'What courses and programs do you offer?' },
+              { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
+              { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
+              { label: '🏢 About Company', text: 'Tell me about the company.' },
+              { label: '👤 Talk to Counselor', text: 'I want to speak with a human counselor.' }
+            ];
+        const selected = chipsList[idx];
+        if (selected) {
+          navigateTo('chat');
+          setTimeout(() => {
+            handleSend(selected.text || selected.label);
+          }, 100);
+        }
+      });
+    });
     
     const bookCard = shadow.getElementById('cp-card-book');
     if (bookCard) {

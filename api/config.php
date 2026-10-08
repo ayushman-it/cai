@@ -86,6 +86,37 @@ try {
         ? ($logoLight ?: $defaultLogo ?: $logoDark)
         : ($logoDark ?: $defaultLogo ?: $logoLight);
 
+    // Quick Action Chips (Configurable by Client Company in Dashboard)
+    $quickActions = [];
+    if (!empty($widget['quick_actions_json'])) {
+        $decodedQa = json_decode($widget['quick_actions_json'], true);
+        if (is_array($decodedQa) && count($decodedQa) > 0) {
+            $quickActions = $decodedQa;
+        }
+    }
+
+    if (empty($quickActions)) {
+        $industry = strtolower($company['industry'] ?? '');
+        $isEdu = (bool)preg_match('/(education|academy|school|college|institute|coaching|training|curriculum|course)/i', $industry);
+        if ($isEdu || stripos($company['name'], 'munk') !== false) {
+            $quickActions = [
+                ['label' => '🎓 Courses & Programs', 'text' => "What courses and programs does {$brandName} offer?"],
+                ['label' => '💰 Course Fees', 'text' => "What is the fee structure for your courses?"],
+                ['label' => '💳 0% EMI Options', 'text' => "Can I pay the course fees in monthly EMIs?"],
+                ['label' => '🏢 About ' . $brandName, 'text' => "Tell me about {$brandName} and why students choose you."],
+                ['label' => '👤 Talk to Counselor', 'text' => "I would like to speak with an admissions counselor."]
+            ];
+        } else {
+            $quickActions = [
+                ['label' => '🚀 Platform Features', 'text' => "What are the core features and capabilities of {$brandName}?"],
+                ['label' => '💰 Plans & Pricing', 'text' => "What are your pricing plans and commercial tiers?"],
+                ['label' => '📅 Book Live Demo', 'text' => "I would like to schedule a product demo."],
+                ['label' => '🏢 About ' . $brandName, 'text' => "Tell me about {$brandName}."],
+                ['label' => '👤 Talk to Sales', 'text' => "Connect me with an executive from the team."]
+            ];
+        }
+    }
+
     echo json_encode([
         'success' => true,
         'company' => [
@@ -108,6 +139,7 @@ try {
             'assistant_name'     => $assistantName,
             'greeting_heading'   => $greetingHeading,
             'greeting_subheading'=> $greetingSubheading,
+            'quick_actions'      => $quickActions,
             'accent_color'       => $accentColor,
             'theme_mode'         => $themeMode,
             'position'           => $position,

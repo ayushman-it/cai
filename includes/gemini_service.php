@@ -32,6 +32,122 @@ class GeminiService {
         return getenv('GEMINI_MODEL') ?: self::$model;
     }
 
+    private static ?string $groqApiKey = null;
+    private static array $groqModels = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'];
+
+    public static function getGroqApiKey(): string {
+        if (self::$groqApiKey !== null) {
+            return self::$groqApiKey;
+        }
+        if (defined('GROQ_API_KEY') && !empty(GROQ_API_KEY) && GROQ_API_KEY !== 'YOUR_GROQ_API_KEY_HERE') {
+            self::$groqApiKey = GROQ_API_KEY;
+        } else {
+            self::$groqApiKey = getenv('GROQ_API_KEY') ?: ($_ENV['GROQ_API_KEY'] ?? ($_SERVER['GROQ_API_KEY'] ?? ''));
+        }
+        return self::$groqApiKey;
+    }
+
+    /**
+     * Executes an ultra-low latency completion via Groq Cloud API (<500ms).
+     */
+    public static function callGroq(array $messages, array $options = []): ?string {
+        $key = self::getGroqApiKey();
+        if (empty($key)) {
+            return null;
+        }
+
+        $models = !empty($options['model']) ? [$options['model']] : self::$groqModels;
+        $maxTokens = $options['max_tokens'] ?? 650;
+        $temperature = $options['temperature'] ?? 0.25;
+        $timeout = $options['timeout'] ?? 5;
+
+        foreach ($models as $idx => $candModel) {
+            if ($idx > 0) {
+                usleep(150000); // 150ms backoff
+            }
+
+            $payload = [
+                'model' => $candModel,
+                'messages' => $messages,
+                'max_tokens' => $maxTokens,
+                'temperature' => $temperature
+            ];
+
+            $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => [
+                    'Authorization: Bearer ' . $key,
+                    'Content-Type: application/json'
+                ],
+                CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                CURLOPT_TIMEOUT => $timeout,
+                CURLOPT_CONNECTTIMEOUT => 3,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => false
+            ]);
+
+            $rawResp = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode === 200 && !empty($rawResp)) {
+                $decoded = json_decode($rawResp, true);
+                if (!empty($decoded['choices'][0]['message']['content'])) {
+                    $text = trim($decoded['choices'][0]['message']['content']);
+                    $text = preg_replace('/<think>.*?<\/think>/is', '', $text);
+                    return trim($text);
+                }
+            } else {
+                error_log("[GeminiService::callGroq Model: {$candModel}] HTTP: {$httpCode} | Error: {$curlErr} | Resp: " . substr((string)$rawResp, 0, 150));
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extracts action chips markup from text response.
+     * Looks for ---ACTION_CHIPS--- followed by JSON array of chips.
+     */
+    public static function extractActionChips(string $text): array {
+        $cleanText = $text;
+        $chips = [];
+
+        if (strpos($text, '---ACTION_CHIPS---') !== false) {
+            $parts = explode('---ACTION_CHIPS---', $text, 2);
+            $cleanText = trim($parts[0]);
+            $chipsRaw = trim($parts[1]);
+
+            // If there is metadata after chips
+            if (strpos($chipsRaw, '---INTERNAL_METADATA---') !== false) {
+                $subParts = explode('---INTERNAL_METADATA---', $chipsRaw, 2);
+                $chipsRaw = trim($subParts[0]);
+            }
+
+            if (preg_match('/\[[\s\S]*?\]/', $chipsRaw, $m)) {
+                $decoded = json_decode($m[0], true);
+                if (is_array($decoded)) {
+                    foreach ($decoded as $c) {
+                        if (!empty($c['label'])) {
+                            $chips[] = [
+                                'label' => trim($c['label']),
+                                'text'  => !empty($c['text']) ? trim($c['text']) : trim($c['label'])
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+
+        return [
+            'text'  => $cleanText,
+            'chips' => $chips
+        ];
+    }
+
     /**
      * Executes a generateContent HTTP request to Gemini Generative Language API.
      */
@@ -102,10 +218,21 @@ class GeminiService {
 
     /**
      * Core conversational completion with system instruction and history.
+     * Uses Groq sub-second inference first, falling back to Gemini.
      */
     public static function generateResponse(string $systemPrompt, array $messages, array $options = []): string {
-        $contents = [];
+        // 1. Try Groq ultra-fast sub-second completion
+        $groqMessages = array_merge(
+            [['role' => 'system', 'content' => $systemPrompt]],
+            $messages
+        );
+        $groqResp = self::callGroq($groqMessages, $options);
+        if (!empty($groqResp)) {
+            return $groqResp;
+        }
 
+        // 2. Fallback to Gemini Generative Language
+        $contents = [];
         foreach ($messages as $msg) {
             $role = ($msg['role'] ?? 'user') === 'assistant' ? 'model' : 'user';
             $contents[] = [
@@ -149,6 +276,18 @@ Respond ONLY with valid JSON in this exact structure:
   \"confidence\": 0.95,
   \"explanation\": \"brief 1-sentence reason\"
 }";
+
+        $groqRaw = self::callGroq([
+            ['role' => 'system', 'content' => $sysPrompt],
+            ['role' => 'user', 'content' => "Classify this customer message:\n\"{$text}\""]
+        ], ['temperature' => 0.1, 'max_tokens' => 200]);
+
+        if (!empty($groqRaw) && preg_match('/\{[\s\S]*\}/', $groqRaw, $m)) {
+            $parsed = json_decode($m[0], true);
+            if (is_array($parsed) && !empty($parsed['intent'])) {
+                return $parsed;
+            }
+        }
 
         $payload = [
             'contents' => [
@@ -214,6 +353,18 @@ Respond ONLY in valid JSON format:
   \"best_fit_id\": 1
 }";
 
+        $groqRaw = self::callGroq([
+            ['role' => 'system', 'content' => $sysPrompt],
+            ['role' => 'user', 'content' => "Find matching items for: \"{$query}\""]
+        ], ['temperature' => 0.2, 'max_tokens' => 300]);
+
+        if (!empty($groqRaw) && preg_match('/\{[\s\S]*\}/', $groqRaw, $m)) {
+            $parsed = json_decode($m[0], true);
+            if (is_array($parsed) && !empty($parsed['recommended_product_ids'])) {
+                return $parsed;
+            }
+        }
+
         $payload = [
             'contents' => [
                 ['role' => 'user', 'parts' => [['text' => "Find matching items for: \"{$query}\""]]]
@@ -273,6 +424,18 @@ Respond ONLY in valid JSON:
   \"rationale\": \"brief 1-sentence rationale\"
 }";
 
+        $groqRaw = self::callGroq([
+            ['role' => 'system', 'content' => $sysPrompt],
+            ['role' => 'user', 'content' => "Evaluate this input:\n\"{$customerMessage}\""]
+        ], ['temperature' => 0.1, 'max_tokens' => 200]);
+
+        if (!empty($groqRaw) && preg_match('/\{[\s\S]*\}/', $groqRaw, $m)) {
+            $parsed = json_decode($m[0], true);
+            if (is_array($parsed) && !empty($parsed['selected_branch_id'])) {
+                return $parsed;
+            }
+        }
+
         $payload = [
             'contents' => [
                 ['role' => 'user', 'parts' => [['text' => "Evaluate this input:\n\"{$customerMessage}\""]]]
@@ -324,6 +487,18 @@ Respond ONLY in valid JSON:
   \"budget\": null,
   \"is_qualified\": true
 }";
+
+        $groqRaw = self::callGroq([
+            ['role' => 'system', 'content' => $sysPrompt],
+            ['role' => 'user', 'content' => "Extract info from: \"{$message}\""]
+        ], ['temperature' => 0.1, 'max_tokens' => 200]);
+
+        if (!empty($groqRaw) && preg_match('/\{[\s\S]*\}/', $groqRaw, $m)) {
+            $parsed = json_decode($m[0], true);
+            if (is_array($parsed)) {
+                return $parsed;
+            }
+        }
 
         $payload = [
             'contents' => [

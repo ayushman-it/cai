@@ -188,6 +188,7 @@ try {
                 'theme_mode'         => $widget['theme_mode'] ?? 'dark',
                 'greeting_heading'   => $widget['greeting_heading'] ?? 'Ask anything about our pricing, plans or EMI',
                 'greeting_subheading'=> $widget['greeting_subheading'] ?? 'The team can also help',
+                'quick_actions'      => !empty($widget['quick_actions_json']) ? (json_decode($widget['quick_actions_json'], true) ?: []) : [],
                 'whatsapp_number'    => $widget['whatsapp_number'] ?? '',
                 'enable_appointments'=> (bool)($widget['enable_appointments'] ?? 1),
                 'enable_human_help'  => (bool)($widget['enable_human_help'] ?? 1),
@@ -358,6 +359,12 @@ try {
             if (!empty($logoLightUrl)) {
                 $wUpdateFields[] = "`logo_light_url` = ?";
                 $wParams[] = $logoLightUrl;
+            }
+            if (isset($_POST['quick_actions'])) {
+                $qaRaw = $_POST['quick_actions'];
+                $qaVal = is_array($qaRaw) ? json_encode($qaRaw, JSON_UNESCAPED_UNICODE) : trim($qaRaw);
+                $wUpdateFields[] = "`quick_actions_json` = ?";
+                $wParams[] = $qaVal;
             }
             if (isset($_POST['enable_appointments'])) {
                 $wUpdateFields[] = "`enable_appointments` = ?";
