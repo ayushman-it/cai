@@ -1428,4 +1428,71 @@ body.sidebar-mobile-open .app-sidebar-backdrop {
   }
 }
 
+/* ==========================================================================
+   INTERCOM-INSPIRED CONVERSATIONS INBOX (RESPONSIVE & MATURE LAYOUT)
+   ========================================================================== */
+body.conversations-inbox-page .app-sub-sidebar {
+  display: none !important;
+}
+
+body.conversations-inbox-page .app-main {
+  width: calc(100vw - var(--rail-width, 58px)) !important;
+  max-width: calc(100vw - var(--rail-width, 58px)) !important;
+}
+
+/* Mobile & Tablet Responsive Layout */
+@media (max-width: 767px) {
+  body.conversations-inbox-page #convo-pane-threads {
+    width: 100% !important;
+    display: flex !important;
+  }
+  body.conversations-inbox-page #convo-pane-chat {
+    display: none !important;
+  }
+  body.conversations-inbox-page.convo-chat-active #convo-pane-threads {
+    display: none !important;
+  }
+  body.conversations-inbox-page.convo-chat-active #convo-pane-chat {
+    width: 100% !important;
+    display: flex !important;
+  }
+}
+
+/* Dossier slide-over styling on tablet & mobile */
+@media (max-width: 1279px) {
+  #convo-pane-dossier {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    width: 320px !important;
+    max-width: 85vw;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+    transform: translateX(100%);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    background: #ffffff;
+  }
+  body.show-dossier #convo-pane-dossier {
+    transform: translateX(0);
+  }
+  body.show-dossier #dossier-backdrop {
+    display: block !important;
+  }
+}
+
+/* Desktop Wide Screen (>= 1280px) */
+@media (min-width: 1280px) {
+  #convo-pane-dossier {
+    position: relative;
+    transform: none !important;
+    box-shadow: none !important;
+    transition: width 0.15s ease, opacity 0.15s ease;
+  }
+  body.dossier-collapsed #convo-pane-dossier {
+    display: none !important;
+  }
+}
+
+
 

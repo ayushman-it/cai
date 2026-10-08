@@ -1722,11 +1722,94 @@ window.CuboidDashboard = {
   currentConversationId: null,
   currentConversationData: null,
 
+  composerMode: 'reply',
+
   toggleDossierDrawer: function() {
-    document.body.classList.toggle('show-dossier');
+    if (window.innerWidth >= 1280) {
+      document.body.classList.toggle('dossier-collapsed');
+    } else {
+      document.body.classList.toggle('show-dossier');
+    }
+  },
+
+  toggleQueueDropdown: function(e) {
+    if (e) e.stopPropagation();
+    const menu = document.getElementById('convo-queue-dropdown-menu');
+    if (menu) {
+      menu.classList.toggle('hidden');
+    }
+  },
+
+  selectQueueFromDropdown: function(filter) {
+    const menu = document.getElementById('convo-queue-dropdown-menu');
+    if (menu) menu.classList.add('hidden');
+    this.setConversationFilter(filter);
+  },
+
+  switchComposerMode: function(mode) {
+    this.composerMode = mode;
+    const btnReply = document.getElementById('composer-tab-reply');
+    const btnNote = document.getElementById('composer-tab-note');
+    const box = document.getElementById('chat-composer-box');
+    const input = document.getElementById('chat-reply-input');
+    const sendBtn = document.getElementById('chat-reply-send');
+    const sendText = document.getElementById('chat-reply-send-text');
+
+    if (mode === 'note') {
+      if (btnNote) {
+        btnNote.classList.add('text-amber-900', 'font-bold', 'border-amber-500');
+        btnNote.classList.remove('text-stone-400', 'border-transparent');
+      }
+      if (btnReply) {
+        btnReply.classList.remove('text-stone-900', 'font-bold', 'border-stone-900');
+        btnReply.classList.add('text-stone-400', 'border-transparent');
+      }
+      if (box) {
+        box.classList.add('bg-amber-50/50', 'border-amber-300');
+        box.classList.remove('bg-white', 'border-stone-200');
+      }
+      if (input) {
+        input.placeholder = 'Write an internal note (only visible to team members)...';
+      }
+      if (sendBtn) {
+        sendBtn.classList.add('bg-amber-600', 'hover:bg-amber-700');
+        sendBtn.classList.remove('bg-[#111111]', 'hover:bg-black');
+      }
+      if (sendText) sendText.innerText = 'Save Note';
+    } else {
+      if (btnReply) {
+        btnReply.classList.add('text-stone-900', 'font-bold', 'border-stone-900');
+        btnReply.classList.remove('text-stone-400', 'border-transparent');
+      }
+      if (btnNote) {
+        btnNote.classList.remove('text-amber-900', 'font-bold', 'border-amber-500');
+        btnNote.classList.add('text-stone-400', 'border-transparent');
+      }
+      if (box) {
+        box.classList.remove('bg-amber-50/50', 'border-amber-300');
+        box.classList.add('bg-white', 'border-stone-200');
+      }
+      if (input) {
+        input.placeholder = 'Type a reply or press "/" for shortcuts...';
+      }
+      if (sendBtn) {
+        sendBtn.classList.remove('bg-amber-600', 'hover:bg-amber-700');
+        sendBtn.classList.add('bg-[#111111]', 'hover:bg-black');
+      }
+      if (sendText) sendText.innerText = 'Send Reply';
+    }
   },
 
   initConversationsModule: function() {
+    // Close dropdown on outside click
+    document.addEventListener('click', (e) => {
+      const menu = document.getElementById('convo-queue-dropdown-menu');
+      const btn = document.getElementById('convo-queue-dropdown-btn');
+      if (menu && !menu.classList.contains('hidden') && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.add('hidden');
+      }
+    });
+
     // Search listener
     const searchInput = document.getElementById('convo-search-input');
     if (searchInput) {
@@ -2041,12 +2124,12 @@ window.CuboidDashboard = {
       const data = await res.json();
       if (!data || !data.success) return;
 
-      // Update sidebar counts
+      // Update sidebar counts & queue dropdown badges
       if (data.counts) {
         const c = data.counts;
         const setBadge = (id, val) => {
           const el = document.getElementById(id);
-          if (el) el.textContent = val.toLocaleString();
+          if (el) el.textContent = (val !== undefined && val !== null) ? val.toLocaleString() : '0';
         };
         setBadge('convo-count-all', c.total);
         setBadge('convo-count-ai', c.ai);
@@ -2056,6 +2139,14 @@ window.CuboidDashboard = {
         setBadge('convo-count-whatsapp', c.whatsapp);
         setBadge('convo-count-open', c.open);
         setBadge('convo-count-resolved', c.resolved);
+
+        // Queue dropdown badges in threads list header
+        setBadge('queue-badge-all', c.total);
+        setBadge('queue-badge-ai', c.ai);
+        setBadge('queue-badge-human', c.human);
+        setBadge('queue-badge-high_intent', c.high_intent);
+        setBadge('queue-badge-widget', c.widget);
+        setBadge('queue-badge-whatsapp', c.whatsapp);
       }
 
       // Filter by status tab if requested
@@ -2441,6 +2532,26 @@ window.CuboidDashboard = {
               `;
             }
 
+            // Internal Note check (starts with [Internal Note] or note sender)
+            if (m.text && m.text.startsWith('[Internal Note]')) {
+              const noteText = m.text.replace(/^\[Internal Note\]\s*/, '');
+              const authorName = m.sender_type === 'counselor' ? (conv.assigned_name || 'Team Member') : 'Team';
+              return `
+                <div class="flex justify-center my-2">
+                  <div class="max-w-[85%] sm:max-w-[75%] bg-amber-50/90 border border-amber-200/90 rounded-xl p-3 shadow-2xs space-y-1">
+                    <div class="flex items-center gap-1.5 text-[10.5px] font-semibold text-amber-900">
+                      <i data-lucide="lock" class="w-3 h-3 text-amber-700"></i>
+                      <span>Internal Note &bull; ${escapeHtml(authorName)}</span>
+                      <span class="text-amber-500 font-mono font-normal ml-auto text-[10px]">${m.time}</span>
+                    </div>
+                    <div class="text-xs text-amber-950 leading-relaxed font-sans">
+                      ${escapeHtml(noteText)}
+                    </div>
+                  </div>
+                </div>
+              `;
+            }
+
             const isVisitor = m.sender_type === 'visitor';
             const isAi = m.sender_type === 'ai';
 
@@ -2518,8 +2629,12 @@ window.CuboidDashboard = {
     const chatInput = document.getElementById('chat-reply-input');
     if (!chatInput || !this.currentConversationId) return;
 
-    const val = chatInput.value.trim();
+    let val = chatInput.value.trim();
     if (!val) return;
+
+    if (this.composerMode === 'note') {
+      val = '[Internal Note] ' + val;
+    }
 
     chatInput.value = '';
     try {
