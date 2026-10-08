@@ -7736,23 +7736,42 @@
         bubble.appendChild(assetCard);
       }
 
-      // Interactive Quick Action Chips (e.g. "📊 Haan, plans dikhao")
+      // Interactive Quick Action Chips (Intercom text-button style, ZERO emojis)
       if (data.action_chips && Array.isArray(data.action_chips) && data.action_chips.length > 0 && !data.chat_ended) {
         const chipsBox = document.createElement('div');
         chipsBox.className = 'cp-action-chips-container';
-        chipsBox.style.cssText = 'display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;';
+        chipsBox.style.cssText = 'display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;';
         data.action_chips.forEach(chip => {
+          // Clean emoji characters out of chip label
+          let cleanLabel = (chip.label || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '').trim();
+          if (!cleanLabel) cleanLabel = chip.label || '';
+
           const chipBtn = document.createElement('button');
           chipBtn.type = 'button';
           chipBtn.className = 'cp-action-chip-pill';
-          chipBtn.style.cssText = 'display:inline-flex; align-items:center; gap:6px; background:rgba(99,102,241,0.12); color:#6366f1; border:1px solid rgba(99,102,241,0.3); border-radius:20px; padding:6px 14px; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s ease; font-family:inherit;';
-          chipBtn.innerHTML = `<span>${escapeHtml(chip.label)}</span>`;
+          const isDark = currentTheme === 'dark';
+          const bgNormal = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f8fafc';
+          const borderNormal = isDark ? 'rgba(255, 255, 255, 0.18)' : '#e2e8f0';
+          const textNormal = isDark ? '#f1f5f9' : '#0f172a';
+          chipBtn.style.cssText = `display:inline-flex; align-items:center; background:${bgNormal}; color:${textNormal}; border:1px solid ${borderNormal}; border-radius:18px; padding:6px 13px; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.15s ease; font-family:inherit; letter-spacing:0.01em;`;
+          
+          chipBtn.addEventListener('mouseenter', () => {
+            chipBtn.style.background = isDark ? 'rgba(255, 255, 255, 0.15)' : '#f1f5f9';
+            chipBtn.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.35)' : '#cbd5e1';
+          });
+          chipBtn.addEventListener('mouseleave', () => {
+            chipBtn.style.background = bgNormal;
+            chipBtn.style.borderColor = borderNormal;
+          });
+
+          chipBtn.innerHTML = `<span>${escapeHtml(cleanLabel)}</span>`;
           chipBtn.addEventListener('click', () => {
             chipsBox.querySelectorAll('.cp-action-chip-pill').forEach(b => {
               b.disabled = true;
               b.style.opacity = '0.5';
+              b.style.pointerEvents = 'none';
             });
-            handleSend(chip.text || chip.label);
+            handleSend(chip.text || cleanLabel);
           });
           chipsBox.appendChild(chipBtn);
         });
@@ -8614,11 +8633,11 @@
     const starterChips = (widgetConfig.quick_actions && Array.isArray(widgetConfig.quick_actions) && widgetConfig.quick_actions.length > 0)
       ? widgetConfig.quick_actions
       : [
-          { label: '🎓 Courses & Programs', text: `What courses and programs does ${brandName} offer?` },
-          { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
-          { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
-          { label: '🏢 About ' + brandName, text: `Tell me about ${brandName}.` },
-          { label: '👤 Talk to Counselor', text: 'I would like to speak with a human counselor.' }
+          { label: 'Courses & Programs', text: `What courses and programs does ${brandName} offer?` },
+          { label: 'Course Fees', text: 'What is the fee structure for your courses?' },
+          { label: '0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
+          { label: 'About ' + brandName, text: `Tell me about ${brandName}.` },
+          { label: 'Talk to Counselor', text: 'I would like to speak with a human counselor.' }
         ];
 
     appendAIMessage({
@@ -9307,37 +9326,6 @@
       </div>
       ` : ''}
 
-      <!-- 1. Ask / Continue Conversation Card -->
-      <div class="cp-ask-action-card ${hasRecentMessages ? 'cp-active-convo-card' : ''}" id="cp-card-ask" role="button" tabindex="0" title="${hasRecentMessages ? 'Continue conversation' : 'Send us a message'}">
-        <div class="cp-ask-card-content">
-          <div class="cp-ask-card-title" style="display:flex;align-items:center;gap:6px;">
-            ${hasRecentMessages ? '<span class="cp-convo-status-dot"></span>' : ''}
-            <span>${hasRecentMessages ? 'Continue conversation' : 'Send us a message'}</span>
-          </div>
-          <div class="cp-ask-card-desc">${hasRecentMessages ? escapeHtml(lastSnippet) : 'Search answers or chat with our AI assistant'}</div>
-        </div>
-        <div class="cp-ask-card-arrow">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
-          </svg>
-        </div>
-      </div>
-
-      <!-- Quickest Action Chips on Home Screen -->
-      <div class="cp-home-quick-chips" style="display:flex; gap:6px; overflow-x:auto; padding:2px 2px 6px 2px; margin-top:-4px; margin-bottom:4px; scrollbar-width:none; -ms-overflow-style:none;">
-        ${(widgetConfig.quick_actions && Array.isArray(widgetConfig.quick_actions) && widgetConfig.quick_actions.length > 0 ? widgetConfig.quick_actions : [
-          { label: '🎓 Courses & Programs', text: 'What courses and programs do you offer?' },
-          { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
-          { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
-          { label: '🏢 About Company', text: 'Tell me about the company.' },
-          { label: '👤 Talk to Counselor', text: 'I want to speak with a human counselor.' }
-        ]).map((chip, idx) => `
-          <button type="button" class="cp-home-action-chip" data-idx="${idx}" style="display:inline-flex; align-items:center; white-space:nowrap; background:rgba(99,102,241,0.08); color:#6366f1; border:1px solid rgba(99,102,241,0.24); border-radius:18px; padding:5px 12px; font-size:11.5px; font-weight:600; cursor:pointer; transition:all 0.15s ease; font-family:inherit;">
-            <span>${escapeHtml(chip.label)}</span>
-          </button>
-        `).join('')}
-      </div>
-
       <!-- 2. Book an appointment -->
       <div class="cp-action-card" id="cp-card-book" role="button" tabindex="0">
         <div class="cp-action-card-left">
@@ -9464,40 +9452,6 @@
       });
     }
 
-    const askCard = shadow.getElementById('cp-card-ask');
-    if (askCard) {
-      bindTap(askCard, () => {
-        navigateTo('chat');
-        setTimeout(() => {
-          if (inputField) inputField.focus();
-        }, 80);
-      });
-    }
-
-    const homeActionChips = shadow.querySelectorAll('.cp-home-action-chip');
-    homeActionChips.forEach(chipBtn => {
-      bindTap(chipBtn, (e) => {
-        if (e && e.stopPropagation) e.stopPropagation();
-        const idx = parseInt(chipBtn.getAttribute('data-idx'), 10);
-        const chipsList = (widgetConfig.quick_actions && Array.isArray(widgetConfig.quick_actions) && widgetConfig.quick_actions.length > 0)
-          ? widgetConfig.quick_actions
-          : [
-              { label: '🎓 Courses & Programs', text: 'What courses and programs do you offer?' },
-              { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
-              { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
-              { label: '🏢 About Company', text: 'Tell me about the company.' },
-              { label: '👤 Talk to Counselor', text: 'I want to speak with a human counselor.' }
-            ];
-        const selected = chipsList[idx];
-        if (selected) {
-          navigateTo('chat');
-          setTimeout(() => {
-            handleSend(selected.text || selected.label);
-          }, 100);
-        }
-      });
-    });
-    
     const bookCard = shadow.getElementById('cp-card-book');
     if (bookCard) {
       bindTap(bookCard, () => {

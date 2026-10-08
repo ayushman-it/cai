@@ -310,24 +310,24 @@ class WorkflowEngine {
                         $qL = mb_strtolower($messageText);
                         if (preg_match('/(course|program|curriculum|syllabus)/i', $qL)) {
                             $tangentialChips = [
-                                ['label' => '💰 Fee Structure', 'text' => 'What is the fee structure for these courses?'],
-                                ['label' => '💳 0% EMI Options', 'text' => 'Can I pay the course fees in monthly EMIs?'],
-                                ['label' => '📄 Syllabus on Email', 'text' => 'Please send the syllabus to my email'],
-                                ['label' => '👤 Talk to Counselor', 'text' => 'I would like to speak with a human counselor']
+                                ['label' => 'Fee Structure', 'text' => 'What is the fee structure for these courses?'],
+                                ['label' => '0% EMI Options', 'text' => 'Can I pay the course fees in monthly EMIs?'],
+                                ['label' => 'Syllabus on Email', 'text' => 'Please send the syllabus to my email'],
+                                ['label' => 'Talk to Counselor', 'text' => 'I would like to speak with a human counselor']
                             ];
                         } elseif (preg_match('/(fee|fees|cost|price|pricing|charge)/i', $qL)) {
                             $tangentialChips = [
-                                ['label' => '💳 0% EMI Plans', 'text' => 'What are the zero-cost EMI plans available?'],
-                                ['label' => '📄 Send Brochure', 'text' => 'Send official course brochure and fee chart to my email'],
-                                ['label' => '🔗 Pay / Enroll', 'text' => 'How can I enroll and make payment online?'],
-                                ['label' => '👤 Talk to Counselor', 'text' => 'I want to speak with a counselor regarding payment']
+                                ['label' => '0% EMI Plans', 'text' => 'What are the zero-cost EMI plans available?'],
+                                ['label' => 'Send Brochure', 'text' => 'Send official course brochure and fee chart to my email'],
+                                ['label' => 'Pay / Enroll', 'text' => 'How can I enroll and make payment online?'],
+                                ['label' => 'Talk to Counselor', 'text' => 'I want to speak with a counselor regarding payment']
                             ];
                         } else {
                             $tangentialChips = [
-                                ['label' => '🎓 Programs & Courses', 'text' => 'What courses and programs do you offer?'],
-                                ['label' => '💰 Fees & Pricing', 'text' => 'What is the fee structure?'],
-                                ['label' => '💳 0% EMI Options', 'text' => 'Do you have 0% EMI installment plans?'],
-                                ['label' => '👤 Talk to Counselor', 'text' => 'Connect me with a counselor']
+                                ['label' => 'Programs & Courses', 'text' => 'What courses and programs do you offer?'],
+                                ['label' => 'Fees & Pricing', 'text' => 'What is the fee structure?'],
+                                ['label' => '0% EMI Options', 'text' => 'Do you have 0% EMI installment plans?'],
+                                ['label' => 'Talk to Counselor', 'text' => 'Connect me with a counselor']
                             ];
                         }
                     }
@@ -535,17 +535,17 @@ class WorkflowEngine {
         $qL = mb_strtolower($messageText);
         if (preg_match('/(course|program|curriculum|syllabus)/i', $qL)) {
             return [
-                ['label' => '💰 Fee Structure', 'text' => 'What is the fee structure for these courses?'],
-                ['label' => '💳 0% EMI Options', 'text' => 'Can I pay the course fees in monthly EMIs?'],
-                ['label' => '📄 Syllabus on Email', 'text' => 'Please send the syllabus to my email'],
-                ['label' => '👤 Talk to Counselor', 'text' => 'I would like to speak with a human counselor']
+                ['label' => 'Fee Structure', 'text' => 'What is the fee structure for these courses?'],
+                ['label' => '0% EMI Options', 'text' => 'Can I pay the course fees in monthly EMIs?'],
+                ['label' => 'Syllabus on Email', 'text' => 'Please send the syllabus to my email'],
+                ['label' => 'Talk to Counselor', 'text' => 'I would like to speak with a human counselor']
             ];
         } elseif (preg_match('/(fee|fees|cost|price|pricing|charge)/i', $qL)) {
             return [
-                ['label' => '💳 0% EMI Plans', 'text' => 'What are the zero-cost EMI plans available?'],
-                ['label' => '📄 Send Brochure', 'text' => 'Send official course brochure and fee chart to my email'],
-                ['label' => '🔗 Pay / Enroll', 'text' => 'How can I enroll and make payment online?'],
-                ['label' => '👤 Talk to Counselor', 'text' => 'I want to speak with a counselor regarding payment']
+                ['label' => '0% EMI Plans', 'text' => 'What are the zero-cost EMI plans available?'],
+                ['label' => 'Send Brochure', 'text' => 'Send official course brochure and fee chart to my email'],
+                ['label' => 'Pay / Enroll', 'text' => 'How can I enroll and make payment online?'],
+                ['label' => 'Talk to Counselor', 'text' => 'I want to speak with a counselor regarding payment']
             ];
         }
 
@@ -560,10 +560,10 @@ class WorkflowEngine {
         }
 
         return [
-            ['label' => '🎓 Programs & Courses', 'text' => 'What courses and programs do you offer?'],
-            ['label' => '💰 Fees & Pricing', 'text' => 'What is the fee structure?'],
-            ['label' => '💳 0% EMI Options', 'text' => 'Do you have 0% EMI installment plans?'],
-            ['label' => '👤 Talk to Counselor', 'text' => 'Connect me with a counselor']
+            ['label' => 'Programs & Courses', 'text' => 'What courses and programs do you offer?'],
+            ['label' => 'Fees & Pricing', 'text' => 'What is the fee structure?'],
+            ['label' => '0% EMI Options', 'text' => 'Do you have 0% EMI installment plans?'],
+            ['label' => 'Talk to Counselor', 'text' => 'Connect me with a counselor']
         ];
     }
 
@@ -937,13 +937,13 @@ CRITICAL INSTRUCTIONS:
 2. If they provided or asked about sending info to their email or WhatsApp, acknowledge that warmly.
 3. Keep the answer clear, helpful, and natural (2-3 sentences), grounded in verified facts.
 4. Conclude by smoothly guiding them to the next helpful step in their journey.
-AT THE VERY END OF YOUR RESPONSE, provide 2-4 contextual action chips for what the visitor might want to ask or do next, prefixed by '---ACTION_CHIPS---' and formatted as a JSON array:
+AT THE VERY END OF YOUR RESPONSE, provide 2-4 contextual action chips for what the visitor might want to ask or do next, prefixed by '---ACTION_CHIPS---' and formatted as a JSON array. Labels must be clean text with ZERO emojis:
 ---ACTION_CHIPS---
 [
-  {\"label\": \"💰 Course Fees\", \"text\": \"What is the fee structure for this?\"},
-  {\"label\": \"💳 0% EMI Options\", \"text\": \"Can I pay in monthly EMIs?\"},
-  {\"label\": \"📄 Syllabus on Email\", \"text\": \"Please send syllabus to my email\"},
-  {\"label\": \"👤 Talk to Counselor\", \"text\": \"I want to speak with a human counselor\"}
+  {\"label\": \"Course Fees\", \"text\": \"What is the fee structure for this?\"},
+  {\"label\": \"0% EMI Options\", \"text\": \"Can I pay in monthly EMIs?\"},
+  {\"label\": \"Syllabus on Email\", \"text\": \"Please send syllabus to my email\"},
+  {\"label\": \"Talk to Counselor\", \"text\": \"I want to speak with a human counselor\"}
 ]";
 
         return GeminiService::generateResponse($sysPrompt, [

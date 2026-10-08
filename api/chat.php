@@ -907,14 +907,14 @@ try {
                   . "6. EMAIL DOCUMENT REQUESTS: When a visitor asks to receive an official document, brochure, or syllabus via email (e.g. 'email par bhej do', 'send me the syllabus on email'), check if their email address is already provided. If NOT provided, politely ask for their email address first: 'Please provide your email address to receive the official document.' Once an email address is provided, confirm that the document has been dispatched from thecodemunk@gmail.com.\n\n"
                   . $memorySection . "\n\n"
                   . "=== SECTION 6: FORMATTING & DYNAMIC ACTION CHIPS ===\n"
-                  . "Keep responses crisp (2-4 focused sentences or clean mobile-friendly markdown bullet points). ZERO amateur emojis.\n"
-                  . "AT THE VERY END OF YOUR RESPONSE, provide 2-4 contextual action chips for what the visitor might want to ask or do next, prefixed by '---ACTION_CHIPS---' and formatted as a JSON array:\n"
+                  . "Keep responses crisp (2-4 focused sentences or clean mobile-friendly markdown bullet points). ZERO emojis.\n"
+                  . "AT THE VERY END OF YOUR RESPONSE, provide 2-4 contextual action chips for what the visitor might want to ask or do next, prefixed by '---ACTION_CHIPS---' and formatted as a JSON array. Labels must be pure professional text with ZERO emojis:\n"
                   . "---ACTION_CHIPS---\n"
                   . "[\n"
-                  . "  {\"label\": \"💰 Course Fees\", \"text\": \"What is the fee structure for this?\"},\n"
-                  . "  {\"label\": \"💳 0% EMI Plans\", \"text\": \"Tell me about 0% EMI options\"},\n"
-                  . "  {\"label\": \"📄 Syllabus on Email\", \"text\": \"Please send syllabus to my email\"},\n"
-                  . "  {\"label\": \"👤 Talk to Counselor\", \"text\": \"I want to speak with a human counselor\"}\n"
+                  . "  {\"label\": \"Course Fees\", \"text\": \"What is the fee structure for this?\"},\n"
+                  . "  {\"label\": \"0% EMI Plans\", \"text\": \"Tell me about 0% EMI options\"},\n"
+                  . "  {\"label\": \"Syllabus on Email\", \"text\": \"Please send syllabus to my email\"},\n"
+                  . "  {\"label\": \"Talk to Counselor\", \"text\": \"I want to speak with a human counselor\"}\n"
                   . "]\n\n"
                   . "THEN output '---INTERNAL_METADATA---' followed by a valid JSON object analyzing the lead:\n"
                   . "{\n"
@@ -1450,29 +1450,29 @@ try {
 
         if ($isCourseQ) {
             $actionChipsPayload = [
-                ['label' => '💰 Fee Structure', 'text' => 'What is the fee structure for these courses?'],
-                ['label' => '💳 0% EMI Options', 'text' => 'Can I pay the fees in monthly EMIs?'],
-                ['label' => '📄 Syllabus on Email', 'text' => 'Please send the complete syllabus to my email'],
-                ['label' => '👤 Talk to Counselor', 'text' => 'I would like to speak with a human counselor']
+                ['label' => 'Fee Structure', 'text' => 'What is the fee structure for these courses?'],
+                ['label' => '0% EMI Options', 'text' => 'Can I pay the fees in monthly EMIs?'],
+                ['label' => 'Syllabus on Email', 'text' => 'Please send the complete syllabus to my email'],
+                ['label' => 'Talk to Counselor', 'text' => 'I would like to speak with a human counselor']
             ];
         } elseif ($isFeeQ) {
             $actionChipsPayload = [
-                ['label' => '💳 0% EMI Plans', 'text' => 'What are the zero-cost EMI plans available?'],
-                ['label' => '📄 Send Brochure', 'text' => 'Send official course brochure and fee chart to my email'],
-                ['label' => '🔗 Pay / Enroll', 'text' => 'How can I enroll and make payment online?'],
-                ['label' => '👤 Talk to Counselor', 'text' => 'I want to speak with a counselor regarding payment']
+                ['label' => '0% EMI Plans', 'text' => 'What are the zero-cost EMI plans available?'],
+                ['label' => 'Send Brochure', 'text' => 'Send official course brochure and fee chart to my email'],
+                ['label' => 'Pay / Enroll', 'text' => 'How can I enroll and make payment online?'],
+                ['label' => 'Talk to Counselor', 'text' => 'I want to speak with a counselor regarding payment']
             ];
         } elseif ($isEmiQ) {
             $actionChipsPayload = [
-                ['label' => '✅ Confirm EMI Plan', 'text' => 'I confirm the EMI plan. Please share payment link for down payment.'],
-                ['label' => '💰 Full Payment Offer', 'text' => 'Is there any discount for one-time full payment?'],
-                ['label' => '👤 Talk to Counselor', 'text' => 'Connect me with an advisor for EMI verification']
+                ['label' => 'Confirm EMI Plan', 'text' => 'I confirm the EMI plan. Please share payment link for down payment.'],
+                ['label' => 'Full Payment Offer', 'text' => 'Is there any discount for one-time full payment?'],
+                ['label' => 'Talk to Counselor', 'text' => 'Connect me with an advisor for EMI verification']
             ];
         } elseif ($isAboutQ) {
             $actionChipsPayload = [
-                ['label' => '🎓 View Courses', 'text' => 'What courses and programs do you offer?'],
-                ['label' => '💰 Fees & Pricing', 'text' => 'Tell me about the course fees'],
-                ['label' => '📅 Book Consultation', 'text' => 'I want to schedule a consultation with the team']
+                ['label' => 'View Courses', 'text' => 'What courses and programs do you offer?'],
+                ['label' => 'Fees & Pricing', 'text' => 'Tell me about the course fees'],
+                ['label' => 'Book Consultation', 'text' => 'I want to schedule a consultation with the team']
             ];
         } else {
             // Check if tenant has customized quick actions
@@ -1481,10 +1481,10 @@ try {
                 $actionChipsPayload = $customQ;
             } else {
                 $actionChipsPayload = [
-                    ['label' => '🎓 Programs & Courses', 'text' => 'What courses and programs do you offer?'],
-                    ['label' => '💰 Fees & Pricing', 'text' => 'What is the fee structure?'],
-                    ['label' => '💳 0% EMI Options', 'text' => 'Do you have 0% EMI installment plans?'],
-                    ['label' => '👤 Talk to Counselor', 'text' => 'Connect me with a counselor']
+                    ['label' => 'Programs & Courses', 'text' => 'What courses and programs do you offer?'],
+                    ['label' => 'Fees & Pricing', 'text' => 'What is the fee structure?'],
+                    ['label' => '0% EMI Options', 'text' => 'Do you have 0% EMI installment plans?'],
+                    ['label' => 'Talk to Counselor', 'text' => 'Connect me with a counselor']
                 ];
             }
         }

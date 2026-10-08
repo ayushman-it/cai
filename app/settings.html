@@ -1867,11 +1867,11 @@
     function renderQuickActionsList(actions) {
       if (!Array.isArray(actions) || actions.length === 0) {
         actions = [
-          { label: '🎓 Courses & Programs', text: 'What courses and programs do you offer?' },
-          { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
-          { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
-          { label: '🏢 About Us', text: 'Tell me about the company and track record.' },
-          { label: '👤 Talk to Counselor', text: 'I would like to speak with a human counselor.' }
+          { label: 'Courses & Programs', text: 'What courses and programs do you offer?' },
+          { label: 'Course Fees', text: 'What is the fee structure for your courses?' },
+          { label: '0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
+          { label: 'About Us', text: 'Tell me about the company and track record.' },
+          { label: 'Talk to Counselor', text: 'I would like to speak with a human counselor.' }
         ];
       }
       currentQuickActions = JSON.parse(JSON.stringify(actions));
@@ -1897,7 +1897,7 @@
           </div>
           <div class="w-full sm:w-1/3">
             <label class="block text-[10px] font-semibold text-stone-500 uppercase">Button Label</label>
-            <input type="text" class="app-input text-xs font-medium py-1 px-2 qa-input-label" value="${escapeHtmlAttr(item.label || '')}" placeholder="e.g. 🎓 Courses & Programs" oninput="currentQuickActions[${idx}].label = this.value">
+            <input type="text" class="app-input text-xs font-medium py-1 px-2 qa-input-label" value="${escapeHtmlAttr(item.label || '')}" placeholder="e.g. Courses & Programs" oninput="currentQuickActions[${idx}].label = this.value">
           </div>
           <div class="flex-1">
             <label class="block text-[10px] font-semibold text-stone-500 uppercase">Visitor Prompt to Cai</label>
@@ -1917,7 +1917,7 @@
 
     function addQuickActionRow() {
       currentQuickActions.push({
-        label: '⚡ Quick Action',
+        label: 'Quick Action',
         text: 'Tell me more about your offerings.'
       });
       renderQuickActionsList(currentQuickActions);
@@ -1939,11 +1939,11 @@
 
     function resetQuickActionsDefaults() {
       const defaults = [
-        { label: '🎓 Courses & Programs', text: 'What courses and programs do you offer?' },
-        { label: '💰 Course Fees', text: 'What is the fee structure for your courses?' },
-        { label: '💳 0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
-        { label: '🏢 About Us', text: 'Tell me about the company and track record.' },
-        { label: '👤 Talk to Counselor', text: 'I would like to speak with a human counselor.' }
+        { label: 'Courses & Programs', text: 'What courses and programs do you offer?' },
+        { label: 'Course Fees', text: 'What is the fee structure for your courses?' },
+        { label: '0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
+        { label: 'About Us', text: 'Tell me about the company and track record.' },
+        { label: 'Talk to Counselor', text: 'I would like to speak with a human counselor.' }
       ];
       renderQuickActionsList(defaults);
     }
