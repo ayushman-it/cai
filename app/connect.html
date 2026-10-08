@@ -59,7 +59,7 @@
               </div>
             </div>
 
-            <pre id="official-widget-snippet" class="p-3 bg-stone-900 text-stone-100 rounded-[6px] font-mono text-[11.5px] sm:text-xs overflow-x-auto whitespace-pre-wrap break-all sm:whitespace-pre sm:break-normal leading-relaxed border border-stone-800 select-all">&lt;script src="https://cai.cuboidsoft.in/widget.js?v=5.6" data-company="cp_live_cuboidsoft" async&gt;&lt;/script&gt;</pre>
+            <pre id="official-widget-snippet" class="p-3 bg-stone-900 text-stone-100 rounded-[6px] font-mono text-[11.5px] sm:text-xs overflow-x-auto whitespace-pre-wrap break-all sm:whitespace-pre sm:break-normal leading-relaxed border border-stone-800 select-all">&lt;script src="https://cai.cuboidsoft.in/widget.js?v=7.5" data-company="cp_live_cuboidsoft" async&gt;&lt;/script&gt;</pre>
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-stone-500 pt-1 border-t border-stone-100">
               <span class="flex items-center gap-1.5 text-stone-600">
@@ -248,8 +248,8 @@ You are now speaking with Cai. How can I help?</textarea>
     function updateSnippetCode(key, theme) {
       const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       const scriptUrl = isLocal 
-        ? `${window.location.origin}/cuboidpilot/widget.js?v=6.2` 
-        : 'https://cai.cuboidsoft.in/widget.js?v=6.2';
+        ? `${window.location.origin}/cuboidpilot/widget.js?v=7.5` 
+        : 'https://cai.cuboidsoft.in/widget.js?v=7.5';
       const snippetCode = `<script src="${scriptUrl}" data-company="${key}" async><\/script>`;
       if (snippetEl) {
         snippetEl.textContent = snippetCode;

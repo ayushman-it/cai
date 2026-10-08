@@ -2252,7 +2252,7 @@
       }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 480px) {
       #cp-expand-btn,
       #cp-menu-expand {
         display: none !important;
@@ -5868,7 +5868,7 @@
   let isExpanded = widgetStorage.getItem(EXPAND_STORAGE_KEY) === '1';
 
   function updateExpandState(expanded) {
-    if (window.innerWidth <= 768) {
+    if (window.innerWidth <= 480) {
       isExpanded = false;
       if (chatWindow) chatWindow.classList.remove('expanded');
       return;
@@ -5924,7 +5924,7 @@
   }
 
   function toggleExpandWindow() {
-    if (window.innerWidth <= 768) return;
+    if (window.innerWidth <= 480) return;
     isExpanded = !isExpanded;
     widgetStorage.setItem(EXPAND_STORAGE_KEY, isExpanded ? '1' : '0');
     updateExpandState(isExpanded);
@@ -5933,15 +5933,15 @@
     }
   }
 
-  // Restore previous expand preference if stored (only on desktop)
-  if (isExpanded && window.innerWidth > 768) {
+  // Restore previous expand preference if stored (only on desktop/tablet)
+  if (isExpanded && window.innerWidth > 480) {
     updateExpandState(true);
   } else {
     updateExpandState(false);
   }
 
   window.addEventListener('resize', () => {
-    if (window.innerWidth <= 768 && isExpanded) {
+    if (window.innerWidth <= 480 && isExpanded) {
       updateExpandState(false);
     }
   });
@@ -9933,7 +9933,7 @@
             isHumanChatActive = true;
             resetHumanInactivityTimer();
             const activePill = shadow.getElementById('cp-waiting-pill');
-            if (activePill && !activePill.classList.contains('connected')) {
+            if (activePill) {
               activePill.classList.add('connected');
               const textEl = shadow.getElementById('cp-waiting-text');
               const timerEl = shadow.getElementById('cp-waiting-timer');
@@ -9968,8 +9968,9 @@
               }
 
               setTimeout(() => {
-                if (activePill) activePill.remove();
-              }, 2500);
+                const p = shadow.getElementById('cp-waiting-pill');
+                if (p) p.remove();
+              }, 1200);
             }
           }
         }

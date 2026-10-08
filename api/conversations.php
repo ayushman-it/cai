@@ -49,9 +49,7 @@ if ($companyId === 0) {
     exit;
 }
 
-if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET') {
-    session_write_close();
-}
+session_write_close();
 
 try {
 

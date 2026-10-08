@@ -133,8 +133,8 @@ function getDbConnection() {
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
     static $schemaChecked = false;
     if (!$schemaChecked) {
-        $localLock = __DIR__ . '/.schema_installed_v19';
-        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v19.lock';
+        $localLock = __DIR__ . '/.schema_installed_v20';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v20.lock';
         if (!file_exists($localLock) || !file_exists($tempLock)) {
             initDbSchemaAndUsers($pdo);
             ensureExtendedSchema($pdo);
@@ -1476,6 +1476,12 @@ HTML;
         }
         if (!in_array('gcal_sync_error', $apptCols)) {
             $pdo->exec("ALTER TABLE `appointments` ADD COLUMN `gcal_sync_error` TEXT NULL AFTER `gcal_sync_status`");
+        }
+
+        // 22b. Conversations Migration for 1-Click Email Quick Reply & Remote Closure
+        $convCols = $pdo->query("SHOW COLUMNS FROM `conversations`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('quick_action_token', $convCols)) {
+            $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `quick_action_token` VARCHAR(64) NULL AFTER `ownership`, ADD KEY `idx_quick_action_token` (`quick_action_token`)");
         }
 
         $pdo->exec("

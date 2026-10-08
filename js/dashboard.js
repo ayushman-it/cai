@@ -131,6 +131,8 @@ window.CuboidDashboard = {
 
   // 1. Overview Page Loader (app/overview.html)
   loadOverview: async function(filterOverride) {
+    if (this._loadingOverview) return;
+    this._loadingOverview = true;
     this.initOverviewControls();
     this.syncFavouritesSidebar();
 
@@ -213,6 +215,8 @@ window.CuboidDashboard = {
 
     } catch (e) {
       console.warn('[CuboidDashboard] Overview fetch error:', e);
+    } finally {
+      this._loadingOverview = false;
     }
   },
 
@@ -1804,11 +1808,16 @@ window.CuboidDashboard = {
 
   startLiveConversationPolling: function() {
     if (this._convoPollInterval) clearInterval(this._convoPollInterval);
+    this._threadListPollTick = 0;
     this._convoPollInterval = setInterval(async () => {
-      // 1. Refresh threads list keeping active conversation
-      await this.loadConversations(true);
+      this._threadListPollTick = (this._threadListPollTick || 0) + 1;
 
-      // 2. If a conversation is actively open, refresh its message stream
+      // 1. Refresh threads list every ~7.5 seconds or if no thread is active
+      if (this._threadListPollTick % 3 === 0 || !this.currentConversationId) {
+        await this.loadConversations(true);
+      }
+
+      // 2. If a conversation is actively open, refresh its message stream at 2.5s low latency
       if (this.currentConversationId) {
         try {
           const res = await fetch(`../api/conversations.php?id=${this.currentConversationId}`);
@@ -1826,6 +1835,7 @@ window.CuboidDashboard = {
               }
               const activeName = (this.currentConversationData && this.currentConversationData.customer_name) || 'Customer';
               await this.selectConversation(this.currentConversationId, activeName, true);
+              this.loadConversations(true);
             }
           }
         } catch (e) {}

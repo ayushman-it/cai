@@ -48,10 +48,12 @@ window.CuboidShell = {
 
   // Render Company App Shell (Sidebar + Topbar) with Real Session
   initCompanyApp: function(activePage, pageTitle, breadcrumbs = []) {
-    // Show Google Workspace minimalist splash loading screen
-    this.renderSplashScreen();
-
     const hasCache = this.hydrateFromCache();
+
+    // Show Google Workspace minimalist splash loading screen ONLY on cold load if no cache
+    if (!hasCache) {
+      this.renderSplashScreen();
+    }
 
     this.renderCompanySidebar(activePage);
     this.renderCompanyTopbar(pageTitle, breadcrumbs);
@@ -61,8 +63,7 @@ window.CuboidShell = {
 
     if (hasCache) {
       this.syncRealWorkspaceDom(activePage, pageTitle, breadcrumbs);
-      // If we have cached session, quickly reveal after smooth render
-      this.dismissSplashScreen(380);
+      this.dismissSplashScreen(0);
     }
     if (window.lucide) window.lucide.createIcons();
 
@@ -407,8 +408,8 @@ window.CuboidShell = {
     if (this.company && this.company.company_key) {
       const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       const scriptUrl = isLocal 
-        ? `${window.location.origin}/cuboidpilot/widget.js?v=6.2`
-        : 'https://cai.cuboidsoft.in/widget.js?v=6.2';
+        ? `${window.location.origin}/cuboidpilot/widget.js?v=7.5`
+        : 'https://cai.cuboidsoft.in/widget.js?v=7.5';
       const theme = (this.company.theme_mode === 'light') ? 'light' : 'dark';
       const snippetCode = `<script src="${scriptUrl}" data-company="${this.company.company_key}" data-theme="${theme}" async><\/script>`;
       if (officialSnippetEl) {
@@ -1150,8 +1151,8 @@ window.CuboidShell = {
     }
     const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const scriptUrl = isLocal 
-      ? `${window.location.origin}/cuboidpilot/widget.js?v=6.2` 
-      : 'https://cai.cuboidsoft.in/widget.js?v=6.2';
+      ? `${window.location.origin}/cuboidpilot/widget.js?v=7.5` 
+      : 'https://cai.cuboidsoft.in/widget.js?v=7.5';
     const compKey = (this.company && this.company.company_key) ? this.company.company_key : 'cp_live_cuboidsoft';
     const snippet = `<script src="${scriptUrl}" data-company="${compKey}" data-theme="dark" async><\/script>`;
 
@@ -1473,14 +1474,19 @@ window.CuboidShell = {
     }
   },
 
-  dismissSplashScreen: function(delayMs = 400) {
+  dismissSplashScreen: function(delayMs = 0) {
     const splash = document.getElementById('cp-app-splash');
     if (!splash) return;
+    if (delayMs <= 0) {
+      splash.classList.add('splash-hidden');
+      if (splash.parentNode) splash.remove();
+      return;
+    }
     setTimeout(() => {
       splash.classList.add('splash-hidden');
       setTimeout(() => {
         if (splash.parentNode) splash.remove();
-      }, 400);
+      }, 150);
     }, delayMs);
   },
 

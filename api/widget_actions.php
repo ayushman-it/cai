@@ -821,25 +821,35 @@ try {
         $customer = $resolveCustomer($sessionToken, $visitorName, $visitorPhone, $visitorEmail);
         $customerId = (int)$customer['id'];
 
+        $quickActionToken = bin2hex(random_bytes(24));
         if (!$conversationId) {
             $insConv = $pdo->prepare("
                 INSERT INTO `conversations` 
-                (`company_id`, `customer_id`, `channel`, `status`, `ownership`, `assigned_user_id`, `unread_human`, `last_message_preview`, `last_message_at`, `created_at`)
-                VALUES (?, ?, 'widget', 'human_requested', 'human', ?, 1, 'Visitor requested human assistance', NOW(), NOW())
+                (`company_id`, `customer_id`, `channel`, `status`, `ownership`, `quick_action_token`, `assigned_user_id`, `unread_human`, `last_message_preview`, `last_message_at`, `created_at`)
+                VALUES (?, ?, 'widget', 'human_requested', 'human', ?, ?, 1, 'Visitor requested human assistance', NOW(), NOW())
             ");
-            $insConv->execute([$companyId, $customerId, $userId ?: null]);
+            $insConv->execute([$companyId, $customerId, $quickActionToken, $userId ?: null]);
             $conversationId = (int)$pdo->lastInsertId();
         } else {
             $pdo->prepare("
                 UPDATE `conversations`
                 SET `status` = 'human_requested',
                     `ownership` = 'human',
+                    `quick_action_token` = COALESCE(quick_action_token, ?),
                     `assigned_user_id` = ?,
                     `unread_human` = unread_human + 1,
                     `last_message_preview` = 'Visitor requested human assistance',
                     `last_message_at` = NOW()
                 WHERE id = ? AND company_id = ?
-            ")->execute([$userId ?: null, $conversationId, $companyId]);
+            ")->execute([$quickActionToken, $userId ?: null, $conversationId, $companyId]);
+
+            // Retrieve existing token if present
+            $qTokenStmt = $pdo->prepare("SELECT quick_action_token FROM `conversations` WHERE id = ? LIMIT 1");
+            $qTokenStmt->execute([$conversationId]);
+            $existingToken = $qTokenStmt->fetchColumn();
+            if (!empty($existingToken)) {
+                $quickActionToken = $existingToken;
+            }
         }
 
         // Insert initial handoff log if human_handoffs exists
@@ -884,7 +894,8 @@ try {
             $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
             $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
             $basePath = (strpos($_SERVER['REQUEST_URI'] ?? '', '/cuboidpilot') !== false) ? '/cuboidpilot' : '';
-            $dashConvoUrl = "{$scheme}://{$host}{$basePath}/app/conversations.html?id={$conversationId}";
+            $dashBaseUrl = "{$scheme}://{$host}{$basePath}";
+            $dashConvoUrl = "{$dashBaseUrl}/app/conversations.html?id={$conversationId}";
 
             // Check if WhatsApp is connected for this tenant
             $waStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` = 'connected' LIMIT 1");
@@ -936,27 +947,30 @@ try {
                 }
             }
 
-            // If WhatsApp not sent or not connected, dispatch Email bridge
-            if (!$waSent) {
-                $supportEmail = !empty($agent['email']) ? $agent['email'] : '';
-                if (empty($supportEmail)) {
-                    $uStmt = $pdo->prepare("SELECT email FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND `is_active` = 1 ORDER BY id ASC LIMIT 1");
-                    $uStmt->execute([$companyId]);
-                    $supportEmail = $uStmt->fetchColumn() ?: '';
-                }
+            // 1. Dispatch Email notification to Company Admin & Assigned Agent
+            $supportEmail = !empty($agent['email']) ? $agent['email'] : '';
+            if (empty($supportEmail)) {
+                $uStmt = $pdo->prepare("SELECT email FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND `is_active` = 1 ORDER BY id ASC LIMIT 1");
+                $uStmt->execute([$companyId]);
+                $supportEmail = $uStmt->fetchColumn() ?: '';
+            }
 
-                if (!empty($supportEmail) && filter_var($supportEmail, FILTER_VALIDATE_EMAIL)) {
-                    $emailSubject = "🚨 [Human Support Request] #CONV-{$conversationId} - {$custDispName}";
-                    $emailHtml = <<<HTML
+            if (!empty($supportEmail) && filter_var($supportEmail, FILTER_VALIDATE_EMAIL)) {
+                $emailSubject = "🚨 [Live Support Request] #CONV-{$conversationId} - {$custDispName}";
+                $replyDirectUrl = "{$dashBaseUrl}/api/quick_action.php?token={$quickActionToken}&action=view";
+                $closeDirectUrl = "{$dashBaseUrl}/api/quick_action.php?token={$quickActionToken}&action=close";
+                $resolveDirectUrl = "{$dashBaseUrl}/api/quick_action.php?token={$quickActionToken}&action=resolve";
+
+                $emailHtml = <<<HTML
 <!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f6f2; color: #1c1917; margin: 0; padding: 24px;">
   <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e7e5de; border-radius: 8px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
     <div style="padding-bottom: 16px; border-bottom: 1px solid #e7e5de; margin-bottom: 20px;">
-      <span style="font-size: 11px; font-weight: 700; color: #b45309; text-transform: uppercase; background: #fef3c7; padding: 3px 8px; border-radius: 4px;">Human Handoff Alert</span>
-      <h2 style="font-size: 18px; margin: 12px 0 4px 0; color: #1c1917;">Visitor Requested Human Specialist</h2>
-      <p style="font-size: 12.5px; color: #78716c; margin: 0;">AI automated replies have been paused for this conversation.</p>
+      <span style="font-size: 11px; font-weight: 700; color: #b45309; text-transform: uppercase; background: #fef3c7; padding: 3px 8px; border-radius: 4px;">Live Human Support Request</span>
+      <h2 style="font-size: 18px; margin: 12px 0 4px 0; color: #1c1917;">Visitor Requested Live Human Assistance</h2>
+      <p style="font-size: 12.5px; color: #78716c; margin: 0;">AI automated replies have been paused. You can reply directly below or join via dashboard.</p>
     </div>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
       <tr>
@@ -976,15 +990,60 @@ try {
         <td style="padding: 6px 0; font-weight: 600; color: #6366f1;">#CONV-{$conversationId}</td>
       </tr>
     </table>
-    <div style="text-align: center; margin: 26px 0 10px 0;">
-      <a href="{$dashConvoUrl}" style="background-color: #111111; color: #ffffff; text-decoration: none; padding: 12px 26px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block;">Join Conversation in Dashboard &rarr;</a>
+
+    <!-- Remote 1-Click Action Hub (No Login Required) -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 18px; margin: 24px 0 16px 0; text-align: center;">
+      <div style="font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 12px; letter-spacing: 0.5px;">Remote 1-Click Email Actions:</div>
+      <div style="display: inline-flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
+        <a href="{$replyDirectUrl}" style="background-color: #0f172a; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 12.5px; font-weight: 600; display: inline-block;">💬 Reply to Visitor</a>
+        <a href="{$resolveDirectUrl}" style="background-color: #10b981; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 12.5px; font-weight: 600; display: inline-block;">✓ Mark Resolved</a>
+        <a href="{$closeDirectUrl}" style="background-color: #ef4444; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 12.5px; font-weight: 600; display: inline-block;">✗ Close Chat</a>
+      </div>
+      <div style="margin-top: 10px; font-size: 11px; color: #94a3b8;">
+        Sends instant message to visitor's website widget without opening dashboard.
+      </div>
+    </div>
+
+    <div style="text-align: center; margin: 16px 0 10px 0;">
+      <a href="{$dashConvoUrl}" style="color: #64748b; text-decoration: underline; font-size: 12px;">Or open full conversation in Dashboard &rarr;</a>
     </div>
   </div>
 </body>
 </html>
 HTML;
-                    CompanyMailer::send($pdo, $companyId, $supportEmail, $emailSubject, $emailHtml);
-                }
+                CompanyMailer::send($pdo, $companyId, $supportEmail, $emailSubject, $emailHtml);
+            }
+
+            // 2. Dispatch Customer Acknowledgment Email if visitor email is available
+            $targetCustEmail = !empty($custDispEmail) && filter_var($custDispEmail, FILTER_VALIDATE_EMAIL) ? $custDispEmail : '';
+            if (!empty($targetCustEmail)) {
+                $compName = htmlspecialchars($company['name'] ?? 'Support Team');
+                $custSubj = "We've received your live support request - {$compName}";
+                $custHtml = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; color: #0f172a; margin: 0; padding: 24px;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 28px;">
+    <div style="border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px;">
+      <h2 style="margin: 0; font-size: 19px; color: #0f172a;">{$compName}</h2>
+      <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Live Assistance Request Received</div>
+    </div>
+    <p style="font-size: 14px; color: #1e293b;">Hello <strong>{$custDispName}</strong>,</p>
+    <p style="font-size: 13px; color: #334155; line-height: 1.6;">
+      Thank you for reaching out to us. A customer support specialist has been notified of your request (Reference: <strong>#CONV-{$conversationId}</strong>).
+    </p>
+    <p style="font-size: 13px; color: #334155; line-height: 1.6;">
+      Our team is connecting with you right on our website chat. If you navigated away, we will follow up with you directly via email or WhatsApp shortly.
+    </p>
+    <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 22px; font-size: 11px; color: #94a3b8;">
+      &copy; {$compName}. Powered by CuboidPilot.
+    </div>
+  </div>
+</body>
+</html>
+HTML;
+                CompanyMailer::send($pdo, $companyId, $targetCustEmail, $custSubj, $custHtml);
             }
 
             // Also trigger standard salesperson alert if lead exists
@@ -1383,6 +1442,117 @@ HTML;
                 INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `created_at`)
                 VALUES (?, ?, 'ai', ?, NOW())
             ")->execute([$companyId, $conversationId, $ack]);
+        }
+
+        // Dual Email Notifications: 1) Admin Verification Alert & 2) Customer Receipt
+        try {
+            $compName = htmlspecialchars($company['name'] ?? 'CuboidPilot');
+            $fmtAmount = '₹' . number_format($amount);
+            $payerEsc = htmlspecialchars($payerName);
+            $utrEsc = htmlspecialchars($utrNumber);
+            $phoneEsc = htmlspecialchars($payerPhone ?: 'Not provided');
+            $custEmail = !empty($data['payer_email'] ?? $_POST['payer_email'] ?? $customer['email'] ?? '') ? trim($data['payer_email'] ?? $_POST['payer_email'] ?? $customer['email']) : '';
+
+            $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+            $baseAppUrl = $protocol . $host . ((strpos($_SERVER['REQUEST_URI'] ?? '', '/cuboidpilot') !== false) ? '/cuboidpilot' : '');
+            $verifyUrl = "{$baseAppUrl}/app/leads.html?search=" . urlencode($utrNumber);
+
+            // 1. Admin Alert Email
+            $adminEmail = $company['email'] ?? '';
+            if (empty($adminEmail)) {
+                $uStmt = $pdo->prepare("SELECT email FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND email IS NOT NULL AND email != '' ORDER BY id ASC LIMIT 1");
+                $uStmt->execute([$companyId]);
+                $adminEmail = (string)$uStmt->fetchColumn();
+            }
+
+            if (!empty($adminEmail) && filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                $adminSubj = "🏦 [Payment Verification Needed] {$fmtAmount} submitted by {$payerName}";
+                $adminHtml = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f6f2; color: #1c1917; margin: 0; padding: 24px;">
+  <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e7e5de; border-radius: 8px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
+    <div style="padding-bottom: 16px; border-bottom: 1px solid #e7e5de; margin-bottom: 20px;">
+      <span style="font-size: 11px; font-weight: 700; color: #15803d; text-transform: uppercase; background: #dcfce7; padding: 3px 8px; border-radius: 4px;">Bank Transfer Received</span>
+      <h2 style="font-size: 18px; margin: 12px 0 4px 0; color: #1c1917;">New Payment Pending Verification</h2>
+      <div style="font-size: 12.5px; color: #78716c; margin-top: 4px;">Payment ID: #PAY-{$paymentId}</div>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+      <tr>
+        <td style="padding: 6px 0; color: #78716c; width: 35%;">Amount:</td>
+        <td style="padding: 6px 0; font-size: 16px; font-weight: 700; color: #15803d;">{$fmtAmount}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Payer Name:</td>
+        <td style="padding: 6px 0; font-weight: 600; color: #1c1917;">{$payerEsc}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">UTR / Ref Number:</td>
+        <td style="padding: 6px 0; font-family: monospace; font-weight: 700; color: #4338ca;">{$utrEsc}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Phone:</td>
+        <td style="padding: 6px 0; font-weight: 600; color: #1c1917;">{$phoneEsc}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Customer Email:</td>
+        <td style="padding: 6px 0; font-weight: 600; color: #1c1917;">{$custEmail}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #78716c;">Notes:</td>
+        <td style="padding: 6px 0; color: #44403c;">{$notes}</td>
+      </tr>
+    </table>
+    <div style="text-align: center; margin: 24px 0 10px 0;">
+      <a href="{$verifyUrl}" style="background-color: #111111; color: #ffffff; text-decoration: none; padding: 11px 24px; border-radius: 6px; font-size: 13px; font-weight: 600; display: inline-block;">Verify & Update in Dashboard &rarr;</a>
+    </div>
+  </div>
+</body>
+</html>
+HTML;
+                CompanyMailer::send($pdo, $companyId, $adminEmail, $adminSubj, $adminHtml);
+            }
+
+            // 2. Customer Receipt Email
+            if (!empty($custEmail) && filter_var($custEmail, FILTER_VALIDATE_EMAIL)) {
+                $custSubj = "Payment Submission Acknowledgment - {$fmtAmount} ({$compName})";
+                $custHtml = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc; color: #0f172a; margin: 0; padding: 24px;">
+  <div style="max-width: 560px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 28px;">
+    <div style="border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 18px;">
+      <h2 style="margin: 0; font-size: 19px; color: #0f172a;">{$compName}</h2>
+      <div style="font-size: 12px; color: #64748b; margin-top: 4px;">Payment Acknowledgment Receipt</div>
+    </div>
+    <p style="font-size: 14px; color: #1e293b;">Dear <strong>{$payerEsc}</strong>,</p>
+    <p style="font-size: 13px; color: #334155; line-height: 1.6;">
+      We have received your payment details submitted via bank transfer. Our accounts desk will verify the transaction and notify you shortly.
+    </p>
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 16px; margin: 16px 0;">
+      <table style="width: 100%; font-size: 13px; color: #334155; border-collapse: collapse;">
+        <tr><td style="padding: 4px 0; color: #64748b; width: 140px;">Amount:</td><td style="font-weight: 700; color: #15803d; font-size: 15px;">{$fmtAmount}</td></tr>
+        <tr><td style="padding: 4px 0; color: #64748b;">UTR / Ref Number:</td><td style="font-family: monospace; font-weight: 700;">{$utrEsc}</td></tr>
+        <tr><td style="padding: 4px 0; color: #64748b;">Status:</td><td><span style="background: #fef3c7; color: #b45309; padding: 2px 7px; border-radius: 4px; font-weight: 600; font-size: 11.5px;">Pending Verification</span></td></tr>
+      </table>
+    </div>
+    <p style="font-size: 12.5px; color: #64748b; line-height: 1.5;">
+      If you have any questions or require an updated invoice, feel free to reply directly to this email or reach us on live chat.
+    </p>
+    <div style="border-top: 1px solid #e2e8f0; padding-top: 14px; margin-top: 20px; font-size: 11px; color: #94a3b8;">
+      &copy; {$compName}. Powered by CuboidPilot.
+    </div>
+  </div>
+</body>
+</html>
+HTML;
+                CompanyMailer::send($pdo, $companyId, $custEmail, $custSubj, $custHtml);
+            }
+        } catch (Exception $payMailEx) {
+            error_log('[Payment Mail Note] ' . $payMailEx->getMessage());
         }
 
         echo json_encode([

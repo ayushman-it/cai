@@ -48,9 +48,7 @@ if ($companyId === 0) {
     exit;
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    session_write_close();
-}
+session_write_close();
 
 try {
     // 0. Dataset Export to CSV

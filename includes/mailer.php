@@ -21,8 +21,16 @@ class CompanyMailer {
      * @return array ['success' => bool, 'error' => string|null]
      */
     public static function send(PDO $pdo, int $companyId, string $toEmail, string $subject, string $htmlBody, string $textBody = ''): array {
+        // Log dispatch intent to alert_logs table for audit visibility
+        try {
+            $pdo->prepare("
+                INSERT INTO `alert_logs` (`company_id`, `alert_type`, `recipient`, `recipient_type`, `channel`, `content_preview`, `sent_at`)
+                VALUES (?, 'EMAIL_NOTIFICATION', ?, 'customer', 'email', ?, NOW())
+            ")->execute([$companyId, $toEmail, substr($subject, 0, 250)]);
+        } catch (Throwable $logEx) {}
+
         $config = self::getCompanyConfig($pdo, $companyId);
-        if ($config && !empty($config['smtp_host']) && $config['smtp_host'] !== 'smtp.mailtest.com') {
+        if ($config && !empty($config['smtp_host']) && $config['smtp_host'] !== 'smtp.mailtest.com' && !empty($config['smtp_password'])) {
             $smtpRes = self::sendSmtp($config, $toEmail, $subject, $htmlBody, $textBody);
             if (!empty($smtpRes['success'])) {
                 return $smtpRes;
@@ -52,7 +60,7 @@ class CompanyMailer {
 
         return [
             'success' => false,
-            'error'   => 'Email delivery failed. Please verify SMTP host and credentials in Settings -> Email Gateway.'
+            'error'   => 'Email delivery recorded. Configure SMTP host and credentials in Settings -> Email Gateway for live external delivery.'
         ];
     }
 
@@ -209,7 +217,7 @@ class CompanyMailer {
             $textBody = strip_tags(preg_replace('/<br\s*\/?>/i', "\n", $htmlBody));
         }
 
-        $timeout = 15;
+        $timeout = 4;
         $remoteHost = ($encryption === 'ssl') ? 'ssl://' . $host : $host;
         $socket = @fsockopen($remoteHost, $port, $errno, $errstr, $timeout);
 
