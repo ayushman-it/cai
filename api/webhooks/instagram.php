@@ -23,8 +23,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if ($mode === 'subscribe' && !empty($challenge)) {
         $isMatched = false;
 
-        // 1. Allow standard user-specified or env verify tokens
-        if ($token === 'cuboid_ig_verify' || $token === 'cuboid_instagram_secret' || (!empty(getenv('INSTAGRAM_VERIFY_TOKEN')) && hash_equals(getenv('INSTAGRAM_VERIFY_TOKEN'), (string)$token))) {
+        // 1. Allow standard universal, user-specified or env verify tokens
+        $universalTokens = [
+            'cuboidsoft',
+            'cuboidpilot',
+            'cai',
+            'cai_ai',
+            'cai_meta_verify',
+            'cuboid_ig_verify',
+            'cuboid_meta_verify',
+            'cuboid_instagram_secret',
+            'cai_webhook_secret',
+            'cp_ig_verify_d12586b4c00064dd'
+        ];
+        if (in_array((string)$token, $universalTokens, true) ||
+            (!empty(getenv('INSTAGRAM_VERIFY_TOKEN')) && hash_equals(getenv('INSTAGRAM_VERIFY_TOKEN'), (string)$token)) ||
+            (!empty(getenv('META_VERIFY_TOKEN')) && hash_equals(getenv('META_VERIFY_TOKEN'), (string)$token))) {
             $isMatched = true;
         }
 

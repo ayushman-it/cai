@@ -99,11 +99,11 @@ class WorkflowTemplates {
                 ],
                 [
                     'id' => 'node_5',
-                    'type' => 'msg_course_carousel',
+                    'type' => 'msg_product_carousel',
                     'category' => 'messages',
                     'position' => ['x' => 60, 'y' => 280],
                     'data' => [
-                        'label' => 'Phase 3: Offering & Solution Carousel',
+                        'label' => 'Phase 3: Solutions & Offerings Carousel',
                         'description' => 'Displays matching offerings with pricing, duration, and features',
                         'title' => 'Here are our verified offerings matching your requirement:',
                         'limit' => 4,
@@ -128,7 +128,7 @@ class WorkflowTemplates {
                     'category' => 'messages',
                     'position' => ['x' => 660, 'y' => 280],
                     'data' => [
-                        'label' => 'Phase 4: 0% Interest EMI Breakdown',
+                        'label' => 'Phase 4: Flexible Installment & EMI Breakdown',
                         'description' => 'Presents transparent 3-Month installment options',
                         'wait_for_reply' => true
                     ]
@@ -139,8 +139,8 @@ class WorkflowTemplates {
                     'category' => 'messages',
                     'position' => ['x' => 960, 'y' => 280],
                     'data' => [
-                        'label' => 'Phase 4: Brochure & Syllabus Delivery',
-                        'description' => 'Delivers verified curriculum documents and brochure',
+                        'label' => 'Phase 4: Overview & Document Delivery',
+                        'description' => 'Delivers verified company documents and brochures',
                         'wait_for_reply' => true
                     ]
                 ],
@@ -161,8 +161,8 @@ class WorkflowTemplates {
                     'category' => 'crm',
                     'position' => ['x' => 360, 'y' => 500],
                     'data' => [
-                        'label' => 'Phase 4: Real Human Counselor Escalation',
-                        'description' => 'Connects customer with human counselor if requested'
+                        'label' => 'Phase 4: Human Specialist Handoff',
+                        'description' => 'Connects customer with human team member if requested'
                     ]
                 ],
                 [
@@ -173,11 +173,11 @@ class WorkflowTemplates {
                     'data' => [
                         'label' => 'Phase 5: Multi-Channel Dispatch & Confirmation',
                         'description' => 'Dispatches complete details to Email or WhatsApp',
-                        'message' => 'Would you like us to email you the complete curriculum and invoice, or send it directly on WhatsApp?',
+                        'message' => 'Would you like us to email you the complete details and invoice, or send it directly on WhatsApp?',
                         'options' => [
                             ['label' => 'Send via Email', 'text' => 'Please email me the details'],
                             ['label' => 'Send on WhatsApp', 'text' => 'Please send on WhatsApp'],
-                            ['label' => 'Talk to Counselor', 'text' => 'I want to speak with a counselor']
+                            ['label' => 'Talk to Team', 'text' => 'I want to speak with a representative']
                         ],
                         'wait_for_reply' => true
                     ]
@@ -271,13 +271,13 @@ class WorkflowTemplates {
                 ],
                 [
                     'id' => 'node_5',
-                    'type' => 'msg_course_carousel',
+                    'type' => 'msg_product_carousel',
                     'category' => 'messages',
                     'position' => ['x' => 1280, 'y' => 180],
                     'data' => [
-                        'label' => '5. Solution & Program Carousel',
+                        'label' => '5. Solution & Offering Carousel',
                         'description' => 'Displays matching offerings with pricing, duration, features',
-                        'title' => "Here are our flagship cohorts and solutions matching your goals:",
+                        'title' => "Here are our solutions and offerings matching your goals:",
                         'limit' => 4,
                         'wait_for_reply' => true
                     ]
@@ -288,8 +288,8 @@ class WorkflowTemplates {
                     'category' => 'messages',
                     'position' => ['x' => 1580, 'y' => 180],
                     'data' => [
-                        'label' => '6. Information & Syllabus Brochure',
-                        'description' => 'Delivers verified curriculum documents and brochure',
+                        'label' => '6. Information & Overview Document',
+                        'description' => 'Delivers verified company documents and brochures',
                         'wait_for_reply' => true
                     ]
                 ],
@@ -299,7 +299,7 @@ class WorkflowTemplates {
                     'category' => 'messages',
                     'position' => ['x' => 1880, 'y' => 180],
                     'data' => [
-                        'label' => '7. Payment Flow & 0% EMI Breakdown',
+                        'label' => '7. Payment Flow & Installment Breakdown',
                         'description' => 'Presents transparent 3-Month installment options',
                         'wait_for_reply' => true
                     ]
@@ -323,11 +323,11 @@ class WorkflowTemplates {
                     'data' => [
                         'label' => '9. Multichannel Dispatch (Email / WhatsApp)',
                         'description' => 'Option to dispatch complete details to Email or WhatsApp',
-                        'message' => "Would you like us to email you the complete curriculum and invoice, or send it directly on WhatsApp?",
+                        'message' => "Would you like us to email you the complete details and invoice, or send it directly on WhatsApp?",
                         'options' => [
                             ['label' => 'Send via Email', 'text' => 'Please email me the details'],
                             ['label' => 'Send on WhatsApp', 'text' => 'Please send on WhatsApp'],
-                            ['label' => 'Talk to Counselor', 'text' => 'I want to speak with a counselor']
+                            ['label' => 'Talk to Team', 'text' => 'I want to speak with a representative']
                         ],
                         'wait_for_reply' => true
                     ]

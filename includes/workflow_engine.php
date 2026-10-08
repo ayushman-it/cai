@@ -257,13 +257,13 @@ class WorkflowEngine {
             }
         }
 
-        // 2. Real Human Counselor Request Interceptor
+        // 2. Real Human Advisor Request Interceptor
         if (preg_match('/\b(human|counselor|counsellor|call\s*me|call|advisor|talk\s*to\s*(someone|person|human|counselor)|founder|baat\s*karni|real\s*human)\b/i', $messageText)) {
             if (!empty($activeExec['conversation_id'])) {
                 $pdo->prepare("UPDATE `conversations` SET `status` = 'human_handling', `ownership` = 'human' WHERE `id` = ? AND `company_id` = ?")
                     ->execute([(int)$activeExec['conversation_id'], $companyId]);
             }
-            $humanReply = "I have prioritized your request for direct human assistance. Our senior counselor has been notified and will connect with you shortly.";
+            $humanReply = "I have prioritized your request for direct human assistance. Our team has been notified and a specialist will connect with you shortly.";
             return [
                 'handled' => true,
                 'reply' => $humanReply,
@@ -272,7 +272,7 @@ class WorkflowEngine {
                 'status' => 'waiting',
                 'action_chips' => [
                     ['label' => 'Connect on WhatsApp', 'text' => 'Connect on WhatsApp'],
-                    ['label' => 'Book 1-on-1 Call', 'text' => 'Book 1-on-1 counseling slot']
+                    ['label' => 'Schedule Call', 'text' => 'Schedule a consultation call']
                 ]
             ];
         }
@@ -307,29 +307,7 @@ class WorkflowEngine {
                     $tangentialChips = $chipRes['chips'];
 
                     if (empty($tangentialChips)) {
-                        $qL = mb_strtolower($messageText);
-                        if (preg_match('/(course|program|curriculum|syllabus)/i', $qL)) {
-                            $tangentialChips = [
-                                ['label' => 'Fee Structure', 'text' => 'What is the fee structure for these courses?'],
-                                ['label' => '0% EMI Options', 'text' => 'Can I pay the course fees in monthly EMIs?'],
-                                ['label' => 'Syllabus on Email', 'text' => 'Please send the syllabus to my email'],
-                                ['label' => 'Talk to Counselor', 'text' => 'I would like to speak with a human counselor']
-                            ];
-                        } elseif (preg_match('/(fee|fees|cost|price|pricing|charge)/i', $qL)) {
-                            $tangentialChips = [
-                                ['label' => '0% EMI Plans', 'text' => 'What are the zero-cost EMI plans available?'],
-                                ['label' => 'Send Brochure', 'text' => 'Send official course brochure and fee chart to my email'],
-                                ['label' => 'Pay / Enroll', 'text' => 'How can I enroll and make payment online?'],
-                                ['label' => 'Talk to Counselor', 'text' => 'I want to speak with a counselor regarding payment']
-                            ];
-                        } else {
-                            $tangentialChips = [
-                                ['label' => 'Programs & Courses', 'text' => 'What courses and programs do you offer?'],
-                                ['label' => 'Fees & Pricing', 'text' => 'What is the fee structure?'],
-                                ['label' => '0% EMI Options', 'text' => 'Do you have 0% EMI installment plans?'],
-                                ['label' => 'Talk to Counselor', 'text' => 'Connect me with a counselor']
-                            ];
-                        }
+                        $tangentialChips = self::resolveActionChips([], $tangentialClean, $messageText, $companyId, $pdo);
                     }
 
                     self::logNodeStep($pdo, (int)$activeExec['id'], $companyId, (int)$workflow['id'], $currentNode['id'], $currentNode['type'], $currentNode['data']['label'] ?? 'AI Guidance', 'success', ['question' => $messageText], ['guidance' => $tangentialClean]);
@@ -532,23 +510,24 @@ class WorkflowEngine {
             return $chipData['chips'];
         }
 
-        $qL = mb_strtolower($messageText);
-        if (preg_match('/(course|program|curriculum|syllabus)/i', $qL)) {
-            return [
-                ['label' => 'Fee Structure', 'text' => 'What is the fee structure for these courses?'],
-                ['label' => '0% EMI Options', 'text' => 'Can I pay the course fees in monthly EMIs?'],
-                ['label' => 'Syllabus on Email', 'text' => 'Please send the syllabus to my email'],
-                ['label' => 'Talk to Counselor', 'text' => 'I would like to speak with a human counselor']
-            ];
-        } elseif (preg_match('/(fee|fees|cost|price|pricing|charge)/i', $qL)) {
-            return [
-                ['label' => '0% EMI Plans', 'text' => 'What are the zero-cost EMI plans available?'],
-                ['label' => 'Send Brochure', 'text' => 'Send official course brochure and fee chart to my email'],
-                ['label' => 'Pay / Enroll', 'text' => 'How can I enroll and make payment online?'],
-                ['label' => 'Talk to Counselor', 'text' => 'I want to speak with a counselor regarding payment']
-            ];
-        }
+        // 1. Check published quick_chips configured by tenant in DB
+        try {
+            $qcStmt = $pdo->prepare("SELECT label, response_text, action_type FROM `quick_chips` WHERE `company_id` = ? AND `status` = 'published' ORDER BY `display_order` ASC, `id` ASC LIMIT 6");
+            $qcStmt->execute([$companyId]);
+            $dbChips = $qcStmt->fetchAll(PDO::FETCH_ASSOC);
+            if (!empty($dbChips)) {
+                $chips = [];
+                foreach ($dbChips as $dc) {
+                    $chips[] = [
+                        'label' => $dc['label'],
+                        'text'  => !empty($dc['response_text']) ? $dc['response_text'] : $dc['label']
+                    ];
+                }
+                return $chips;
+            }
+        } catch (Throwable $e) {}
 
+        // 2. Check widget_settings quick_actions_json
         $ws = $pdo->prepare("SELECT quick_actions_json FROM `widget_settings` WHERE `company_id` = ? LIMIT 1");
         $ws->execute([$companyId]);
         $row = $ws->fetch(PDO::FETCH_ASSOC);
@@ -559,11 +538,12 @@ class WorkflowEngine {
             }
         }
 
+        // 3. Fallback to clean, universal business chips (Zero hardcoded course/tuition bias)
         return [
-            ['label' => 'Programs & Courses', 'text' => 'What courses and programs do you offer?'],
-            ['label' => 'Fees & Pricing', 'text' => 'What is the fee structure?'],
-            ['label' => '0% EMI Options', 'text' => 'Do you have 0% EMI installment plans?'],
-            ['label' => 'Talk to Counselor', 'text' => 'Connect me with a counselor']
+            ['label' => 'Explore Offerings', 'text' => 'Tell me more about your solutions and offerings'],
+            ['label' => 'Pricing & Plans', 'text' => 'What are your pricing plans and packages?'],
+            ['label' => 'Download Overview', 'text' => 'Can you share official documentation or overview?'],
+            ['label' => 'Talk to Team', 'text' => 'I would like to speak with a representative']
         ];
     }
 
@@ -725,11 +705,18 @@ Instruction:
             case 'msg_emi_card':
                 $prodId = (int)($data['product_id'] ?? ($variables['product']['id'] ?? 0));
                 $prod = self::getProductById($pdo, $companyId, $prodId);
-                $price = $prod ? (int)$prod['price_inr'] : 24999;
+                if (!$prod) {
+                    $allProds = self::getCompanyProducts($pdo, $companyId);
+                    if (!empty($allProds)) {
+                        $prod = $allProds[0];
+                    }
+                }
+                $price = $prod ? (int)$prod['price_inr'] : 4999;
                 $emiAmount = (int)ceil($price / 3);
+                $prodName = $prod['name'] ?? 'Commercial Solution / Service Plan';
 
                 $emiPayload = [
-                    'product_name' => $prod['name'] ?? 'Course Enrollment',
+                    'product_name' => $prodName,
                     'total_amount' => $price,
                     'starting_at_inr' => $emiAmount,
                     'duration_months' => 3,
@@ -744,7 +731,7 @@ Instruction:
                 ];
                 return [
                     'status' => 'success',
-                    'reply' => "Here is our flexible 3-Month 0% Interest EMI plan:",
+                    'reply' => "Here is our flexible 3-Month 0% Interest installment plan for {$prodName}:",
                     'emi_plans' => $emiPayload,
                     'wait_for_reply' => true
                 ];
@@ -753,14 +740,20 @@ Instruction:
             case 'sales_send_payment_card':
                 $prodId = (int)($data['product_id'] ?? ($variables['product']['id'] ?? 0));
                 $prod = self::getProductById($pdo, $companyId, $prodId);
-                $amount = $prod ? (int)$prod['price_inr'] : 24999;
+                if (!$prod) {
+                    $allProds = self::getCompanyProducts($pdo, $companyId);
+                    if (!empty($allProds)) {
+                        $prod = $allProds[0];
+                    }
+                }
+                $amount = $prod ? (int)$prod['price_inr'] : 4999;
                 $link = "https://cai.cuboidsoft.in/pay?deal=" . bin2hex(random_bytes(6)) . "&amt=" . $amount;
 
                 $paymentPayload = [
                     'url' => $link,
                     'amount' => $amount,
                     'currency' => 'INR',
-                    'title' => $prod['name'] ?? 'Enrollment Fee',
+                    'title' => $prod['name'] ?? 'Service Invoice / Order',
                     'label' => "Pay Securely ₹" . number_format($amount)
                 ];
                 return [
@@ -940,10 +933,10 @@ CRITICAL INSTRUCTIONS:
 AT THE VERY END OF YOUR RESPONSE, provide 2-4 contextual action chips for what the visitor might want to ask or do next, prefixed by '---ACTION_CHIPS---' and formatted as a JSON array. Labels must be clean text with ZERO emojis:
 ---ACTION_CHIPS---
 [
-  {\"label\": \"Course Fees\", \"text\": \"What is the fee structure for this?\"},
-  {\"label\": \"0% EMI Options\", \"text\": \"Can I pay in monthly EMIs?\"},
-  {\"label\": \"Syllabus on Email\", \"text\": \"Please send syllabus to my email\"},
-  {\"label\": \"Talk to Counselor\", \"text\": \"I want to speak with a human counselor\"}
+  {\"label\": \"Explore Offerings\", \"text\": \"Tell me more about your solutions and offerings\"},
+  {\"label\": \"Pricing & Plans\", \"text\": \"What are your pricing plans and packages?\"},
+  {\"label\": \"Download Overview\", \"text\": \"Can you share official documentation or overview?\"},
+  {\"label\": \"Talk to Team\", \"text\": \"I would like to speak with a representative\"}
 ]";
 
         return GeminiService::generateResponse($sysPrompt, [
@@ -1161,14 +1154,14 @@ AT THE VERY END OF YOUR RESPONSE, provide 2-4 contextual action chips for what t
         return [
             'id' => (int)$prod['id'],
             'name' => $prod['name'],
-            'category' => $prod['category'] ?? 'Course',
+            'category' => $prod['category'] ?? 'Solution',
             'price_inr' => (int)$prod['price_inr'],
             'original_price_inr' => (int)($prod['original_price_inr'] ?? 0),
             'discount_percent' => (int)($prod['discount_percent'] ?? 0),
             'emi_available' => !empty($prod['emi_available']),
             'emi_starting_at_inr' => (int)($prod['emi_starting_at_inr'] ?? ceil($prod['price_inr'] / 3)),
-            'duration' => $prod['duration'] ?? '12 Weeks',
-            'features' => array_slice($features ?: ['Live interactive sessions', 'Hands-on projects', 'Placement assistance'], 0, 3)
+            'duration' => $prod['duration'] ?? '',
+            'features' => array_slice($features ?: ['Verified Commercial Offering', 'Instant Access', 'Dedicated Support'], 0, 3)
         ];
     }
 

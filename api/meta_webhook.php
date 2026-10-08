@@ -111,22 +111,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
             echo (string)$challenge;
             exit;
         }
-        http_response_code(403);
-        header("Content-Type: text/plain; charset=UTF-8");
-        echo "Verification token mismatch";
-        exit;
     }
 
-    // Direct browser visit diagnostics
-    header("Content-Type: application/json; charset=UTF-8");
-    echo json_encode([
-        'status'  => 'active',
-        'service' => 'CuboidPilot Meta Webhook Hub',
-        'webhook_url' => 'https://cai.cuboidsoft.in/api/instagram_webhook.php',
-        'verify_token' => 'cuboidsoft',
-        'supported_channels' => ['instagram', 'whatsapp', 'messenger'],
-        'instructions' => 'Paste this Webhook URL and verify_token into Meta Developer Portal.'
-    ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+    http_response_code(403);
+    header("Content-Type: text/plain; charset=UTF-8");
+    echo "Verification token mismatch";
     exit;
 }
 

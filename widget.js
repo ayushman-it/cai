@@ -4207,6 +4207,17 @@
       border-color: rgba(16, 185, 129, 0.25);
     }
 
+    .cp-waiting-pill.pending .cp-waiting-dot-pulse {
+      background: #6366f1;
+      animation: none;
+    }
+
+    .cp-waiting-pill.pending .cp-waiting-timer {
+      color: #6366f1;
+      background: rgba(99, 102, 241, 0.12);
+      border-color: rgba(99, 102, 241, 0.25);
+    }
+
     /* Intercom Agent Takeover Card / Notification */
     .cp-takeover-banner {
       display: flex;
@@ -4521,17 +4532,83 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
-    /* 10-Second Inactivity Chips (Premium Only) */
+    /* Strictly Black & White Single-Row Action Chips & Inactivity Chips */
+    .cp-action-chips-container {
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      gap: 6px !important;
+      padding: 6px 2px 4px 2px !important;
+      margin-top: 8px !important;
+      max-width: 100% !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    .cp-action-chips-container::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
+    .cp-action-chip-pill {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0 !important;
+      white-space: nowrap !important;
+      background: #ffffff !important;
+      color: #000000 !important;
+      border: 1px solid #000000 !important;
+      border-radius: 16px !important;
+      padding: 4px 11px !important;
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      line-height: 1.2 !important;
+      cursor: pointer !important;
+      transition: all 0.15s ease-in-out !important;
+      font-family: inherit !important;
+      letter-spacing: -0.01em !important;
+      outline: none !important;
+      box-shadow: none !important;
+      user-select: none !important;
+    }
+    .cp-action-chip-pill:hover,
+    .cp-action-chip-pill:focus-visible {
+      background: #000000 !important;
+      color: #ffffff !important;
+      border-color: #000000 !important;
+    }
+    :host([data-theme="dark"]) .cp-action-chip-pill,
+    .cp-dark-theme .cp-action-chip-pill,
+    .theme-dark .cp-action-chip-pill {
+      background: #18181b !important;
+      color: #ffffff !important;
+      border: 1px solid #3f3f46 !important;
+    }
+    :host([data-theme="dark"]) .cp-action-chip-pill:hover,
+    .cp-dark-theme .cp-action-chip-pill:hover,
+    .theme-dark .cp-action-chip-pill:hover,
+    :host([data-theme="dark"]) .cp-action-chip-pill:focus-visible,
+    .cp-dark-theme .cp-action-chip-pill:focus-visible,
+    .theme-dark .cp-action-chip-pill:focus-visible {
+      background: #ffffff !important;
+      color: #000000 !important;
+      border-color: #ffffff !important;
+    }
+
+    /* 10-Second Inactivity Chips (Monochrome Black & White) */
     .cp-inactivity-chips-container {
-      margin: 12px 0 6px 0;
-      padding: 10px 12px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
+      margin: 10px 0 4px 0;
+      padding: 8px 10px;
+      background: #fafafa;
+      border: 1px solid #e4e4e7;
       border-radius: 10px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      animation: cpSlideUpFade 0.28s ease-out;
+      gap: 6px;
+      animation: cpSlideUpFade 0.25s ease-out;
     }
     :host([data-theme="dark"]) .cp-inactivity-chips-container,
     .cp-dark-theme .cp-inactivity-chips-container,
@@ -4544,9 +4621,10 @@
       to { opacity: 1; transform: translateY(0); }
     }
     .cp-inactivity-chips-title {
-      font-size: 11px;
-      color: #64748b;
+      font-size: 10.5px;
+      color: #71717a;
       font-weight: 500;
+      letter-spacing: -0.01em;
     }
     :host([data-theme="dark"]) .cp-inactivity-chips-title,
     .cp-dark-theme .cp-inactivity-chips-title,
@@ -4554,95 +4632,71 @@
       color: #a1a1aa;
     }
     .cp-inactivity-chips-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: nowrap !important;
+      overflow-x: auto !important;
+      overflow-y: hidden !important;
+      gap: 6px !important;
+      padding: 2px 0 !important;
+      -webkit-overflow-scrolling: touch !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    .cp-inactivity-chips-pills::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
     }
     .cp-inactivity-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 11.5px;
-      font-weight: 500;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.18s ease;
-      font-family: inherit;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0 !important;
+      white-space: nowrap !important;
+      gap: 5px !important;
+      padding: 4px 10px !important;
+      border-radius: 14px !important;
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      cursor: pointer !important;
+      border: 1px solid #000000 !important;
+      background: #ffffff !important;
+      color: #000000 !important;
+      transition: all 0.15s ease-in-out !important;
+      font-family: inherit !important;
+      outline: none !important;
+      letter-spacing: -0.01em !important;
     }
-    .cp-chip-wa {
-      background: #ecfdf5;
-      color: #047857;
-      border-color: #a7f3d0;
+    .cp-inactivity-chip:hover,
+    .cp-inactivity-chip:focus-visible {
+      background: #000000 !important;
+      color: #ffffff !important;
+      border-color: #000000 !important;
     }
-    .cp-chip-wa:hover {
-      background: #10b981;
-      color: #ffffff;
-      border-color: #10b981;
+    :host([data-theme="dark"]) .cp-inactivity-chip,
+    .cp-dark-theme .cp-inactivity-chip,
+    .theme-dark .cp-inactivity-chip {
+      background: #18181b !important;
+      color: #ffffff !important;
+      border: 1px solid #3f3f46 !important;
     }
-    :host([data-theme="dark"]) .cp-chip-wa,
-    .cp-dark-theme .cp-chip-wa,
-    .theme-dark .cp-chip-wa {
-      background: rgba(16, 185, 129, 0.12);
-      color: #34d399;
-      border-color: rgba(16, 185, 129, 0.3);
+    :host([data-theme="dark"]) .cp-inactivity-chip:hover,
+    .cp-dark-theme .cp-inactivity-chip:hover,
+    .theme-dark .cp-inactivity-chip:hover,
+    :host([data-theme="dark"]) .cp-inactivity-chip:focus-visible,
+    .cp-dark-theme .cp-inactivity-chip:focus-visible,
+    .theme-dark .cp-inactivity-chip:focus-visible {
+      background: #ffffff !important;
+      color: #000000 !important;
+      border-color: #ffffff !important;
     }
-    :host([data-theme="dark"]) .cp-chip-wa:hover,
-    .cp-dark-theme .cp-chip-wa:hover,
-    .theme-dark .cp-chip-wa:hover {
-      background: #10b981;
-      color: #ffffff;
-      border-color: #10b981;
-    }
+    .cp-chip-wa,
+    .cp-chip-person,
     .cp-chip-end {
-      background: #f1f5f9;
-      color: #475569;
-      border-color: #cbd5e1;
-    }
-    .cp-chip-end:hover {
-      background: #e2e8f0;
-      color: #0f172a;
-      border-color: #94a3b8;
-    }
-    :host([data-theme="dark"]) .cp-chip-end,
-    .cp-dark-theme .cp-chip-end,
-    .theme-dark .cp-chip-end {
-      background: #27272a;
-      color: #d4d4d8;
-      border-color: #3f3f46;
-    }
-    :host([data-theme="dark"]) .cp-chip-end:hover,
-    .cp-dark-theme .cp-chip-end:hover,
-    .theme-dark .cp-chip-end:hover {
-      background: #3f3f46;
-      color: #ffffff;
-      border-color: #52525b;
-    }
-
-    .cp-chip-person {
-      background: #eff6ff;
-      color: #1d4ed8;
-      border-color: #bfdbfe;
-    }
-    .cp-chip-person:hover {
-      background: #2563eb;
-      color: #ffffff;
-      border-color: #2563eb;
-    }
-    :host([data-theme="dark"]) .cp-chip-person,
-    .cp-dark-theme .cp-chip-person,
-    .theme-dark .cp-chip-person {
-      background: rgba(37, 99, 235, 0.15);
-      color: #60a5fa;
-      border-color: rgba(37, 99, 235, 0.35);
-    }
-    :host([data-theme="dark"]) .cp-chip-person:hover,
-    .cp-dark-theme .cp-chip-person:hover,
-    .theme-dark .cp-chip-person:hover {
-      background: #2563eb;
-      color: #ffffff;
-      border-color: #2563eb;
+      background: inherit;
+      color: inherit;
+      border-color: inherit;
     }
 
     /* Visitor Intake Card (Section 1: Intercom / Fin Minimalist Design) */
@@ -7169,14 +7223,13 @@
 
     if (currentScreen === 'home' && typeof renderActionHome === 'function') {
       renderActionHome();
-    } else if (currentScreen === 'chat') {
-      const starterRow = chatStream ? chatStream.querySelector('.cp-starter-welcome-row') : null;
-      if (starterRow && !chatStream.querySelector('.cp-msg-row.user')) {
-        const oldChips = starterRow.querySelector('.cp-action-chips-container');
-        if (oldChips) oldChips.remove();
+    }
+    if (chatStream) {
+      const starterRow = chatStream.querySelector('.cp-starter-welcome-row') || (!chatStream.querySelector('.cp-msg-row.user') ? chatStream.querySelector('.cp-msg-row.ai') : null);
+      if (starterRow) {
         const bubble = starterRow.querySelector('.cp-bubble');
-        if (bubble && typeof attachChipsToBubble === 'function') attachChipsToBubble(bubble);
-      } else {
+        if (bubble && typeof attachChipsToBubble === 'function') attachChipsToBubble(bubble, true);
+      } else if (currentScreen === 'chat' && typeof ensureStarterQuickActionChips === 'function') {
         ensureStarterQuickActionChips();
       }
     }
@@ -7750,7 +7803,7 @@
       if (data.action_chips && Array.isArray(data.action_chips) && data.action_chips.length > 0 && !data.chat_ended) {
         const chipsBox = document.createElement('div');
         chipsBox.className = 'cp-action-chips-container';
-        chipsBox.style.cssText = 'display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;';
+        chipsBox.style.cssText = 'display:flex; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:6px; margin-top:8px; padding:4px 2px; max-width:100%; scrollbar-width:none; -webkit-overflow-scrolling:touch;';
         data.action_chips.forEach(chip => {
           // Clean emoji characters out of chip label
           let cleanLabel = (chip.label || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '').trim();
@@ -7760,17 +7813,19 @@
           chipBtn.type = 'button';
           chipBtn.className = 'cp-action-chip-pill';
           const isDark = currentTheme === 'dark';
-          const bgNormal = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f8fafc';
-          const borderNormal = isDark ? 'rgba(255, 255, 255, 0.18)' : '#e2e8f0';
-          const textNormal = isDark ? '#f1f5f9' : '#0f172a';
-          chipBtn.style.cssText = `display:inline-flex; align-items:center; background:${bgNormal}; color:${textNormal}; border:1px solid ${borderNormal}; border-radius:18px; padding:6px 13px; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.15s ease; font-family:inherit; letter-spacing:0.01em;`;
+          const bgNormal = isDark ? '#18181b' : '#ffffff';
+          const borderNormal = isDark ? '#3f3f46' : '#18181b';
+          const textNormal = isDark ? '#ffffff' : '#000000';
+          chipBtn.style.cssText = `display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; white-space:nowrap; background:${bgNormal}; color:${textNormal}; border:1px solid ${borderNormal}; border-radius:16px; padding:4px 11px; font-size:11px; font-weight:500; cursor:pointer; transition:all 0.15s ease; font-family:inherit; letter-spacing:-0.01em; outline:none;`;
           
           chipBtn.addEventListener('mouseenter', () => {
-            chipBtn.style.background = isDark ? 'rgba(255, 255, 255, 0.15)' : '#f1f5f9';
-            chipBtn.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.35)' : '#cbd5e1';
+            chipBtn.style.background = isDark ? '#ffffff' : '#000000';
+            chipBtn.style.color = isDark ? '#000000' : '#ffffff';
+            chipBtn.style.borderColor = isDark ? '#ffffff' : '#000000';
           });
           chipBtn.addEventListener('mouseleave', () => {
             chipBtn.style.background = bgNormal;
+            chipBtn.style.color = textNormal;
             chipBtn.style.borderColor = borderNormal;
           });
 
@@ -7781,7 +7836,7 @@
               b.style.opacity = '0.5';
               b.style.pointerEvents = 'none';
             });
-            handleSend(chip.text || cleanLabel);
+            executeChipAction(chip, chipBtn);
           });
           chipsBox.appendChild(chipBtn);
         });
@@ -8055,19 +8110,19 @@
     chipsRow.className = 'cp-inactivity-chips-container';
 
     chipsRow.innerHTML = `
-      <div class="cp-inactivity-chips-title">Need help or want to speak with our team?</div>
+      <div class="cp-inactivity-chips-title">Need help?</div>
       <div class="cp-inactivity-chips-pills">
         <button type="button" class="cp-inactivity-chip cp-chip-person" id="cp-btn-inactivity-person">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          <span>Talk to a Person</span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Human</span>
         </button>
         <button type="button" class="cp-inactivity-chip cp-chip-wa" id="cp-btn-inactivity-wa">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.46 0 .1 5.36.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.27-1.64a11.9 11.9 0 0 0 5.77 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.47-8.42z"/></svg>
-          <span>Continue on WhatsApp</span>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.46 0 .1 5.36.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.27-1.64a11.9 11.9 0 0 0 5.77 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.47-8.42z"/></svg>
+          <span>WhatsApp</span>
         </button>
         <button type="button" class="cp-inactivity-chip cp-chip-end" id="cp-btn-inactivity-end">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-          <span>End chat</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          <span>End Chat</span>
         </button>
       </div>
     `;
@@ -8457,6 +8512,11 @@
         hideTyping();
         if (data.success) {
           appendAIMessage(data);
+          if (data.human_handoff_requested && !isHumanChatActive) {
+            setTimeout(() => {
+              initiateHumanSupportHandoff();
+            }, 500);
+          }
         } else {
           let chatError = data.error || "Main aapki query process kar raha hoon. Kripya apna sawal ek baar dobara poochein!";
           if (chatError.toLowerCase().includes('workspace')) {
@@ -8634,27 +8694,269 @@
 
 
   function getActiveStarterChips() {
-    const brandName = widgetConfig.brand_name || 'CuboidPilot';
     if (widgetConfig.quick_actions && Array.isArray(widgetConfig.quick_actions) && widgetConfig.quick_actions.length > 0) {
       return widgetConfig.quick_actions;
     }
-    return [
-      { label: 'Courses & Programs', text: `What courses and programs does ${brandName} offer?` },
-      { label: 'Course Fees', text: 'What is the fee structure for your courses?' },
-      { label: '0% EMI Options', text: 'Can I pay the course fees in monthly EMIs?' },
-      { label: 'About ' + brandName, text: `Tell me about ${brandName}.` },
-      { label: 'Talk to Counselor', text: 'I would like to speak with a human counselor.' }
-    ];
+    return [];
   }
 
-  function attachChipsToBubble(bubble) {
-    if (!bubble || bubble.querySelector('.cp-action-chips-container')) return;
+  // Action Registry Execution Handler for Dynamic Client-Controlled Chips
+  async function executeChipAction(chip, triggerBtn = null) {
+    const actionType = chip.action_type || 'SEND_TEXT_RESPONSE';
+    const text = chip.text || chip.label || '';
+
+    switch (actionType) {
+      case 'OPEN_CATALOG_SELECTOR':
+        await renderCatalogSelectorInChat();
+        break;
+
+      case 'OPEN_CATALOG':
+        if (chip.linked_catalog_id) {
+          await renderCatalogItemsInChat(chip.linked_catalog_id, chip.label);
+        } else {
+          await renderCatalogSelectorInChat();
+        }
+        break;
+
+      case 'OPEN_BROCHURE_SELECTOR':
+        await renderBrochureSelectorInChat(chip.linked_category_id);
+        break;
+
+      case 'OPEN_BROCHURE':
+        if (chip.action_payload && chip.action_payload.file_url) {
+          window.open(chip.action_payload.file_url, '_blank');
+        } else {
+          await renderBrochureSelectorInChat();
+        }
+        break;
+
+      case 'START_HUMAN_HANDOFF':
+        appendUserMessage(chip.label || 'Connect me with a team member');
+        setTimeout(() => {
+          initiateHumanSupportHandoff();
+        }, 300);
+        break;
+
+      case 'BOOK_APPOINTMENT':
+        navigateTo('appointments');
+        break;
+
+      case 'SEND_WHATSAPP':
+        if (widgetConfig.whatsapp_number) {
+          const num = widgetConfig.whatsapp_number.replace(/[^0-9]/g, '');
+          window.open(`https://wa.me/${num}?text=${encodeURIComponent(text)}`, '_blank');
+        } else {
+          handleSend(text);
+        }
+        break;
+
+      case 'OPEN_URL':
+        if (chip.action_payload && chip.action_payload.url) {
+          window.open(chip.action_payload.url, '_blank');
+        } else {
+          handleSend(text);
+        }
+        break;
+
+      case 'SEND_TEXT_RESPONSE':
+      default:
+        handleSend(text);
+        break;
+    }
+  }
+
+  // Render Interactive Catalog Selector in Chat Stream
+  async function renderCatalogSelectorInChat() {
+    appendUserMessage('Browse Catalogs');
+    const loadRow = appendAIMessage({
+      reply: 'Fetching available catalogs...',
+      timestamp: 'Just now',
+      skipSound: true
+    });
+
+    try {
+      const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_catalogs&company_key=${encodeURIComponent(companyKey)}`);
+      const data = await res.json();
+      if (loadRow && loadRow.parentNode) loadRow.remove();
+
+      if (data.success && Array.isArray(data.catalogs) && data.catalogs.length > 0) {
+        const bubbleContent = document.createElement('div');
+        bubbleContent.innerHTML = `<div style="font-weight:600; margin-bottom:8px;">Choose a catalog to explore:</div>`;
+        const listDiv = document.createElement('div');
+        listDiv.style.cssText = 'display:flex; flex-direction:column; gap:8px; margin-top:6px;';
+
+        data.catalogs.forEach(cat => {
+          const itemCard = document.createElement('div');
+          const isDark = currentTheme === 'dark';
+          itemCard.style.cssText = `background:${isDark ? 'rgba(255,255,255,0.06)' : '#f8fafc'}; border:1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0'}; border-radius:10px; padding:10px 12px; cursor:pointer; transition:all 0.15s ease;`;
+          itemCard.innerHTML = `
+            <div style="font-weight:600; font-size:13px; color:${isDark ? '#f8fafc' : '#0f172a'}; display:flex; justify-content:space-between; align-items:center;">
+              <span>${escapeHtml(cat.name)}</span>
+              <span style="font-size:11px; font-weight:500; color:#6366f1; background:rgba(99,102,241,0.1); padding:2px 6px; border-radius:10px;">${cat.item_count} items</span>
+            </div>
+            ${cat.description ? `<div style="font-size:12px; color:${isDark ? '#94a3b8' : '#64748b'}; margin-top:3px;">${escapeHtml(cat.description)}</div>` : ''}
+          `;
+          itemCard.addEventListener('mouseenter', () => {
+            itemCard.style.borderColor = '#6366f1';
+          });
+          itemCard.addEventListener('mouseleave', () => {
+            itemCard.style.borderColor = isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0';
+          });
+          itemCard.addEventListener('click', () => {
+            renderCatalogItemsInChat(cat.id, cat.name);
+          });
+          listDiv.appendChild(itemCard);
+        });
+
+        const replyRow = appendAIMessage({
+          reply: 'Here are our verified catalogs:',
+          timestamp: 'Just now'
+        });
+        if (replyRow) {
+          const bubble = replyRow.querySelector('.cp-bubble');
+          if (bubble) bubble.appendChild(listDiv);
+        }
+      } else {
+        appendAIMessage({
+          reply: 'No public catalogs are currently available for this workspace.',
+          timestamp: 'Just now'
+        });
+      }
+    } catch (e) {
+      if (loadRow && loadRow.parentNode) loadRow.remove();
+      appendAIMessage({
+        reply: 'Unable to load catalogs at this moment.',
+        timestamp: 'Just now'
+      });
+    }
+  }
+
+  // Render Interactive Catalog Items in Chat Stream
+  async function renderCatalogItemsInChat(catalogId, catalogName) {
+    appendUserMessage(`View ${catalogName || 'Catalog'}`);
+    const loadRow = appendAIMessage({
+      reply: `Loading offerings for ${escapeHtml(catalogName || 'catalog')}...`,
+      timestamp: 'Just now',
+      skipSound: true
+    });
+
+    try {
+      const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_catalog_items&catalog_id=${catalogId}&company_key=${encodeURIComponent(companyKey)}`);
+      const data = await res.json();
+      if (loadRow && loadRow.parentNode) loadRow.remove();
+
+      if (data.success && Array.isArray(data.items) && data.items.length > 0) {
+        const productCards = data.items.map(it => ({
+          id: it.id,
+          name: it.name,
+          description: it.description,
+          price_inr: it.price,
+          duration: it.duration,
+          features: it.features
+        }));
+
+        appendAIMessage({
+          reply: `Here are the verified offerings available under **${escapeHtml(catalogName || 'this catalog')}**:`,
+          product_cards: productCards,
+          timestamp: 'Just now'
+        });
+      } else {
+        appendAIMessage({
+          reply: `No items found under **${escapeHtml(catalogName || 'this catalog')}** yet.`,
+          timestamp: 'Just now'
+        });
+      }
+    } catch (e) {
+      if (loadRow && loadRow.parentNode) loadRow.remove();
+      appendAIMessage({
+        reply: 'Unable to load catalog items right now.',
+        timestamp: 'Just now'
+      });
+    }
+  }
+
+  // Render Interactive Brochure / Asset Selector in Chat Stream
+  async function renderBrochureSelectorInChat(categoryId = null) {
+    appendUserMessage('View Documents & Brochures');
+    const loadRow = appendAIMessage({
+      reply: 'Fetching available documents...',
+      timestamp: 'Just now',
+      skipSound: true
+    });
+
+    try {
+      let url = `${baseUrl}/api/widget_actions.php?action=get_brochures&company_key=${encodeURIComponent(companyKey)}`;
+      if (categoryId) url += `&category_id=${categoryId}`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      if (loadRow && loadRow.parentNode) loadRow.remove();
+
+      if (data.success && Array.isArray(data.brochures) && data.brochures.length > 0) {
+        const isDark = currentTheme === 'dark';
+        const listDiv = document.createElement('div');
+        listDiv.style.cssText = 'display:flex; flex-direction:column; gap:8px; margin-top:8px;';
+
+        data.brochures.forEach(b => {
+          const item = document.createElement('div');
+          item.style.cssText = `background:${isDark ? 'rgba(255,255,255,0.06)' : '#f8fafc'}; border:1px solid ${isDark ? 'rgba(255,255,255,0.12)' : '#e2e8f0'}; border-radius:10px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center;`;
+          
+          let dlUrl = b.file_url || '';
+          if (dlUrl && !dlUrl.startsWith('http')) {
+            dlUrl = `${baseUrl}/${dlUrl.replace(/^\/+/, '')}`;
+          }
+
+          item.innerHTML = `
+            <div>
+              <div style="font-weight:600; font-size:13px; color:${isDark ? '#f8fafc' : '#0f172a'};">${escapeHtml(b.title)}</div>
+              ${b.description ? `<div style="font-size:11px; color:${isDark ? '#94a3b8' : '#64748b'}; margin-top:2px;">${escapeHtml(b.description)}</div>` : ''}
+            </div>
+            <a href="${escapeHtml(dlUrl)}" target="_blank" download style="display:inline-flex; align-items:center; gap:4px; padding:5px 10px; background:#6366f1; color:#fff; border-radius:6px; font-size:11px; font-weight:600; text-decoration:none;">
+              Download
+            </a>
+          `;
+          listDiv.appendChild(item);
+        });
+
+        const replyRow = appendAIMessage({
+          reply: 'Here are the official downloadable documents and brochures:',
+          timestamp: 'Just now'
+        });
+        if (replyRow) {
+          const bubble = replyRow.querySelector('.cp-bubble');
+          if (bubble) bubble.appendChild(listDiv);
+        }
+      } else {
+        appendAIMessage({
+          reply: 'No brochures or documents are currently published for this company.',
+          timestamp: 'Just now'
+        });
+      }
+    } catch (e) {
+      if (loadRow && loadRow.parentNode) loadRow.remove();
+      appendAIMessage({
+        reply: 'Unable to retrieve brochures at this time.',
+        timestamp: 'Just now'
+      });
+    }
+  }
+
+  function attachChipsToBubble(bubble, forceRefresh = false) {
+    if (!bubble) return;
+    const existing = bubble.querySelector('.cp-action-chips-container');
+    if (existing) {
+      if (forceRefresh) {
+        existing.remove();
+      } else {
+        return;
+      }
+    }
     const starterChips = getActiveStarterChips();
     if (!starterChips || starterChips.length === 0) return;
 
     const chipsBox = document.createElement('div');
     chipsBox.className = 'cp-action-chips-container';
-    chipsBox.style.cssText = 'display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;';
+    chipsBox.style.cssText = 'display:flex; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:6px; margin-top:8px; padding:4px 2px; max-width:100%; scrollbar-width:none; -webkit-overflow-scrolling:touch;';
     starterChips.forEach(chip => {
       let cleanLabel = (chip.label || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '').trim();
       if (!cleanLabel) cleanLabel = chip.label || '';
@@ -8663,17 +8965,19 @@
       chipBtn.type = 'button';
       chipBtn.className = 'cp-action-chip-pill';
       const isDark = currentTheme === 'dark';
-      const bgNormal = isDark ? 'rgba(255, 255, 255, 0.08)' : '#f8fafc';
-      const borderNormal = isDark ? 'rgba(255, 255, 255, 0.18)' : '#e2e8f0';
-      const textNormal = isDark ? '#f1f5f9' : '#0f172a';
-      chipBtn.style.cssText = `display:inline-flex; align-items:center; background:${bgNormal}; color:${textNormal}; border:1px solid ${borderNormal}; border-radius:18px; padding:6px 13px; font-size:12px; font-weight:500; cursor:pointer; transition:all 0.15s ease; font-family:inherit; letter-spacing:0.01em;`;
+      const bgNormal = isDark ? '#18181b' : '#ffffff';
+      const borderNormal = isDark ? '#3f3f46' : '#18181b';
+      const textNormal = isDark ? '#ffffff' : '#000000';
+      chipBtn.style.cssText = `display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; white-space:nowrap; background:${bgNormal}; color:${textNormal}; border:1px solid ${borderNormal}; border-radius:16px; padding:4px 11px; font-size:11px; font-weight:500; cursor:pointer; transition:all 0.15s ease; font-family:inherit; letter-spacing:-0.01em; outline:none;`;
 
       chipBtn.addEventListener('mouseenter', () => {
-        chipBtn.style.background = isDark ? 'rgba(255, 255, 255, 0.15)' : '#f1f5f9';
-        chipBtn.style.borderColor = isDark ? 'rgba(255, 255, 255, 0.35)' : '#cbd5e1';
+        chipBtn.style.background = isDark ? '#ffffff' : '#000000';
+        chipBtn.style.color = isDark ? '#000000' : '#ffffff';
+        chipBtn.style.borderColor = isDark ? '#ffffff' : '#000000';
       });
       chipBtn.addEventListener('mouseleave', () => {
         chipBtn.style.background = bgNormal;
+        chipBtn.style.color = textNormal;
         chipBtn.style.borderColor = borderNormal;
       });
 
@@ -8684,7 +8988,7 @@
           b.style.opacity = '0.5';
           b.style.pointerEvents = 'none';
         });
-        handleSend(chip.text || cleanLabel);
+        executeChipAction(chip, chipBtn);
       });
       chipsBox.appendChild(chipBtn);
     });
@@ -8694,35 +8998,30 @@
   function ensureStarterQuickActionChips() {
     if (!chatStream) return;
 
-    // If user has already spoken, don't show starter greeting
-    const userMsg = chatStream.querySelector('.cp-msg-row.user');
-    if (userMsg) return;
-
-    // Check if starter message row already exists
-    const existingStarter = chatStream.querySelector('.cp-starter-welcome-row');
-    if (existingStarter) {
-      const existingChips = existingStarter.querySelector('.cp-action-chips-container');
-      if (!existingChips) {
-        const bubble = existingStarter.querySelector('.cp-bubble');
-        if (bubble) attachChipsToBubble(bubble);
-      }
-      return;
-    }
-
     // Hide the static template welcome row if present
     const staticWelcome = shadow.getElementById('cp-welcome-row');
     if (staticWelcome) staticWelcome.style.display = 'none';
 
+    // Check if starter message row already exists
+    const existingStarter = chatStream.querySelector('.cp-starter-welcome-row');
+    if (existingStarter) {
+      const bubble = existingStarter.querySelector('.cp-bubble');
+      if (bubble) attachChipsToBubble(bubble, true);
+      return;
+    }
+
     // If chatStream has any AI message(s) from restored history:
+    const userMsg = chatStream.querySelector('.cp-msg-row.user');
     const aiRows = chatStream.querySelectorAll('.cp-msg-row.ai');
     if (aiRows.length > 0) {
-      const chipsInStream = chatStream.querySelector('.cp-action-chips-container');
-      if (chipsInStream) return;
-      const lastAiBubble = aiRows[aiRows.length - 1].querySelector('.cp-bubble');
-      if (lastAiBubble) {
-        attachChipsToBubble(lastAiBubble);
-        return;
+      if (!userMsg) {
+        const firstAiBubble = aiRows[0].querySelector('.cp-bubble');
+        if (firstAiBubble) {
+          attachChipsToBubble(firstAiBubble, true);
+          return;
+        }
       }
+      return;
     }
 
     const brandName = widgetConfig.brand_name || 'CuboidPilot';
@@ -9842,10 +10141,7 @@
   }
 
   // -------------------------------------------------------------
-  // SCREEN 4: INSTANT HUMAN CHAT & ACTIVE 30s COUNTDOWN (3 ATTEMPTS)
-  // -------------------------------------------------------------
-  // -------------------------------------------------------------
-  // SCREEN 4: INSTANT HUMAN CHAT & SLEEK INTERCOM-STYLE WAITING PILL (3 ATTEMPTS)
+  // SCREEN 4: INSTANT HUMAN CHAT & SLEEK 30s COUNTDOWN HANDOFF FLOW
   // -------------------------------------------------------------
   async function startInstantHumanHelpSession(agent) {
     stopHumanCountdown();
@@ -9856,11 +10152,21 @@
 
     navigateTo('human-chat', { agent: selectedAgent });
 
+    // 1. Initial immediate acknowledgment
+    const lastMsgBubble = chatStream ? chatStream.querySelector('.cp-msg-row.ai:last-child .cp-bubble') : null;
+    const hasAck = lastMsgBubble && lastMsgBubble.textContent.includes("Sure! I'm connecting you with our team.");
+    if (!hasAck) {
+      appendAIMessage({
+        reply: "Sure! I'm connecting you with our team. Please wait a moment.",
+        timestamp: 'Just now'
+      });
+    }
+
     // Clean up any stale waiting pills
     const existingPill = chatStream ? chatStream.querySelector('.cp-waiting-pill') : null;
     if (existingPill) existingPill.remove();
 
-    // Sleek Intercom-style waiting pill (No bulky card, no hardcoded paragraphs)
+    // Sleek Intercom-style waiting pill
     const pill = document.createElement('div');
     pill.className = 'cp-waiting-pill';
     pill.id = 'cp-waiting-pill';
@@ -9911,7 +10217,7 @@
 
     startHumanPolling();
 
-    // Start 30s countdown with 3 attempts
+    // Start single 30s countdown
     humanCountdownTimer = setInterval(() => {
       humanSecondsRemaining--;
 
@@ -9926,47 +10232,31 @@
       }
 
       if (humanSecondsRemaining <= 0) {
-        if (humanAttemptNumber < 3) {
-          humanAttemptNumber++;
-          humanSecondsRemaining = 30;
-          if (textEl) textEl.textContent = `Attempt ${humanAttemptNumber}: Re-notifying ${selectedAgent?.name || 'team'}...`;
-          if (timerEl) timerEl.textContent = `30s`;
-          if (subtitleEl) subtitleEl.textContent = `Attempt ${humanAttemptNumber} (30s)...`;
+        // 30 seconds elapsed without immediate join: Transition to HUMAN_PENDING
+        // Do NOT terminate conversation or falsely revert to AI
+        stopHumanCountdown();
 
-          // Re-trigger alert notification ping
-          try {
-            fetch(`${baseUrl}/api/widget_actions.php?action=start_human_chat`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
-              body: JSON.stringify({
-                company_key: companyKey,
-                user_id: selectedAgent ? selectedAgent.id : 0,
-                session_token: sessionId,
-                conversation_id: conversationId,
-                name: visitorName,
-                email: visitorEmail,
-                phone: visitorPhone
-              })
-            }).catch(() => {});
-          } catch(e) {}
-        } else {
-          // All 3 attempts elapsed without connection -> AI Fallback
-          stopHumanCountdown();
-          const activePill = shadow.getElementById('cp-waiting-pill');
-          if (activePill) activePill.remove();
-
-          isHumanChatActive = false;
-          const brandName = widgetConfig.brand_name || 'Cai';
-          if (assistantNameEl) assistantNameEl.textContent = brandName;
-          if (subtitleEl) subtitleEl.textContent = '● Online (AI Assistant)';
-          if (inputField) inputField.placeholder = 'Ask Cai a question...';
-
-          appendAIMessage({
-            reply: "Our team is currently busy assisting other clients. I'm Cai, your AI assistant! How can I help you right now? You can share your query here, and our team will follow up with you on WhatsApp shortly!",
-            timestamp: 'Just now'
-          });
-          playReceivedSound();
+        const activePill = shadow.getElementById('cp-waiting-pill');
+        if (activePill) {
+          activePill.classList.add('pending');
+          if (textEl) textEl.textContent = 'Our team has been notified';
+          if (timerEl) timerEl.textContent = 'Pending';
         }
+        if (subtitleEl) {
+          subtitleEl.textContent = '● Team Notified (Waiting for reply)';
+        }
+        if (inputField) {
+          inputField.placeholder = 'Leave a message for our team...';
+        }
+
+        // Leave human chat active so visitor messages are queued for human agent (not AI)
+        isHumanChatActive = true;
+
+        appendAIMessage({
+          reply: "Our team has been notified. You can leave your message here, and we'll respond as soon as possible.",
+          timestamp: 'Just now'
+        });
+        playReceivedSound();
       }
     }, 1000);
   }
@@ -10063,10 +10353,11 @@
             resetHumanInactivityTimer();
             const activePill = shadow.getElementById('cp-waiting-pill');
             if (activePill) {
+              activePill.classList.remove('pending');
               activePill.classList.add('connected');
               const textEl = shadow.getElementById('cp-waiting-text');
               const timerEl = shadow.getElementById('cp-waiting-timer');
-              if (textEl) textEl.textContent = `Connected with ${latestAgentName}`;
+              if (textEl) textEl.textContent = "You're now connected with our team.";
               if (timerEl) timerEl.textContent = 'Live';
               if (subtitleEl) subtitleEl.textContent = `● Online (${latestAgentName})`;
               if (assistantNameEl) assistantNameEl.textContent = latestAgentName;

@@ -1623,25 +1623,25 @@ function provisionTenantWorkspace(PDO $pdo, array $params): array {
         $companyId,
         $params['widget_assistant_name'] ?? 'Cai',
         json_encode(['name', 'phone', 'email', 'requirement', 'budget', 'timeline']),
-        "Never invent unverified pricing, discounts, guarantees, or delivery dates. When reliable information is unavailable, ask for clarification or offer human counselor assistance.",
+        "Never invent unverified pricing, discounts, guarantees, or delivery dates. When reliable information is unavailable, ask for clarification or offer team specialist assistance.",
         json_encode([
             'min_budget' => 25000,
             'urgent_timeline_days' => 30,
             'high_priority_keywords' => ['pricing', 'fee', 'demo', 'appointment', 'urgent', 'immediately']
         ]),
-        "Admissions & discovery calls available Monday through Saturday 10:00 AM to 7:00 PM IST.",
-        "Accepts UPI, Netbanking, Credit Cards, and flexible 3-Month / 6-Month zero-interest EMI installment schedules."
+        "Consultation & discovery calls available Monday through Saturday 10:00 AM to 7:00 PM IST.",
+        "Accepts UPI, Netbanking, Credit Cards, and flexible payment / installment schedules."
     ]);
 
     // 8. Seed Default Lead Scoring Rules (Section 8)
     $defaultScoringRules = [
         ['phone_shared', null, 20, 'Visitor provided phone number / contact info'],
-        ['pricing_inquired', null, 15, 'Asked about pricing, fees, or packages'],
-        ['budget_confirmed', '50000', 25, 'Confirmed project/tuition budget >= ₹50,000'],
-        ['timeline_urgent', '30', 20, 'Needs project or enrollment within 30 days'],
+        ['pricing_inquired', null, 15, 'Asked about pricing, packages, or plans'],
+        ['budget_confirmed', '50000', 25, 'Confirmed project/service budget >= ₹50,000'],
+        ['timeline_urgent', '30', 20, 'Needs project or implementation within 30 days'],
         ['whatsapp_continued', null, 15, 'Continued conversation on WhatsApp'],
         ['demo_requested', null, 20, 'Requested demo or consultation meeting'],
-        ['human_requested', null, 25, 'Explicitly requested human counselor / call']
+        ['human_requested', null, 25, 'Explicitly requested human representative / call']
     ];
     $insRule = $pdo->prepare("
         INSERT IGNORE INTO `lead_scoring_rules` (`company_id`, `signal_type`, `condition_value`, `score_delta`, `description`, `is_active`)
@@ -1653,7 +1653,7 @@ function provisionTenantWorkspace(PDO $pdo, array $params): array {
 
     // 9. Seed Default Custom Fields (Section 29)
     $defaultFields = [
-        ['requirement_type', 'Project / Course Requirement', 'text', null, 1],
+        ['requirement_type', 'Service / Project Requirement', 'text', null, 1],
         ['budget_range', 'Budget Range', 'select', json_encode(['₹25,000 - ₹50,000', '₹50,000 - ₹1,00,000', '₹1,00,000+']), 0],
         ['target_timeline', 'Target Timeline', 'select', json_encode(['Immediate (1-2 weeks)', 'Within 30 Days', '1-3 Months']), 0]
     ];

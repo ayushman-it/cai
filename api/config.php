@@ -86,36 +86,60 @@ try {
         ? ($logoLight ?: $defaultLogo ?: $logoDark)
         : ($logoDark ?: $defaultLogo ?: $logoLight);
 
-    // Quick Action Chips (Configurable by Client Company in Dashboard)
+    // Dynamic Quick Action Chips (Client-Controlled from quick_chips Registry)
     $quickActions = [];
-    if (!empty($widget['quick_actions_json'])) {
-        $decodedQa = json_decode($widget['quick_actions_json'], true);
-        if (is_array($decodedQa) && count($decodedQa) > 0) {
-            $quickActions = $decodedQa;
+    try {
+        $chipsStmt = $pdo->prepare("
+            SELECT id, label, display_order, action_type, response_text, linked_category_id, linked_catalog_id, action_payload_json
+            FROM `quick_chips`
+            WHERE `company_id` = ? AND `is_active` = 1 AND `is_starter` = 1 AND `status` = 'published'
+            ORDER BY `display_order` ASC, `id` ASC
+        ");
+        $chipsStmt->execute([$companyId]);
+        $dbChips = $chipsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($dbChips as $chip) {
+            $quickActions[] = [
+                'id'                  => (int)$chip['id'],
+                'label'               => $chip['label'],
+                'text'                => !empty($chip['response_text']) ? $chip['response_text'] : $chip['label'],
+                'action_type'         => $chip['action_type'] ?: 'SEND_TEXT_RESPONSE',
+                'linked_category_id'  => $chip['linked_category_id'] ? (int)$chip['linked_category_id'] : null,
+                'linked_catalog_id'   => $chip['linked_catalog_id'] ? (int)$chip['linked_catalog_id'] : null,
+                'action_payload'      => !empty($chip['action_payload_json']) ? json_decode($chip['action_payload_json'], true) : null
+            ];
+        }
+    } catch (Throwable $e) {
+        // Fallback to widget settings json if quick_chips fails
+        if (!empty($widget['quick_actions_json'])) {
+            $decodedQa = json_decode($widget['quick_actions_json'], true);
+            if (is_array($decodedQa) && count($decodedQa) > 0) {
+                $quickActions = $decodedQa;
+            }
         }
     }
 
-    if (empty($quickActions)) {
-        $industry = strtolower($company['industry'] ?? '');
-        $isEdu = (bool)preg_match('/(education|academy|school|college|institute|coaching|training|curriculum|course)/i', $industry);
-        if ($isEdu || stripos($company['name'], 'munk') !== false) {
-            $quickActions = [
-                ['label' => 'Courses & Programs', 'text' => "What courses and programs does {$brandName} offer?"],
-                ['label' => 'Course Fees', 'text' => "What is the fee structure for your courses?"],
-                ['label' => '0% EMI Options', 'text' => "Can I pay the course fees in monthly EMIs?"],
-                ['label' => 'About ' . $brandName, 'text' => "Tell me about {$brandName} and why students choose you."],
-                ['label' => 'Talk to Counselor', 'text' => "I would like to speak with an admissions counselor."]
-            ];
-        } else {
-            $quickActions = [
-                ['label' => 'Platform Features', 'text' => "What are the core features and capabilities of {$brandName}?"],
-                ['label' => 'Plans & Pricing', 'text' => "What are your pricing plans and commercial tiers?"],
-                ['label' => 'Book Live Demo', 'text' => "I would like to schedule a product demo."],
-                ['label' => 'About ' . $brandName, 'text' => "Tell me about {$brandName}."],
-                ['label' => 'Talk to Sales', 'text' => "Connect me with an executive from the team."]
-            ];
-        }
-    }
+    // Tenant Business Meta (Categories & Catalogs)
+    $businessCategories = [];
+    try {
+        $catStmt = $pdo->prepare("SELECT id, name, slug, description, icon FROM `company_business_categories` WHERE `company_id` = ? AND `is_active` = 1 ORDER BY `display_order` ASC");
+        $catStmt->execute([$companyId]);
+        $businessCategories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Throwable $e) {}
+
+    $publishedCatalogsCount = 0;
+    try {
+        $catCountStmt = $pdo->prepare("SELECT COUNT(*) FROM `offering_catalogs` WHERE `company_id` = ? AND `is_published` = 1");
+        $catCountStmt->execute([$companyId]);
+        $publishedCatalogsCount = (int)$catCountStmt->fetchColumn();
+    } catch (Throwable $e) {}
+
+    $publishedBrochuresCount = 0;
+    try {
+        $broCountStmt = $pdo->prepare("SELECT COUNT(*) FROM `company_assets` WHERE `company_id` = ? AND `asset_type` = 'brochure' AND `is_published` = 1");
+        $broCountStmt->execute([$companyId]);
+        $publishedBrochuresCount = (int)$broCountStmt->fetchColumn();
+    } catch (Throwable $e) {}
 
     echo json_encode([
         'success' => true,
@@ -159,6 +183,9 @@ try {
             'bank_ifsc'          => $widget['bank_ifsc'] ?? '',
             'bank_upi_id'        => $widget['bank_upi_id'] ?? '',
             'bank_qr_url'        => $widget['bank_qr_url'] ?? '',
+            'business_categories'=> $businessCategories,
+            'catalogs_count'     => $publishedCatalogsCount,
+            'brochures_count'    => $publishedBrochuresCount,
         ],
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 

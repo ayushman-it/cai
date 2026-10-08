@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'name'                 => $companyName,
                     'slug'                 => $slug,
                     'company_key'          => $companyKey,
-                    'industry'             => 'Education & Academies',
+                    'industry'             => 'General Business & Services',
                     'owner_name'           => $name,
                     'owner_email'          => $email,
                     'owner_password'       => $password,
@@ -55,8 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'knowledge_sources'    => [
                         [
                             'type'    => 'faq',
-                            'title'   => 'General Inquiries',
-                            'content' => "Welcome to {$companyName}. We provide professional educational courses and career programs. Feel free to ask about our admission criteria, curriculum, fees, and installment options."
+                            'title'   => 'General Business Overview',
+                            'content' => "Welcome to {$companyName}. We provide professional products, solutions, and client services. Feel free to ask about our offerings, pricing plans, service options, and how to get started."
                         ]
                     ]
                 ]);

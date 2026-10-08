@@ -956,21 +956,28 @@ try {
             }
 
             if (!empty($supportEmail) && filter_var($supportEmail, FILTER_VALIDATE_EMAIL)) {
-                $emailSubject = "🚨 [Live Support Request] #CONV-{$conversationId} - {$custDispName}";
+                $compName = htmlspecialchars($company['name'] ?? 'Support Team');
+                $emailSubject = "Human Assistance Requested — {$compName} (#CONV-{$conversationId})";
                 $replyDirectUrl = "{$dashBaseUrl}/api/quick_action.php?token={$quickActionToken}&action=view";
                 $closeDirectUrl = "{$dashBaseUrl}/api/quick_action.php?token={$quickActionToken}&action=close";
                 $resolveDirectUrl = "{$dashBaseUrl}/api/quick_action.php?token={$quickActionToken}&action=resolve";
 
+                $emailCfg = CompanyMailer::getCompanyConfig($pdo, $companyId);
+                $inboundDomain = !empty($emailCfg['reply_to_email']) && strpos($emailCfg['reply_to_email'], '@') !== false
+                    ? substr(strrchr($emailCfg['reply_to_email'], "@"), 1)
+                    : (!empty($host) && $host !== 'localhost' ? $host : 'cai.cuboidsoft.in');
+                $inboundReplyTo = "reply+{$quickActionToken}@{$inboundDomain}";
+
                 $emailHtml = <<<HTML
 <!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"></head>
+<head><meta charset="utf-8"><title>{$emailSubject}</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f7f6f2; color: #1c1917; margin: 0; padding: 24px;">
   <div style="max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #e7e5de; border-radius: 8px; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);">
     <div style="padding-bottom: 16px; border-bottom: 1px solid #e7e5de; margin-bottom: 20px;">
       <span style="font-size: 11px; font-weight: 700; color: #b45309; text-transform: uppercase; background: #fef3c7; padding: 3px 8px; border-radius: 4px;">Live Human Support Request</span>
       <h2 style="font-size: 18px; margin: 12px 0 4px 0; color: #1c1917;">Visitor Requested Live Human Assistance</h2>
-      <p style="font-size: 12.5px; color: #78716c; margin: 0;">AI automated replies have been paused. You can reply directly below or join via dashboard.</p>
+      <p style="font-size: 12.5px; color: #78716c; margin: 0;">AI automated replies have been paused. You can reply directly to this email or join via dashboard.</p>
     </div>
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
       <tr>
@@ -1000,7 +1007,7 @@ try {
         <a href="{$closeDirectUrl}" style="background-color: #ef4444; color: #ffffff; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-size: 12.5px; font-weight: 600; display: inline-block;">✗ Close Chat</a>
       </div>
       <div style="margin-top: 10px; font-size: 11px; color: #94a3b8;">
-        Sends instant message to visitor's website widget without opening dashboard.
+        You can also reply directly to this email from your inbox. Your response will appear immediately on the visitor's website widget.
       </div>
     </div>
 
@@ -1011,7 +1018,11 @@ try {
 </body>
 </html>
 HTML;
-                CompanyMailer::send($pdo, $companyId, $supportEmail, $emailSubject, $emailHtml);
+                $extraHeaders = [
+                    'reply_to'   => $inboundReplyTo,
+                    'message_id' => "<conv-{$conversationId}-{$quickActionToken}@{$inboundDomain}>"
+                ];
+                CompanyMailer::send($pdo, $companyId, $supportEmail, $emailSubject, $emailHtml, '', $extraHeaders);
             }
 
             // 2. Dispatch Customer Acknowledgment Email if visitor email is available
@@ -1593,6 +1604,157 @@ HTML;
             'razorpay_key'    => $razorpayKey,
             'company_name'    => $company['name'],
             'purpose'         => $purpose
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: get_catalogs (Published Offering Catalogs for Tenant)
+    // -------------------------------------------------------------
+    if ($action === 'get_catalogs') {
+        $catStmt = $pdo->prepare("
+            SELECT oc.*
+            FROM `offering_catalogs` oc
+            WHERE oc.company_id = ? AND oc.is_published = 1
+            ORDER BY oc.display_order ASC, oc.id ASC
+        ");
+        $catStmt->execute([$companyId]);
+        $catalogs = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($catalogs as $c) {
+            $itemCount = 0;
+            $sectionIds = !empty($c['section_ids']) ? json_decode($c['section_ids'], true) : [];
+            if (!empty($sectionIds) && is_array($sectionIds)) {
+                $placeholders = implode(',', array_fill(0, count($sectionIds), '?'));
+                $iStmt = $pdo->prepare("SELECT COUNT(*) FROM `products` WHERE `company_id` = ? AND `section_id` IN ($placeholders) AND `is_active` = 1");
+                $iStmt->execute(array_merge([$companyId], $sectionIds));
+                $itemCount = (int)$iStmt->fetchColumn();
+            } else {
+                $iStmt = $pdo->prepare("SELECT COUNT(*) FROM `products` WHERE `company_id` = ? AND `is_active` = 1");
+                $iStmt->execute([$companyId]);
+                $itemCount = (int)$iStmt->fetchColumn();
+            }
+
+            $result[] = [
+                'id'            => (int)$c['id'],
+                'name'          => $c['name'],
+                'slug'          => $c['slug'],
+                'description'   => $c['description'] ?? '',
+                'item_count'    => $itemCount,
+                'cover_image'   => $c['image_url'] ?? '',
+                'cta_label'     => 'Browse Catalog'
+            ];
+        }
+
+        echo json_encode([
+            'success'  => true,
+            'catalogs' => $result
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: get_catalog_items (Items/Offerings in a Catalog)
+    // -------------------------------------------------------------
+    if ($action === 'get_catalog_items') {
+        $catalogId = (int)($_GET['catalog_id'] ?? $data['catalog_id'] ?? 0);
+        $catalog = null;
+        if ($catalogId > 0) {
+            $catStmt = $pdo->prepare("SELECT * FROM `offering_catalogs` WHERE `id` = ? AND `company_id` = ? AND `is_published` = 1 LIMIT 1");
+            $catStmt->execute([$catalogId, $companyId]);
+            $catalog = $catStmt->fetch(PDO::FETCH_ASSOC);
+        }
+
+        $items = [];
+        $sectionIds = ($catalog && !empty($catalog['section_ids'])) ? json_decode($catalog['section_ids'], true) : [];
+        if (!empty($sectionIds) && is_array($sectionIds)) {
+            $placeholders = implode(',', array_fill(0, count($sectionIds), '?'));
+            $pStmt = $pdo->prepare("
+                SELECT id, name, description, price_inr as price, duration, features_json as features, is_featured, custom_fields_json, section_id
+                FROM `products`
+                WHERE `company_id` = ? AND `section_id` IN ($placeholders) AND `is_active` = 1
+                ORDER BY `id` ASC
+            ");
+            $pStmt->execute(array_merge([$companyId], $sectionIds));
+            $items = $pStmt->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $pStmt = $pdo->prepare("
+                SELECT id, name, description, price_inr as price, duration, features_json as features, is_featured, custom_fields_json, section_id
+                FROM `products`
+                WHERE `company_id` = ? AND `is_active` = 1
+                ORDER BY `id` ASC
+            ");
+            $pStmt->execute([$companyId]);
+            $items = $pStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        $formatted = [];
+        foreach ($items as $item) {
+            $customFields = !empty($item['custom_fields_json']) ? json_decode($item['custom_fields_json'], true) : [];
+            $formatted[] = [
+                'id'            => (int)$item['id'],
+                'name'          => $item['name'],
+                'description'   => $item['description'] ?? '',
+                'price'         => $item['price'] !== null ? (float)$item['price'] : null,
+                'currency'      => $item['currency'] ?: 'INR',
+                'duration'      => $item['duration'] ?? '',
+                'features'      => !empty($item['features']) ? json_decode($item['features'], true) : [],
+                'is_featured'   => (bool)$item['is_featured'],
+                'custom_fields' => is_array($customFields) ? $customFields : []
+            ];
+        }
+
+        echo json_encode([
+            'success' => true,
+            'catalog' => $catalog ? [
+                'id'          => (int)$catalog['id'],
+                'name'        => $catalog['name'],
+                'description' => $catalog['description'] ?? ''
+            ] : null,
+            'items'   => $formatted
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: get_brochures (Published Documents/Assets for Tenant)
+    // -------------------------------------------------------------
+    if ($action === 'get_brochures') {
+        $categoryId = (int)($_GET['category_id'] ?? $data['category_id'] ?? 0);
+        
+        $sql = "
+            SELECT id, title, description, file_url, original_filename, file_size_bytes, download_count, linked_category_ids
+            FROM `company_assets`
+            WHERE `company_id` = ? AND `asset_type` = 'brochure' AND `is_published` = 1
+        ";
+        $params = [$companyId];
+        $sql .= " ORDER BY `id` DESC";
+
+        $bStmt = $pdo->prepare($sql);
+        $bStmt->execute($params);
+        $brochures = $bStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $filtered = [];
+        foreach ($brochures as $b) {
+            $linkedCats = !empty($b['linked_category_ids']) ? json_decode($b['linked_category_ids'], true) : [];
+            if ($categoryId > 0 && !empty($linkedCats) && !in_array($categoryId, $linkedCats)) {
+                continue;
+            }
+            $filtered[] = [
+                'id'                => (int)$b['id'],
+                'title'             => $b['title'],
+                'description'       => $b['description'] ?? '',
+                'file_url'          => $b['file_url'],
+                'original_filename' => $b['original_filename'] ?? '',
+                'file_size'         => (int)($b['file_size_bytes'] ?? 0),
+                'download_count'    => (int)($b['download_count'] ?? 0)
+            ];
+        }
+
+        echo json_encode([
+            'success'   => true,
+            'brochures' => $filtered
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
     }

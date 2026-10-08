@@ -147,8 +147,8 @@ class AssetHelper {
                 // Fallback: try PHP mail() if company SMTP isn't configured yet
                 $headers  = "MIME-Version: 1.0\r\n";
                 $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
-                $headers .= "From: {$brandName} <thecodemunk@gmail.com>\r\n";
-                $headers .= "Reply-To: thecodemunk@gmail.com\r\n";
+                $headers .= "From: {$brandName} <noreply@cai.cuboidsoft.in>\r\n";
+                $headers .= "Reply-To: noreply@cai.cuboidsoft.in\r\n";
                 $isSent = (bool)@mail($toEmail, $subject, $htmlBody, $headers);
                 // If local CLI / localhost / sandbox without mail server, treat simulation as dispatched
                 if (!$isSent && (php_sapi_name() === 'cli' || strpos($_SERVER['HTTP_HOST'] ?? '', 'localhost') !== false || empty($_SERVER['HTTP_HOST']))) {

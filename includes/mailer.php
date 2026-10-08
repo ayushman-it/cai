@@ -20,7 +20,7 @@ class CompanyMailer {
      * @param string $textBody
      * @return array ['success' => bool, 'error' => string|null]
      */
-    public static function send(PDO $pdo, int $companyId, string $toEmail, string $subject, string $htmlBody, string $textBody = ''): array {
+    public static function send(PDO $pdo, int $companyId, string $toEmail, string $subject, string $htmlBody, string $textBody = '', array $extraHeaders = []): array {
         // Log dispatch intent to alert_logs table for audit visibility
         try {
             $pdo->prepare("
@@ -31,7 +31,7 @@ class CompanyMailer {
 
         $config = self::getCompanyConfig($pdo, $companyId);
         if ($config && !empty($config['smtp_host']) && $config['smtp_host'] !== 'smtp.mailtest.com' && !empty($config['smtp_password'])) {
-            $smtpRes = self::sendSmtp($config, $toEmail, $subject, $htmlBody, $textBody);
+            $smtpRes = self::sendSmtp($config, $toEmail, $subject, $htmlBody, $textBody, $extraHeaders);
             if (!empty($smtpRes['success'])) {
                 return $smtpRes;
             }
@@ -41,11 +41,21 @@ class CompanyMailer {
         // Graceful Fallback: Native mail() / System relay
         $senderName = $config['sender_name'] ?? 'CuboidPilot';
         $senderEmail = $config['sender_email'] ?? 'noreply@cai.cuboidsoft.in';
+        $replyTo = !empty($extraHeaders['reply_to']) ? $extraHeaders['reply_to'] : ($config['reply_to_email'] ?? $senderEmail);
 
         $headers  = "MIME-Version: 1.0\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
         $headers .= "From: =?UTF-8?B?" . base64_encode($senderName) . "?= <{$senderEmail}>\r\n";
-        $headers .= "Reply-To: {$senderEmail}\r\n";
+        $headers .= "Reply-To: {$replyTo}\r\n";
+        if (!empty($extraHeaders['message_id'])) {
+            $headers .= "Message-ID: {$extraHeaders['message_id']}\r\n";
+        }
+        if (!empty($extraHeaders['in_reply_to'])) {
+            $headers .= "In-Reply-To: {$extraHeaders['in_reply_to']}\r\n";
+        }
+        if (!empty($extraHeaders['references'])) {
+            $headers .= "References: {$extraHeaders['references']}\r\n";
+        }
         $headers .= "X-Mailer: CuboidPilot Gateway\r\n";
 
         $mailSent = @mail($toEmail, $subject, $htmlBody, $headers);
@@ -203,7 +213,7 @@ class CompanyMailer {
     /**
      * Low-level SMTP message delivery using isolated socket.
      */
-    private static function sendSmtp(array $config, string $toEmail, string $subject, string $htmlBody, string $textBody = ''): array {
+    private static function sendSmtp(array $config, string $toEmail, string $subject, string $htmlBody, string $textBody = '', array $extraHeaders = []): array {
         $host       = trim($config['smtp_host']);
         $port       = (int)($config['smtp_port'] ?? 587);
         $username   = trim($config['smtp_username']);
@@ -211,7 +221,7 @@ class CompanyMailer {
         $encryption = strtolower(trim($config['encryption_type'] ?? 'tls'));
         $senderName = trim($config['sender_name'] ?? 'CuboidPilot');
         $senderEmail = trim($config['sender_email'] ?? $username);
-        $replyTo    = trim($config['reply_to_email'] ?? $senderEmail);
+        $replyTo    = !empty($extraHeaders['reply_to']) ? $extraHeaders['reply_to'] : trim($config['reply_to_email'] ?? $senderEmail);
 
         if (empty($textBody)) {
             $textBody = strip_tags(preg_replace('/<br\s*\/?>/i', "\n", $htmlBody));
@@ -305,6 +315,15 @@ class CompanyMailer {
         $headers[] = "To: <{$toEmail}>";
         $headers[] = "Reply-To: <{$replyTo}>";
         $headers[] = "Subject: =?UTF-8?B?" . base64_encode($subject) . "?=";
+        if (!empty($extraHeaders['message_id'])) {
+            $headers[] = "Message-ID: {$extraHeaders['message_id']}";
+        }
+        if (!empty($extraHeaders['in_reply_to'])) {
+            $headers[] = "In-Reply-To: {$extraHeaders['in_reply_to']}";
+        }
+        if (!empty($extraHeaders['references'])) {
+            $headers[] = "References: {$extraHeaders['references']}";
+        }
         $headers[] = "MIME-Version: 1.0";
         $headers[] = "Content-Type: multipart/alternative; boundary=\"{$boundary}\"";
         $headers[] = "Date: " . date('r');

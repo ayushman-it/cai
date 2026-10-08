@@ -55,6 +55,14 @@
               <i data-lucide="building-2" class="w-3.5 h-3.5"></i>
               <span>Company Profile & Branding</span>
             </button>
+            <button onclick="switchSettingsSection('business-engine')" id="nav-btn-business-engine" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="network" class="w-3.5 h-3.5"></i>
+              <span>Business Structure & Sections</span>
+            </button>
+            <button onclick="switchSettingsSection('quick-chips-manager')" id="nav-btn-quick-chips-manager" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+              <span>Quick Reply Chips & Registry</span>
+            </button>
             <button onclick="switchSettingsSection('ai-persona')" id="nav-btn-ai-persona" class="settings-nav-btn px-3.5 py-2.5 border-b-2 border-transparent text-stone-500 hover:text-stone-900 hover:border-stone-300 flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap">
               <i data-lucide="bot" class="w-3.5 h-3.5"></i>
               <span>AI Persona & Prompt</span>
@@ -226,6 +234,10 @@
                       <label class="block font-medium text-stone-700 mb-1">Industry / Category</label>
                       <input type="text" id="setting-industry" value="" class="app-input text-xs" placeholder="e.g. Software & AI Solutions">
                     </div>
+                    <div class="md:col-span-2">
+                      <label class="block font-medium text-stone-700 mb-1">Business Overview & Scope</label>
+                      <textarea id="setting-business-description" rows="2" class="app-input text-xs w-full py-2" placeholder="Briefly describe what your business offers, who your clients are, and your primary commercial scope..."></textarea>
+                    </div>
                     <div>
                       <label class="block font-medium text-stone-700 mb-1">City / Location</label>
                       <input type="text" id="setting-city" value="" class="app-input text-xs" placeholder="e.g. Bengaluru">
@@ -261,6 +273,109 @@
                         <span>Delete workspace...</span>
                       </button>
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 1B. Dynamic Business Engine (Tenant Categories & Dynamic Sections) -->
+              <div id="section-business-engine" class="settings-pane space-y-6 hidden">
+                <div class="app-panel space-y-5">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e7e5de]">
+                    <div>
+                      <h2 class="text-sm font-semibold text-stone-900">Universal Business Structure & Categories</h2>
+                      <p class="text-[11px] text-stone-500 mt-0.5">Define your company's actual business profile, core departments/categories, and custom dynamic sections without any hardcoded templates.</p>
+                    </div>
+                    <button type="button" class="btn-primary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5" onclick="openAddCategoryModal()">
+                      <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                      <span>Add Business Category</span>
+                    </button>
+                  </div>
+
+                  <!-- Business Categories Table -->
+                  <div class="space-y-2">
+                    <div class="text-xs font-semibold text-stone-700">Configured Business Categories</div>
+                    <div class="app-table-wrapper border border-[#e7e5de] rounded-lg overflow-hidden">
+                      <table class="app-table w-full text-xs">
+                        <thead>
+                          <tr class="bg-stone-50 text-stone-500 font-medium">
+                            <th class="p-2.5 text-left">Category Name</th>
+                            <th class="p-2.5 text-left">Slug</th>
+                            <th class="p-2.5 text-left">Description</th>
+                            <th class="p-2.5 text-left">Status</th>
+                            <th class="p-2.5 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody id="business-categories-tbody">
+                          <tr><td colspan="5" class="p-4 text-center text-stone-400">Loading business categories...</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- Dynamic Sections Table -->
+                  <div class="pt-4 border-t border-[#e7e5de] space-y-3">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <div class="text-xs font-semibold text-stone-700">Dynamic Dashboard Sections</div>
+                        <p class="text-[11px] text-stone-500">Create client-controlled tabs and collections (e.g. Products, Treatments, Packages, Memberships, Tours) with custom fields.</p>
+                      </div>
+                      <button type="button" class="btn-secondary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5" onclick="openAddSectionModal()">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                        <span>Add Dynamic Section</span>
+                      </button>
+                    </div>
+
+                    <div class="app-table-wrapper border border-[#e7e5de] rounded-lg overflow-hidden">
+                      <table class="app-table w-full text-xs">
+                        <thead>
+                          <tr class="bg-stone-50 text-stone-500 font-medium">
+                            <th class="p-2.5 text-left">Section Name</th>
+                            <th class="p-2.5 text-left">Identifier</th>
+                            <th class="p-2.5 text-left">Linked Category</th>
+                            <th class="p-2.5 text-left">Item Count</th>
+                            <th class="p-2.5 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody id="dynamic-sections-tbody">
+                          <tr><td colspan="5" class="p-4 text-center text-stone-400">Loading dynamic sections...</td></tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 1C. Quick Reply Chips & Action Registry Manager -->
+              <div id="section-quick-chips-manager" class="settings-pane space-y-6 hidden">
+                <div class="app-panel space-y-5">
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#e7e5de]">
+                    <div>
+                      <h2 class="text-sm font-semibold text-stone-900">Client-Controlled Quick Reply Chips</h2>
+                      <p class="text-[11px] text-stone-500 mt-0.5">Control every button chip shown in your website widget chat. Zero hardcoded industry assumptions.</p>
+                    </div>
+                    <button type="button" class="btn-primary btn-sm text-xs py-1.5 px-3 flex items-center gap-1.5" onclick="openAddQuickChipModal()">
+                      <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                      <span>Create New Chip</span>
+                    </button>
+                  </div>
+
+                  <!-- Chips Table -->
+                  <div class="app-table-wrapper border border-[#e7e5de] rounded-lg overflow-hidden">
+                    <table class="app-table w-full text-xs">
+                      <thead>
+                        <tr class="bg-stone-50 text-stone-500 font-medium">
+                          <th class="p-2.5 text-left">Chip Label</th>
+                          <th class="p-2.5 text-left">Action Type</th>
+                          <th class="p-2.5 text-left">Linked Target</th>
+                          <th class="p-2.5 text-left">Placement</th>
+                          <th class="p-2.5 text-left">Status</th>
+                          <th class="p-2.5 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody id="quick-chips-tbody">
+                        <tr><td colspan="6" class="p-4 text-center text-stone-400">Loading quick reply chips...</td></tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -1375,6 +1490,190 @@
     </div>
   </div>
 
+  <!-- Intercom-Designed Modal: Add Business Category -->
+  <div id="modal-add-category" class="app-modal-overlay">
+    <div class="app-modal max-w-md w-full p-6 space-y-4">
+      <div class="flex items-start justify-between pb-3 border-b border-[#e7e5de]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-stone-100 text-stone-700 border border-stone-200 flex items-center justify-center shrink-0">
+            <i data-lucide="layers" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-stone-900">Add Business Category</h3>
+            <p class="text-[11px] text-stone-500">Define a core business domain or service vertical.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeAddCategoryModal()" class="text-stone-400 hover:text-stone-700 p-1 rounded-md transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="form-add-category" onsubmit="submitAddCategory(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Category Name *</label>
+          <input type="text" id="cat-input-name" required placeholder="e.g. Cloud Security, Aesthetic Care, B2B SaaS" class="app-input w-full text-xs">
+          <p class="text-[10.5px] text-stone-400 mt-1">This will identify your primary services or departmental offerings.</p>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Description (Optional)</label>
+          <textarea id="cat-input-desc" rows="3" placeholder="Brief summary of what this category encompasses..." class="app-input w-full text-xs"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-[#e7e5de] flex items-center justify-end gap-2">
+          <button type="button" onclick="closeAddCategoryModal()" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+            Cancel
+          </button>
+          <button type="submit" id="btn-submit-category" class="btn-primary btn-sm text-xs py-1.5 px-4 flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save Category</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Intercom-Designed Modal: Add Dynamic Section -->
+  <div id="modal-add-section" class="app-modal-overlay">
+    <div class="app-modal max-w-md w-full p-6 space-y-4">
+      <div class="flex items-start justify-between pb-3 border-b border-[#e7e5de]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-stone-100 text-stone-700 border border-stone-200 flex items-center justify-center shrink-0">
+            <i data-lucide="folder-plus" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-stone-900">Add Dynamic Section</h3>
+            <p class="text-[11px] text-stone-500">Create a custom client-controlled catalog tab.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeAddSectionModal()" class="text-stone-400 hover:text-stone-700 p-1 rounded-md transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="form-add-section" onsubmit="submitAddSection(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Section Name *</label>
+          <input type="text" id="sec-input-name" required placeholder="e.g. Treatments, Packages, Courses, Solutions" class="app-input w-full text-xs" oninput="autoPopulateSectionSlug(this.value)">
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Linked Category (Optional)</label>
+          <select id="sec-input-category" class="app-select w-full text-xs font-medium">
+            <option value="">General / All Categories</option>
+          </select>
+          <p class="text-[10.5px] text-stone-400 mt-1">Select the business category this section relates to.</p>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Description (Optional)</label>
+          <textarea id="sec-input-desc" rows="2" placeholder="Details about what items belong under this dynamic section..." class="app-input w-full text-xs"></textarea>
+        </div>
+
+        <div class="pt-3 border-t border-[#e7e5de] flex items-center justify-end gap-2">
+          <button type="button" onclick="closeAddSectionModal()" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+            Cancel
+          </button>
+          <button type="submit" id="btn-submit-section" class="btn-primary btn-sm text-xs py-1.5 px-4 flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Create Section</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Intercom-Designed Modal: Create Quick Reply Chip & Action Registry -->
+  <div id="modal-add-quick-chip" class="app-modal-overlay">
+    <div class="app-modal max-w-lg w-full p-6 space-y-4">
+      <div class="flex items-start justify-between pb-3 border-b border-[#e7e5de]">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-full bg-stone-100 text-stone-700 border border-stone-200 flex items-center justify-center shrink-0">
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-semibold text-stone-900">Create Quick Reply Chip</h3>
+            <p class="text-[11px] text-stone-500">Configure actionable widget buttons with custom behavior.</p>
+          </div>
+        </div>
+        <button type="button" onclick="closeAddQuickChipModal()" class="text-stone-400 hover:text-stone-700 p-1 rounded-md transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- AI Suggestions Trigger Bar -->
+      <div class="p-3 bg-gradient-to-r from-stone-50 via-amber-50/30 to-stone-50 border border-stone-200/90 rounded-lg space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5 text-stone-700">
+            <span class="text-sm">✨</span>
+            <span class="text-xs font-semibold text-stone-900">AI Suggested Quick Chips</span>
+          </div>
+          <button type="button" id="btn-fetch-ai-chips" onclick="fetchAiChipSuggestions()" class="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-800 bg-white border border-stone-300 hover:bg-stone-50 hover:border-stone-400 px-2.5 py-1 rounded-md shadow-2xs transition-all">
+            <i data-lucide="sparkles" class="w-3 h-3 text-amber-600"></i>
+            <span>Suggest For My Business</span>
+          </button>
+        </div>
+        <p class="text-[11px] text-stone-500">Intelligent suggestions tailored to your business profile, offerings, and audience.</p>
+        <div id="ai-chip-suggestions-list" class="hidden pt-1.5 flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <form id="form-add-quick-chip" onsubmit="submitAddQuickChip(event)" class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Chip Button Label *</label>
+          <input type="text" id="chip-input-label" required placeholder="e.g. Browse Catalogs, Download Brochure, Talk to Human" class="app-input w-full text-xs">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block font-medium text-stone-700 mb-1">Action Type *</label>
+            <select id="chip-input-action-type" class="app-select w-full text-xs font-medium" onchange="onChipActionTypeChange(this.value)">
+              <option value="SEND_TEXT_RESPONSE">Standard Query (Send Prompt)</option>
+              <option value="OPEN_CATALOG_SELECTOR">Interactive Catalogs Selector</option>
+              <option value="OPEN_CATALOG">Open Specific Catalog</option>
+              <option value="OPEN_BROCHURE_SELECTOR">Downloadable Brochures Selector</option>
+              <option value="START_HUMAN_HANDOFF">Connect to Human Agent</option>
+              <option value="BOOK_APPOINTMENT">Book Appointment / Schedule</option>
+              <option value="OPEN_URL">Open External Web Link</option>
+            </select>
+          </div>
+
+          <div id="chip-target-container">
+            <label class="block font-medium text-stone-700 mb-1" id="chip-target-label">Linked Catalog / Target</label>
+            <select id="chip-input-target-select" class="app-select w-full text-xs font-medium">
+              <option value="">All / Automatic</option>
+            </select>
+            <input type="url" id="chip-input-target-url" class="app-input w-full text-xs hidden" placeholder="https://example.com/demo">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-medium text-stone-700 mb-1">Automated AI Prompt / Response Text (Optional)</label>
+          <textarea id="chip-input-response-text" rows="2" placeholder="Text sent directly to customer or prompt invoked when this chip is clicked..." class="app-input w-full text-xs"></textarea>
+        </div>
+
+        <div class="p-3 bg-stone-50 border border-stone-200/80 rounded-md flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="chip-input-starter" checked class="rounded border-stone-300 text-stone-900 focus:ring-0">
+            <label for="chip-input-starter" class="text-xs font-medium text-stone-800 cursor-pointer">
+              Show as Initial Welcome Chip
+            </label>
+          </div>
+          <span class="text-[11px] text-stone-400">Displayed in widget welcome state</span>
+        </div>
+
+        <div class="pt-3 border-t border-[#e7e5de] flex items-center justify-end gap-2">
+          <button type="button" onclick="closeAddQuickChipModal()" class="btn-secondary btn-sm text-xs py-1.5 px-3">
+            Cancel
+          </button>
+          <button type="submit" id="btn-submit-quick-chip" class="btn-primary btn-sm text-xs py-1.5 px-4 flex items-center gap-1.5">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Create Chip</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="../js/components.js?v=5.0.0"></script>
   <script src="../js/dashboard.js?v=5.0.0"></script>
   <script>
@@ -1383,6 +1682,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       CuboidShell.initCompanyApp('settings', 'Workspace Settings', ['Manage']);
       loadSettings();
+      loadBusinessEngineData();
     });
 
     function resolveAssetUrl(url) {
@@ -1410,6 +1710,8 @@
         targetBtn.classList.remove('border-transparent', 'text-stone-500');
         targetBtn.classList.add('border-stone-900', 'text-stone-900', 'font-semibold');
       }
+      if (sectionId === 'business-engine') loadBusinessEngineData();
+      if (sectionId === 'quick-chips-manager') loadQuickChipsData();
       if (sectionId === 'email-settings') loadEmailConfig();
       if (sectionId === 'instagram-settings') loadInstagramConfig();
       if (window.lucide && window.lucide.createIcons) {
@@ -1597,6 +1899,10 @@
           if (dangerZone) dangerZone.style.display = 'none';
         }
         if (c.industry) document.getElementById('setting-industry').value = c.industry;
+        if (c.business_description) {
+          const descEl = document.getElementById('setting-business-description');
+          if (descEl) descEl.value = c.business_description;
+        }
         if (c.city) document.getElementById('setting-city').value = c.city;
         if (c.country) document.getElementById('setting-country').value = c.country;
         
@@ -2061,6 +2367,8 @@
       const formData = new FormData();
       formData.append('name', document.getElementById('setting-company-name').value.trim());
       formData.append('industry', document.getElementById('setting-industry').value.trim());
+      const bDescEl = document.getElementById('setting-business-description');
+      if (bDescEl) formData.append('business_description', bDescEl.value.trim());
       formData.append('city', document.getElementById('setting-city').value.trim());
       formData.append('brand_name', document.getElementById('setting-widget-brand').value.trim());
       const astNameInput = document.getElementById('setting-assistant-name');
@@ -2834,6 +3142,541 @@
         if (btn) {
           btn.disabled = false;
           btn.innerHTML = '<i data-lucide="activity" class="w-3.5 h-3.5 text-stone-600"></i><span>Test Connection</span>';
+          if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+        }
+      }
+    }
+
+    // =========================================================================
+    // DYNAMIC BUSINESS ENGINE & QUICK CHIPS HANDLERS
+    // =========================================================================
+    async function loadBusinessEngineData() {
+      const catTbody = document.getElementById('business-categories-tbody');
+      const secTbody = document.getElementById('dynamic-sections-tbody');
+      if (catTbody) catTbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-stone-400">Loading categories...</td></tr>';
+      if (secTbody) secTbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-stone-400">Loading dynamic sections...</td></tr>';
+
+      try {
+        const [cRes, sRes] = await Promise.all([
+          fetch('../api/business_config.php?action=get_categories'),
+          fetch('../api/business_config.php?action=get_sections')
+        ]);
+        const cData = await cRes.json();
+        const sData = await sRes.json();
+
+        if (cData.success && Array.isArray(cData.categories)) {
+          cachedBusinessCategories = cData.categories;
+        }
+
+        // Render categories
+        if (catTbody) {
+          if (cData.success && Array.isArray(cData.categories) && cData.categories.length > 0) {
+            catTbody.innerHTML = cData.categories.map(cat => `
+              <tr class="border-b border-[#e7e5de] hover:bg-stone-50">
+                <td class="p-2.5 font-semibold text-stone-900">${escapeHtml(cat.name)}</td>
+                <td class="p-2.5 font-mono text-[11px] text-stone-500">${escapeHtml(cat.slug)}</td>
+                <td class="p-2.5 text-stone-600">${escapeHtml(cat.description || '—')}</td>
+                <td class="p-2.5">
+                  <span class="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded ${cat.is_active ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-stone-100 text-stone-500'}">
+                    ${cat.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td class="p-2.5 text-right space-x-1">
+                  <button type="button" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-red-600 hover:text-red-800" onclick="deleteCategory(${cat.id})">Delete</button>
+                </td>
+              </tr>
+            `).join('');
+          } else {
+            catTbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-stone-400">No custom categories defined. Click "Add Business Category" above.</td></tr>';
+          }
+        }
+
+        // Render dynamic sections
+        if (secTbody) {
+          if (sData.success && Array.isArray(sData.sections) && sData.sections.length > 0) {
+            secTbody.innerHTML = sData.sections.map(sec => `
+              <tr class="border-b border-[#e7e5de] hover:bg-stone-50">
+                <td class="p-2.5 font-semibold text-stone-900">${escapeHtml(sec.name)}</td>
+                <td class="p-2.5 font-mono text-[11px] text-stone-500">${escapeHtml(sec.key_identifier)}</td>
+                <td class="p-2.5 text-stone-600">${escapeHtml(sec.category_name || 'General')}</td>
+                <td class="p-2.5"><span class="px-2 py-0.5 rounded text-[11px] bg-stone-100 text-stone-700">${sec.item_count || 0} items</span></td>
+                <td class="p-2.5 text-right space-x-1">
+                  <button type="button" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-red-600 hover:text-red-800" onclick="deleteDynamicSection(${sec.id})">Delete</button>
+                </td>
+              </tr>
+            `).join('');
+          } else {
+            secTbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-stone-400">No dynamic sections created yet.</td></tr>';
+          }
+        }
+      } catch (e) {
+        if (catTbody) catTbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Error loading categories.</td></tr>';
+        if (secTbody) secTbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Error loading sections.</td></tr>';
+      }
+    }
+
+    async function loadQuickChipsData() {
+      const tbody = document.getElementById('quick-chips-tbody');
+      if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-stone-400">Loading chips registry...</td></tr>';
+
+      try {
+        const res = await fetch('../api/quick_chips.php?action=list');
+        const data = await res.json();
+
+        if (tbody) {
+          if (data.success && Array.isArray(data.chips) && data.chips.length > 0) {
+            tbody.innerHTML = data.chips.map(chip => `
+              <tr class="border-b border-[#e7e5de] hover:bg-stone-50">
+                <td class="p-2.5 font-semibold text-stone-900">${escapeHtml(chip.label)}</td>
+                <td class="p-2.5">
+                  <span class="inline-flex px-2 py-0.5 text-[10px] font-mono rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+                    ${escapeHtml(chip.action_type || 'SEND_TEXT_RESPONSE')}
+                  </span>
+                </td>
+                <td class="p-2.5 text-stone-600">${escapeHtml(chip.category_name || chip.catalog_name || 'Standard Query')}</td>
+                <td class="p-2.5 text-stone-500 text-[11px]">${chip.is_starter ? 'Starter & Active' : 'Contextual'}</td>
+                <td class="p-2.5">
+                  <span class="inline-flex px-2 py-0.5 text-[10px] font-semibold rounded ${chip.status === 'published' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-stone-100 text-stone-500'}">
+                    ${escapeHtml(chip.status || 'published')}
+                  </span>
+                </td>
+                <td class="p-2.5 text-right space-x-1">
+                  <button type="button" class="btn-secondary btn-sm text-[11px] py-1 px-2" onclick="toggleQuickChipStatus(${chip.id})">Toggle</button>
+                  <button type="button" class="btn-secondary btn-sm text-[11px] py-1 px-2 text-red-600 hover:text-red-800" onclick="deleteQuickChip(${chip.id})">Delete</button>
+                </td>
+              </tr>
+            `).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-stone-400">No quick reply chips created yet. Click "Create New Chip" above.</td></tr>';
+          }
+        }
+      } catch (e) {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-red-500">Error loading chips.</td></tr>';
+      }
+    }
+
+    async function deleteCategory(id) {
+      if (!confirm('Are you sure you want to delete this category?')) return;
+      try {
+        const res = await fetch('../api/business_config.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete_category', id })
+        });
+        const d = await res.json();
+        if (d.success) loadBusinessEngineData();
+        else alert(d.error || 'Failed to delete category');
+      } catch (e) { alert('Network error'); }
+    }
+
+    async function deleteDynamicSection(id) {
+      if (!confirm('Are you sure you want to delete this section?')) return;
+      try {
+        const res = await fetch('../api/business_config.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete_section', id })
+        });
+        const d = await res.json();
+        if (d.success) loadBusinessEngineData();
+        else alert(d.error || 'Failed to delete section');
+      } catch (e) { alert('Network error'); }
+    }
+
+    async function toggleQuickChipStatus(id) {
+      try {
+        const res = await fetch('../api/quick_chips.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'toggle_status', id })
+        });
+        const d = await res.json();
+        if (d.success) loadQuickChipsData();
+        else alert(d.error || 'Failed to update chip status');
+      } catch (e) { alert('Network error'); }
+    }
+
+    async function deleteQuickChip(id) {
+      if (!confirm('Are you sure you want to delete this quick reply chip?')) return;
+      try {
+        const res = await fetch('../api/quick_chips.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', id })
+        });
+        const d = await res.json();
+        if (d.success) loadQuickChipsData();
+        else alert(d.error || 'Failed to delete chip');
+      } catch (e) { alert('Network error'); }
+    }
+
+    // =========================================================================
+    // CUSTOM MODALS: ADD CATEGORY, ADD SECTION, ADD QUICK CHIP
+    // =========================================================================
+    let cachedBusinessCategories = [];
+    let cachedOfferingCatalogs = [];
+
+    // Helper: Toast notification
+    function notifyAction(msg, type = 'success') {
+      if (window.CuboidShell && window.CuboidShell.toast) {
+        window.CuboidShell.toast(msg, type);
+      } else {
+        alert(msg);
+      }
+    }
+
+    // --- 1. Add Category Modal ---
+    function openAddCategoryModal() {
+      const modal = document.getElementById('modal-add-category');
+      const form = document.getElementById('form-add-category');
+      if (form) form.reset();
+      if (modal) {
+        modal.classList.add('open');
+        setTimeout(() => document.getElementById('cat-input-name')?.focus(), 50);
+      }
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+    }
+
+    function closeAddCategoryModal() {
+      const modal = document.getElementById('modal-add-category');
+      if (modal) modal.classList.remove('open');
+    }
+
+    async function submitAddCategory(e) {
+      if (e) e.preventDefault();
+      const btn = document.getElementById('btn-submit-category');
+      const name = document.getElementById('cat-input-name')?.value.trim();
+      const desc = document.getElementById('cat-input-desc')?.value.trim();
+
+      if (!name) {
+        notifyAction('Category name is required', 'error');
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Saving...';
+      }
+
+      try {
+        const res = await fetch('../api/business_config.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'save_category', name, description: desc })
+        });
+        const d = await res.json();
+        if (d.success) {
+          notifyAction(d.message || 'Category saved successfully.', 'success');
+          closeAddCategoryModal();
+          await loadBusinessEngineData();
+        } else {
+          notifyAction(d.error || 'Failed to save category', 'error');
+        }
+      } catch (err) {
+        notifyAction('Network error occurred while saving category.', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i><span>Save Category</span>';
+          if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+        }
+      }
+    }
+
+    // --- 2. Add Dynamic Section Modal ---
+    function autoPopulateSectionSlug(val) {
+      // Automatic helper if needed
+    }
+
+    async function openAddSectionModal() {
+      const modal = document.getElementById('modal-add-section');
+      const form = document.getElementById('form-add-section');
+      if (form) form.reset();
+
+      // Populate Linked Category select dropdown
+      const catSelect = document.getElementById('sec-input-category');
+      if (catSelect) {
+        catSelect.innerHTML = '<option value="">General / All Categories</option>';
+        if (Array.isArray(cachedBusinessCategories) && cachedBusinessCategories.length > 0) {
+          cachedBusinessCategories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.textContent = cat.name;
+            catSelect.appendChild(opt);
+          });
+        }
+      }
+
+      if (modal) {
+        modal.classList.add('open');
+        setTimeout(() => document.getElementById('sec-input-name')?.focus(), 50);
+      }
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+    }
+
+    function closeAddSectionModal() {
+      const modal = document.getElementById('modal-add-section');
+      if (modal) modal.classList.remove('open');
+    }
+
+    async function submitAddSection(e) {
+      if (e) e.preventDefault();
+      const btn = document.getElementById('btn-submit-section');
+      const name = document.getElementById('sec-input-name')?.value.trim();
+      const desc = document.getElementById('sec-input-desc')?.value.trim();
+      const catId = document.getElementById('sec-input-category')?.value;
+
+      if (!name) {
+        notifyAction('Section name is required', 'error');
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Saving...';
+      }
+
+      try {
+        const payload = {
+          action: 'save_section',
+          name,
+          description: desc,
+          linked_category_ids: catId ? [parseInt(catId)] : []
+        };
+        const res = await fetch('../api/business_config.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        if (d.success) {
+          notifyAction(d.message || 'Dynamic section created successfully.', 'success');
+          closeAddSectionModal();
+          await loadBusinessEngineData();
+        } else {
+          notifyAction(d.error || 'Failed to create dynamic section', 'error');
+        }
+      } catch (err) {
+        notifyAction('Network error occurred while saving dynamic section.', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i><span>Create Section</span>';
+          if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+        }
+      }
+    }
+
+    // --- 3. Quick Reply Chip Modal & Action Registry ---
+    function onChipActionTypeChange(actionType) {
+      const targetContainer = document.getElementById('chip-target-container');
+      const targetLabel = document.getElementById('chip-target-label');
+      const targetSelect = document.getElementById('chip-input-target-select');
+      const targetUrl = document.getElementById('chip-input-target-url');
+
+      if (!targetContainer || !targetLabel || !targetSelect || !targetUrl) return;
+
+      if (actionType === 'OPEN_URL') {
+        targetLabel.textContent = 'Destination URL *';
+        targetSelect.classList.add('hidden');
+        targetUrl.classList.remove('hidden');
+        targetUrl.required = true;
+      } else if (actionType === 'OPEN_CATALOG' || actionType === 'OPEN_CATALOG_SELECTOR') {
+        targetLabel.textContent = 'Linked Catalog';
+        targetUrl.classList.add('hidden');
+        targetUrl.required = false;
+        targetSelect.classList.remove('hidden');
+        targetSelect.innerHTML = '<option value="">All / Automatic Catalog</option>';
+        if (Array.isArray(cachedOfferingCatalogs) && cachedOfferingCatalogs.length > 0) {
+          cachedOfferingCatalogs.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.textContent = cat.name + ' (' + (cat.slug || 'catalog') + ')';
+            targetSelect.appendChild(opt);
+          });
+        }
+      } else {
+        // Standard queries, human handoff, booking, brochures
+        targetLabel.textContent = 'Context Domain';
+        targetUrl.classList.add('hidden');
+        targetUrl.required = false;
+        targetSelect.classList.remove('hidden');
+        targetSelect.innerHTML = '<option value="">General / System Default</option>';
+        if (Array.isArray(cachedBusinessCategories) && cachedBusinessCategories.length > 0) {
+          cachedBusinessCategories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.textContent = cat.name;
+            targetSelect.appendChild(opt);
+          });
+        }
+      }
+    }
+
+    async function fetchAiChipSuggestions() {
+      const btn = document.getElementById('btn-fetch-ai-chips');
+      const listEl = document.getElementById('ai-chip-suggestions-list');
+      if (!listEl) return;
+
+      const origHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Thinking...';
+      }
+
+      try {
+        const res = await fetch('../api/quick_chips.php?action=suggest_ai_chips');
+        const data = await res.json();
+
+        if (data.success && Array.isArray(data.suggestions) && data.suggestions.length > 0) {
+          listEl.innerHTML = '';
+          listEl.classList.remove('hidden');
+
+          data.suggestions.forEach(item => {
+            const chipBtn = document.createElement('button');
+            chipBtn.type = 'button';
+            chipBtn.className = 'group inline-flex items-center gap-1.5 px-2.5 py-1 bg-stone-100 hover:bg-stone-900 text-stone-800 hover:text-white rounded-md border border-stone-200 transition-all text-[11px] font-medium text-left cursor-pointer';
+            chipBtn.title = (item.explanation || '') + ' (Click to apply)';
+            chipBtn.innerHTML = `<span>${escapeHtml(item.label)}</span><span class="text-[10px] text-stone-400 group-hover:text-stone-300 font-normal">(${escapeHtml(item.action_type || 'Prompt')})</span>`;
+            chipBtn.onclick = () => applyAiSuggestedChip(item);
+            listEl.appendChild(chipBtn);
+          });
+          notifyAction(`Generated ${data.suggestions.length} AI suggestions for ${data.industry || 'your business'}`, 'success');
+        } else {
+          notifyAction(data.error || 'Unable to generate suggestions at this moment.', 'error');
+        }
+      } catch (err) {
+        notifyAction('Error connecting to AI suggestions service', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origHtml;
+        }
+        if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+      }
+    }
+
+    function applyAiSuggestedChip(item) {
+      if (!item) return;
+      const labelInput = document.getElementById('chip-input-label');
+      const actionSelect = document.getElementById('chip-input-action-type');
+      const respInput = document.getElementById('chip-input-response-text');
+
+      if (labelInput && item.label) labelInput.value = item.label;
+      if (actionSelect && item.action_type) {
+        actionSelect.value = item.action_type;
+        onChipActionTypeChange(item.action_type);
+      }
+      if (respInput && (item.text || item.response_text)) {
+        respInput.value = item.text || item.response_text;
+      }
+      notifyAction(`Applied "${item.label}" to chip form`, 'info');
+      labelInput?.focus();
+    }
+
+    async function openAddQuickChipModal() {
+      const modal = document.getElementById('modal-add-quick-chip');
+      const form = document.getElementById('form-add-quick-chip');
+      if (form) form.reset();
+
+      const listEl = document.getElementById('ai-chip-suggestions-list');
+      if (listEl) {
+        listEl.innerHTML = '';
+        listEl.classList.add('hidden');
+      }
+
+      // Ensure catalogs and categories are fresh
+      try {
+        const catRes = await fetch('../api/business_config.php?action=list_catalogs');
+        const catData = await catRes.json();
+        if (catData.success && Array.isArray(catData.catalogs)) {
+          cachedOfferingCatalogs = catData.catalogs;
+        }
+      } catch (e) {}
+
+      // Trigger initial action type setup
+      onChipActionTypeChange('SEND_TEXT_RESPONSE');
+
+      if (modal) {
+        modal.classList.add('open');
+        setTimeout(() => document.getElementById('chip-input-label')?.focus(), 50);
+      }
+      if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
+    }
+
+    function closeAddQuickChipModal() {
+      const modal = document.getElementById('modal-add-quick-chip');
+      if (modal) modal.classList.remove('open');
+    }
+
+    async function submitAddQuickChip(e) {
+      if (e) e.preventDefault();
+      const btn = document.getElementById('btn-submit-quick-chip');
+      const label = document.getElementById('chip-input-label')?.value.trim();
+      const actionType = document.getElementById('chip-input-action-type')?.value;
+      const responseText = document.getElementById('chip-input-response-text')?.value.trim();
+      const isStarter = document.getElementById('chip-input-starter')?.checked ? 1 : 0;
+      const targetSelect = document.getElementById('chip-input-target-select');
+      const targetUrl = document.getElementById('chip-input-target-url');
+
+      if (!label) {
+        notifyAction('Chip button label is required', 'error');
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="inline-block animate-spin mr-1">⏳</span> Creating...';
+      }
+
+      const payload = {
+        action: 'save',
+        label,
+        action_type: actionType,
+        response_text: responseText,
+        is_starter: isStarter,
+        status: 'published',
+        is_active: 1
+      };
+
+      if (actionType === 'OPEN_URL') {
+        const urlVal = targetUrl?.value.trim();
+        if (!urlVal) {
+          notifyAction('Please provide a valid destination URL', 'error');
+          if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i><span>Create Chip</span>'; }
+          return;
+        }
+        payload.action_payload_json = { url: urlVal };
+      } else if (actionType === 'OPEN_CATALOG' || actionType === 'OPEN_CATALOG_SELECTOR') {
+        if (targetSelect && targetSelect.value) {
+          payload.linked_catalog_id = parseInt(targetSelect.value);
+        }
+      } else {
+        if (targetSelect && targetSelect.value) {
+          payload.linked_category_id = parseInt(targetSelect.value);
+        }
+      }
+
+      try {
+        const res = await fetch('../api/quick_chips.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        if (d.success) {
+          notifyAction(d.message || 'Quick reply chip created successfully.', 'success');
+          closeAddQuickChipModal();
+          await loadQuickChipsData();
+        } else {
+          notifyAction(d.error || 'Failed to create chip', 'error');
+        }
+      } catch (err) {
+        notifyAction('Network error creating quick chip.', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5"></i><span>Create Chip</span>';
           if (window.lucide && window.lucide.createIcons) window.lucide.createIcons();
         }
       }
