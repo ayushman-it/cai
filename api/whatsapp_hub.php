@@ -138,6 +138,29 @@ try {
     switch ($action) {
 
         // ==========================================
+        // 0. GET CONTACTS FOR CUSTOM DROPDOWNS
+        // ==========================================
+        case 'get_contacts':
+            $search = trim($_GET['search'] ?? '');
+            $sql = "
+                SELECT DISTINCT c.id, c.name, COALESCE(c.phone, c.whatsapp_number) as phone, c.email
+                FROM `customers` c
+                WHERE c.company_id = ? AND (c.phone IS NOT NULL AND c.phone != '' OR c.whatsapp_number IS NOT NULL AND c.whatsapp_number != '')
+            ";
+            $params = [$companyId];
+            if (!empty($search)) {
+                $sql .= " AND (c.name LIKE ? OR c.phone LIKE ? OR c.whatsapp_number LIKE ?)";
+                $s = "%{$search}%";
+                $params[] = $s; $params[] = $s; $params[] = $s;
+            }
+            $sql .= " ORDER BY c.last_seen_at DESC LIMIT 50";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $contacts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            echo json_encode(['success' => true, 'contacts' => $contacts]);
+            break;
+
+        // ==========================================
         // 1. OVERVIEW & HEALTH METRICS
         // ==========================================
         case 'overview':
