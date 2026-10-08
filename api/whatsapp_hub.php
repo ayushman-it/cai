@@ -20,6 +20,11 @@ header('Cache-Control: no-cache, no-store, must-revalidate');
 require_once __DIR__ . '/../config/db.php';
 $pdo = getDbConnection();
 
+// Self-healing migration for legacy/empty customer_uuid
+try {
+    $pdo->exec("UPDATE `customers` SET `customer_uuid` = CONCAT('cust_', MD5(CONCAT(id, RAND(), NOW()))) WHERE `customer_uuid` = '' OR `customer_uuid` IS NULL");
+} catch (Throwable $e) {}
+
 // 1. Authenticate user & resolve company
 $userId = (int)($_SESSION['user_id'] ?? 0);
 $companyId = (int)($_SESSION['company_id'] ?? 0);
@@ -401,8 +406,9 @@ try {
                 $cId = (int)$cCust->fetchColumn();
 
                 if ($cId <= 0) {
-                    $pdo->prepare("INSERT INTO `customers` (`company_id`, `name`, `phone`, `whatsapp_number`, `first_seen_at`, `last_seen_at`) VALUES (?, ?, ?, ?, NOW(), NOW())")
-                        ->execute([$companyId, 'WhatsApp ' . substr($cleanPhone, -4), $destPhone, $destPhone]);
+                    $custUuid = 'cust_' . bin2hex(random_bytes(16));
+                    $pdo->prepare("INSERT INTO `customers` (`company_id`, `customer_uuid`, `name`, `phone`, `whatsapp_number`, `first_seen_at`, `last_seen_at`) VALUES (?, ?, ?, ?, ?, NOW(), NOW())")
+                        ->execute([$companyId, $custUuid, 'WhatsApp ' . substr($cleanPhone, -4), $destPhone, $destPhone]);
                     $cId = (int)$pdo->lastInsertId();
                 }
 
@@ -555,14 +561,15 @@ try {
 
                 // Insert or update lead & customer
                 try {
+                    $custUuid = 'cust_' . bin2hex(random_bytes(16));
                     $pdo->prepare("
-                        INSERT INTO `customers` (`company_id`, `name`, `phone`, `whatsapp_number`, `email`, `first_seen_at`, `last_seen_at`)
-                        VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                        INSERT INTO `customers` (`company_id`, `customer_uuid`, `name`, `phone`, `whatsapp_number`, `email`, `first_seen_at`, `last_seen_at`)
+                        VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
                         ON DUPLICATE KEY UPDATE 
                             `name` = IF(VALUES(`name`) != 'Prospect', VALUES(`name`), `name`),
                             `email` = COALESCE(VALUES(`email`), `email`),
                             `last_seen_at` = NOW()
-                    ")->execute([$companyId, $name, $cleanPhone, $cleanPhone, $email]);
+                    ")->execute([$companyId, $custUuid, $name, $cleanPhone, $cleanPhone, $email]);
 
                     $cId = (int)$pdo->lastInsertId();
                     if ($cId === 0) {
@@ -707,8 +714,9 @@ try {
                 $cId = (int)$chk->fetchColumn();
 
                 if ($cId <= 0) {
-                    $pdo->prepare("INSERT INTO `customers` (`company_id`, `name`, `phone`, `whatsapp_number`, `first_seen_at`, `last_seen_at`) VALUES (?, ?, ?, ?, NOW(), NOW())")
-                        ->execute([$companyId, $name, $phone, $phone]);
+                    $custUuid = 'cust_' . bin2hex(random_bytes(16));
+                    $pdo->prepare("INSERT INTO `customers` (`company_id`, `customer_uuid`, `name`, `phone`, `whatsapp_number`, `first_seen_at`, `last_seen_at`) VALUES (?, ?, ?, ?, ?, NOW(), NOW())")
+                        ->execute([$companyId, $custUuid, $name, $phone, $phone]);
                     $cId = (int)$pdo->lastInsertId();
                 }
             }
