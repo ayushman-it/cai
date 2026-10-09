@@ -5648,6 +5648,12 @@
             </svg>
             <span id="cp-sound-label">Mute sounds</span>
           </div>
+          <div class="cp-option-item" id="cp-menu-history">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Previous conversations</span>
+          </div>
           <div class="cp-option-item" id="cp-menu-clear">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18m-2 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
             <span>Restart conversation</span>
@@ -5904,6 +5910,7 @@
   const optionsMenu = shadow.getElementById('cp-options-menu');
   const menuSound = shadow.getElementById('cp-menu-sound');
   const menuTheme = shadow.getElementById('cp-menu-theme');
+  const menuHistory = shadow.getElementById('cp-menu-history');
   const menuClear = shadow.getElementById('cp-menu-clear');
   const menuEndChat = shadow.getElementById('cp-menu-end-chat');
   const menuWhatsapp = shadow.getElementById('cp-menu-whatsapp');
@@ -6687,6 +6694,13 @@
       inputField.placeholder = "Enter your Name & WhatsApp Number...";
       inputField.value = '';
     }
+  }
+
+  if (menuHistory) {
+    menuHistory.addEventListener('click', () => {
+      optionsMenu.classList.remove('show');
+      navigateTo('history');
+    });
   }
 
   menuClear.addEventListener('click', () => {
@@ -7997,6 +8011,66 @@
         bubble.appendChild(payCard);
       }
 
+      // Contextual Sales Representative Cards (Human Assistance Bridge)
+      if (data.sales_team_cards && Array.isArray(data.sales_team_cards) && data.sales_team_cards.length > 0) {
+        row.classList.add('has-cards');
+        const teamBox = document.createElement('div');
+        teamBox.className = 'cp-sales-team-cards-box';
+        teamBox.style.cssText = 'display:flex; flex-direction:column; gap:8px; margin-top:10px; width:100%;';
+
+        const boxHeader = document.createElement('div');
+        boxHeader.style.cssText = 'font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--cp-text-muted, #94a3b8); margin-bottom:2px;';
+        boxHeader.textContent = 'Dedicated Sales Representatives';
+        teamBox.appendChild(boxHeader);
+
+        data.sales_team_cards.forEach(rep => {
+          const repCard = document.createElement('div');
+          repCard.className = 'cp-member-card';
+          repCard.style.cssText = 'padding:10px 12px; margin:0;';
+
+          const fallbackAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
+          const avatarUrl = rep.avatar_url ? (rep.avatar_url.startsWith('http') ? rep.avatar_url : `${baseUrl}/${rep.avatar_url.replace(/^\/+/, '')}`) : fallbackAvatar;
+          const statusClass = (rep.availability_status || 'available').toLowerCase();
+          const cleanName = (rep.name || 'Sales Specialist').replace(/\s*\([^)]*\)/g, '').trim();
+
+          repCard.innerHTML = `
+            <div class="cp-member-left">
+              <div class="cp-action-avatar-wrap">
+                <img src="${avatarUrl}" class="cp-action-avatar-img" alt="" onerror="this.onerror=null; this.src='${fallbackAvatar}';" />
+                <div class="cp-action-status-dot ${statusClass}"></div>
+              </div>
+              <div class="cp-action-text-box">
+                <div class="cp-member-name-row">
+                  <span class="cp-member-name" style="max-width:130px;">${escapeHtml(cleanName)}</span>
+                  <span class="cp-dept-tag">SALES</span>
+                </div>
+                <div class="cp-member-role" style="max-width:140px;">${escapeHtml(rep.job_title || 'Sales Specialist')}</div>
+              </div>
+            </div>
+            <div class="cp-member-actions">
+              <button class="cp-btn-sm primary cp-connect-rep-btn" type="button" style="padding:5px 11px; font-size:11px; font-weight:600;">Connect</button>
+            </div>
+          `;
+
+          const connectBtn = repCard.querySelector('.cp-connect-rep-btn');
+          if (connectBtn) {
+            connectBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              startInstantHumanHelpSession({
+                id: rep.id,
+                name: cleanName,
+                job_title: rep.job_title || 'Sales Specialist',
+                avatar_url: avatarUrl
+              });
+            });
+          }
+
+          teamBox.appendChild(repCard);
+        });
+
+        bubble.appendChild(teamBox);
+      }
+
       row.appendChild(metaLine);
 
       // If chat has ended, display concluding wrap-up card at the end
@@ -8734,11 +8808,21 @@
         break;
 
       case 'OPEN_CATALOG':
+      case 'OPEN_SERVICE_CATALOG':
         if (chip.linked_catalog_id) {
           await renderCatalogItemsInChat(chip.linked_catalog_id, chip.label);
         } else {
           await renderCatalogSelectorInChat();
         }
+        break;
+
+      case 'REQUEST_QUOTATION':
+        appendUserMessage(chip.label || 'Request quotation');
+        handleSend(chip.text || 'I would like to request an official quotation and pricing proposal.');
+        break;
+
+      case 'OPEN_AVAILABLE_SALES_AGENTS':
+        navigateTo('human-team', { filter: 'sales' });
         break;
 
       case 'OPEN_BROCHURE_SELECTOR':
@@ -9255,6 +9339,11 @@
       if (assistantNameEl) assistantNameEl.textContent = 'News & Updates';
       if (subtitleEl) subtitleEl.textContent = 'Latest announcements';
       renderNews();
+    } else if (screen === 'history') {
+      if (composerSection) composerSection.style.display = 'none';
+      if (assistantNameEl) assistantNameEl.textContent = 'Previous conversations';
+      if (subtitleEl) subtitleEl.textContent = 'Chat history';
+      renderHistoryScreen();
     }
   }
 
@@ -9265,6 +9354,10 @@
     const stalePill = shadow.getElementById('cp-waiting-pill');
     if (stalePill) stalePill.remove();
     if (currentScreen === 'home') {
+      return;
+    }
+    if (currentScreen === 'history') {
+      navigateTo('chat');
       return;
     }
     if (currentScreen === 'book-slots') {
@@ -10031,6 +10124,173 @@
         <div class="cp-news-desc">Schedule discovery calls directly with verified advisors with automatic collision detection.</div>
       </div>
     `;
+  }
+
+  // -------------------------------------------------------------
+  // SCREEN 11: PREVIOUS CONVERSATIONS / TRANSCRIPTS
+  // -------------------------------------------------------------
+  async function renderHistoryScreen() {
+    if (!screensView) return;
+
+    screensView.innerHTML = `
+      <div class="cp-sub-screen-header">
+        <div class="cp-sub-screen-title">Previous Conversations</div>
+        <div class="cp-sub-screen-desc">Browse past chat sessions and messages with Cai and human advisors</div>
+      </div>
+      <div id="cp-history-list-container" style="display:flex;flex-direction:column;gap:8px;padding-top:4px;">
+        <div class="cp-skeleton-card-item">
+          <div class="cp-skeleton-circle"></div>
+          <div class="cp-skeleton-card-body">
+            <div class="cp-skeleton-line" style="width: 60%; height: 11px;"></div>
+            <div class="cp-skeleton-line" style="width: 85%; height: 9px;"></div>
+          </div>
+        </div>
+        <div class="cp-skeleton-card-item">
+          <div class="cp-skeleton-circle"></div>
+          <div class="cp-skeleton-card-body">
+            <div class="cp-skeleton-line" style="width: 50%; height: 11px;"></div>
+            <div class="cp-skeleton-line" style="width: 70%; height: 9px;"></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const container = shadow.getElementById('cp-history-list-container');
+    if (!container) return;
+
+    try {
+      const sessToken = sessionId || (widgetStorage.getItem(STORAGE_KEYS.CONVO_ID) ? 'sess_' + widgetStorage.getItem(STORAGE_KEYS.CONVO_ID) : '');
+      const activeConvId = conversationId || (widgetStorage.getItem(STORAGE_KEYS.CONVO_ID) ? parseInt(widgetStorage.getItem(STORAGE_KEYS.CONVO_ID), 10) : 0);
+      
+      const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_history&session_token=${encodeURIComponent(sessToken)}&conversation_id=${encodeURIComponent(activeConvId)}&company_key=${encodeURIComponent(companyKey)}`);
+      const data = await res.json();
+
+      if (!data.success || !data.conversations || data.conversations.length === 0) {
+        // Fallback: check local storage messages if server has no synced history yet
+        const localRaw = widgetStorage.getItem(STORAGE_KEYS.MESSAGES);
+        let localMsgs = [];
+        try { localMsgs = JSON.parse(localRaw || '[]'); } catch(e) {}
+
+        if (localMsgs.length > 0) {
+          const lastMsg = localMsgs[localMsgs.length - 1];
+          container.innerHTML = `
+            <div class="cp-action-card" id="cp-history-active-local" role="button" tabindex="0" style="margin-top:4px;">
+              <div class="cp-action-card-left">
+                <div class="cp-action-icon-box" style="background:rgba(16,185,129,0.12);color:#10b981;border:1px solid rgba(16,185,129,0.25);">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                </div>
+                <div class="cp-action-text-box">
+                  <div class="cp-action-card-title">Active Conversation</div>
+                  <div class="cp-action-card-desc">${escapeHtml((lastMsg.text || 'Recent discussion').slice(0, 55))}...</div>
+                </div>
+              </div>
+              <div class="cp-action-card-right">
+                <span class="cp-dept-tag" style="background:rgba(16,185,129,0.15);color:#10b981;">CURRENT</span>
+              </div>
+            </div>
+            <div style="text-align:center;margin-top:14px;">
+              <button class="cp-btn-sm primary" id="cp-history-resume-btn" type="button" style="padding:7px 16px;">Return to Active Chat</button>
+            </div>
+          `;
+          const resumeBtn = container.querySelector('#cp-history-resume-btn');
+          const localCard = container.querySelector('#cp-history-active-local');
+          if (resumeBtn) resumeBtn.onclick = () => navigateTo('chat');
+          if (localCard) localCard.onclick = () => navigateTo('chat');
+          return;
+        }
+
+        container.innerHTML = `
+          <div style="background:var(--cp-options-bg, #ffffff);border:1px solid var(--cp-border-input, #e2e8f0);border-radius:12px;padding:24px 16px;text-align:center;margin-top:6px;">
+            <div style="font-size:13px;font-weight:700;color:var(--cp-text-title);">No previous chats found</div>
+            <div style="font-size:11.5px;color:var(--cp-text-secondary);margin-top:5px;line-height:1.45;">
+              You have no past saved sessions on this device yet. Start chatting below!
+            </div>
+            <button class="cp-btn-sm primary" id="cp-history-start-btn" type="button" style="margin-top:14px;padding:7px 16px;">Start New Conversation</button>
+          </div>
+        `;
+        const startBtn = container.querySelector('#cp-history-start-btn');
+        if (startBtn) startBtn.onclick = () => navigateTo('chat');
+        return;
+      }
+
+      container.innerHTML = '';
+      data.conversations.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'cp-action-card';
+        card.style.cssText = 'padding:11px 13px; cursor:pointer;';
+        
+        const isCurrent = (activeConvId && parseInt(c.id, 10) === activeConvId);
+        const statusBadge = isCurrent 
+          ? `<span class="cp-dept-tag" style="background:rgba(16,185,129,0.15);color:#10b981;">CURRENT</span>`
+          : (c.ownership === 'human' ? `<span class="cp-dept-tag">AGENT</span>` : `<span class="cp-dept-tag">AI</span>`);
+
+        const previewText = c.last_message_preview || 'Conversation thread';
+        const dateStr = c.last_message_at ? new Date(c.last_message_at).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Recent';
+
+        card.innerHTML = `
+          <div class="cp-action-card-left" style="overflow:hidden;">
+            <div class="cp-action-icon-box" style="flex-shrink:0;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+            </div>
+            <div class="cp-action-text-box" style="overflow:hidden;">
+              <div class="cp-action-card-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Chat #${c.id} • ${dateStr}</div>
+              <div class="cp-action-card-desc" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(previewText)}</div>
+            </div>
+          </div>
+          <div class="cp-action-card-right" style="flex-shrink:0;margin-left:8px;">
+            ${statusBadge}
+          </div>
+        `;
+
+        card.onclick = async () => {
+          if (isCurrent) {
+            navigateTo('chat');
+            return;
+          }
+          // Load selected conversation transcript into chatStream
+          try {
+            card.style.opacity = '0.6';
+            const trRes = await fetch(`${baseUrl}/api/widget_actions.php?action=get_history&session_token=${encodeURIComponent(sessToken)}&conversation_id=${encodeURIComponent(c.id)}&company_key=${encodeURIComponent(companyKey)}`);
+            const trData = await trRes.json();
+            if (trData.success && Array.isArray(trData.active_transcript) && trData.active_transcript.length > 0) {
+              chatStream.innerHTML = '';
+              trData.active_transcript.forEach(m => {
+                if (m.sender === 'user') {
+                  appendUserMessage(m.text, null, true);
+                } else {
+                  appendAIMessage({
+                    reply: m.text,
+                    timestamp: m.created_at || 'Past',
+                    skipSound: true,
+                    is_human: (m.sender === 'human_agent')
+                  });
+                }
+              });
+              conversationId = parseInt(c.id, 10);
+              widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+              navigateTo('chat');
+            } else {
+              navigateTo('chat');
+            }
+          } catch(err) {
+            navigateTo('chat');
+          }
+        };
+
+        container.appendChild(card);
+      });
+
+    } catch(err) {
+      console.warn('[Widget] History fetch error:', err);
+      container.innerHTML = `
+        <div style="text-align:center;padding:18px;font-size:12px;color:var(--cp-text-muted);">
+          Unable to load chat history right now.
+          <div style="margin-top:10px;"><button class="cp-btn-sm" id="cp-err-history-back" type="button">Back to Chat</button></div>
+        </div>
+      `;
+      const b = container.querySelector('#cp-err-history-back');
+      if (b) b.onclick = () => navigateTo('chat');
+    }
   }
 
   // -------------------------------------------------------------

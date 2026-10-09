@@ -118,6 +118,21 @@ try {
         exit;
     }
 
+    // Deduplication Protection: Extract Meta Message ID if available
+    $metaMessageId = $data['entry'][0]['changes'][0]['value']['messages'][0]['id'] ?? ($data['message_id'] ?? ($data['id'] ?? ''));
+    if (!empty($metaMessageId)) {
+        $chkDup = $pdo->prepare("SELECT id FROM `webhook_events` WHERE `provider` = 'whatsapp' AND `event_name` = ? LIMIT 1");
+        $chkDup->execute(['msg_' . $metaMessageId]);
+        if ($chkDup->fetch()) {
+            echo json_encode(['status' => 'duplicate_ignored', 'message_id' => $metaMessageId]);
+            exit;
+        }
+        try {
+            $pdo->prepare("INSERT INTO `webhook_events` (`provider`, `event_name`, `payload_json`, `is_processed`, `created_at`) VALUES ('whatsapp', ?, ?, 0, NOW())")
+                ->execute(['msg_' . $metaMessageId, $rawPayload]);
+        } catch (Throwable $e) {}
+    }
+
     // 2b. Priority Human Support Agent Reply Bridge via WhatsApp
     // Supports patterns: "REPLY #123 Hello" or "reply 123 Hello" or "#123 Hello"
     if (preg_match('/^(?:reply\s*#?|#)\s*([0-9]+)\s+(.+)$/is', $messageText, $agentReplyMatch)) {

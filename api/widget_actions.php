@@ -133,23 +133,26 @@ try {
             // Update details if provided
             $updates = [];
             $params = [];
-            if (!empty($name) && $customer['name'] === 'Website Visitor') {
+            if (!empty($name) && ($customer['name'] === 'Website Visitor' || strpos($customer['name'], 'Prospect ') === 0)) {
                 $updates[] = "`name` = ?";
                 $params[] = $name;
             }
-            if (!empty($phone) && empty($customer['phone'])) {
+            if (!empty($phone) && (empty($customer['phone']) || $customer['phone'] !== $phone)) {
                 $updates[] = "`phone` = ?";
                 $updates[] = "`whatsapp_number` = ?";
                 $params[] = $phone;
                 $params[] = $phone;
             }
-            if (!empty($email) && empty($customer['email'])) {
+            if (!empty($email) && (empty($customer['email']) || $customer['email'] !== $email)) {
                 $updates[] = "`email` = ?";
                 $params[] = $email;
             }
             if (!empty($updates)) {
                 $params[] = $customer['id'];
                 $pdo->prepare("UPDATE `customers` SET " . implode(', ', $updates) . " WHERE id = ?")->execute($params);
+                $refetch = $pdo->prepare("SELECT * FROM `customers` WHERE id = ? LIMIT 1");
+                $refetch->execute([$customer['id']]);
+                $customer = $refetch->fetch();
             }
         }
         return $customer;
@@ -1755,6 +1758,182 @@ HTML;
         echo json_encode([
             'success'   => true,
             'brochures' => $filtered
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: get_sales_reps (Available Human Sales Representatives for Contextual Assistance)
+    // -------------------------------------------------------------
+    if ($action === 'get_sales_reps') {
+        $sql = "
+            SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url
+            FROM `users`
+            WHERE `company_id` = ? AND `is_active` = 1
+              AND (`department` = 'sales' OR `is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)
+            ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'OFFLINE'), id ASC
+            LIMIT 4
+        ";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$companyId]);
+        $reps = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($reps)) {
+            $stmt = $pdo->prepare("
+                SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url
+                FROM `users`
+                WHERE `company_id` = ? AND `is_active` = 1
+                ORDER BY id ASC LIMIT 3
+            ");
+            $stmt->execute([$companyId]);
+            $reps = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
+        echo json_encode([
+            'success' => true,
+            'sales_reps' => $reps
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: get_history (Visitor Conversation Sessions & Transcripts with Tenant Isolation)
+    // -------------------------------------------------------------
+    if ($action === 'get_history') {
+        $sessionToken = trim($_GET['session_token'] ?? $data['session_token'] ?? '');
+        $requestedConvId = (int)($_GET['conversation_id'] ?? $data['conversation_id'] ?? 0);
+
+        if (empty($sessionToken)) {
+            echo json_encode(['success' => true, 'conversations' => [], 'active_transcript' => []]);
+            exit;
+        }
+
+        // 1. Resolve customer ID for this session within the company
+        $sStmt = $pdo->prepare("
+            SELECT customer_id, conversation_id FROM `visitor_sessions`
+            WHERE (`session_token` = ? OR `session_id` = ?) AND `company_id` = ?
+            ORDER BY id DESC LIMIT 1
+        ");
+        $sStmt->execute([$sessionToken, $sessionToken, $companyId]);
+        $sessRow = $sStmt->fetch(PDO::FETCH_ASSOC);
+
+        $customerId = $sessRow ? (int)$sessRow['customer_id'] : 0;
+        $linkedConvId = $sessRow ? (int)$sessRow['conversation_id'] : 0;
+
+        if ($customerId <= 0 && $linkedConvId <= 0) {
+            echo json_encode(['success' => true, 'conversations' => [], 'active_transcript' => []]);
+            exit;
+        }
+
+        // 2. Fetch past conversations belonging to this customer & tenant
+        $cStmt = $pdo->prepare("
+            SELECT c.id, c.status, c.ownership, c.last_message_preview, c.last_message_at, c.created_at,
+                   u.name as agent_name
+            FROM `conversations` c
+            LEFT JOIN `users` u ON u.id = c.assigned_user_id
+            WHERE c.company_id = ? AND (c.customer_id = ? OR c.id = ?)
+            ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
+            LIMIT 10
+        ");
+        $cStmt->execute([$companyId, $customerId, $linkedConvId]);
+        $convs = $cStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 3. If a specific conversation transcript is requested, load its messages
+        $transcript = [];
+        $targetConvId = $requestedConvId > 0 ? $requestedConvId : ($linkedConvId > 0 ? $linkedConvId : (!empty($convs[0]['id']) ? (int)$convs[0]['id'] : 0));
+
+        if ($targetConvId > 0) {
+            // Verify conversation belongs to tenant & customer
+            $verifyStmt = $pdo->prepare("SELECT id FROM `conversations` WHERE id = ? AND company_id = ? AND (customer_id = ? OR id = ?) LIMIT 1");
+            $verifyStmt->execute([$targetConvId, $companyId, $customerId, $linkedConvId]);
+            if ($verifyStmt->fetchColumn()) {
+                $mStmt = $pdo->prepare("
+                    SELECT id, sender_type, message_text, metadata_json, created_at
+                    FROM `messages`
+                    WHERE conversation_id = ? AND company_id = ?
+                    ORDER BY id ASC LIMIT 50
+                ");
+                $mStmt->execute([$targetConvId, $companyId]);
+                $rows = $mStmt->fetchAll(PDO::FETCH_ASSOC);
+                foreach ($rows as $r) {
+                    $isHuman = in_array($r['sender_type'], ['agent', 'human', 'user', 'support_agent'], true);
+                    $transcript[] = [
+                        'id'        => (int)$r['id'],
+                        'sender'    => ($r['sender_type'] === 'visitor') ? 'user' : ($r['sender_type'] === 'system' ? 'system' : ($isHuman ? 'human_agent' : 'ai')),
+                        'text'      => $r['message_text'],
+                        'timestamp' => date('M j, g:i A', strtotime($r['created_at']))
+                    ];
+                }
+            }
+        }
+
+        echo json_encode([
+            'success'           => true,
+            'conversations'     => array_map(function($c) {
+                return [
+                    'id'            => (int)$c['id'],
+                    'status'        => $c['status'],
+                    'ownership'     => $c['ownership'],
+                    'preview'       => $c['last_message_preview'] ?: 'Conversation',
+                    'agent_name'    => $c['agent_name'] ?: 'Cai AI',
+                    'time'          => date('M j, g:i A', strtotime($c['last_message_at'] ?: $c['created_at']))
+                ];
+            }, $convs),
+            'active_conversation_id' => $targetConvId,
+            'transcript'        => $transcript
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
+    // -------------------------------------------------------------
+    // ACTION: capture_lead (Direct Visitor Lead Ingestion & Profile Upgrade)
+    // -------------------------------------------------------------
+    if ($action === 'capture_lead') {
+        $name = trim($data['name'] ?? $_POST['name'] ?? '');
+        $phone = trim($data['phone'] ?? $_POST['phone'] ?? '');
+        $email = trim($data['email'] ?? $_POST['email'] ?? '');
+        $sessionToken = trim($data['session_token'] ?? $_POST['session_token'] ?? '');
+        $customNotes = trim($data['notes'] ?? $_POST['notes'] ?? '');
+
+        if (empty($name) && empty($phone) && empty($email)) {
+            echo json_encode(['success' => false, 'error' => 'At least name, phone, or email is required.']);
+            exit;
+        }
+
+        $customer = $resolveCustomer($sessionToken, $name, $phone, $email);
+        $customerId = (int)$customer['id'];
+
+        // Find or create lead
+        $leadStmt = $pdo->prepare("SELECT id FROM `leads` WHERE `company_id` = ? AND `customer_id` = ? ORDER BY id DESC LIMIT 1");
+        $leadStmt->execute([$companyId, $customerId]);
+        $leadId = $leadStmt->fetchColumn();
+
+        if (!$leadId) {
+            $pdo->prepare("
+                INSERT INTO `leads`
+                (`company_id`, `customer_id`, `title`, `stage_name`, `priority`, `intent_level`, `opportunity_value`, `source`, `status`, `ai_summary`, `created_at`, `updated_at`)
+                VALUES (?, ?, ?, 'Qualified', 'MEDIUM', 'medium', 25000, 'WEBSITE_WIDGET', 'open', ?, NOW(), NOW())
+            ")->execute([
+                $companyId,
+                $customerId,
+                $name ? "Lead: {$name}" : "Website Inquiry",
+                $customNotes ?: "Visitor captured through widget lead form."
+            ]);
+            $leadId = (int)$pdo->lastInsertId();
+        } else {
+            $pdo->prepare("UPDATE `leads` SET `updated_at` = NOW() WHERE `id` = ? AND `company_id` = ?")->execute([$leadId, $companyId]);
+        }
+
+        echo json_encode([
+            'success'     => true,
+            'customer_id' => $customerId,
+            'lead_id'     => (int)$leadId,
+            'customer'    => [
+                'id'    => $customerId,
+                'name'  => $customer['name'],
+                'phone' => $customer['phone'],
+                'email' => $customer['email']
+            ]
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         exit;
     }

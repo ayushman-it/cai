@@ -866,6 +866,19 @@ try {
             'assistant_name'     => $assistantName,
             'product_cards'      => $workflowResult['product_cards'] ?? [],
             'action_chips'       => $workflowResult['action_chips'] ?? [],
+            'sales_team_cards'   => (function() use ($pdo, $companyId) {
+                try {
+                    $sStmt = $pdo->prepare("SELECT id, name, email, job_title, department, availability_status, avatar_url FROM `users` WHERE `company_id` = ? AND `is_active` = 1 AND (`department` = 'sales' OR `is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1) ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'OFFLINE'), id ASC LIMIT 3");
+                    $sStmt->execute([$companyId]);
+                    $reps = $sStmt->fetchAll(PDO::FETCH_ASSOC);
+                    if (empty($reps)) {
+                        $sStmt2 = $pdo->prepare("SELECT id, name, email, job_title, department, availability_status, avatar_url FROM `users` WHERE `company_id` = ? AND `is_active` = 1 ORDER BY id ASC LIMIT 2");
+                        $sStmt2->execute([$companyId]);
+                        $reps = $sStmt2->fetchAll(PDO::FETCH_ASSOC);
+                    }
+                    return $reps;
+                } catch (Throwable $e) { return []; }
+            })(),
             'emi_plans'          => $workflowResult['emi_plans'] ?? null,
             'payment_link'       => $workflowResult['payment_link'] ?? null,
             'shared_asset'       => $workflowResult['shared_asset'] ?? null,
@@ -1955,6 +1968,35 @@ try {
         }
     }
 
+    // Contextual Human Sales Assistance Cards (Phase 3: Sales Representatives)
+    $salesTeamCards = [];
+    $isCommercialConsultationIntent = (bool)preg_match('/\b(price|pricing|prining|fee|fees|cost|plan|plans|discount|emi|quote|quotation|purchase|buy|package|talk to team|speak with sales|sales team|consultant|advisor|human)\b/i', $messageText);
+    if ($isCommercialConsultationIntent || !empty($productCards)) {
+        try {
+            $repStmt = $pdo->prepare("
+                SELECT id, name, email, job_title, department, availability_status, avatar_url
+                FROM `users`
+                WHERE `company_id` = ? AND `is_active` = 1
+                  AND (`department` = 'sales' OR `is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)
+                ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'OFFLINE'), id ASC
+                LIMIT 3
+            ");
+            $repStmt->execute([$companyId]);
+            $salesTeamCards = $repStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($salesTeamCards)) {
+                $repStmt = $pdo->prepare("
+                    SELECT id, name, email, job_title, department, availability_status, avatar_url
+                    FROM `users`
+                    WHERE `company_id` = ? AND `is_active` = 1
+                    ORDER BY id ASC LIMIT 2
+                ");
+                $repStmt->execute([$companyId]);
+                $salesTeamCards = $repStmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+        } catch (Throwable $repEx) {}
+    }
+
     // 7. Persistence: Save Messages
     $pdo->prepare("
         INSERT INTO `messages` 
@@ -2231,6 +2273,7 @@ try {
         'shared_asset'       => $sharedAssetPayload,
         'product_cards'      => $productCards,
         'action_chips'       => $actionChipsPayload,
+        'sales_team_cards'   => $salesTeamCards,
         'emi_plans'          => $emiPlansPayload,
         'payment_link'       => $paymentLinkPayload,
         'chat_ended'         => $isChatEnding,

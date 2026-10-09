@@ -472,8 +472,8 @@ class CustomerIdentityResolver {
      * Extract and resolve handoff token from message text.
      */
     public static function extractAndResolveHandoff(PDO $pdo, ?int $companyId, string $messageText, string $targetChannel = 'any'): ?array {
-        // Precise extraction: checks for Ref: TOKEN, #TOKEN, [Ref: TOKEN], standalone 6-char token, or legacy wh_/CP- tokens
-        if (preg_match('/(?:Ref:\s*|#\s*|\[Ref:\s*)([A-Z0-9]{5,12})/i', $messageText, $match)) {
+        // Precise extraction: checks for Ref: TOKEN, #TOKEN, [Ref: TOKEN], CONTINUE_TOKEN, standalone 6-char token, or legacy wh_/CP- tokens
+        if (preg_match('/(?:Ref:\s*|#\s*|\[Ref:\s*|CONTINUE_)([A-Z0-9_\-]{5,20})/i', $messageText, $match)) {
             $token = strtoupper(trim($match[1]));
         } elseif (preg_match('/\b(wh_[a-f0-9]{6,}|CP-[A-Z0-9\-]+)\b/i', $messageText, $match)) {
             $token = strtoupper(trim($match[1]));
