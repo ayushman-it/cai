@@ -486,7 +486,7 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
   </footer>
 
   <!-- Real Live CuboidPilot Fin AI Widget Embed (Matches media_1790706216898.png launcher) -->
-  <script src="widget.js?v=7.0" data-company="cp_live_cuboidsoft" async></script>
+  <script src="widget.js?v=8.0.0" data-company="cp_live_cuboidsoft" async></script>
 
   <!-- Scripts -->
   <script>

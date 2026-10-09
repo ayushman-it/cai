@@ -1746,8 +1746,8 @@
       if (keyEl && keyEl.value && embedEl) {
         const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
         const scriptUrl = isLocal 
-          ? `${window.location.origin}/cuboidpilot/widget.js?v=7.5` 
-          : 'https://cai.cuboidsoft.in/widget.js?v=7.5';
+          ? `${window.location.origin}/cuboidpilot/widget.js?v=8.0.0` 
+          : 'https://cai.cuboidsoft.in/widget.js?v=8.0.0';
         const theme = themeEl ? themeEl.value : 'dark';
         embedEl.value = `<script src="${scriptUrl}" data-company="${keyEl.value}" data-theme="${theme}" async><\/script>`;
       }
