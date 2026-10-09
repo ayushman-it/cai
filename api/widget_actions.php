@@ -899,66 +899,43 @@ try {
             $dashBaseUrl = $isLocal ? 'http://localhost/cuboidpilot' : 'https://cai.cuboidsoft.in';
             $dashConvoUrl = "{$dashBaseUrl}/app/conversations.html?id={$conversationId}";
 
-            // Check if WhatsApp is connected for this tenant
-            $waStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` = 'connected' LIMIT 1");
-            $waStmt->execute([$companyId]);
-            $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
-
-            $targetPhone = !empty($agent['phone']) ? $agent['phone'] : '';
-            if (empty($targetPhone)) {
-                $uStmt = $pdo->prepare("SELECT phone FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin', 'manager') AND `phone` IS NOT NULL AND `phone` != '' ORDER BY id ASC LIMIT 1");
-                $uStmt->execute([$companyId]);
-                $targetPhone = $uStmt->fetchColumn() ?: '9238695500';
+            // Resolve Session ID for clean WhatsApp notification
+            $sIdStmt = $pdo->prepare("SELECT session_id FROM `conversations` WHERE id = ? LIMIT 1");
+            $sIdStmt->execute([$conversationId]);
+            $resolvedSessionId = $sIdStmt->fetchColumn() ?: '';
+            if (empty($resolvedSessionId) && !empty($sessionToken)) {
+                $chkVs = $pdo->prepare("SELECT session_id FROM `visitor_sessions` WHERE session_token = ? OR session_id = ? LIMIT 1");
+                $chkVs->execute([$sessionToken, $sessionToken]);
+                $resolvedSessionId = $chkVs->fetchColumn() ?: '';
+            }
+            if (empty($resolvedSessionId)) {
+                $resolvedSessionId = !empty($sessionToken) && !str_starts_with($sessionToken, 'sess_') ? $sessionToken : (string)$conversationId;
             }
 
-            $waSent = false;
-            if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token']) && !empty($targetPhone)) {
-                $cleanRecipient = preg_replace('/[^0-9]/', '', $targetPhone);
-                if (strlen($cleanRecipient) === 10) {
-                    $cleanRecipient = '91' . $cleanRecipient;
-                }
-                $dashConvoUrl = "https://cai.cuboidsoft.in/app/conversations.html?id={$conversationId}";
-                $compName = !empty($company['name']) ? $company['name'] : 'CuboidSoft';
-                $waMsg = "*{$compName} Support Desk*\n"
-                    . "Live Customer Assistance\n\n"
-                    . "*New Lead Waiting*\n"
-                    . "Lead Name: {$custDispName}\n"
-                    . "Phone: {$custDispPhone}\n"
-                    . "Email: {$custDispEmail}\n"
-                    . "Conversation ID: #CONV-{$conversationId}\n\n"
-                    . "*How to Reply*\n"
-                    . "Reply directly to this chat (e.g. `Hello! How can I assist you?`), or type `REPLY #{$conversationId} <your message>`.\n\n"
-                    . "*How to Resolve*\n"
-                    . "Type `RESOLVE #{$conversationId}` when done.\n\n"
-                    . "Live Dashboard:\n"
-                    . "{$dashConvoUrl}\n\n"
-                    . "— Powered by Cai (CuboidSoft AI)";
+            // Ensure conversation has session_id populated
+            $pdo->prepare("UPDATE `conversations` SET `session_id` = ? WHERE `id` = ? AND `company_id` = ?")
+                ->execute([$resolvedSessionId, $conversationId, $companyId]);
 
-                $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
-                $payload = [
-                    'messaging_product' => 'whatsapp',
-                    'to'                => $cleanRecipient,
-                    'type'              => 'text',
-                    'text'              => ['body' => $waMsg]
-                ];
-                $ch = curl_init($endpoint);
-                curl_setopt_array($ch, [
-                    CURLOPT_POST           => true,
-                    CURLOPT_POSTFIELDS     => json_encode($payload),
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_HTTPHEADER     => [
-                        'Authorization: Bearer ' . $waAcc['whatsapp_access_token'],
-                        'Content-Type: application/json'
-                    ],
-                    CURLOPT_TIMEOUT        => 4
-                ]);
-                $wRes = @curl_exec($ch);
-                $wCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
-                if ($wCode >= 200 && $wCode < 300) {
-                    $waSent = true;
-                }
-            }
+            // Retrieve latest visitor inquiry message
+            $lastMsgStmt = $pdo->prepare("
+                SELECT message_text FROM `messages` 
+                WHERE `conversation_id` = ? AND `sender_type` = 'visitor' 
+                ORDER BY id DESC LIMIT 1
+            ");
+            $lastMsgStmt->execute([$conversationId]);
+            $lastVisitorMsg = $lastMsgStmt->fetchColumn() ?: 'I want to speak with a sales person / counselor.';
+
+            require_once __DIR__ . '/../includes/whatsapp_bridge.php';
+            $waSentInfo = WhatsAppBridge::sendNotification(
+                $pdo,
+                $companyId,
+                $conversationId,
+                $resolvedSessionId,
+                $custDispName,
+                $lastVisitorMsg,
+                $userId
+            );
+            $waSent = !empty($waSentInfo['success']);
 
             // 1. Dispatch Email notification to Company Admin & Assigned Agent
             $supportEmail = !empty($agent['email']) ? $agent['email'] : '';
@@ -1095,8 +1072,10 @@ HTML;
             }
 
             if ($leadId) {
-                // 1. Send salesperson assignment alert
-                sendSalespersonAssignmentAlert($pdo, $companyId, (int)$leadId, $agent, 'HUMAN_REQUIRED');
+                // 1. Send salesperson assignment alert (only if WhatsAppBridge notification didn't already dispatch)
+                if (empty($waSent)) {
+                    sendSalespersonAssignmentAlert($pdo, $companyId, (int)$leadId, $agent, 'HUMAN_REQUIRED');
+                }
 
                 // 2. Real-time Channel Sync (Google Sheets, Webhooks, CRMs)
                 try {
@@ -1350,10 +1329,23 @@ HTML;
             exit;
         }
 
+        // Resolve Session ID
+        $sIdStmt = $pdo->prepare("SELECT session_id FROM `conversations` WHERE id = ? LIMIT 1");
+        $sIdStmt->execute([$conversationId]);
+        $resolvedSessionId = $sIdStmt->fetchColumn() ?: '';
+        if (empty($resolvedSessionId) && !empty($sessionToken)) {
+            $chkVs = $pdo->prepare("SELECT session_id FROM `visitor_sessions` WHERE session_token = ? OR session_id = ? LIMIT 1");
+            $chkVs->execute([$sessionToken, $sessionToken]);
+            $resolvedSessionId = $chkVs->fetchColumn() ?: '';
+        }
+        if (empty($resolvedSessionId)) {
+            $resolvedSessionId = !empty($sessionToken) && !str_starts_with($sessionToken, 'sess_') ? $sessionToken : (string)$conversationId;
+        }
+
         $pdo->prepare("
-            INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `created_at`)
-            VALUES (?, ?, 'visitor', ?, NOW())
-        ")->execute([$companyId, $conversationId, $messageText]);
+            INSERT INTO `messages` (`company_id`, `conversation_id`, `session_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+            VALUES (?, ?, ?, 'visitor', ?, 'widget', NOW())
+        ")->execute([$companyId, $conversationId, $resolvedSessionId, $messageText]);
         $msgId = (int)$pdo->lastInsertId();
 
         $pdo->prepare("
@@ -1377,69 +1369,36 @@ HTML;
             }
         }
 
-        // Dispatch alert to Counselor WhatsApp (Meta Cloud API wiring)
+        // Dispatch alert to Counselor WhatsApp via WhatsAppBridge
         try {
-            $waStmt = $pdo->prepare("
-                SELECT u.phone as agent_phone, u.name as agent_name, 
-                       c.name as cust_name, c.phone as cust_phone,
-                       w.phone_number_id, w.whatsapp_access_token
+            $custStmt = $pdo->prepare("
+                SELECT c.name as cust_name, conv.assigned_user_id
                 FROM `conversations` conv
-                LEFT JOIN `users` u ON u.id = conv.assigned_user_id
                 LEFT JOIN `customers` c ON c.id = conv.customer_id
-                LEFT JOIN `whatsapp_accounts` w ON w.company_id = conv.company_id AND w.status = 'connected'
                 WHERE conv.id = ? AND conv.company_id = ?
                 LIMIT 1
             ");
-            $waStmt->execute([$conversationId, $companyId]);
-            $waInfo = $waStmt->fetch(PDO::FETCH_ASSOC);
+            $custStmt->execute([$conversationId, $companyId]);
+            $cRow = $custStmt->fetch(PDO::FETCH_ASSOC);
+            $custLabel = !empty($cRow['cust_name']) ? $cRow['cust_name'] : 'Website Visitor';
+            $assignedUserId = !empty($cRow['assigned_user_id']) ? (int)$cRow['assigned_user_id'] : null;
 
-            $custLabel = !empty($waInfo['cust_name']) ? $waInfo['cust_name'] : 'Website Visitor';
-            $targetPhone = !empty($waInfo['agent_phone']) ? $waInfo['agent_phone'] : '';
-            if (empty($targetPhone)) {
-                $uStmt = $pdo->prepare("SELECT phone FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin') AND `phone` IS NOT NULL AND `phone` != '' LIMIT 1");
-                $uStmt->execute([$companyId]);
-                $targetPhone = $uStmt->fetchColumn() ?: '';
-            }
-
-            // If Meta WhatsApp Cloud API credentials exist, dispatch direct WhatsApp message
-            if (!empty($targetPhone) && !empty($waInfo['phone_number_id']) && !empty($waInfo['whatsapp_access_token'])) {
-                $cleanRecipient = preg_replace('/[^0-9]/', '', $targetPhone);
-                $dashHost = $_SERVER['HTTP_HOST'] ?? 'cai.cuboidsoft.in';
-                $dashBase = ($dashHost === 'localhost' || $dashHost === '127.0.0.1') ? 'http://localhost/cuboidpilot' : 'https://cai.cuboidsoft.in';
-                $replyUrl = "{$dashBase}/app/conversations.html?id={$conversationId}";
-                $waText = "💬 *New Message from {$custLabel}* (Live Chat)\n\n"
-                    . "\"{$messageText}\"\n\n"
-                    . "👉 Dashboard: {$replyUrl}\n\n"
-                    . "Or reply directly here:\n"
-                    . "REPLY #{$conversationId} <your message>";
-
-                $endpoint = "https://graph.facebook.com/v20.0/{$waInfo['phone_number_id']}/messages";
-                $payload = [
-                    'messaging_product' => 'whatsapp',
-                    'to'                => $cleanRecipient,
-                    'type'              => 'text',
-                    'text'              => ['body' => $waText]
-                ];
-                $ch = curl_init($endpoint);
-                curl_setopt_array($ch, [
-                    CURLOPT_POST           => true,
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_HTTPHEADER     => [
-                        'Authorization: Bearer ' . $waInfo['whatsapp_access_token'],
-                        'Content-Type: application/json'
-                    ],
-                    CURLOPT_POSTFIELDS     => json_encode($payload),
-                    CURLOPT_TIMEOUT        => 4
-                ]);
-                @curl_exec($ch);
-                curl_close($ch);
-            }
+            require_once __DIR__ . '/../includes/whatsapp_bridge.php';
+            WhatsAppBridge::sendNotification(
+                $pdo,
+                $companyId,
+                $conversationId,
+                $resolvedSessionId,
+                $custLabel,
+                $messageText,
+                $assignedUserId
+            );
 
             // Always log alert into alert_logs for audit
             $pdo->prepare("
                 INSERT INTO `alert_logs` (`company_id`, `alert_type`, `recipient`, `channel`, `content_preview`, `sent_at`)
-                VALUES (?, 'HUMAN_MESSAGE_RECEIVED', ?, 'whatsapp', ?, NOW())
-            ")->execute([$companyId, $targetPhone ?: 'dashboard_inbox', substr($messageText, 0, 200)]);
+                VALUES (?, 'HUMAN_MESSAGE_RECEIVED', 'whatsapp_counselor', 'whatsapp', ?, NOW())
+            ")->execute([$companyId, substr($messageText, 0, 200)]);
         } catch (Exception $waEx) {
             error_log('[WhatsApp Alert Note] ' . $waEx->getMessage());
         }

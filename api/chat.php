@@ -559,25 +559,45 @@ try {
         $checkHumanStmt->execute([$conversationId, $companyId]);
         $currentConv = $checkHumanStmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($currentConv && ($currentConv['ownership'] === 'human' || $currentConv['status'] === 'human_handling' || $currentConv['status'] === 'human_active')) {
+        if ($currentConv && ($currentConv['ownership'] === 'human' || in_array($currentConv['status'], ['human_handling', 'human_active', 'human_requested'], true))) {
             $pdo->prepare("
-                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `created_at`)
-                VALUES (?, ?, 'visitor', ?, NOW())
-            ")->execute([$companyId, $conversationId, $messageText]);
+                INSERT INTO `messages` (`company_id`, `conversation_id`, `session_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+                VALUES (?, ?, ?, 'visitor', ?, 'web', NOW())
+            ")->execute([$companyId, $conversationId, $sessionId, $messageText]);
 
             $pdo->prepare("
                 UPDATE `conversations`
                 SET `last_message_preview` = ?,
                     `last_message_at` = NOW(),
+                    `status` = 'human_requested',
+                    `ownership` = 'human',
                     `unread_human` = unread_human + 1
                 WHERE id = ? AND company_id = ?
             ")->execute([substr($messageText, 0, 150), $conversationId, $companyId]);
+
+            // Dispatch alert to Counselor WhatsApp via WhatsAppBridge
+            try {
+                require_once __DIR__ . '/../includes/whatsapp_bridge.php';
+                $custLabel = !empty($currentConv['customer_name']) ? $currentConv['customer_name'] : (!empty($visitorName) ? $visitorName : 'Website Visitor');
+                WhatsAppBridge::sendNotification(
+                    $pdo,
+                    $companyId,
+                    $conversationId,
+                    $sessionId,
+                    $custLabel,
+                    $messageText,
+                    !empty($currentConv['assigned_user_id']) ? (int)$currentConv['assigned_user_id'] : null
+                );
+            } catch (Throwable $waEx) {
+                error_log('[Chat Human Handoff WhatsApp Alert] ' . $waEx->getMessage());
+            }
 
             $agentName = $currentConv['agent_name'] ?: 'Advisor';
 
             echo json_encode([
                 'success'         => true,
                 'conversation_id' => $conversationId,
+                'session_id'      => $sessionId,
                 'human_handling'  => true,
                 'agent_name'      => $agentName,
                 'reply'           => null,

@@ -16,6 +16,7 @@ require_once __DIR__ . '/../../includes/customer_journey_service.php';
 require_once __DIR__ . '/../../includes/channel_handoff_service.php';
 require_once __DIR__ . '/../../includes/asset_helper.php';
 require_once __DIR__ . '/../../includes/gemini_service.php';
+require_once __DIR__ . '/../../includes/whatsapp_bridge.php';
 
 $pdo = getDbConnection();
 
@@ -80,12 +81,28 @@ if (empty($data)) {
 }
 
 try {
-    // Extract incoming sender, text, waba_id, and recipient phone from payload
+    // Extract incoming sender, text, waba_id, context_id, media and recipient phone from payload
     // Supports both standard Meta Graph Webhook format and clean Direct format
     $senderPhone = '';
     $messageText = '';
     $wabaId      = '';
     $destPhone   = '';
+    $contextWaId = '';
+    $mediaType   = 'text';
+    $mediaObj    = null;
+
+    // Handle Meta Status Updates (Sent, Delivered, Read)
+    if (!empty($data['entry'][0]['changes'][0]['value']['statuses'][0])) {
+        $stObj = $data['entry'][0]['changes'][0]['value']['statuses'][0];
+        $stId = $stObj['id'] ?? '';
+        $stVal = $stObj['status'] ?? '';
+        if (!empty($stId) && !empty($stVal)) {
+            $pdo->prepare("UPDATE `whatsapp_messages` SET `status` = ? WHERE `metadata_json` LIKE ?")
+                ->execute([$stVal, '%"wamid":"' . $stId . '"%']);
+            echo json_encode(['status' => 'status_updated', 'wa_id' => $stId, 'delivery_status' => $stVal]);
+            exit;
+        }
+    }
 
     // Meta Webhook Format
     if (!empty($data['entry'][0]['changes'][0]['value'])) {
@@ -95,7 +112,26 @@ try {
         if (!empty($changeVal['messages'][0])) {
             $msgObj = $changeVal['messages'][0];
             $senderPhone = $msgObj['from'] ?? '';
-            $messageText = $msgObj['text']['body'] ?? ($msgObj['button']['text'] ?? '');
+            $contextWaId = $msgObj['context']['id'] ?? '';
+            $type = $msgObj['type'] ?? 'text';
+
+            if ($type === 'text') {
+                $messageText = $msgObj['text']['body'] ?? '';
+            } elseif ($type === 'image') {
+                $messageText = $msgObj['image']['caption'] ?? '[Attached Image]';
+                $mediaType = 'image';
+                $mediaObj = $msgObj['image'];
+            } elseif ($type === 'document') {
+                $messageText = $msgObj['document']['caption'] ?? ($msgObj['document']['filename'] ?? '[Attached Document]');
+                $mediaType = 'document';
+                $mediaObj = $msgObj['document'];
+            } elseif ($type === 'button') {
+                $messageText = $msgObj['button']['text'] ?? '';
+            } elseif ($type === 'interactive') {
+                $messageText = $msgObj['interactive']['button_reply']['title'] ?? ($msgObj['interactive']['list_reply']['title'] ?? '');
+            } else {
+                $messageText = $msgObj['text']['body'] ?? '';
+            }
         }
     } else {
         // Direct / Simulated JSON Format
@@ -103,6 +139,9 @@ try {
         $messageText = $data['message'] ?? $data['text'] ?? $data['body'] ?? '';
         $wabaId      = $data['waba_id'] ?? '';
         $destPhone   = $data['to'] ?? $data['display_number'] ?? '';
+        $contextWaId = $data['context_id'] ?? ($data['context']['id'] ?? '');
+        $mediaType   = $data['media_type'] ?? 'text';
+        $mediaObj    = $data['media'] ?? null;
     }
 
     $cleanSender = preg_replace('/[^0-9]/', '', $senderPhone);
@@ -210,250 +249,168 @@ try {
         }
     }
 
-    // 2b. Priority Human Support Agent Reply Bridge via WhatsApp
-    // Supports patterns: "REPLY #123 Hello" or "reply 123 Hello" or "#123 Hello"
-    if (preg_match('/^(?:reply\s*#?|#)\s*([0-9]+)\s+(.+)$/is', $messageText, $agentReplyMatch)) {
-        $targetConvId = (int)$agentReplyMatch[1];
-        $agentReplyBody = trim($agentReplyMatch[2]);
+    // 2b. Two-Way WhatsApp Bridge for Team Members (Native Reply & Contextual Mapping)
+    $context = WhatsAppBridge::resolveIncomingContext($pdo, $contextWaId, $cleanSender, $wabaId);
 
-        $tcStmt = $pdo->prepare("SELECT c.*, cust.name as customer_name, comp.name as company_name FROM `conversations` c JOIN `companies` comp ON comp.id = c.company_id LEFT JOIN `customers` cust ON cust.id = c.customer_id WHERE c.id = ? LIMIT 1");
-        $tcStmt->execute([$targetConvId]);
-        $targetConv = $tcStmt->fetch(PDO::FETCH_ASSOC);
+    // If ambiguous sessions detected, do NOT guess or send to another visitor!
+    if ($context['status'] === 'ambiguous_sessions') {
+        WhatsAppBridge::sendAgentRejection(
+            $pdo,
+            $context['company_id'],
+            $cleanSender,
+            "⚠️ You have multiple active visitor conversations. Please use WhatsApp's native Reply feature (swipe or reply to the specific visitor message) to send your message to the correct session."
+        );
+        echo json_encode([
+            'status' => 'ambiguous_reply_blocked',
+            'error'  => 'Multiple active sessions found. Native Reply required to map to the correct visitor.'
+        ]);
+        exit;
+    }
 
-        if ($targetConv) {
-            $convCompanyId = (int)$targetConv['company_id'];
-            $compName = $targetConv['company_name'] ?: 'CuboidSoft';
+    if (in_array($context['status'], ['matched_reply', 'matched_single_active'], true)) {
+        $targetConvId = (int)$context['conversation_id'];
+        $convCompanyId = (int)$context['company_id'];
+        $sessionId = $context['session_id'];
+        $agentUserId = (int)$context['user_id'];
+        $agentName = $context['user_name'];
+        $agentReplyBody = trim($messageText);
 
-            // Find which agent this sender phone belongs to
-            $agStmt = $pdo->prepare("SELECT id, name, job_title FROM `users` WHERE `company_id` = ? AND REPLACE(REPLACE(REPLACE(phone, '+', ''), ' ', ''), '-', '') LIKE ? LIMIT 1");
-            $agStmt->execute([$convCompanyId, '%' . substr($cleanSender, -10)]);
-            $matchedAgent = $agStmt->fetch(PDO::FETCH_ASSOC);
-            $agentUserId = $matchedAgent ? (int)$matchedAgent['id'] : (!empty($targetConv['assigned_user_id']) ? (int)$targetConv['assigned_user_id'] : null);
-            $agentName = $matchedAgent ? $matchedAgent['name'] : 'Support Specialist';
-
-            // Insert message as human in canonical messages table
-            $pdo->prepare("
-                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `sender_id`, `message_text`, `channel`, `created_at`)
-                VALUES (?, ?, 'human', ?, ?, 'whatsapp', NOW())
-            ")->execute([$convCompanyId, $targetConvId, $agentUserId, $agentReplyBody]);
-
-            // Update conversation to human_active and reopen if closed
-            $pdo->prepare("
-                UPDATE `conversations`
-                SET `ownership` = 'human',
-                    `status` = 'human_active',
-                    `closure_reason` = NULL,
-                    `closed_at` = NULL,
-                    `assigned_user_id` = COALESCE(?, `assigned_user_id`),
-                    `last_message_preview` = ?,
-                    `last_message_at` = NOW(),
-                    `unread_human` = 0
-                WHERE id = ? AND company_id = ?
-            ")->execute([$agentUserId, substr($agentReplyBody, 0, 150), $targetConvId, $convCompanyId]);
-
-            // Update human_handoffs if pending
-            try {
-                $pdo->prepare("
-                    UPDATE `human_handoffs`
-                    SET `status` = 'active',
-                        `assigned_to_user_id` = COALESCE(?, `assigned_to_user_id`),
-                        `accepted_at` = COALESCE(`accepted_at`, NOW())
-                    WHERE `conversation_id` = ? AND `status` = 'pending'
-                ")->execute([$agentUserId, $targetConvId]);
-            } catch (Throwable $hEx) {}
-
-            // Send confirmation WhatsApp message back to agent if WhatsApp account is connected
-            try {
-                $waStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` = 'connected' LIMIT 1");
-                $waStmt->execute([$convCompanyId]);
-                $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
-
-                if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token'])) {
-                    $ackReply = "*{$compName} Support Desk*\n\n"
-                        . "*Message Delivered to #CONV-{$targetConvId}* (" . ($targetConv['customer_name'] ?: 'Visitor') . ")\n\n"
-                        . "\"{$agentReplyBody}\"\n\n"
-                        . "Type `RESOLVE #{$targetConvId}` when done.\n"
-                        . "— Powered by Cai (CuboidSoft AI)";
-                    $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
-                    $payload = [
-                        'messaging_product' => 'whatsapp',
-                        'to'                => $cleanSender,
-                        'type'              => 'text',
-                        'text'              => ['body' => $ackReply]
-                    ];
-                    $ch = curl_init($endpoint);
-                    curl_setopt_array($ch, [
-                        CURLOPT_POST           => true,
-                        CURLOPT_POSTFIELDS     => json_encode($payload),
-                        CURLOPT_RETURNTRANSFER => true,
-                        CURLOPT_HTTPHEADER     => [
-                            'Authorization: Bearer ' . $waAcc['whatsapp_access_token'],
-                            'Content-Type: application/json'
-                        ],
-                        CURLOPT_TIMEOUT        => 4
-                    ]);
-                    @curl_exec($ch);
-                    curl_close($ch);
-                }
-            } catch (Throwable $waAckEx) {}
-
+        // ====================================================================
+        // STRICT TEAM COMMAND: "STOP" (Hands off back to AI)
+        // If assigned team member sends "STOP", end human handling, resume AI,
+        // send AI feedback message to visitor, and NEVER display "STOP" to visitor.
+        // ====================================================================
+        if (strtoupper($agentReplyBody) === 'STOP') {
+            $stopResult = WhatsAppBridge::executeHandoffStop(
+                $pdo,
+                $convCompanyId,
+                $targetConvId,
+                $agentUserId,
+                $senderPhone
+            );
             echo json_encode([
-                'status' => 'agent_reply_delivered',
-                'target_conversation_id' => $targetConvId,
-                'message' => $agentReplyBody,
-                'agent' => $agentName
+                'success' => true,
+                'action'  => 'handoff_stopped',
+                'details' => $stopResult
             ]);
             exit;
         }
-    }
 
-    // 2c. Natural Agent Reply Bridge (e.g. Ayush simply replies "Hi" or answers directly from WhatsApp)
-    // Check if the sender is an authorized team member / owner with an active waiting lead
-    $sender10 = substr($cleanSender, -10);
-    $checkAgentStmt = $pdo->prepare("
-        SELECT u.id, u.company_id, u.name, u.job_title 
-        FROM `users` u 
-        WHERE REPLACE(REPLACE(REPLACE(u.phone, '+', ''), ' ', ''), '-', '') LIKE ? 
-          AND u.is_active = 1 
-        ORDER BY (u.company_id IS NOT NULL AND u.company_id > 0) DESC, u.id DESC 
-        LIMIT 1
-    ");
-    $checkAgentStmt->execute(['%' . $sender10]);
-    $matchedTeamUser = $checkAgentStmt->fetch(PDO::FETCH_ASSOC);
-
-    // If company_id is NULL or 0 (e.g. super admin), attempt fallback to the first active tenant
-    if ($matchedTeamUser && empty($matchedTeamUser['company_id'])) {
-        $firstCompId = (int)$pdo->query("SELECT id FROM `companies` WHERE `status` = 'active' ORDER BY id ASC LIMIT 1")->fetchColumn();
-        if ($firstCompId) {
-            $matchedTeamUser['company_id'] = $firstCompId;
-        }
-    }
-
-    if ($matchedTeamUser && !empty($matchedTeamUser['company_id'])) {
-        $agentCompanyId = (int)$matchedTeamUser['company_id'];
-        
-        // Find most recent pending, active or recently closed human handoff conversation for this company
-        $pendingConvStmt = $pdo->prepare("
-            SELECT c.*, cust.name as customer_name 
-            FROM `conversations` c 
-            LEFT JOIN `customers` cust ON cust.id = c.customer_id 
-            WHERE c.company_id = ? 
-              AND (
-                c.status IN ('human_requested', 'human_active') 
-                OR (c.status = 'closed' AND c.closed_at >= NOW() - INTERVAL 120 MINUTE)
-                OR c.id IN (
-                    SELECT DISTINCT l.conversation_id 
-                    FROM `alert_logs` al 
-                    JOIN `leads` l ON l.id = al.lead_id 
-                    WHERE al.company_id = ? AND al.recipient LIKE ? AND al.sent_at >= NOW() - INTERVAL 120 MINUTE
-                )
-              )
-              AND (c.assigned_user_id = ? OR c.assigned_user_id IS NULL OR c.assigned_user_id = 0)
-            ORDER BY (c.status IN ('human_requested', 'human_active')) DESC, c.last_message_at DESC, c.id DESC 
-            LIMIT 1
-        ");
-        $pendingConvStmt->execute([$agentCompanyId, $agentCompanyId, '%' . $sender10, (int)$matchedTeamUser['id']]);
-        $activeHandoffConv = $pendingConvStmt->fetch(PDO::FETCH_ASSOC);
-
-        // Fallback: If no conv matched by assigned_user_id, match the latest human_requested/active conversation in the company
-        if (!$activeHandoffConv) {
-            $fallbackConvStmt = $pdo->prepare("
-                SELECT c.*, cust.name as customer_name 
-                FROM `conversations` c 
-                LEFT JOIN `customers` cust ON cust.id = c.customer_id 
-                WHERE c.company_id = ? 
-                  AND (c.status IN ('human_requested', 'human_active') OR c.ownership = 'human')
-                ORDER BY c.last_message_at DESC, c.id DESC 
-                LIMIT 1
-            ");
-            $fallbackConvStmt->execute([$agentCompanyId]);
-            $activeHandoffConv = $fallbackConvStmt->fetch(PDO::FETCH_ASSOC);
+        $attachmentMeta = null;
+        if (!empty($mediaObj['id'])) {
+            $dlResult = WhatsAppBridge::downloadWhatsAppMedia($pdo, $convCompanyId, $mediaObj['id']);
+            if ($dlResult) {
+                $attachmentMeta = $dlResult;
+                $tagType = $dlResult['is_image'] ? 'Image' : 'Document';
+                $attTag = "[Attached {$tagType}: {$dlResult['file_name']}] ({$dlResult['url']})";
+                $agentReplyBody = (!empty($agentReplyBody) && $agentReplyBody !== '[Attached Image]' && $agentReplyBody !== '[Attached Document]')
+                    ? "{$agentReplyBody}\n{$attTag}"
+                    : $attTag;
+            }
         }
 
-        if ($activeHandoffConv) {
-            $targetConvId = (int)$activeHandoffConv['id'];
-            $agentReplyBody = trim($messageText);
-            $agentUserId = (int)$matchedTeamUser['id'];
-            $agentName = $matchedTeamUser['name'] ?: 'Support Specialist';
+        // Insert message as human in canonical messages table with session_id
+        $pdo->prepare("
+            INSERT INTO `messages` (`company_id`, `conversation_id`, `session_id`, `sender_type`, `sender_id`, `message_text`, `channel`, `metadata_json`, `created_at`)
+            VALUES (?, ?, ?, 'human', ?, ?, 'whatsapp', ?, NOW())
+        ")->execute([
+            $convCompanyId,
+            $targetConvId,
+            $sessionId,
+            $agentUserId,
+            $agentReplyBody,
+            $attachmentMeta ? json_encode(['attachment' => $attachmentMeta], JSON_UNESCAPED_UNICODE) : null
+        ]);
+        $newMsgId = (int)$pdo->lastInsertId();
 
-            // Insert message as human in canonical messages table
+        // Update conversation to human_active and reopen if closed
+        $pdo->prepare("
+            UPDATE `conversations`
+            SET `ownership` = 'human',
+                `status` = 'human_active',
+                `closure_reason` = NULL,
+                `closed_at` = NULL,
+                `assigned_user_id` = ?,
+                `last_message_preview` = ?,
+                `last_message_at` = NOW(),
+                `unread_human` = 0
+            WHERE id = ? AND company_id = ?
+        ")->execute([$agentUserId, substr($agentReplyBody, 0, 150), $targetConvId, $convCompanyId]);
+
+        // Update human_handoffs if pending
+        try {
             $pdo->prepare("
-                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `sender_id`, `message_text`, `channel`, `created_at`)
-                VALUES (?, ?, 'human', ?, ?, 'whatsapp', NOW())
-            ")->execute([$agentCompanyId, $targetConvId, $agentUserId, $agentReplyBody]);
+                UPDATE `human_handoffs`
+                SET `status` = 'active',
+                    `assigned_to_user_id` = ?,
+                    `accepted_at` = COALESCE(`accepted_at`, NOW())
+                WHERE `conversation_id` = ? AND `status` = 'pending'
+            ")->execute([$agentUserId, $targetConvId]);
+        } catch (Throwable $hEx) {}
 
-            // Reopen and update conversation to human_active
-            $pdo->prepare("
-                UPDATE `conversations`
-                SET `ownership` = 'human',
-                    `status` = 'human_active',
-                    `closure_reason` = NULL,
-                    `closed_at` = NULL,
-                    `assigned_user_id` = ?,
-                    `last_message_preview` = ?,
-                    `last_message_at` = NOW(),
-                    `unread_human` = 0
-                WHERE id = ? AND company_id = ?
-            ")->execute([$agentUserId, substr($agentReplyBody, 0, 150), $targetConvId, $agentCompanyId]);
-
-            // Update human_handoffs if pending
+        // Record incoming message in whatsapp_message_mappings to support chaining replies
+        if (!empty($metaMessageId)) {
             try {
                 $pdo->prepare("
-                    UPDATE `human_handoffs`
-                    SET `status` = 'active',
-                        `assigned_to_user_id` = ?,
-                        `accepted_at` = COALESCE(`accepted_at`, NOW())
-                    WHERE `conversation_id` = ? AND `status` = 'pending'
-                ")->execute([$agentUserId, $targetConvId]);
-            } catch (Throwable $hEx) {}
-
-            // Send confirmation WhatsApp message back to agent
-            try {
-                $waStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` = 'connected' LIMIT 1");
-                $waStmt->execute([$agentCompanyId]);
-                $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
-
-                if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token'])) {
-                    $cNameStmt = $pdo->prepare("SELECT name FROM `companies` WHERE id = ? LIMIT 1");
-                    $cNameStmt->execute([$agentCompanyId]);
-                    $agentCompName = $cNameStmt->fetchColumn() ?: 'CuboidSoft';
-
-                    $ackReply = "*{$agentCompName} Support Desk*\n\n"
-                        . "*Message Delivered to #CONV-{$targetConvId}* (" . ($activeHandoffConv['customer_name'] ?: 'Visitor') . ")\n\n"
-                        . "\"{$agentReplyBody}\"\n\n"
-                        . "Type `RESOLVE #{$targetConvId}` when done.\n"
-                        . "— Powered by Cai (CuboidSoft AI)";
-                    $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
-                    $payload = [
-                        'messaging_product' => 'whatsapp',
-                        'to'                => $cleanSender,
-                        'type'              => 'text',
-                        'text'              => ['body' => $ackReply]
-                    ];
-                    $ch = curl_init($endpoint);
-                    curl_setopt_array($ch, [
-                        CURLOPT_POST           => true,
-                        CURLOPT_POSTFIELDS     => json_encode($payload),
-                        CURLOPT_RETURNTRANSFER => true,
-                        CURLOPT_HTTPHEADER     => [
-                            'Authorization: Bearer ' . $waAcc['whatsapp_access_token'],
-                            'Content-Type: application/json'
-                        ],
-                        CURLOPT_TIMEOUT        => 4
-                    ]);
-                    @curl_exec($ch);
-                    curl_close($ch);
-                }
-            } catch (Throwable $waAckEx) {}
-
-            echo json_encode([
-                'status' => 'agent_reply_delivered',
-                'target_conversation_id' => $targetConvId,
-                'message' => $agentReplyBody,
-                'agent' => $agentName
-            ]);
-            exit;
+                    INSERT INTO `whatsapp_message_mappings`
+                    (`company_id`, `session_id`, `conversation_id`, `message_id`, `wa_message_id`, `recipient_phone`, `direction`, `created_at`)
+                    VALUES (?, ?, ?, ?, ?, ?, 'inbound', NOW())
+                    ON DUPLICATE KEY UPDATE `message_id` = VALUES(`message_id`)
+                ")->execute([$convCompanyId, $sessionId, $targetConvId, $newMsgId, $metaMessageId, $cleanSender]);
+            } catch (Throwable $mEx) {}
         }
+
+        echo json_encode([
+            'status'                 => 'agent_reply_delivered',
+            'target_conversation_id' => $targetConvId,
+            'session_id'             => $sessionId,
+            'message'                => $agentReplyBody,
+            'agent'                  => $agentName
+        ]);
+        exit;
+    }
+
+    // 2c. If the sender is an authorized company user but has no active session:
+    // Check if they typed a legacy #ID command, else notify them
+    if ($context['status'] === 'no_active_session') {
+        if (preg_match('/^(?:reply\s*#?|#)\s*([0-9]+)\s+(.+)$/is', $messageText, $cmdMatch)) {
+            $targetConvId = (int)$cmdMatch[1];
+            $agentReplyBody = trim($cmdMatch[2]);
+            $convCompanyId = $context['company_id'];
+            $agentUserId = $context['user_id'];
+            $agentName = $context['user_name'];
+
+            $tcStmt = $pdo->prepare("SELECT id, session_id FROM `conversations` WHERE id = ? AND company_id = ? LIMIT 1");
+            $tcStmt->execute([$targetConvId, $convCompanyId]);
+            $tcRow = $tcStmt->fetch(PDO::FETCH_ASSOC);
+
+            if ($tcRow) {
+                $sessionId = $tcRow['session_id'] ?: (string)$targetConvId;
+                $pdo->prepare("
+                    INSERT INTO `messages` (`company_id`, `conversation_id`, `session_id`, `sender_type`, `sender_id`, `message_text`, `channel`, `created_at`)
+                    VALUES (?, ?, ?, 'human', ?, ?, 'whatsapp', NOW())
+                ")->execute([$convCompanyId, $targetConvId, $sessionId, $agentUserId, $agentReplyBody]);
+
+                $pdo->prepare("
+                    UPDATE `conversations`
+                    SET `ownership` = 'human', `status` = 'human_active', `closure_reason` = NULL, `closed_at` = NULL,
+                        `assigned_user_id` = ?, `last_message_preview` = ?, `last_message_at` = NOW(), `unread_human` = 0
+                    WHERE id = ? AND company_id = ?
+                ")->execute([$agentUserId, substr($agentReplyBody, 0, 150), $targetConvId, $convCompanyId]);
+
+                echo json_encode(['status' => 'agent_reply_delivered', 'target_conversation_id' => $targetConvId]);
+                exit;
+            }
+        }
+
+        WhatsAppBridge::sendAgentRejection(
+            $pdo,
+            $context['company_id'],
+            $cleanSender,
+            "⚠️ No active human support session found waiting for your reply."
+        );
+        echo json_encode(['status' => 'no_active_session', 'note' => 'Agent notified of no active session']);
+        exit;
     }
 
     // 3. Multi-Tenant & Omnichannel Customer Identity Resolution

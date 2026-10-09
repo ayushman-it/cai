@@ -563,12 +563,17 @@ try {
             exit;
         }
 
-        // Insert human counselor message
+        // Fetch session_id for conversation
+        $sIdStmt = $pdo->prepare("SELECT session_id FROM `conversations` WHERE id = ? LIMIT 1");
+        $sIdStmt->execute([$convId]);
+        $sessionId = $sIdStmt->fetchColumn() ?: (string)$convId;
+
+        // Insert human counselor message with session_id
         $pdo->prepare("
             INSERT INTO `messages`
-            (`company_id`, `conversation_id`, `sender_type`, `sender_id`, `message_text`, `created_at`)
-            VALUES (?, ?, 'human', ?, ?, NOW())
-        ")->execute([$companyId, $convId, $userId, $messageText]);
+            (`company_id`, `conversation_id`, `session_id`, `sender_type`, `sender_id`, `message_text`, `channel`, `created_at`)
+            VALUES (?, ?, ?, 'human', ?, ?, 'dashboard', NOW())
+        ")->execute([$companyId, $convId, $sessionId, $userId, $messageText]);
 
         // Update conversation
         $pdo->prepare("

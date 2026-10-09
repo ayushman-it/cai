@@ -245,6 +245,7 @@ try {
             $sql = "
                 SELECT 
                     c.id as conversation_id,
+                    c.session_id,
                     c.channel,
                     c.status,
                     COALESCE(c.ownership, 'ai') as ownership,
@@ -261,7 +262,10 @@ try {
                 FROM `conversations` c
                 LEFT JOIN `customers` cust ON cust.id = c.customer_id
                 LEFT JOIN `leads` l ON l.conversation_id = c.id
-                WHERE c.company_id = ? AND (c.channel = 'whatsapp' OR c.id IN (SELECT DISTINCT conversation_id FROM messages WHERE channel = 'whatsapp' AND company_id = ?))
+                WHERE c.company_id = ? AND (
+                    c.channel IN ('whatsapp', 'web', 'widget') 
+                    OR c.id IN (SELECT DISTINCT conversation_id FROM messages WHERE company_id = ?)
+                )
             ";
             $params = [$companyId, $companyId];
 
@@ -292,8 +296,9 @@ try {
             $cleaned = array_map(function($t) {
                 return [
                     'id'              => (int)$t['conversation_id'],
+                    'session_id'      => $t['session_id'] ?: '',
                     'customer_id'     => (int)($t['customer_id'] ?? 0),
-                    'customer_name'   => !empty($t['customer_name']) ? $t['customer_name'] : (!empty($t['customer_phone']) ? $t['customer_phone'] : 'WhatsApp Prospect #' . $t['conversation_id']),
+                    'customer_name'   => !empty($t['customer_name']) ? $t['customer_name'] : (!empty($t['customer_phone']) ? $t['customer_phone'] : 'Visitor #' . ($t['session_id'] ?: $t['conversation_id'])),
                     'customer_phone'  => $t['customer_phone'] ?: '',
                     'last_message'    => $t['last_message_preview'] ?: 'Conversation initiated',
                     'last_message_at' => $t['last_message_at'] ?: $t['created_at'],
@@ -339,9 +344,9 @@ try {
                 exit;
             }
 
-            // Fetch messages
+            // Fetch messages with session_id and metadata_json
             $mStmt = $pdo->prepare("
-                SELECT id, sender_type, sender_id, message_text, channel, created_at
+                SELECT id, session_id, sender_type, sender_id, message_text, channel, metadata_json, created_at
                 FROM `messages`
                 WHERE conversation_id = ? AND company_id = ?
                 ORDER BY created_at ASC, id ASC
@@ -353,7 +358,8 @@ try {
                 'success' => true,
                 'conversation' => [
                     'id'             => (int)$conv['id'],
-                    'customer_name'  => $conv['customer_name'] ?: ($conv['customer_phone'] ?: 'WhatsApp Prospect'),
+                    'session_id'     => $conv['session_id'] ?: '',
+                    'customer_name'  => $conv['customer_name'] ?: ($conv['customer_phone'] ?: 'Visitor #' . ($conv['session_id'] ?: $conv['id'])),
                     'customer_phone' => $conv['customer_phone'] ?: '',
                     'customer_email' => $conv['customer_email'] ?: '',
                     'ownership'      => $conv['ownership'] ?: 'ai',
@@ -374,10 +380,46 @@ try {
             $convId      = (int)($body['conversation_id'] ?? 0);
             $destPhone   = trim($body['phone'] ?? '');
             $messageText = trim($body['message'] ?? '');
+            $attachment  = $body['attachment'] ?? null; // Optional: { url, file_name, file_size, mime_type, is_image }
 
-            if (empty($messageText)) {
-                echo json_encode(['success' => false, 'error' => 'Message text cannot be empty']);
+            if (empty($messageText) && empty($attachment)) {
+                echo json_encode(['success' => false, 'error' => 'Message text or attachment is required']);
                 exit;
+            }
+
+            // ====================================================================
+            // STRICT DASHBOARD COMMAND: "STOP" (Hands off back to AI)
+            // If team member sends "STOP", end human handling, resume AI,
+            // send AI feedback message to visitor, and NEVER display "STOP" to visitor.
+            // ====================================================================
+            if (strtoupper($messageText) === 'STOP' && $convId > 0) {
+                require_once __DIR__ . '/../includes/whatsapp_bridge.php';
+                $stopResult = WhatsAppBridge::executeHandoffStop(
+                    $pdo,
+                    $companyId,
+                    $convId,
+                    $userId ?: null,
+                    null
+                );
+                echo json_encode([
+                    'success' => true,
+                    'action'  => 'handoff_stopped',
+                    'details' => $stopResult
+                ]);
+                exit;
+            }
+
+            // Look up conversation channel and session ID
+            $convChannel = 'whatsapp';
+            $sessionId = null;
+            if ($convId > 0) {
+                $cLookup = $pdo->prepare("SELECT channel, session_id FROM `conversations` WHERE id = ? AND company_id = ? LIMIT 1");
+                $cLookup->execute([$convId, $companyId]);
+                $cRow = $cLookup->fetch(PDO::FETCH_ASSOC);
+                if ($cRow) {
+                    $convChannel = $cRow['channel'] ?: 'whatsapp';
+                    $sessionId = $cRow['session_id'];
+                }
             }
 
             // If convId is provided, get phone from customer
@@ -388,29 +430,24 @@ try {
                 $destPhone = $pRow['phone'] ?: ($pRow['whatsapp_number'] ?: '');
             }
 
-            if (empty($destPhone)) {
-                echo json_encode(['success' => false, 'error' => 'Recipient phone number is required']);
-                exit;
+            // If it's a web/widget conversation and no phone is present, we still allow replying!
+            // It will be saved into messages for widget polling.
+            $dispatch = ['success' => false, 'meta_message_id' => null, 'http_code' => 0, 'raw_response' => ''];
+            if (!empty($destPhone)) {
+                $creds = getWhatsAppCredentials($pdo, $companyId);
+                if (!empty($creds['phone_number_id']) && !empty($creds['access_token'])) {
+                    $dispatch = dispatchWhatsAppMessage(
+                        $creds['phone_number_id'],
+                        $creds['access_token'],
+                        $destPhone,
+                        $messageText ?: ($attachment ? '[Attachment: ' . ($attachment['file_name'] ?? 'File') . ']' : '')
+                    );
+                }
             }
-
-            // Retrieve credentials
-            $creds = getWhatsAppCredentials($pdo, $companyId);
-            if (empty($creds['phone_number_id']) || empty($creds['access_token'])) {
-                echo json_encode(['success' => false, 'error' => 'WhatsApp Cloud API is not connected.']);
-                exit;
-            }
-
-            // Dispatch to Meta
-            $dispatch = dispatchWhatsAppMessage(
-                $creds['phone_number_id'],
-                $creds['access_token'],
-                $destPhone,
-                $messageText
-            );
 
             // Ensure conversation exists
+            $previewText = !empty($messageText) ? $messageText : ($attachment ? '[Attachment: ' . ($attachment['file_name'] ?? 'File') . ']' : '');
             if ($convId <= 0) {
-                // Find or create customer
                 $cleanPhone = preg_replace('/[^0-9]/', '', $destPhone);
                 $cCust = $pdo->prepare("SELECT id FROM `customers` WHERE company_id = ? AND (phone LIKE ? OR whatsapp_number LIKE ?) LIMIT 1");
                 $cCust->execute([$companyId, "%{$cleanPhone}%", "%{$cleanPhone}%"]);
@@ -424,10 +461,9 @@ try {
                 }
 
                 $pdo->prepare("INSERT INTO `conversations` (`company_id`, `customer_id`, `channel`, `status`, `ownership`, `last_message_preview`, `last_message_at`, `created_at`) VALUES (?, ?, 'whatsapp', 'human_active', 'human', ?, NOW(), NOW())")
-                    ->execute([$companyId, $cId, substr($messageText, 0, 150)]);
+                    ->execute([$companyId, $cId, substr($previewText, 0, 150)]);
                 $convId = (int)$pdo->lastInsertId();
             } else {
-                // Take over as human
                 $pdo->prepare("
                     UPDATE `conversations`
                     SET `ownership` = 'human',
@@ -435,14 +471,21 @@ try {
                         `last_message_preview` = ?,
                         `last_message_at` = NOW()
                     WHERE id = ? AND company_id = ?
-                ")->execute([substr($messageText, 0, 150), $convId, $companyId]);
+                ")->execute([substr($previewText, 0, 150), $convId, $companyId]);
             }
 
-            // Persist message in messages table
+            $metaJson = $attachment ? json_encode(['attachment' => $attachment], JSON_UNESCAPED_UNICODE) : null;
+            $savedMsgBody = $messageText;
+            if ($attachment && empty($savedMsgBody)) {
+                $tagType = !empty($attachment['is_image']) ? 'Image' : 'Document';
+                $savedMsgBody = "[Attached {$tagType}: {$attachment['file_name']}] ({$attachment['url']})";
+            }
+
+            // Persist message in messages table (include session_id & metadata_json)
             $pdo->prepare("
-                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `sender_id`, `message_text`, `channel`, `created_at`)
-                VALUES (?, ?, 'human', ?, ?, 'whatsapp', NOW())
-            ")->execute([$companyId, $convId, $userId ?: null, $messageText]);
+                INSERT INTO `messages` (`company_id`, `conversation_id`, `session_id`, `sender_type`, `sender_id`, `message_text`, `channel`, `metadata_json`, `created_at`)
+                VALUES (?, ?, ?, 'human', ?, ?, ?, ?, NOW())
+            ")->execute([$companyId, $convId, $sessionId, $userId ?: null, $savedMsgBody, $convChannel, $metaJson]);
             $msgId = (int)$pdo->lastInsertId();
 
             // Persist in whatsapp_messages log
@@ -478,26 +521,46 @@ try {
         // 5. TOGGLE AI / HUMAN OWNERSHIP
         // ==========================================
         case 'toggle_ownership':
+        case 'switch_to_ai':
             $convId    = (int)($body['conversation_id'] ?? 0);
-            $ownership = strtolower(trim($body['ownership'] ?? ''));
+            $ownership = strtolower(trim($body['ownership'] ?? 'ai'));
 
-            if (!in_array($ownership, ['ai', 'human'], true) || $convId <= 0) {
+            if ($convId <= 0) {
                 echo json_encode(['success' => false, 'error' => 'Invalid parameters']);
                 exit;
             }
 
-            $newStatus = ($ownership === 'human') ? 'human_active' : 'ai_handling';
+            if ($ownership === 'ai' || $action === 'switch_to_ai') {
+                require_once __DIR__ . '/../includes/whatsapp_bridge.php';
+                $stopResult = WhatsAppBridge::executeHandoffStop(
+                    $pdo,
+                    $companyId,
+                    $convId,
+                    $userId ?: null,
+                    null
+                );
+                echo json_encode([
+                    'success'         => true,
+                    'conversation_id' => $convId,
+                    'ownership'       => 'ai',
+                    'status'          => 'ai_handling',
+                    'details'         => $stopResult
+                ]);
+                exit;
+            }
+
+            $newStatus = 'human_active';
 
             $pdo->prepare("
                 UPDATE `conversations`
-                SET `ownership` = ?, `status` = ?, `closure_reason` = NULL, `closed_at` = NULL
+                SET `ownership` = 'human', `status` = ?, `closure_reason` = NULL, `closed_at` = NULL
                 WHERE id = ? AND company_id = ?
-            ")->execute([$ownership, $newStatus, $convId, $companyId]);
+            ")->execute([$newStatus, $convId, $companyId]);
 
             echo json_encode([
                 'success'         => true,
                 'conversation_id' => $convId,
-                'ownership'       => $ownership,
+                'ownership'       => 'human',
                 'status'          => $newStatus
             ]);
             break;

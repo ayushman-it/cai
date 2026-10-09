@@ -24,23 +24,18 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 /**
- * Generate human-readable unique Session ID in format CP-XXXXXXX (e.g. CP-8F42K91)
+ * Generate human-readable unique Session ID in clean numeric format (e.g. 1042)
  */
 function generateUniqueSessionId(PDO $pdo): string {
-    $chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
-    for ($attempt = 0; $attempt < 10; $attempt++) {
-        $rand = '';
-        for ($i = 0; $i < 7; $i++) {
-            $rand .= $chars[random_int(0, strlen($chars) - 1)];
-        }
-        $code = "CP-{$rand}";
+    for ($attempt = 0; $attempt < 30; $attempt++) {
+        $candidate = (string)random_int(1001, 9999);
         $chk = $pdo->prepare("SELECT id FROM `visitor_sessions` WHERE `session_id` = ? LIMIT 1");
-        $chk->execute([$code]);
+        $chk->execute([$candidate]);
         if (!$chk->fetch()) {
-            return $code;
+            return $candidate;
         }
     }
-    return 'CP-' . strtoupper(substr(bin2hex(random_bytes(4)), 0, 7));
+    return (string)random_int(10000, 999999);
 }
 
 try {
@@ -187,18 +182,16 @@ try {
 
     $visitorId = $customerId; // visitor_id maps to customer_id
 
-    // 3. Unique Session ID Generation (CP-8F42K91)
-    // Reuse existing Session ID if valid format, else generate new CP-XXXXXXX
+    // 3. Unique Session ID Generation
     $sessionId = null;
-    if (!empty($clientSess) && preg_match('/^CP-[A-Z0-9]{5,10}$/i', $clientSess)) {
-        $sessionId = strtoupper($clientSess);
+    if (!empty($clientSess) && (preg_match('/^[0-9]{3,10}$/', $clientSess) || preg_match('/^CP-[A-Z0-9]{4,10}$/i', $clientSess))) {
+        $sessionId = trim($clientSess);
     }
 
     if (!$sessionId && $isReturningVisitor) {
-        // Check if customer already has a CP-XXXXXXX session in this company
         $sessCheck = $pdo->prepare("
             SELECT session_id FROM `visitor_sessions` 
-            WHERE `customer_id` = ? AND `company_id` = ? AND `session_id` LIKE 'CP-%'
+            WHERE `customer_id` = ? AND `company_id` = ? AND `session_id` IS NOT NULL AND `session_id` != ''
             ORDER BY id DESC LIMIT 1
         ");
         $sessCheck->execute([$customerId, $companyId]);

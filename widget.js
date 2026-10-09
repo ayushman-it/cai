@@ -8610,6 +8610,7 @@
             company_key: companyKey,
             conversation_id: conversationId,
             session_token: sessionId,
+            session_id: sessionId,
             message: payloadText
           })
         });
@@ -8894,6 +8895,9 @@
     esc = esc.replace(/\n/g, '<br/>');
     esc = esc.replace(/<br\s*\/?>\s*(<div class="cp-table-responsive">)/g, '$1');
     esc = esc.replace(/(<\/div>)\s*<br\s*\/?>/g, '$1');
+    // Parse attached images and documents
+    esc = esc.replace(/\[Attached Image:\s*([^\]]+)\]\((https?:\/\/[^\s\)<]+)\)/g, '<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:260px; border-radius:8px; overflow:hidden; cursor:pointer;" onclick="window.open(\'$2\',\'_blank\')"><img src="$2" alt="$1" style="width:100%; display:block; border-radius:8px;" /><span style="font-size:11px; color:#94a3b8; display:block; margin-top:2px;">🖼️ $1</span></div>');
+    esc = esc.replace(/\[Attached Document:\s*([^\]]+)\]\((https?:\/\/[^\s\)<]+)\)/g, '<div style="margin:8px 0;"><a class="cp-bubble-attachment-file" href="$2" target="_blank" download="$1" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:8px; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:inherit; text-decoration:none;"><span style="font-size:16px;">📄</span><div style="font-size:12px; font-weight:600;">$1</div></a></div>');
     // Parse markdown links [Title](https://...)
     esc = esc.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)<]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:3px; color:#38bdf8; text-decoration:underline; font-weight:600;">$1 ↗</a>');
     // Standalone URLs not inside href
@@ -10580,6 +10584,7 @@
           company_key: companyKey,
           user_id: selectedAgent ? selectedAgent.id : 0,
           session_token: sessionId,
+          session_id: sessionId,
           conversation_id: conversationId,
           name: visitorName,
           email: visitorEmail,

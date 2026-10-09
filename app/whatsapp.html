@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp Command Center & Automations — Cai AI</title>
+  <title>WhatsApp Web — CAI Command Center</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,872 +12,318 @@
   <link rel="stylesheet" href="../css/theme.css">
   <link rel="stylesheet" href="../css/dashboard.css?v=5.0.0">
   <style>
-    /* Intercom-grade Clean Monochrome Theme */
-    body { font-family: 'Inter', -apple-system, sans-serif; }
-    .intercom-chat-bg {
-      background-color: #faf9f7;
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
-    .intercom-bubble-visitor {
+    /* WhatsApp Web 2-Panel Monochrome Theme */
+    .wa-bg-subtle { background-color: #f7f6f3; }
+    .wa-border-subtle { border-color: #ebe9e1; }
+    .wa-bubble-visitor {
       background-color: #ffffff;
       color: #111827;
-      border: 1px solid #e7e5de;
+      border: 1px solid #ebe9e1;
       border-radius: 12px 12px 12px 2px;
-      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
     }
-    .intercom-bubble-out {
+    .wa-bubble-agent {
       background-color: #18181b;
       color: #ffffff;
       border-radius: 12px 12px 2px 12px;
-      box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
     }
-    .intercom-thread-item.active {
-      background-color: #f5f4ef;
+    .wa-bubble-ai {
+      background-color: #f4f4f5;
+      color: #18181b;
+      border: 1px solid #e4e4e7;
+      border-radius: 12px 12px 12px 2px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+    .wa-thread-item.active {
+      background-color: #f4f3ee;
       border-left: 3px solid #18181b;
-    }
-    .intercom-meta-ticks {
-      color: #71717a;
-    }
-    .intercom-bubble-out .intercom-meta-ticks {
-      color: #a1a1aa;
     }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-    .custom-select-popup {
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-    }
+
+    /* Custom scrollbar for message stream & contact list */
+    .custom-scroll::-webkit-scrollbar { width: 5px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #e2e0d8; border-radius: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #c8c6be; }
+
     /* Mobile responsive pane toggles */
     @media (max-width: 767px) {
-      .mobile-view-chat #convo-pane-threads { display: none !important; }
-      .mobile-view-chat #convo-pane-chat { display: flex !important; }
-      .mobile-view-threads #convo-pane-chat { display: none !important; }
-      .mobile-view-threads #convo-pane-threads { display: flex !important; }
+      .mobile-view-chat #panel-contacts { display: none !important; }
+      .mobile-view-chat #panel-conversation { display: flex !important; }
+      .mobile-view-contacts #panel-conversation { display: none !important; }
+      .mobile-view-contacts #panel-contacts { display: flex !important; }
     }
   </style>
 </head>
-<body class="app-body overflow-hidden mobile-view-threads">
+<body class="app-body overflow-hidden mobile-view-contacts bg-[#faf9f7]">
 
   <div class="app-viewport">
+    <!-- Universal Navigation Sidebar -->
     <div id="sidebar-container"></div>
 
+    <!-- Main 2-Panel Application Window -->
     <div class="app-main h-screen flex flex-col overflow-hidden bg-[#faf9f7]">
       <div id="topbar-container" class="block lg:hidden shrink-0"></div>
 
-      <!-- Top Header & Meta Gateway Live Status Bar -->
-      <header class="px-5 py-3 border-b border-[#e7e5de] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
-        <div>
-          <div class="flex items-center gap-2.5 flex-wrap">
-            <h1 class="text-base font-bold text-stone-900 tracking-tight flex items-center gap-2">
-              <svg class="w-4 h-4 text-emerald-600 fill-current" viewBox="0 0 24 24">
-                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.587 1.761.884 2.791.884 3.181 0 5.767-2.586 5.767-5.766.001-3.18-2.585-5.77-5.767-5.77zm0 10.455c-.958 0-1.745-.279-2.529-.76l-.181-.112-1.58.414.422-1.54-.118-.188c-.528-.84-.808-1.587-.807-2.503.001-2.583 2.102-4.685 4.686-4.685 2.584 0 4.686 2.102 4.686 4.685 0 2.583-2.102 4.689-4.686 4.689zm2.569-3.504c-.141-.07-.833-.41-0.963-.457-.129-.047-.223-.07-.317.07-.094.141-.365.457-.447.551-.082.094-.165.105-.306.035-.141-.07-.596-.22-1.135-.7-.419-.374-.702-.835-.784-.976-.082-.141-.009-.217.062-.287.063-.063.141-.165.212-.247.07-.082.094-.141.141-.235.047-.094.024-.176-.012-.247-.035-.07-.317-.764-.435-1.046-.115-.274-.232-.237-.317-.241-.082-.004-.176-.005-.27-.005-.094 0-.247.035-.376.176-.129.141-.494.482-.494 1.176 0 .694.506 1.364.576 1.458.07.094.996 1.52 2.413 2.132.337.146.6.233.805.298.339.108.647.093.891.057.272-.041.833-.341.951-.67.118-.329.118-.611.082-.67-.035-.059-.129-.094-.27-.165z"/>
-              </svg>
-              <span>WhatsApp Command Center</span>
-            </h1>
-            <span id="gateway-badge" class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded-[4px] text-[11px] font-medium font-mono">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span id="gateway-phone">+91 82249 73413</span> • Meta Cloud API Live
-            </span>
+      <!-- Top Utility Header -->
+      <header class="px-5 py-2.5 border-b border-[#e7e5de] bg-white flex items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-lg bg-stone-900 text-white flex items-center justify-center font-bold text-xs">
+              <i data-lucide="message-square" class="w-4 h-4 text-emerald-400"></i>
+            </div>
+            <div>
+              <h1 class="text-sm font-bold text-stone-900 tracking-tight leading-none">WhatsApp Web</h1>
+              <span class="text-[10px] text-stone-400 font-medium">CAI Unified Two-Way Messaging Bridge</span>
+            </div>
           </div>
-          <p class="text-xs text-stone-500 mt-0.5">
-            Intercom-grade live conversations, autonomous workflows, bulk CSV outreach &amp; custom client reminders.
-          </p>
+          <span class="h-4 w-px bg-stone-200 hidden sm:block"></span>
+          <div id="gateway-status" class="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200/80 rounded text-[11px] font-medium font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="gateway-phone">+91 82249 73413</span> • Meta Cloud API Live
+          </div>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
-          <button onclick="openNewMessageModal()" class="px-3 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition">
+        <div class="flex items-center gap-2">
+          <button onclick="openNewChatModal()" class="px-3 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             <span>New Chat</span>
           </button>
-          <a href="templates.html" class="px-3 py-1.5 bg-white border border-stone-200 hover:border-stone-400 text-stone-700 text-xs font-medium rounded-md inline-flex items-center gap-1.5 transition no-underline">
-            <i data-lucide="layout-template" class="w-3.5 h-3.5 text-stone-500"></i>
-            <span>Meta Templates</span>
-          </a>
-          <a href="automations.html" class="px-3 py-1.5 bg-white border border-stone-200 hover:border-stone-400 text-stone-700 text-xs font-medium rounded-md inline-flex items-center gap-1.5 transition no-underline">
-            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
-            <span>Automations</span>
-          </a>
         </div>
       </header>
 
-      <!-- Navigation Tabs (Intercom Clean Navigation) -->
-      <nav class="px-5 border-b border-[#e7e5de] bg-white flex items-center gap-1 overflow-x-auto scrollbar-hide shrink-0 text-xs font-medium text-stone-600">
-        <button onclick="switchTab('inbox')" id="tab-btn-inbox" class="py-2.5 px-3 border-b-2 border-stone-900 text-stone-900 font-semibold flex items-center gap-1.5 transition">
-          <i data-lucide="inbox" class="w-3.5 h-3.5"></i>
-          <span>Live Inbox</span>
-          <span id="badge-total-threads" class="px-1.5 py-0.2 bg-stone-100 text-stone-700 rounded-full font-mono text-[10px]">0</span>
-        </button>
-        <button onclick="switchTab('templates')" id="tab-btn-templates" class="py-2.5 px-3 border-b-2 border-transparent hover:text-stone-900 flex items-center gap-1.5 transition">
-          <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
-          <span>Quick Responses</span>
-        </button>
-        <div class="h-4 w-px bg-stone-200 mx-1"></div>
-        <a href="automations.html" class="py-2.5 px-3 border-b-2 border-transparent hover:text-stone-900 text-stone-500 flex items-center gap-1.5 transition whitespace-nowrap">
-          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
-          <span>Automations Cockpit</span>
-          <i data-lucide="arrow-up-right" class="w-3 h-3 text-stone-400"></i>
-        </a>
-        <a href="contacts.html" class="py-2.5 px-3 border-b-2 border-transparent hover:text-stone-900 text-stone-500 flex items-center gap-1.5 transition whitespace-nowrap">
-          <i data-lucide="users" class="w-3.5 h-3.5 text-blue-500"></i>
-          <span>Contacts CRM</span>
-          <i data-lucide="arrow-up-right" class="w-3 h-3 text-stone-400"></i>
-        </a>
-        <a href="templates.html" class="py-2.5 px-3 border-b-2 border-transparent hover:text-stone-900 text-stone-500 flex items-center gap-1.5 transition whitespace-nowrap">
-          <i data-lucide="layout-template" class="w-3.5 h-3.5 text-purple-500"></i>
-          <span>Meta Templates</span>
-          <i data-lucide="arrow-up-right" class="w-3 h-3 text-stone-400"></i>
-        </a>
-      </nav>
+      <!-- STRICT TWO-PANEL WORKSPACE -->
+      <div class="flex-1 flex overflow-hidden relative">
 
-      <!-- Main Workspace Container -->
-      <div class="flex-1 overflow-hidden relative">
-
-        <!-- ========================================================= -->
-        <!-- TAB 1: LIVE INBOX (INTERCOM 3-PANE LAYOUT + DOSSIER) -->
-        <!-- ========================================================= -->
-        <section id="view-inbox" class="h-full flex overflow-hidden">
+        <!-- ==================================================================== -->
+        <!-- LEFT PANEL: CONTACTS & WIDGET LEADS (~360px)                         -->
+        <!-- ==================================================================== -->
+        <aside id="panel-contacts" class="w-full md:w-[350px] lg:w-[380px] border-r border-[#e7e5de] bg-white flex flex-col shrink-0 h-full">
           
-          <!-- PANE 2: Conversation Threads Rail (320px) -->
-          <aside id="convo-pane-threads" class="w-full md:w-[320px] lg:w-[340px] border-r border-[#e7e5de] bg-white flex flex-col shrink-0">
-            <!-- Search & Queue Selector -->
-            <div class="p-3 border-b border-[#f0eee8] space-y-2 bg-stone-50/40">
-              <div class="relative">
-                <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
-                <input type="text" id="thread-search" oninput="filterThreads()" placeholder="Search contact, phone or snippet..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 transition text-stone-900 placeholder:text-stone-400 shadow-2xs">
-              </div>
-
-              <!-- Filter Pills (All / AI / Human / Unread) -->
-              <div class="flex items-center gap-1 p-0.5 bg-stone-200/60 rounded-md text-[11px] font-medium text-stone-600">
-                <button onclick="setQueueFilter('all')" id="qf-all" class="flex-1 py-1 rounded bg-white text-stone-900 font-semibold shadow-2xs text-center transition">All</button>
-                <button onclick="setQueueFilter('ai')" id="qf-ai" class="flex-1 py-1 rounded text-stone-600 hover:text-stone-900 text-center transition">AI</button>
-                <button onclick="setQueueFilter('human')" id="qf-human" class="flex-1 py-1 rounded text-stone-600 hover:text-stone-900 text-center transition">Human</button>
-                <button onclick="setQueueFilter('unread')" id="qf-unread" class="flex-1 py-1 rounded text-stone-600 hover:text-stone-900 text-center transition">Unread</button>
-              </div>
+          <!-- Search & Filter Header -->
+          <div class="p-3 border-b border-[#f0eee8] space-y-2 bg-stone-50/50 shrink-0">
+            <!-- Search bar -->
+            <div class="relative">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
+              <input type="text" id="contact-search" oninput="filterContacts()" placeholder="Search name, phone, session ID..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 transition text-stone-900 placeholder:text-stone-400 shadow-2xs font-sans">
             </div>
 
-            <!-- Thread List Container -->
-            <div id="threads-container" class="flex-1 overflow-y-auto divide-y divide-[#f5f4ef]">
-              <div class="p-8 text-center text-xs text-stone-400">Loading conversation threads...</div>
+            <!-- Filter Pills (All / Human / AI / Unread) -->
+            <div class="flex items-center gap-1 p-0.5 bg-stone-200/60 rounded-md text-[11px] font-medium text-stone-600">
+              <button onclick="setFilter('all')" id="flt-all" class="flex-1 py-1 rounded bg-white text-stone-900 font-semibold shadow-2xs text-center transition">All</button>
+              <button onclick="setFilter('human')" id="flt-human" class="flex-1 py-1 rounded text-stone-600 hover:text-stone-900 text-center transition">Human</button>
+              <button onclick="setFilter('ai')" id="flt-ai" class="flex-1 py-1 rounded text-stone-600 hover:text-stone-900 text-center transition">AI</button>
+              <button onclick="setFilter('unread')" id="flt-unread" class="flex-1 py-1 rounded text-stone-600 hover:text-stone-900 text-center transition">Unread</button>
             </div>
-          </aside>
+          </div>
 
-          <!-- PANE 3: Live Chat Stream & Rich Composer (Flex-1) -->
-          <main id="convo-pane-chat" class="flex-1 flex flex-col bg-white overflow-hidden">
-            
-            <!-- Conversation Header (Intercom-grade Clean Header) -->
-            <div id="chat-header" class="px-5 py-3 border-b border-[#e7e5de] bg-white flex items-center justify-between shrink-0">
-              <div class="flex items-center gap-3">
-                <!-- Mobile Back Button -->
-                <button onclick="returnToThreadList()" class="md:hidden p-1.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-md transition" title="Back to Inquiries">
-                  <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                </button>
+          <!-- Scrollable Contact List -->
+          <div id="contacts-list" class="flex-1 overflow-y-auto divide-y divide-[#f5f4ef] custom-scroll">
+            <div class="p-8 text-center text-xs text-stone-400">Loading active conversations...</div>
+          </div>
 
-                <div class="w-9 h-9 rounded-full bg-stone-900 text-white font-semibold text-xs flex items-center justify-center font-mono shrink-0 shadow-2xs">
-                  <span id="chat-avatar">WA</span>
-                </div>
-                <div>
-                  <div class="flex items-center gap-2">
-                    <span id="chat-title" class="font-bold text-stone-900 text-sm">Select a Conversation</span>
-                    <span id="chat-stage-badge" class="px-2 py-0.5 bg-stone-100 text-stone-700 rounded text-[10px] font-medium font-mono border border-stone-200">Prospect</span>
-                  </div>
-                  <div class="flex items-center gap-2 text-xs text-stone-500">
-                    <span id="chat-phone" class="font-mono">--</span>
-                    <span>•</span>
-                    <span id="chat-channel-badge" class="inline-flex items-center gap-1 text-stone-600 font-medium">
-                      <i data-lucide="check-check" class="w-3.5 h-3.5 text-stone-700"></i> WhatsApp Business
-                    </span>
-                  </div>
-                </div>
-              </div>
+          <!-- Bottom Status Bar -->
+          <div class="p-2.5 border-t border-[#f0eee8] bg-stone-50/80 text-[11px] text-stone-500 flex items-center justify-between shrink-0 font-mono">
+            <span>Conversations: <strong id="total-threads-count" class="text-stone-900">0</strong></span>
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Live Synced
+            </span>
+          </div>
+        </aside>
 
-              <!-- Right Actions: AI ⇄ Human Toggle & Toggle Dossier -->
-              <div class="flex items-center gap-2">
-                <div class="text-right hidden sm:block">
-                  <div id="ownership-label" class="text-xs font-semibold text-stone-900">AI Autonomous</div>
-                  <div class="text-[10px] text-stone-400">Handling conversations 24/7</div>
-                </div>
-                <button id="ownership-toggle-btn" onclick="toggleOwnership()" class="px-2.5 py-1.5 bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-800 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 transition">
-                  <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
-                  <span id="ownership-btn-text">Take Over</span>
-                </button>
-                <button id="resolve-chat-btn" onclick="resolveActiveChat()" class="px-2.5 py-1.5 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 transition">
-                  <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
-                  <span>Resolve Chat</span>
-                </button>
-                <button onclick="toggleDossierPane()" class="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-md transition" title="Toggle Contact Info">
-                  <i data-lucide="panel-right-close" class="w-4 h-4"></i>
-                </button>
-              </div>
-            </div>
 
-            <!-- Messages Stream (Clean Intercom Monochrome Canvas) -->
-            <div id="messages-container" class="flex-1 p-5 overflow-y-auto space-y-3.5 intercom-chat-bg">
-              <div class="flex flex-col items-center justify-center h-full text-xs text-stone-500 space-y-2">
-                <i data-lucide="message-square" class="w-8 h-8 text-stone-300"></i>
-                <span class="bg-white px-3 py-1.5 rounded-md border border-stone-200 shadow-2xs font-medium text-stone-600">Pick a conversation on the left to start live WhatsApp chat</span>
-              </div>
-            </div>
+        <!-- ==================================================================== -->
+        <!-- RIGHT PANEL: CONVERSATION STREAM & COMPOSER (Flex-1)                 -->
+        <!-- ==================================================================== -->
+        <main id="panel-conversation" class="flex-1 flex flex-col bg-white overflow-hidden h-full">
 
-            <!-- Rich Composer Area -->
-            <div class="p-3.5 border-t border-[#e7e5de] bg-white shrink-0 space-y-2.5">
-              <!-- Quick Insert Template Chips (Pure Lucide Icons, No Emojis) -->
-              <div class="flex items-center gap-1.5 text-xs text-stone-500 overflow-x-auto scrollbar-hide">
-                <span class="text-[11px] font-semibold text-stone-400 shrink-0">Templates:</span>
-                <button onclick="insertTemplateText('tpl_welcome')" class="px-2.5 py-1 bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 rounded-md text-[11px] shrink-0 inline-flex items-center gap-1.5 transition">
-                  <i data-lucide="sparkles" class="w-3 h-3 text-stone-600"></i>
-                  <span>Welcome</span>
-                </button>
-                <button onclick="insertTemplateText('tpl_demo')" class="px-2.5 py-1 bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 rounded-md text-[11px] shrink-0 inline-flex items-center gap-1.5 transition">
-                  <i data-lucide="video" class="w-3 h-3 text-stone-600"></i>
-                  <span>Demo Link</span>
-                </button>
-                <button onclick="insertTemplateText('tpl_plans')" class="px-2.5 py-1 bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 rounded-md text-[11px] shrink-0 inline-flex items-center gap-1.5 transition">
-                  <i data-lucide="tag" class="w-3 h-3 text-stone-600"></i>
-                  <span>Pricing Plans</span>
-                </button>
-                <button onclick="insertTemplateText('tpl_followup')" class="px-2.5 py-1 bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 rounded-md text-[11px] shrink-0 inline-flex items-center gap-1.5 transition">
-                  <i data-lucide="bell" class="w-3 h-3 text-stone-600"></i>
-                  <span>Follow-Up</span>
-                </button>
-              </div>
-
-              <!-- Message Input & Send Toolbar -->
-              <div class="bg-[#faf9f7] border border-[#e7e5de] rounded-xl p-2.5 focus-within:border-stone-900 focus-within:bg-white transition shadow-2xs">
-                <textarea id="composer-input" rows="2" placeholder="Write WhatsApp message... (Press Enter to send, Shift+Enter for new line)" onkeydown="handleComposerKey(event)" class="w-full bg-transparent border-0 outline-none resize-none text-xs text-stone-900 placeholder:text-stone-400 leading-relaxed"></textarea>
-                
-                <div class="flex items-center justify-between pt-1.5 border-t border-stone-100">
-                  <div class="text-[11px] text-stone-400 font-mono">
-                    Press <kbd class="px-1.5 py-0.5 bg-stone-100 border border-stone-200 rounded text-[10px] text-stone-600">Enter</kbd> to dispatch via Meta Cloud API
-                  </div>
-                  <button id="send-msg-btn" onclick="sendActiveMessage()" class="px-4 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md shrink-0 inline-flex items-center gap-1.5 shadow-2xs transition">
-                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                    <span>Send</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </main>
-
-          <!-- PANE 4: Intercom Contact Dossier / Inspector (290px) -->
-          <aside id="convo-pane-dossier" class="hidden xl:flex w-[290px] border-l border-[#e7e5de] bg-white flex-col h-full overflow-y-auto p-4 shrink-0 space-y-4">
-            <div class="pb-3 border-b border-[#f0eee8]">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2">Customer Profile</div>
-              <div class="flex items-center gap-2.5">
-                <div class="w-10 h-10 rounded-full bg-stone-900 text-white font-mono font-bold text-xs flex items-center justify-center">
-                  <span id="dossier-avatar">WA</span>
-                </div>
-                <div>
-                  <div id="dossier-name" class="font-bold text-xs text-stone-900">Prospect</div>
-                  <div id="dossier-phone" class="font-mono text-[11px] text-stone-500">--</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Contact Details List -->
-            <div class="space-y-2 text-xs">
-              <div class="flex items-center justify-between">
-                <span class="text-stone-400">Lead Stage</span>
-                <span id="dossier-stage" class="font-medium px-2 py-0.5 bg-stone-100 rounded text-stone-800">Prospect</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-stone-400">Buyer Intent</span>
-                <span id="dossier-intent" class="font-semibold text-emerald-700 capitalize">Warm</span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-stone-400">Assigned Handler</span>
-                <span id="dossier-handler" class="font-mono text-stone-800">Cai AI</span>
-              </div>
-            </div>
-
-            <!-- Quick CRM & Follow-Up Actions -->
-            <div class="pt-2 border-t border-[#f0eee8] space-y-2">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Actions</div>
-              
-              <button onclick="resolveActiveChat()" class="w-full py-2 px-3 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition shadow-2xs">
-                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
-                <span>Resolve Conversation</span>
+          <!-- Conversation Header (WhatsApp Web-Style) -->
+          <div id="convo-header" class="px-5 py-3 border-b border-[#e7e5de] bg-white flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3 min-w-0">
+              <!-- Mobile Back Button -->
+              <button onclick="returnToContactsList()" class="md:hidden p-1.5 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-md transition" title="Back to Contacts">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
               </button>
 
-              <button onclick="toggleOwnership()" class="w-full py-1.5 px-3 bg-white border border-[#e7e5de] hover:border-stone-400 text-stone-700 text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition">
-                <i data-lucide="user-check" class="w-3.5 h-3.5 text-stone-500"></i>
-                <span id="dossier-ownership-btn-text">Take Over Chat</span>
-              </button>
-
-              <a href="leads.html" class="w-full py-1.5 px-3 bg-stone-50 hover:bg-stone-100 text-stone-600 text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition no-underline border border-stone-200">
-                <i data-lucide="external-link" class="w-3.5 h-3.5 text-stone-400"></i>
-                <span>Open in Full CRM</span>
-              </a>
-            </div>
-
-            <!-- Commercial Offering Cheat Sheet -->
-            <div class="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-1.5 text-xs">
-              <div class="font-semibold text-stone-900 text-[11px] flex items-center justify-between">
-                <span class="flex items-center gap-1">
-                  <i data-lucide="sparkles" class="w-3 h-3 text-emerald-600"></i>
-                  <span>Verified Catalog Offerings</span>
-                </span>
-                <span class="text-[10px] text-stone-400 font-mono" id="dossier-catalog-count">Live</span>
+              <!-- Customer Avatar -->
+              <div class="w-10 h-10 rounded-full bg-stone-900 text-white font-semibold text-xs flex items-center justify-center font-mono shrink-0 shadow-2xs">
+                <span id="header-avatar">WA</span>
               </div>
-              <div id="dossier-offerings-list" class="text-[11px] text-stone-600 leading-relaxed font-mono space-y-1.5 max-h-48 overflow-y-auto">
-                <div class="text-stone-400 text-[10px]">Loading company catalog...</div>
-              </div>
-            </div>
-          </aside>
 
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- TAB 2: AUTOMATION FLOWS (VISUAL JOURNEY BUILDER) -->
-        <!-- ========================================================= -->
-        <section id="view-flows" class="hidden h-full overflow-y-auto p-6 max-w-5xl mx-auto space-y-6">
-          <div>
-            <h2 class="text-lg font-bold text-stone-900">Autonomous WhatsApp Sales &amp; Support Flows</h2>
-            <p class="text-xs text-stone-500 mt-1">Pre-wired omnichannel automations that run 24/7 on your verified WhatsApp Business Cloud API number.</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Flow 1 -->
-            <div class="bg-white border border-[#e7e5de] rounded-xl p-5 shadow-2xs space-y-3">
-              <div class="flex items-start justify-between">
-                <div class="w-9 h-9 rounded-lg bg-stone-100 text-stone-900 flex items-center justify-center font-bold">
-                  <i data-lucide="git-merge" class="w-4 h-4"></i>
+              <!-- Customer & Session Info -->
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span id="header-name" class="font-bold text-stone-900 text-sm truncate">Select a conversation</span>
+                  <span id="header-session-badge" class="px-2 py-0.5 bg-stone-100 text-stone-700 rounded text-[10px] font-mono font-semibold border border-stone-200 shrink-0">No Session</span>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked onchange="toggleFlowState('dropoff_continuity', this.checked)" class="sr-only peer">
-                  <div class="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
-                </label>
-              </div>
-              <div>
-                <h3 class="text-sm font-semibold text-stone-900">Website Drop-Off → WhatsApp Continuity</h3>
-                <p class="text-xs text-stone-500 mt-1">When a visitor leaves the web chat or stops typing for 45s, mirror the conversation context to their WhatsApp number immediately.</p>
-              </div>
-              <div class="pt-2 border-t border-[#f0eee8] flex items-center justify-between text-[11px] text-stone-500">
-                <span class="font-mono">Trigger: Widget Inactivity</span>
-                <span class="font-semibold text-emerald-700">142 Executions</span>
-              </div>
-            </div>
-
-            <!-- Flow 2 -->
-            <div class="bg-white border border-[#e7e5de] rounded-xl p-5 shadow-2xs space-y-3">
-              <div class="flex items-start justify-between">
-                <div class="w-9 h-9 rounded-lg bg-stone-100 text-stone-900 flex items-center justify-center font-bold">
-                  <i data-lucide="user-check" class="w-4 h-4"></i>
+                <div class="flex items-center gap-2 text-xs text-stone-500 mt-0.5">
+                  <span id="header-phone" class="font-mono text-stone-600">--</span>
+                  <span>•</span>
+                  <span id="header-channel-badge" class="text-[11px] text-stone-500 font-medium">Widget / WhatsApp</span>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked onchange="toggleFlowState('lead_welcome', this.checked)" class="sr-only peer">
-                  <div class="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
-                </label>
-              </div>
-              <div>
-                <h3 class="text-sm font-semibold text-stone-900">Instant Lead Welcome &amp; Qualification</h3>
-                <p class="text-xs text-stone-500 mt-1">When a lead submits their mobile number on Cai, dispatch an automated warm greeting and ask 2 high-intent qualifying questions.</p>
-              </div>
-              <div class="pt-2 border-t border-[#f0eee8] flex items-center justify-between text-[11px] text-stone-500">
-                <span class="font-mono">Trigger: Lead Created</span>
-                <span class="font-semibold text-emerald-700">389 Executions</span>
               </div>
             </div>
 
-            <!-- Flow 3 -->
-            <div class="bg-white border border-[#e7e5de] rounded-xl p-5 shadow-2xs space-y-3">
-              <div class="flex items-start justify-between">
-                <div class="w-9 h-9 rounded-lg bg-stone-100 text-stone-900 flex items-center justify-center font-bold">
-                  <i data-lucide="calendar" class="w-4 h-4"></i>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked onchange="toggleFlowState('demo_booking', this.checked)" class="sr-only peer">
-                  <div class="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
-                </label>
-              </div>
-              <div>
-                <h3 class="text-sm font-semibold text-stone-900">High-Intent 30-Min Demo Booking Bridge</h3>
-                <p class="text-xs text-stone-500 mt-1">When visitor asks for a demo, brochure, or live walkthrough, instantly deliver your Cal.com booking link directly to WhatsApp.</p>
-              </div>
-              <div class="pt-2 border-t border-[#f0eee8] flex items-center justify-between text-[11px] text-stone-500">
-                <span class="font-mono">Trigger: Intent Score &gt; 70</span>
-                <span class="font-semibold text-emerald-700">96 Executions</span>
-              </div>
-            </div>
+            <!-- Header Actions: Mode Pill & STOP Switch Button -->
+            <div class="flex items-center gap-2 shrink-0">
+              <!-- Ownership Status Badge -->
+              <span id="header-mode-badge" class="px-2.5 py-1 rounded-md text-[11px] font-semibold border bg-stone-100 text-stone-700 border-stone-200">
+                AI Handling
+              </span>
 
-            <!-- Flow 4 -->
-            <div class="bg-white border border-[#e7e5de] rounded-xl p-5 shadow-2xs space-y-3">
-              <div class="flex items-start justify-between">
-                <div class="w-9 h-9 rounded-lg bg-stone-100 text-stone-900 flex items-center justify-center font-bold">
-                  <i data-lucide="clock" class="w-4 h-4"></i>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" checked onchange="toggleFlowState('reengagement_24h', this.checked)" class="sr-only peer">
-                  <div class="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-stone-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-stone-900"></div>
-                </label>
-              </div>
-              <div>
-                <h3 class="text-sm font-semibold text-stone-900">24-Hour Dormant Prospect Follow-Up</h3>
-                <p class="text-xs text-stone-500 mt-1">Sends a courteous check-in highlighting our 3 plans (₹79, ₹159, ₹279) if a prospective client doesn't reply within 24 hours.</p>
-              </div>
-              <div class="pt-2 border-t border-[#f0eee8] flex items-center justify-between text-[11px] text-stone-500">
-                <span class="font-mono">Trigger: 24h Inactivity</span>
-                <span class="font-semibold text-emerald-700">64 Executions</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-
-        <!-- ========================================================= -->
-        <!-- TAB 3: CSV IMPORT & BULK BROADCAST CAMPAIGN -->
-        <!-- ========================================================= -->
-        <section id="view-broadcast" class="hidden h-full overflow-y-auto p-6 max-w-5xl mx-auto space-y-6">
-          <div>
-            <h2 class="text-lg font-bold text-stone-900">CSV Lead Upload &amp; WhatsApp Broadcast Campaign</h2>
-            <p class="text-xs text-stone-500 mt-1">Upload client contact lists in bulk and dispatch personalized WhatsApp messages at scale with real delivery logging.</p>
-          </div>
-
-          <!-- Step 1: Upload Card -->
-          <div class="bg-white border border-[#e7e5de] rounded-xl p-5 shadow-2xs space-y-4">
-            <h3 class="text-sm font-semibold text-stone-900">1. Upload Contact Spreadsheet (CSV)</h3>
-            
-            <div id="csv-dropzone" onclick="document.getElementById('csv-file-input').click()" class="border-2 border-dashed border-stone-300 hover:border-stone-500 rounded-xl p-8 text-center cursor-pointer transition bg-stone-50/50 hover:bg-stone-50">
-              <i data-lucide="upload-cloud" class="w-8 h-8 mx-auto text-stone-400 mb-2"></i>
-              <div class="text-xs font-semibold text-stone-800">Click to choose or drop CSV file here</div>
-              <div class="text-[11px] text-stone-400 mt-1">Columns supported: Name, Phone (or Mobile), Email, Company</div>
-              <input type="file" id="csv-file-input" accept=".csv" onchange="handleCsvFile(this)" class="hidden">
-            </div>
-
-            <!-- Upload Preview Table -->
-            <div id="csv-preview-container" class="hidden space-y-2">
-              <div class="flex items-center justify-between text-xs">
-                <span class="font-semibold text-stone-800">Detected Contacts (<span id="csv-count">0</span>)</span>
-                <button onclick="clearCsvData()" class="text-red-600 hover:underline text-[11px]">Remove</button>
-              </div>
-              <div class="border border-[#e7e5de] rounded-lg overflow-x-auto max-h-48 text-xs">
-                <table class="w-full text-left divide-y divide-stone-200">
-                  <thead class="bg-stone-50 font-semibold text-stone-600 text-[11px]">
-                    <tr>
-                      <th class="p-2">Name</th>
-                      <th class="p-2">Phone</th>
-                      <th class="p-2">Email</th>
-                      <th class="p-2">Company</th>
-                    </tr>
-                  </thead>
-                  <tbody id="csv-preview-body" class="divide-y divide-stone-100 font-mono text-[11px]"></tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          <!-- Step 2: Message Composer -->
-          <div class="bg-white border border-[#e7e5de] rounded-xl p-5 shadow-2xs space-y-4">
-            <div class="flex items-center justify-between">
-              <h3 class="text-sm font-semibold text-stone-900">2. Compose Campaign Message</h3>
-              <div class="flex items-center gap-1.5 text-[11px]">
-                <span class="text-stone-400">Tokens:</span>
-                <button onclick="insertTokenToBroadcast('{{name}}')" class="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 rounded text-stone-800 font-mono">{{name}}</button>
-                <button onclick="insertTokenToBroadcast('{{company}}')" class="px-2 py-0.5 bg-stone-100 hover:bg-stone-200 rounded text-stone-800 font-mono">{{company}}</button>
-              </div>
-            </div>
-
-            <textarea id="broadcast-template-input" rows="4" placeholder="Hello {{name}}! We are thrilled to share an exclusive update from {{company}}..." class="w-full p-3 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 focus:bg-white transition text-stone-900 placeholder:text-stone-400 leading-relaxed"></textarea>
-
-            <div class="flex items-center justify-between pt-2">
-              <div class="text-[11px] text-stone-500 font-mono">
-                Throttled automatically to comply with Meta Cloud API rate standards.
-              </div>
-              <button id="broadcast-submit-btn" onclick="launchBroadcast()" class="px-5 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition">
-                <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                <span>Launch Broadcast</span>
+              <!-- Human -> AI STOP Button -->
+              <button id="btn-switch-ai" onclick="triggerStopHandoff()" class="px-3 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition" title="End human handling and resume AI conversation">
+                <i data-lucide="bot" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span id="btn-switch-ai-text">Switch to AI (STOP)</span>
               </button>
             </div>
+          </div>
 
-            <!-- Broadcast Progress Bar -->
-            <div id="broadcast-progress-container" class="hidden space-y-2 pt-2">
-              <div class="flex items-center justify-between text-xs font-medium">
-                <span id="broadcast-progress-status">Dispatching messages...</span>
-                <span id="broadcast-progress-pct" class="font-mono">0%</span>
+          <!-- Message History Stream (WhatsApp Bubbles) -->
+          <div id="messages-stream" class="flex-1 p-5 overflow-y-auto space-y-3 bg-[#faf9f7] custom-scroll">
+            <div class="flex flex-col items-center justify-center h-full text-xs text-stone-500 space-y-2">
+              <div class="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center text-stone-400">
+                <i data-lucide="message-square" class="w-6 h-6"></i>
               </div>
-              <div class="w-full bg-stone-100 h-2 rounded-full overflow-hidden">
-                <div id="broadcast-progress-bar" class="bg-emerald-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
-              </div>
+              <span class="bg-white px-3.5 py-2 rounded-lg border border-stone-200 shadow-2xs font-medium text-stone-600">
+                Select a conversation on the left to start messaging
+              </span>
             </div>
           </div>
-        </section>
 
-
-        <!-- ========================================================= -->
-        <!-- TAB 4: SCHEDULED CLIENT REMINDERS -->
-        <!-- ========================================================= -->
-        <section id="view-reminders" class="hidden h-full overflow-y-auto p-6 max-w-5xl mx-auto space-y-6">
-          <div class="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <h2 class="text-lg font-bold text-stone-900">WhatsApp Client Reminders</h2>
-              <p class="text-xs text-stone-500 mt-1">Schedule date &amp; time alerts to follow up with specific prospects, demo attendees, or collection promises.</p>
+          <!-- Pending Attachment Preview Bar (If file chosen) -->
+          <div id="pending-attachment-bar" class="hidden px-4 py-2 border-t border-[#e7e5de] bg-stone-50 flex items-center justify-between text-xs shrink-0">
+            <div class="flex items-center gap-2 truncate">
+              <i data-lucide="paperclip" class="w-4 h-4 text-stone-500 shrink-0"></i>
+              <span id="pending-att-name" class="font-medium text-stone-800 truncate">document.pdf</span>
+              <span id="pending-att-size" class="text-stone-400 font-mono text-[11px]"></span>
             </div>
-            <button onclick="openReminderModal()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition">
-              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-              <span>Schedule New Reminder</span>
+            <button onclick="clearPendingAttachment()" class="text-stone-400 hover:text-stone-900 p-1" title="Remove attachment">
+              <i data-lucide="x" class="w-4 h-4"></i>
             </button>
           </div>
 
-          <!-- Reminders Table -->
-          <div class="bg-white border border-[#e7e5de] rounded-xl p-5 shadow-2xs space-y-3">
-            <h3 class="text-sm font-semibold text-stone-900">Upcoming &amp; Past Reminders</h3>
-            <div class="border border-[#e7e5de] rounded-lg overflow-x-auto text-xs">
-              <table class="w-full text-left divide-y divide-stone-200">
-                <thead class="bg-stone-50 font-semibold text-stone-600 text-[11px]">
-                  <tr>
-                    <th class="p-3">Title / Target</th>
-                    <th class="p-3">Phone</th>
-                    <th class="p-3">Scheduled For</th>
-                    <th class="p-3">Status</th>
-                    <th class="p-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="reminders-table-body" class="divide-y divide-stone-100 text-stone-800">
-                  <tr>
-                    <td colspan="5" class="p-6 text-center text-stone-400">Loading reminders...</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
+          <!-- Message Composer Area -->
+          <div class="p-3 border-t border-[#e7e5de] bg-white shrink-0">
+            <div class="flex items-end gap-2 bg-[#fcfbf9] border border-[#e7e5de] rounded-xl p-2 focus-within:border-stone-900 focus-within:bg-white transition shadow-2xs">
+              
+              <!-- Attachment Button (Hidden File Input) -->
+              <input type="file" id="composer-file-input" class="hidden" onchange="handleFileUpload(this)">
+              <button type="button" onclick="document.getElementById('composer-file-input').click()" class="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition shrink-0" title="Attach Image, PDF, or Document">
+                <i data-lucide="paperclip" class="w-4 h-4"></i>
+              </button>
 
+              <!-- Auto-growing Text Input -->
+              <textarea id="composer-textarea" rows="1" placeholder="Type a message or type STOP to switch back to AI..." oninput="autoGrowTextarea(this)" onkeydown="handleComposerKey(event)" class="flex-1 bg-transparent border-0 outline-none resize-none text-xs text-stone-900 placeholder:text-stone-400 leading-relaxed max-h-32 py-1.5 font-sans"></textarea>
 
-        <!-- ========================================================= -->
-        <!-- TAB 5: TEMPLATES LIBRARY -->
-        <!-- ========================================================= -->
-        <section id="view-templates" class="hidden h-full overflow-y-auto p-6 max-w-5xl mx-auto space-y-6">
-          <div>
-            <h2 class="text-lg font-bold text-stone-900">WhatsApp Messaging Templates Library</h2>
-            <p class="text-xs text-stone-500 mt-1">Pre-tested commercial templates designed for high response rates on WhatsApp.</p>
-          </div>
-
-          <div id="templates-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Dynamic templates loaded here -->
-          </div>
-        </section>
-
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ========================================================= -->
-  <!-- MODAL: SCHEDULE REMINDER WITH CUSTOM SEARCHABLE DROPDOWNS -->
-  <!-- ========================================================= -->
-  <div id="reminder-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-2xs flex items-center justify-center p-4">
-    <div class="bg-white border border-stone-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-      <div class="flex items-center justify-between pb-2 border-b border-stone-100">
-        <div>
-          <h3 class="text-sm font-bold text-stone-900 flex items-center gap-2">
-            <i data-lucide="clock" class="w-4 h-4 text-stone-700"></i>
-            Schedule Client WhatsApp Reminder
-          </h3>
-          <p class="text-[11px] text-stone-400 mt-0.5">Automated WhatsApp alert sent at your designated date &amp; time.</p>
-        </div>
-        <button onclick="closeReminderModal()" class="text-stone-400 hover:text-stone-700 p-1">✕</button>
-      </div>
-
-      <!-- Field 1: Multiple Person Selection with Custom Searchable Dropdown -->
-      <div>
-        <div class="flex items-center justify-between mb-1">
-          <label class="block text-[11px] font-semibold text-stone-700">Recipients (Multi-Person Selection) *</label>
-          <span id="rem-selected-count" class="text-[10px] font-mono text-stone-400">0 selected</span>
-        </div>
-
-        <!-- Selected Recipients Pill Badges -->
-        <div id="rem-recipient-pills" class="flex flex-wrap gap-1.5 mb-2 min-h-[28px] p-1.5 bg-[#faf9f7] border border-[#e7e5de] rounded-lg">
-          <span id="rem-pills-placeholder" class="text-[11px] text-stone-400 italic px-1">No recipients selected yet. Click below to add.</span>
-        </div>
-
-        <div class="relative">
-          <div id="rem-contact-trigger" onclick="toggleCustomDropdown('rem-contact-dropdown')" class="w-full p-2.5 text-xs bg-white border border-[#e7e5de] hover:border-stone-400 rounded-lg cursor-pointer flex items-center justify-between transition shadow-2xs">
-            <div class="flex items-center gap-2 text-stone-600">
-              <i data-lucide="user-plus" class="w-3.5 h-3.5 text-stone-500"></i>
-              <span id="rem-contact-label">Add clients or enter phone number...</span>
-            </div>
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-stone-400 shrink-0"></i>
-          </div>
-
-          <!-- Dropdown Popup -->
-          <div id="rem-contact-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-stone-200 rounded-xl custom-select-popup z-50 p-2.5 space-y-2 shadow-xl">
-            <div class="relative">
-              <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
-              <input type="text" id="rem-contact-search" oninput="filterCustomContacts()" placeholder="Filter contacts by name or phone..." class="w-full pl-8 pr-2 py-1.5 text-xs bg-stone-50 border border-stone-200 rounded-md outline-none focus:border-stone-900 text-stone-900">
-            </div>
-
-            <!-- Select All / Clear All Bar -->
-            <div class="flex items-center justify-between px-1 text-[11px]">
-              <button type="button" onclick="selectAllFilteredContacts()" class="text-stone-700 hover:text-black font-semibold hover:underline">Select All Filtered</button>
-              <button type="button" onclick="clearAllSelectedRecipients()" class="text-rose-600 hover:underline">Clear Selection</button>
-            </div>
-
-            <div id="rem-contact-list" class="max-h-44 overflow-y-auto divide-y divide-stone-100 text-xs">
-              <div class="p-2 text-stone-400 text-center">Loading contacts...</div>
-            </div>
-
-            <!-- Manual Custom Phone Entry -->
-            <div class="pt-2 border-t border-stone-100 space-y-2">
-              <div class="text-[11px] font-semibold text-stone-700 flex items-center gap-1">
-                <i data-lucide="plus" class="w-3 h-3 text-stone-500"></i>
-                <span>Add Custom Phone Number</span>
-              </div>
-              <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="rem-quick-manual-name" placeholder="Name" class="p-1.5 text-xs bg-stone-50 border border-stone-200 rounded outline-none focus:border-stone-900 text-stone-900">
-                <input type="text" id="rem-quick-manual-phone" placeholder="Phone (+91...)" class="p-1.5 text-xs bg-stone-50 border border-stone-200 rounded outline-none focus:border-stone-900 font-mono text-stone-900">
-              </div>
-              <button type="button" onclick="addManualRecipient()" class="w-full py-1 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded text-xs font-semibold transition">
-                + Add Custom Recipient
+              <!-- Send Button -->
+              <button id="btn-send" onclick="sendActiveMessage()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg shrink-0 inline-flex items-center gap-1.5 shadow-2xs transition">
+                <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                <span>Send</span>
               </button>
             </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Field 2: Custom Reminder Purpose Dropdown (Intercom Monochrome, Lucide Icons) -->
-      <div>
-        <label class="block text-[11px] font-semibold text-stone-700 mb-1">Reminder Purpose / Subject</label>
-        <div class="relative">
-          <div id="rem-purpose-trigger" onclick="toggleCustomDropdown('rem-purpose-dropdown')" class="w-full p-2.5 text-xs bg-[#faf9f7] border border-[#e7e5de] hover:border-stone-400 rounded-lg cursor-pointer flex items-center justify-between transition shadow-2xs">
-            <div class="flex items-center gap-2">
-              <i data-lucide="phone-call" class="w-3.5 h-3.5 text-stone-700" id="rem-purpose-icon"></i>
-              <span id="rem-purpose-label" class="text-stone-900 font-medium">Discovery Call Follow-Up</span>
+            <!-- Composer Hint -->
+            <div class="flex items-center justify-between px-2 pt-1.5 text-[10px] text-stone-400 font-mono">
+              <span>Press <kbd class="px-1 py-0.2 bg-stone-100 border border-stone-200 rounded text-[9px] text-stone-600">Enter</kbd> to send • <kbd class="px-1 py-0.2 bg-stone-100 border border-stone-200 rounded text-[9px] text-stone-600">Shift+Enter</kbd> for new line</span>
+              <span class="text-stone-500">Type <strong>STOP</strong> to hand back to AI</span>
             </div>
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-stone-400"></i>
           </div>
 
-          <div id="rem-purpose-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-stone-200 rounded-xl custom-select-popup z-50 p-1.5 space-y-0.5 text-xs shadow-xl">
-            <div onclick="selectReminderPurpose('Discovery Call Follow-Up', 'tpl_demo', 'phone-call')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center justify-between">
-              <span class="font-medium text-stone-900 flex items-center gap-2">
-                <i data-lucide="phone-call" class="w-3.5 h-3.5 text-stone-600"></i>
-                <span>Discovery Call Follow-Up</span>
-              </span>
-              <span class="text-[10px] text-stone-400 font-mono">Sales</span>
-            </div>
-            <div onclick="selectReminderPurpose('30-Min Live Demo Walkthrough', 'tpl_demo', 'video')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center justify-between">
-              <span class="font-medium text-stone-900 flex items-center gap-2">
-                <i data-lucide="video" class="w-3.5 h-3.5 text-stone-600"></i>
-                <span>30-Min Live Demo Walkthrough</span>
-              </span>
-              <span class="text-[10px] text-stone-400 font-mono">Demo</span>
-            </div>
-            <div onclick="selectReminderPurpose('Commercial Plans & Pricing Discussion', 'tpl_plans', 'credit-card')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center justify-between">
-              <span class="font-medium text-stone-900 flex items-center gap-2">
-                <i data-lucide="credit-card" class="w-3.5 h-3.5 text-stone-600"></i>
-                <span>Commercial Plans &amp; Pricing</span>
-              </span>
-              <span class="text-[10px] text-stone-400 font-mono">Billing</span>
-            </div>
-            <div onclick="selectReminderPurpose('Friendly Inactivity Check-In', 'tpl_followup', 'bell')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center justify-between">
-              <span class="font-medium text-stone-900 flex items-center gap-2">
-                <i data-lucide="bell" class="w-3.5 h-3.5 text-stone-600"></i>
-                <span>Friendly Inactivity Check-In</span>
-              </span>
-              <span class="text-[10px] text-stone-400 font-mono">Retention</span>
-            </div>
-            <div onclick="selectReminderPurpose('Custom Follow-Up Alert', '', 'calendar')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center justify-between">
-              <span class="font-medium text-stone-900 flex items-center gap-2">
-                <i data-lucide="calendar" class="w-3.5 h-3.5 text-stone-600"></i>
-                <span>Custom Follow-Up Alert</span>
-              </span>
-              <span class="text-[10px] text-stone-400 font-mono">Custom</span>
-            </div>
-          </div>
-        </div>
-      </div>
+        </main>
 
-      <!-- Field 3: Custom Preset Time Selector Dropdown -->
-      <div>
-        <label class="block text-[11px] font-semibold text-stone-700 mb-1">When to Send Reminder</label>
-        <div class="relative">
-          <div id="rem-time-trigger" onclick="toggleCustomDropdown('rem-time-dropdown')" class="w-full p-2.5 text-xs bg-[#faf9f7] border border-[#e7e5de] hover:border-stone-400 rounded-lg cursor-pointer flex items-center justify-between transition shadow-2xs">
-            <div class="flex items-center gap-2">
-              <i data-lucide="sun" class="w-3.5 h-3.5 text-stone-700" id="rem-time-icon"></i>
-              <span id="rem-time-label" class="text-stone-900 font-medium">Tomorrow Morning (10:00 AM)</span>
-            </div>
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-stone-400"></i>
-          </div>
-
-          <div id="rem-time-dropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white border border-stone-200 rounded-xl custom-select-popup z-50 p-1.5 space-y-0.5 text-xs shadow-xl">
-            <div onclick="selectReminderTimePreset('in_30m', 'In 30 Minutes', 'zap')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center gap-2 text-stone-900 font-medium">
-              <i data-lucide="zap" class="w-3.5 h-3.5 text-stone-600"></i>
-              <span>In 30 Minutes</span>
-            </div>
-            <div onclick="selectReminderTimePreset('in_2h', 'In 2 Hours', 'clock')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center gap-2 text-stone-900 font-medium">
-              <i data-lucide="clock" class="w-3.5 h-3.5 text-stone-600"></i>
-              <span>In 2 Hours</span>
-            </div>
-            <div onclick="selectReminderTimePreset('tomorrow_10am', 'Tomorrow Morning (10:00 AM)', 'sun')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center gap-2 text-stone-900 font-medium">
-              <i data-lucide="sun" class="w-3.5 h-3.5 text-stone-600"></i>
-              <span>Tomorrow Morning (10:00 AM)</span>
-            </div>
-            <div onclick="selectReminderTimePreset('in_2d', 'In 2 Days (10:00 AM)', 'calendar')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center gap-2 text-stone-900 font-medium">
-              <i data-lucide="calendar" class="w-3.5 h-3.5 text-stone-600"></i>
-              <span>In 2 Days (10:00 AM)</span>
-            </div>
-            <div onclick="selectReminderTimePreset('custom', 'Custom Date & Time Picker', 'calendar-days')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center gap-2 text-stone-900 font-semibold border-t border-stone-100">
-              <i data-lucide="calendar-days" class="w-3.5 h-3.5 text-stone-700"></i>
-              <span>Custom Date &amp; Time Picker</span>
-            </div>
-          </div>
-        </div>
-
-        <input type="datetime-local" id="rem-custom-datetime" class="hidden w-full mt-2 p-2 text-xs bg-[#faf9f7] border border-[#e7e5de] rounded-md outline-none text-stone-900 font-mono">
-      </div>
-
-      <!-- Field 4: WhatsApp Message Body -->
-      <div>
-        <div class="flex items-center justify-between mb-1">
-          <label class="block text-[11px] font-semibold text-stone-700">WhatsApp Message Body *</label>
-          <span class="text-[10px] text-stone-400 font-mono">Supports {{name}} token</span>
-        </div>
-        <textarea id="rem-modal-msg" rows="3" placeholder="Hello {{name}}, this is a friendly follow-up regarding..." class="w-full p-2.5 text-xs bg-[#faf9f7] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 text-stone-900 leading-relaxed"></textarea>
-      </div>
-
-      <!-- Submit / Cancel -->
-      <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
-        <button onclick="closeReminderModal()" class="px-3 py-1.5 text-xs font-medium text-stone-600 hover:text-stone-900">Cancel</button>
-        <button onclick="submitModalReminder()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md shadow-2xs transition inline-flex items-center gap-1.5">
-          <i data-lucide="calendar-check" class="w-3.5 h-3.5"></i>
-          <span>Schedule Reminder</span>
-        </button>
       </div>
     </div>
   </div>
 
 
-  <!-- Direct New Chat Modal -->
-  <div id="new-msg-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-2xs flex items-center justify-center p-4">
+  <!-- ==================================================================== -->
+  <!-- MODAL: START NEW CHAT                                                -->
+  <!-- ==================================================================== -->
+  <div id="new-chat-modal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-2xs flex items-center justify-center p-4">
     <div class="bg-white border border-stone-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-stone-100">
-        <h3 class="text-sm font-bold text-stone-900">Start Direct WhatsApp Chat</h3>
-        <button onclick="closeNewMessageModal()" class="text-stone-400 hover:text-stone-700">✕</button>
+        <h3 class="text-sm font-bold text-stone-900 flex items-center gap-2">
+          <i data-lucide="message-square-plus" class="w-4 h-4 text-emerald-600"></i>
+          <span>Start Direct WhatsApp Chat</span>
+        </h3>
+        <button onclick="closeNewChatModal()" class="text-stone-400 hover:text-stone-700 p-1">✕</button>
       </div>
 
       <div>
-        <label class="block text-[11px] font-semibold text-stone-600 mb-1">Target Phone Number</label>
-        <input type="text" id="direct-phone" placeholder="e.g. +91 98200 12345" class="w-full p-2 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 font-mono text-stone-900">
+        <label class="block text-[11px] font-semibold text-stone-700 mb-1">Target Phone Number *</label>
+        <input type="text" id="modal-phone" placeholder="e.g. +91 98200 12345" class="w-full p-2.5 text-xs bg-[#faf9f7] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-mono text-stone-900">
       </div>
 
       <div>
-        <label class="block text-[11px] font-semibold text-stone-600 mb-1">Initial Message</label>
-        <textarea id="direct-msg" rows="3" placeholder="Hello! I'm reaching out from CuboidSoft regarding..." class="w-full p-2.5 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 text-stone-900 leading-relaxed"></textarea>
+        <label class="block text-[11px] font-semibold text-stone-700 mb-1">Initial Message *</label>
+        <textarea id="modal-msg" rows="3" placeholder="Hello! I'm reaching out regarding..." class="w-full p-2.5 text-xs bg-[#faf9f7] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 text-stone-900 leading-relaxed"></textarea>
       </div>
 
-      <div class="flex items-center justify-end gap-2 pt-2">
-        <button onclick="closeNewMessageModal()" class="px-3 py-1.5 text-xs font-medium text-stone-600 hover:text-stone-900">Cancel</button>
-        <button onclick="sendDirectMessage()" class="px-4 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md shadow-2xs">Send Message</button>
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+        <button onclick="closeNewChatModal()" class="px-3 py-1.5 text-xs font-medium text-stone-600 hover:text-stone-900">Cancel</button>
+        <button onclick="submitNewChat()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg shadow-2xs">Send Message</button>
       </div>
     </div>
   </div>
 
+
+  <!-- Dependencies -->
   <script src="../js/components.js?v=5.0.2"></script>
   <script src="../js/dashboard.js?v=5.0.2"></script>
 
-  <!-- High-Performance Interactive Controller for WhatsApp Hub -->
+  <!-- Interactive 2-Panel Controller -->
   <script>
     let activeConversationId = null;
     let allThreads = [];
-    let allContacts = [];
     let currentFilter = 'all';
-    let loadedTemplates = [];
-    let csvParsedRows = [];
-    let selectedReminderContact = null;
-    let selectedReminderTimeISO = null;
+    let pendingAttachment = null;
+    let isPolling = false;
 
     document.addEventListener('DOMContentLoaded', () => {
-      CuboidShell.initCompanyApp('whatsapp', 'WhatsApp Command Center', ['Messaging', 'WhatsApp']);
-      initWhatsAppHub();
+      CuboidShell.initCompanyApp('whatsapp', 'WhatsApp Web', ['Messaging', 'WhatsApp Web']);
+      initWhatsAppWeb();
     });
 
-    async function initWhatsAppHub() {
-      await loadOverview();
+    async function initWhatsAppWeb() {
+      await loadGatewayInfo();
       await loadThreads();
-      await loadTemplates();
-      await loadContacts();
-      await loadDossierOfferings();
       if (window.lucide) lucide.createIcons();
-      
-      // Auto-poll threads and active conversation every 6 seconds
-      setInterval(() => {
-        loadThreads(true);
-        if (activeConversationId) {
-          loadMessages(activeConversationId, true);
+
+      // Real-time synchronization: Poll every 3 seconds
+      setInterval(async () => {
+        if (isPolling) return;
+        isPolling = true;
+        try {
+          await loadThreads(true);
+          if (activeConversationId) {
+            await loadMessages(activeConversationId, true);
+          }
+        } catch (e) {
+        } finally {
+          isPolling = false;
         }
-      }, 6000);
+      }, 3000);
     }
 
-    async function loadDossierOfferings() {
-      const container = document.getElementById('dossier-offerings-list');
-      if (!container) return;
-      try {
-        const res = await fetch('../api/products.php?action=list');
-        const data = await res.json();
-        if (data && data.success && Array.isArray(data.products) && data.products.length > 0) {
-          const countEl = document.getElementById('dossier-catalog-count');
-          if (countEl) countEl.textContent = `${data.products.length} Items`;
-          container.innerHTML = data.products.slice(0, 8).map(p => `
-            <div class="p-1.5 bg-white border border-stone-200/80 rounded-md">
-              <div class="font-bold text-stone-900 text-[11px] truncate">${escapeHtml(p.name)}</div>
-              <div class="flex items-center justify-between text-[10px] text-stone-500 mt-0.5">
-                <span class="capitalize text-stone-400">${escapeHtml(p.category || 'product')}</span>
-                <span class="font-bold text-emerald-700">₹${Number(p.price_inr || 0).toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-          `).join('');
-        } else {
-          container.innerHTML = '<div class="text-[10px] text-stone-400">No published offerings in catalog.</div>';
-        }
-      } catch (e) {
-        container.innerHTML = '<div class="text-[10px] text-stone-400">Catalog unavailable</div>';
-      }
-    }
-
-    // Switch between Sub-Tabs
-    function switchTab(tabId) {
-      const tabs = ['inbox', 'flows', 'broadcast', 'reminders', 'templates'];
-      tabs.forEach(t => {
-        const view = document.getElementById(`view-${t}`);
-        const btn  = document.getElementById(`tab-btn-${t}`);
-        if (view) view.classList.add('hidden');
-        if (btn) {
-          btn.classList.remove('border-stone-900', 'text-stone-900', 'font-semibold');
-          btn.classList.add('border-transparent');
-        }
-      });
-
-      const activeView = document.getElementById(`view-${tabId}`);
-      const activeBtn  = document.getElementById(`tab-btn-${tabId}`);
-      if (activeView) activeView.classList.remove('hidden');
-      if (activeBtn) {
-        activeBtn.classList.add('border-stone-900', 'text-stone-900', 'font-semibold');
-        activeBtn.classList.remove('border-transparent');
-      }
-
-      if (tabId === 'reminders') loadReminders();
-      if (tabId === 'templates') renderTemplatesGrid();
-      if (window.lucide) lucide.createIcons();
-    }
-
-    // Load Hub Overview & Gateway Details
-    async function loadOverview() {
+    // Load Gateway Info
+    async function loadGatewayInfo() {
       try {
         const res = await fetch('../api/whatsapp_hub.php?action=overview');
         const data = await res.json();
-        if (!data || !data.success) return;
-
-        if (data.gateway && data.gateway.display_number) {
-          document.getElementById('gateway-phone').textContent = data.gateway.display_number;
+        if (data && data.success && data.gateway && data.gateway.display_number) {
+          const el = document.getElementById('gateway-phone');
+          if (el) el.textContent = data.gateway.display_number;
         }
-        if (data.metrics) {
-          document.getElementById('badge-total-threads').textContent = data.metrics.total_threads || 0;
-          document.getElementById('badge-pending-reminders').textContent = data.metrics.pending_reminders || 0;
-        }
-      } catch (e) {
-        console.error('Error loading overview:', e);
-      }
+      } catch (e) {}
     }
 
-    // Load Conversation Threads
+    // Load Contact Threads
     async function loadThreads(isSilent = false) {
       try {
         const res = await fetch(`../api/whatsapp_hub.php?action=get_threads&filter=${currentFilter}`);
@@ -885,9 +331,12 @@
         if (!data || !data.success) return;
 
         allThreads = data.threads || [];
-        renderThreadsList();
+        const countEl = document.getElementById('total-threads-count');
+        if (countEl) countEl.textContent = allThreads.length;
 
-        // If no conversation selected, auto select first thread
+        renderContactsList();
+
+        // If no conversation is active and threads exist, select the first
         if (!activeConversationId && allThreads.length > 0 && !isSilent) {
           selectConversation(allThreads[0].id);
         }
@@ -896,19 +345,21 @@
       }
     }
 
-    function renderThreadsList() {
-      const container = document.getElementById('threads-container');
-      const search = (document.getElementById('thread-search').value || '').toLowerCase();
+    function renderContactsList() {
+      const container = document.getElementById('contacts-list');
+      const search = (document.getElementById('contact-search')?.value || '').toLowerCase().trim();
 
       const filtered = allThreads.filter(t => {
         if (!search) return true;
-        return (t.customer_name || '').toLowerCase().includes(search) ||
-               (t.customer_phone || '').toLowerCase().includes(search) ||
-               (t.last_message || '').toLowerCase().includes(search);
+        const name = (t.customer_name || '').toLowerCase();
+        const phone = (t.customer_phone || '').toLowerCase();
+        const session = (t.session_id ? String(t.session_id) : '').toLowerCase();
+        const lastMsg = (t.last_message || '').toLowerCase();
+        return name.includes(search) || phone.includes(search) || session.includes(search) || lastMsg.includes(search);
       });
 
       if (filtered.length === 0) {
-        container.innerHTML = `<div class="p-8 text-center text-xs text-stone-400">No conversation threads found.</div>`;
+        container.innerHTML = `<div class="p-8 text-center text-xs text-stone-400">No matching conversations found.</div>`;
         return;
       }
 
@@ -916,38 +367,66 @@
         const isActive = (t.id === activeConversationId);
         const isHuman = (t.ownership === 'human');
         const timeAgo = formatTimeAgo(t.last_message_at);
+        const unreadCount = t.unread || 0;
+        const avatarLetter = (t.customer_name?.charAt(0) || 'W').toUpperCase();
 
         return `
-          <div onclick="selectConversation(${t.id})" class="p-3.5 cursor-pointer transition intercom-thread-item ${isActive ? 'active' : 'hover:bg-stone-50'}">
-            <div class="flex items-center justify-between mb-1">
-              <div class="font-semibold text-xs text-stone-900 truncate max-w-[170px] flex items-center gap-1.5">
-                <span class="w-2 h-2 rounded-full ${isHuman ? 'bg-amber-500' : 'bg-emerald-500'}"></span>
-                <span>${escapeHtml(t.customer_name)}</span>
+          <div onclick="selectConversation(${t.id})" class="p-3 cursor-pointer transition wa-thread-item ${isActive ? 'active' : 'hover:bg-stone-50'}">
+            <div class="flex items-start gap-3">
+              <!-- Avatar -->
+              <div class="w-10 h-10 rounded-full ${isHuman ? 'bg-amber-600' : 'bg-stone-900'} text-white font-semibold text-xs flex items-center justify-center font-mono shrink-0 shadow-2xs mt-0.5">
+                ${avatarLetter}
               </div>
-              <span class="text-[10px] text-stone-400 font-mono">${timeAgo}</span>
-            </div>
-            <div class="text-[11px] text-stone-500 truncate mb-1.5 leading-snug">
-              ${escapeHtml(t.last_message)}
-            </div>
-            <div class="flex items-center justify-between text-[10px]">
-              <span class="font-mono text-stone-400">${escapeHtml(t.customer_phone)}</span>
-              <span class="px-1.5 py-0.2 rounded font-medium ${isHuman ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}">
-                ${isHuman ? 'Human' : 'AI'}
-              </span>
+
+              <!-- Main Thread Content -->
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between mb-0.5">
+                  <span class="font-bold text-xs text-stone-900 truncate">${escapeHtml(t.customer_name)}</span>
+                  <span class="text-[10px] text-stone-400 font-mono shrink-0 ml-1">${timeAgo}</span>
+                </div>
+
+                <div class="text-[11px] text-stone-500 truncate mb-1 leading-snug">
+                  ${escapeHtml(t.last_message)}
+                </div>
+
+                <!-- Footer Pills -->
+                <div class="flex items-center justify-between text-[10px]">
+                  <div class="flex items-center gap-1.5 truncate">
+                    ${t.session_id ? `
+                      <span class="px-1.5 py-0.2 bg-stone-100 text-stone-600 rounded font-mono font-medium border border-stone-200 truncate">
+                        #${escapeHtml(t.session_id)}
+                      </span>
+                    ` : ''}
+                    <span class="font-mono text-stone-400 truncate">${escapeHtml(t.customer_phone || '')}</span>
+                  </div>
+
+                  <div class="flex items-center gap-1 shrink-0 ml-1">
+                    ${unreadCount > 0 ? `
+                      <span class="px-1.5 py-0.2 bg-emerald-600 text-white rounded-full font-bold font-mono text-[9px]">
+                        ${unreadCount}
+                      </span>
+                    ` : ''}
+                    <span class="px-1.5 py-0.2 rounded font-medium ${isHuman ? 'bg-amber-100 text-amber-800' : 'bg-stone-100 text-stone-700'}">
+                      ${isHuman ? 'Human' : 'AI'}
+                    </span>
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         `;
       }).join('');
     }
 
-    function filterThreads() {
-      renderThreadsList();
+    function filterContacts() {
+      renderContactsList();
     }
 
-    function setQueueFilter(filter) {
+    function setFilter(filter) {
       currentFilter = filter;
-      ['all', 'ai', 'human', 'unread'].forEach(f => {
-        const btn = document.getElementById(`qf-${f}`);
+      ['all', 'human', 'ai', 'unread'].forEach(f => {
+        const btn = document.getElementById(`flt-${f}`);
         if (btn) {
           if (f === filter) {
             btn.className = 'flex-1 py-1 rounded bg-white text-stone-900 font-semibold shadow-2xs text-center transition';
@@ -959,27 +438,22 @@
       loadThreads();
     }
 
-    // Select and load active conversation
+    // Select Conversation & Load Messages
     async function selectConversation(convId) {
       activeConversationId = convId;
-      document.body.classList.remove('mobile-view-threads');
+      document.body.classList.remove('mobile-view-contacts');
       document.body.classList.add('mobile-view-chat');
 
-      renderThreadsList();
+      renderContactsList();
       await loadMessages(convId);
+      
+      const input = document.getElementById('composer-textarea');
+      if (input) input.focus();
     }
 
-    function returnToThreadList() {
+    function returnToContactsList() {
       document.body.classList.remove('mobile-view-chat');
-      document.body.classList.add('mobile-view-threads');
-    }
-
-    function toggleDossierPane() {
-      const pane = document.getElementById('convo-pane-dossier');
-      if (pane) {
-        pane.classList.toggle('hidden');
-        pane.classList.toggle('xl:flex');
-      }
+      document.body.classList.add('mobile-view-contacts');
     }
 
     async function loadMessages(convId, isSilent = false) {
@@ -991,46 +465,117 @@
         const conv = data.conversation;
         const msgs = data.messages || [];
 
-        // Update Chat Header
-        document.getElementById('chat-title').textContent = conv.customer_name;
-        document.getElementById('chat-phone').textContent = conv.customer_phone || 'WhatsApp Visitor';
-        document.getElementById('chat-avatar').textContent = (conv.customer_name.substring(0, 2) || 'WA').toUpperCase();
-        document.getElementById('chat-stage-badge').textContent = conv.lead_stage || 'Prospect';
+        // Update Header UI
+        document.getElementById('header-name').textContent = conv.customer_name;
+        document.getElementById('header-phone').textContent = conv.customer_phone || 'Visitor';
+        document.getElementById('header-avatar').textContent = (conv.customer_name?.charAt(0) || 'W').toUpperCase();
 
-        // Update Dossier Pane
-        document.getElementById('dossier-name').textContent = conv.customer_name;
-        document.getElementById('dossier-phone').textContent = conv.customer_phone || '--';
-        document.getElementById('dossier-avatar').textContent = (conv.customer_name.substring(0, 2) || 'WA').toUpperCase();
-        document.getElementById('dossier-stage').textContent = conv.lead_stage || 'Prospect';
-        document.getElementById('dossier-intent').textContent = conv.intent_level || 'Warm';
-
-        // Update Ownership Switch
-        const isHuman = (conv.ownership === 'human');
-        document.getElementById('ownership-label').textContent = isHuman ? 'Human Specialist' : 'AI Autonomous';
-        document.getElementById('ownership-label').className = isHuman ? 'text-xs font-semibold text-amber-700' : 'text-xs font-semibold text-stone-900';
-        document.getElementById('ownership-btn-text').textContent = isHuman ? 'Hand Back to AI' : 'Take Over';
-        document.getElementById('dossier-handler').textContent = isHuman ? 'Human Specialist' : 'Cai AI';
-        document.getElementById('dossier-ownership-btn-text').textContent = isHuman ? 'Hand Back to AI' : 'Take Over Chat';
-
-        // Render Messages Stream
-        const msgContainer = document.getElementById('messages-container');
-        if (msgs.length === 0) {
-          msgContainer.innerHTML = `<div class="p-8 text-center text-xs text-stone-400">No messages in this conversation yet.</div>`;
+        const sessionBadge = document.getElementById('header-session-badge');
+        if (conv.session_id) {
+          sessionBadge.textContent = `Session #${conv.session_id}`;
+          sessionBadge.className = 'px-2 py-0.5 bg-stone-900 text-white rounded text-[10px] font-mono font-semibold border border-stone-800 shrink-0';
         } else {
-          msgContainer.innerHTML = msgs.map(m => {
-            const isOut = (m.sender_type === 'ai' || m.sender_type === 'human');
-            const isHumanOut = (m.sender_type === 'human');
-            const senderLabel = (m.sender_type === 'ai') ? 'Cai AI' : (isHumanOut ? 'You (Specialist)' : conv.customer_name);
+          sessionBadge.textContent = 'Web Session';
+          sessionBadge.className = 'px-2 py-0.5 bg-stone-100 text-stone-600 rounded text-[10px] font-mono font-medium border border-stone-200 shrink-0';
+        }
+
+        const isHuman = (conv.ownership === 'human');
+        const modeBadge = document.getElementById('header-mode-badge');
+        const switchBtn = document.getElementById('btn-switch-ai');
+        const switchText = document.getElementById('btn-switch-ai-text');
+
+        if (isHuman) {
+          modeBadge.textContent = 'Human Handling';
+          modeBadge.className = 'px-2.5 py-1 rounded-md text-[11px] font-semibold border bg-amber-50 text-amber-800 border-amber-300';
+          switchBtn.className = 'px-3 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition';
+          switchText.textContent = 'Switch to AI (STOP)';
+        } else {
+          modeBadge.textContent = 'AI Handling';
+          modeBadge.className = 'px-2.5 py-1 rounded-md text-[11px] font-semibold border bg-emerald-50 text-emerald-800 border-emerald-300';
+          switchBtn.className = 'px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 transition';
+          switchText.textContent = 'Take Over (Human)';
+        }
+
+        // Render Message Stream
+        const stream = document.getElementById('messages-stream');
+        if (msgs.length === 0) {
+          stream.innerHTML = `<div class="p-8 text-center text-xs text-stone-400">No messages in this conversation yet.</div>`;
+        } else {
+          stream.innerHTML = msgs.map(m => {
+            const isAgent = (m.sender_type === 'human');
+            const isAi = (m.sender_type === 'ai');
+            const isVisitor = (m.sender_type === 'visitor' || m.sender_type === 'user');
             const timeStr = formatTime(m.created_at);
 
+            let senderLabel = conv.customer_name;
+            let bubbleClass = 'wa-bubble-visitor';
+            let alignClass = 'items-start';
+
+            if (isAgent) {
+              senderLabel = 'You (Team Specialist)';
+              bubbleClass = 'wa-bubble-agent';
+              alignClass = 'items-end';
+            } else if (isAi) {
+              senderLabel = 'CAI AI Assistant';
+              bubbleClass = 'wa-bubble-ai';
+              alignClass = 'items-start';
+            }
+
+            // Parse metadata for attachments or chips
+            let attachmentHtml = '';
+            let chipsHtml = '';
+
+            let meta = null;
+            if (m.metadata_json) {
+              try {
+                meta = typeof m.metadata_json === 'string' ? JSON.parse(m.metadata_json) : m.metadata_json;
+              } catch (e) {}
+            }
+
+            if (meta && meta.attachment) {
+              const att = meta.attachment;
+              if (att.is_image) {
+                attachmentHtml = `
+                  <div class="mb-2 rounded-lg overflow-hidden border border-black/10">
+                    <a href="${escapeAttr(att.url)}" target="_blank">
+                      <img src="${escapeAttr(att.url)}" alt="Attachment" class="max-h-56 max-w-full object-cover">
+                    </a>
+                  </div>
+                `;
+              } else {
+                attachmentHtml = `
+                  <div class="mb-2 p-2 bg-black/5 rounded-lg flex items-center gap-2 border border-black/10">
+                    <i data-lucide="file-text" class="w-4 h-4 text-stone-500"></i>
+                    <a href="${escapeAttr(att.url)}" target="_blank" class="font-medium underline truncate text-[11px]">
+                      ${escapeHtml(att.file_name || 'Attached File')}
+                    </a>
+                  </div>
+                `;
+              }
+            }
+
+            if (meta && Array.isArray(meta.chips) && meta.chips.length > 0) {
+              chipsHtml = `
+                <div class="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-stone-200">
+                  ${meta.chips.map(c => `
+                    <span class="px-2 py-0.5 bg-white border border-stone-300 text-stone-800 rounded-md text-[10px] font-medium shadow-2xs font-sans">
+                      ${escapeHtml(c.label)}
+                    </span>
+                  `).join('')}
+                </div>
+              `;
+            }
+
             return `
-              <div class="flex flex-col ${isOut ? 'items-end' : 'items-start'} my-1">
+              <div class="flex flex-col ${alignClass} my-1">
                 <span class="text-[10px] text-stone-400 mb-0.5 px-1">${escapeHtml(senderLabel)}</span>
-                <div class="max-w-[85%] sm:max-w-[70%] px-4 py-2.5 text-xs leading-relaxed ${isOut ? 'intercom-bubble-out' : 'intercom-bubble-visitor'}">
-                  <div>${formatMessageBody(m.message_text)}</div>
-                  <div class="flex items-center justify-end gap-1 text-[10px] mt-1 select-none font-mono ${isOut ? 'text-stone-400' : 'text-stone-400'}">
+                <div class="max-w-[85%] sm:max-w-[70%] px-4 py-2.5 text-xs leading-relaxed ${bubbleClass}">
+                  ${attachmentHtml}
+                  <div class="whitespace-pre-line">${formatMessageBody(m.message_text)}</div>
+                  ${chipsHtml}
+                  <div class="flex items-center justify-end gap-1 text-[10px] mt-1 select-none font-mono ${isAgent ? 'text-stone-400' : 'text-stone-400'}">
                     <span>${timeStr}</span>
-                    ${isOut ? `<span class="intercom-meta-ticks text-[11px] leading-none" title="Delivered">✓✓</span>` : ''}
+                    ${isAgent ? `<span class="text-[11px] leading-none" title="Delivered">✓✓</span>` : ''}
                   </div>
                 </div>
               </div>
@@ -1038,7 +583,7 @@
           }).join('');
 
           if (!isSilent) {
-            msgContainer.scrollTop = msgContainer.scrollHeight;
+            stream.scrollTop = stream.scrollHeight;
           }
         }
 
@@ -1048,6 +593,12 @@
       }
     }
 
+    // Auto-grow textarea
+    function autoGrowTextarea(textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = (textarea.scrollHeight) + 'px';
+    }
+
     function handleComposerKey(e) {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -1055,14 +606,153 @@
       }
     }
 
-    async function sendActiveMessage() {
-      const input = document.getElementById('composer-input');
-      const text = input.value.trim();
-      if (!text || !activeConversationId) return;
+    // Attachment Upload Handler
+    async function handleFileUpload(input) {
+      const file = input.files[0];
+      if (!file) return;
 
-      const btn = document.getElementById('send-msg-btn');
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await fetch('../api/upload.php', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (data && data.success) {
+          const rawHost = window.location.hostname;
+          const isLocal = rawHost === 'localhost' || rawHost === '127.0.0.1';
+          const baseUrl = isLocal ? 'http://localhost/cuboidpilot' : 'https://cai.cuboidsoft.in';
+          const fullUrl = `${baseUrl}/${data.file_url}`;
+
+          pendingAttachment = {
+            url: fullUrl,
+            file_name: data.file_name,
+            file_size: data.file_size,
+            mime_type: data.file_ext,
+            is_image: data.is_image
+          };
+
+          document.getElementById('pending-att-name').textContent = data.file_name;
+          document.getElementById('pending-att-size').textContent = `(${(data.file_size / 1024).toFixed(1)} KB)`;
+          document.getElementById('pending-attachment-bar').classList.remove('hidden');
+          window.CuboidShell.toast('Attachment ready to send', 'info');
+        } else {
+          alert('Upload failed: ' + (data.error || 'Unknown error'));
+        }
+      } catch (e) {
+        alert('Network error uploading file');
+      } finally {
+        input.value = '';
+      }
+    }
+
+    function clearPendingAttachment() {
+      pendingAttachment = null;
+      document.getElementById('pending-attachment-bar').classList.add('hidden');
+    }
+
+    // Send Active Message or STOP
+    async function sendActiveMessage() {
+      const textarea = document.getElementById('composer-textarea');
+      const text = textarea.value.trim();
+
+      if (!text && !pendingAttachment) return;
+      if (!activeConversationId) return;
+
+      const btn = document.getElementById('btn-send');
       btn.disabled = true;
-      btn.innerHTML = `<span class="animate-spin">⏳</span>`;
+
+      try {
+        const payload = {
+          action: 'send_message',
+          conversation_id: activeConversationId,
+          message: text,
+          attachment: pendingAttachment
+        };
+
+        const res = await fetch('../api/whatsapp_hub.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data && data.success) {
+          textarea.value = '';
+          textarea.style.height = 'auto';
+          clearPendingAttachment();
+
+          if (data.action === 'handoff_stopped') {
+            window.CuboidShell.toast('Switched to AI. Follow-up question sent to visitor.', 'info');
+          } else {
+            window.CuboidShell.toast('Message delivered', 'success');
+          }
+
+          await loadMessages(activeConversationId);
+          await loadThreads(true);
+        } else {
+          alert('Failed to send: ' + (data.error || 'Server error'));
+        }
+      } catch (e) {
+        alert('Network error sending message');
+      } finally {
+        btn.disabled = false;
+        textarea.focus();
+      }
+    }
+
+    // Trigger STOP Hand-back to AI
+    async function triggerStopHandoff() {
+      if (!activeConversationId) return;
+
+      const btn = document.getElementById('btn-switch-ai');
+      const isSwitchToAi = btn.textContent.includes('Switch to AI');
+
+      try {
+        const res = await fetch('../api/whatsapp_hub.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: isSwitchToAi ? 'switch_to_ai' : 'toggle_ownership',
+            conversation_id: activeConversationId,
+            ownership: isSwitchToAi ? 'ai' : 'human'
+          })
+        });
+        const data = await res.json();
+
+        if (data && data.success) {
+          window.CuboidShell.toast(
+            isSwitchToAi ? 'Ended human session. Resumed AI conversation.' : 'You have taken over this conversation.',
+            'info'
+          );
+          await loadMessages(activeConversationId);
+          await loadThreads(true);
+        } else {
+          alert('Action failed: ' + (data.error || 'Server error'));
+        }
+      } catch (e) {
+        alert('Network error');
+      }
+    }
+
+    // Start New Direct Chat Modal
+    function openNewChatModal() {
+      document.getElementById('new-chat-modal').classList.remove('hidden');
+    }
+    function closeNewChatModal() {
+      document.getElementById('new-chat-modal').classList.add('hidden');
+    }
+    async function submitNewChat() {
+      const phone = document.getElementById('modal-phone').value.trim();
+      const msg = document.getElementById('modal-msg').value.trim();
+
+      if (!phone || !msg) {
+        alert('Phone number and initial message are required.');
+        return;
+      }
 
       try {
         const res = await fetch('../api/whatsapp_hub.php', {
@@ -1070,631 +760,26 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'send_message',
-            conversation_id: activeConversationId,
-            message: text
+            phone: phone,
+            message: msg
           })
         });
         const data = await res.json();
 
         if (data && data.success) {
-          input.value = '';
-          await loadMessages(activeConversationId);
-          await loadThreads(true);
-          window.CuboidShell.toast('Message delivered to WhatsApp', 'success');
-        } else {
-          alert('Failed to send message: ' + (data.error || 'Unknown error'));
-        }
-      } catch (e) {
-        alert('Network error sending message');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i data-lucide="send" class="w-3.5 h-3.5"></i><span>Send</span>`;
-        if (window.lucide) lucide.createIcons();
-      }
-    }
-
-    async function toggleOwnership() {
-      if (!activeConversationId) return;
-
-      const label = document.getElementById('ownership-label').textContent;
-      const targetOwnership = label.includes('AI') ? 'human' : 'ai';
-
-      try {
-        const res = await fetch('../api/whatsapp_hub.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'toggle_ownership',
-            conversation_id: activeConversationId,
-            ownership: targetOwnership
-          })
-        });
-        const data = await res.json();
-        if (data && data.success) {
-          await loadMessages(activeConversationId);
-          await loadThreads(true);
-          window.CuboidShell.toast(`Chat transferred to ${targetOwnership === 'human' ? 'Human Specialist' : 'Cai AI'}`, 'info');
-        }
-      } catch (e) {
-        console.error('Error toggling ownership:', e);
-      }
-    }
-
-    async function resolveActiveChat() {
-      if (!activeConversationId) return;
-      if (!confirm('Resolve this conversation and mark it as concluded?')) return;
-
-      try {
-        const res = await fetch('../api/whatsapp_hub.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'resolve_conversation',
-            conversation_id: activeConversationId
-          })
-        });
-        const data = await res.json();
-        if (data && data.success) {
-          await loadMessages(activeConversationId);
-          await loadThreads(true);
-          window.CuboidShell.toast('Conversation successfully resolved', 'success');
-        }
-      } catch (e) {
-        console.error('Error resolving conversation:', e);
-      }
-    }
-
-    // Load Contacts for Custom Dropdowns
-    async function loadContacts() {
-      try {
-        const res = await fetch('../api/whatsapp_hub.php?action=get_contacts');
-        const data = await res.json();
-        if (data && data.success) {
-          allContacts = data.contacts || [];
-          renderCustomContactList(allContacts);
-        }
-      } catch (e) {}
-    }
-
-    let selectedRecipients = []; // Array of { id, name, phone }
-
-    // Load Contacts for Custom Dropdowns
-    async function loadContacts() {
-      try {
-        const res = await fetch('../api/whatsapp_hub.php?action=get_contacts');
-        const data = await res.json();
-        if (data && data.success) {
-          allContacts = data.contacts || [];
-          renderCustomContactList(allContacts);
-        }
-      } catch (e) {}
-    }
-
-    function renderCustomContactList(contacts) {
-      const container = document.getElementById('rem-contact-list');
-      if (!container) return;
-
-      if (contacts.length === 0) {
-        container.innerHTML = `<div class="p-3 text-center text-xs text-stone-400">No contacts found</div>`;
-        return;
-      }
-
-      container.innerHTML = contacts.map(c => {
-        const isSelected = selectedRecipients.some(r => r.phone === c.phone || (r.id && r.id === c.id));
-        return `
-          <div onclick="toggleRecipientSelection('${c.id}', '${escapeAttr(c.name)}', '${escapeAttr(c.phone)}')" class="p-2 hover:bg-stone-50 rounded-lg cursor-pointer flex items-center justify-between transition ${isSelected ? 'bg-stone-50' : ''}">
-            <div class="flex items-center gap-2.5 truncate">
-              <input type="checkbox" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleRecipientSelection('${c.id}', '${escapeAttr(c.name)}', '${escapeAttr(c.phone)}');" class="rounded border-stone-300 text-stone-900 pointer-events-none">
-              <span class="w-6 h-6 rounded-full bg-stone-100 text-stone-700 font-mono text-[10px] flex items-center justify-center font-bold shrink-0">
-                ${(c.name.substring(0, 1) || 'C').toUpperCase()}
-              </span>
-              <span class="font-medium text-stone-900 truncate">${escapeHtml(c.name)}</span>
-            </div>
-            <span class="font-mono text-stone-500 text-[11px] shrink-0">${escapeHtml(c.phone)}</span>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function toggleRecipientSelection(id, name, phone) {
-      const existingIdx = selectedRecipients.findIndex(r => r.phone === phone || (r.id && r.id === id));
-      if (existingIdx >= 0) {
-        selectedRecipients.splice(existingIdx, 1);
-      } else {
-        selectedRecipients.push({ id, name, phone });
-      }
-      updateRecipientUI();
-      renderCustomContactList(getFilteredContacts());
-    }
-
-    function removeRecipient(phone) {
-      selectedRecipients = selectedRecipients.filter(r => r.phone !== phone);
-      updateRecipientUI();
-      renderCustomContactList(getFilteredContacts());
-    }
-
-    function clearAllSelectedRecipients() {
-      selectedRecipients = [];
-      updateRecipientUI();
-      renderCustomContactList(getFilteredContacts());
-    }
-
-    function selectAllFilteredContacts() {
-      const filtered = getFilteredContacts();
-      filtered.forEach(c => {
-        if (!selectedRecipients.some(r => r.phone === c.phone)) {
-          selectedRecipients.push({ id: c.id, name: c.name, phone: c.phone });
-        }
-      });
-      updateRecipientUI();
-      renderCustomContactList(filtered);
-    }
-
-    function addManualRecipient() {
-      const name = document.getElementById('rem-quick-manual-name').value.trim() || 'Client';
-      const phone = document.getElementById('rem-quick-manual-phone').value.trim();
-      if (!phone) {
-        alert('Please enter a valid phone number');
-        return;
-      }
-      if (!selectedRecipients.some(r => r.phone === phone)) {
-        selectedRecipients.push({ id: null, name, phone });
-      }
-      document.getElementById('rem-quick-manual-name').value = '';
-      document.getElementById('rem-quick-manual-phone').value = '';
-      updateRecipientUI();
-      closeAllCustomDropdowns();
-    }
-
-    function updateRecipientUI() {
-      const countEl = document.getElementById('rem-selected-count');
-      const pillsContainer = document.getElementById('rem-recipient-pills');
-      if (countEl) countEl.textContent = `${selectedRecipients.length} selected`;
-
-      if (!pillsContainer) return;
-
-      if (selectedRecipients.length === 0) {
-        pillsContainer.innerHTML = `<span id="rem-pills-placeholder" class="text-[11px] text-stone-400 italic px-1">No recipients selected yet. Click below to add.</span>`;
-        return;
-      }
-
-      pillsContainer.innerHTML = selectedRecipients.map(r => `
-        <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-white border border-[#e7e5de] text-stone-800 rounded-md text-[11px] font-medium shadow-2xs">
-          <span>${escapeHtml(r.name)}</span>
-          <span class="font-mono text-[10px] text-stone-400">${escapeHtml(r.phone)}</span>
-          <button type="button" onclick="event.stopPropagation(); removeRecipient('${escapeAttr(r.phone)}');" class="text-stone-400 hover:text-stone-900 ml-0.5 font-bold">✕</button>
-        </span>
-      `).join('');
-    }
-
-    function getFilteredContacts() {
-      const search = (document.getElementById('rem-contact-search')?.value || '').toLowerCase();
-      if (!search) return allContacts;
-      return allContacts.filter(c => (c.name || '').toLowerCase().includes(search) || (c.phone || '').includes(search));
-    }
-
-    function filterCustomContacts() {
-      renderCustomContactList(getFilteredContacts());
-    }
-
-    function toggleCustomDropdown(dropdownId) {
-      const d = document.getElementById(dropdownId);
-      const isClosed = d.classList.contains('hidden');
-      closeAllCustomDropdowns();
-      if (isClosed) d.classList.remove('hidden');
-    }
-
-    function closeAllCustomDropdowns() {
-      document.querySelectorAll('.custom-select-popup').forEach(el => el.classList.add('hidden'));
-    }
-
-    document.addEventListener('click', (e) => {
-      if (!e.target.closest('#rem-contact-trigger') &&
-          !e.target.closest('#rem-contact-dropdown') &&
-          !e.target.closest('#rem-purpose-trigger') &&
-          !e.target.closest('#rem-purpose-dropdown') &&
-          !e.target.closest('#rem-time-trigger') &&
-          !e.target.closest('#rem-time-dropdown')) {
-        closeAllCustomDropdowns();
-      }
-    });
-
-    function selectReminderPurpose(purposeTitle, templateKey, iconName = 'phone-call') {
-      document.getElementById('rem-purpose-label').textContent = purposeTitle;
-      const iconEl = document.getElementById('rem-purpose-icon');
-      if (iconEl) iconEl.setAttribute('data-lucide', iconName);
-      closeAllCustomDropdowns();
-      if (templateKey) {
-        const tpl = loadedTemplates.find(t => t.id === templateKey);
-        if (tpl) {
-          const clientName = selectedRecipients.length === 1 ? selectedRecipients[0].name : '{{name}}';
-          document.getElementById('rem-modal-msg').value = tpl.body.replace(/\{\{1\}\}/gi, clientName).replace(/\{\{name\}\}/gi, clientName);
-        }
-      }
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function selectReminderTimePreset(presetKey, label, iconName = 'sun') {
-      document.getElementById('rem-time-label').textContent = label;
-      const iconEl = document.getElementById('rem-time-icon');
-      if (iconEl) iconEl.setAttribute('data-lucide', iconName);
-
-      const customPicker = document.getElementById('rem-custom-datetime');
-      closeAllCustomDropdowns();
-
-      const now = new Date();
-      let targetDate = new Date();
-
-      if (presetKey === 'in_30m') {
-        targetDate = new Date(now.getTime() + 30 * 60000);
-        customPicker.classList.add('hidden');
-      } else if (presetKey === 'in_2h') {
-        targetDate = new Date(now.getTime() + 120 * 60000);
-        customPicker.classList.add('hidden');
-      } else if (presetKey === 'tomorrow_10am') {
-        targetDate.setDate(targetDate.getDate() + 1);
-        targetDate.setHours(10, 0, 0, 0);
-        customPicker.classList.add('hidden');
-      } else if (presetKey === 'in_2d') {
-        targetDate.setDate(targetDate.getDate() + 2);
-        targetDate.setHours(10, 0, 0, 0);
-        customPicker.classList.add('hidden');
-      } else if (presetKey === 'custom') {
-        customPicker.classList.remove('hidden');
-        if (window.lucide) lucide.createIcons();
-        return;
-      }
-
-      // Format ISO string for SQL: YYYY-MM-DD HH:mm:ss
-      selectedReminderTimeISO = targetDate.toISOString().slice(0, 19).replace('T', ' ');
-      if (window.lucide) lucide.createIcons();
-    }
-
-    // Open/Close Reminder Modal
-    function openReminderModal() {
-      document.getElementById('reminder-modal').classList.remove('hidden');
-      selectReminderTimePreset('tomorrow_10am', 'Tomorrow Morning (10:00 AM)', 'sun');
-      updateRecipientUI();
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function closeReminderModal() {
-      document.getElementById('reminder-modal').classList.add('hidden');
-    }
-
-    function quickScheduleForCurrent() {
-      openReminderModal();
-      if (activeConversationId) {
-        const thread = allThreads.find(t => t.id === activeConversationId);
-        if (thread && !selectedRecipients.some(r => r.phone === thread.customer_phone)) {
-          selectedRecipients = [{
-            id: thread.customer_id,
-            name: thread.customer_name,
-            phone: thread.customer_phone
-          }];
-          updateRecipientUI();
-          renderCustomContactList(getFilteredContacts());
-        }
-      }
-    }
-
-    async function submitModalReminder() {
-      if (selectedRecipients.length === 0) {
-        alert('Please select at least one recipient for the WhatsApp reminder.');
-        return;
-      }
-
-      const purpose = document.getElementById('rem-purpose-label').textContent;
-      const msg = document.getElementById('rem-modal-msg').value.trim();
-
-      if (!msg) {
-        alert('Please write or select a message body for the reminder.');
-        return;
-      }
-
-      let scheduledTime = selectedReminderTimeISO;
-      const customDatetimeEl = document.getElementById('rem-custom-datetime');
-      if (!customDatetimeEl.classList.contains('hidden') && customDatetimeEl.value) {
-        scheduledTime = customDatetimeEl.value.replace('T', ' ') + ':00';
-      }
-
-      try {
-        const res = await fetch('../api/whatsapp_hub.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'create_reminder',
-            title: purpose,
-            message: msg,
-            message_template: msg,
-            scheduled_at: scheduledTime || undefined,
-            recipients: selectedRecipients
-          })
-        });
-        const data = await res.json();
-
-        if (data && data.success) {
-          closeReminderModal();
-          selectedRecipients = [];
-          updateRecipientUI();
-          window.CuboidShell.toast(`Scheduled WhatsApp reminders for ${data.created_count || 'selected'} recipients`, 'success');
-          loadReminders();
-          loadOverview();
-        } else {
-          alert('Error: ' + (data.error || 'Failed to schedule'));
-        }
-      } catch (e) {
-        alert('Network error scheduling reminder');
-      }
-    }
-
-    // Reminders Table Loader
-    async function loadReminders() {
-      try {
-        const res = await fetch('../api/whatsapp_hub.php?action=get_reminders');
-        const data = await res.json();
-        if (!data || !data.success) return;
-
-        const tbody = document.getElementById('reminders-table-body');
-        const rems = data.reminders || [];
-
-        if (rems.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-xs text-stone-400">No scheduled reminders found.</td></tr>`;
-          return;
-        }
-
-        tbody.innerHTML = rems.map(r => {
-          const isPending = (r.status === 'PENDING');
-          return `
-            <tr>
-              <td class="p-3">
-                <div class="font-semibold text-xs text-stone-900">${escapeHtml(r.title)}</div>
-                <div class="text-[11px] text-stone-500">${escapeHtml(r.customer_name || 'Prospect')}</div>
-              </td>
-              <td class="p-3 font-mono text-[11px] text-stone-600">${escapeHtml(r.customer_phone || '-')}</td>
-              <td class="p-3 text-[11px] font-mono text-stone-500">${escapeHtml(r.scheduled_at || r.due_date || '-')}</td>
-              <td class="p-3">
-                <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${isPending ? 'bg-amber-50 text-amber-800 border border-amber-200' : 'bg-emerald-50 text-emerald-800 border border-emerald-200'}">
-                  ${r.status}
-                </span>
-              </td>
-              <td class="p-3 text-right">
-                ${isPending ? `<button onclick="dispatchReminderNow(${r.id})" class="px-2.5 py-1 bg-stone-900 hover:bg-black text-white text-[11px] font-medium rounded transition">Send Now</button>` : `<span class="text-[11px] text-stone-400">Sent</span>`}
-              </td>
-            </tr>
-          `;
-        }).join('');
-      } catch (e) {}
-    }
-
-    async function dispatchReminderNow(remId) {
-      try {
-        const res = await fetch('../api/whatsapp_hub.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'dispatch_reminder', reminder_id: remId })
-        });
-        const data = await res.json();
-        if (data && data.success) {
-          window.CuboidShell.toast('Reminder dispatched to WhatsApp', 'success');
-          loadReminders();
-        } else {
-          alert('Dispatch failed: ' + (data.error || 'Error'));
-        }
-      } catch (e) {
-        alert('Network error sending reminder');
-      }
-    }
-
-    // Templates Library
-    async function loadTemplates() {
-      try {
-        const res = await fetch('../api/whatsapp_hub.php?action=get_templates');
-        const data = await res.json();
-        if (data && data.success) {
-          loadedTemplates = data.templates || [];
-        }
-      } catch (e) {}
-    }
-
-    function insertTemplateText(tplId) {
-      const tpl = loadedTemplates.find(t => t.id === tplId);
-      if (!tpl) return;
-      const input = document.getElementById('composer-input');
-      input.value = tpl.body;
-      input.focus();
-    }
-
-    function renderTemplatesGrid() {
-      const container = document.getElementById('templates-grid');
-      container.innerHTML = loadedTemplates.map(t => `
-        <div class="bg-white border border-[#e7e5de] rounded-xl p-5 shadow-2xs space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-[11px] font-semibold px-2 py-0.5 bg-stone-100 text-stone-700 rounded font-mono">${t.category}</span>
-            <button onclick="copyToClipboard('${escapeAttr(t.body)}')" class="text-xs text-stone-500 hover:text-stone-900 inline-flex items-center gap-1">
-              <i data-lucide="copy" class="w-3 h-3"></i> Copy
-            </button>
-          </div>
-          <h4 class="text-sm font-bold text-stone-900">${escapeHtml(t.name)}</h4>
-          <p class="text-xs text-stone-600 font-mono bg-stone-50 p-2.5 rounded-lg border border-stone-200 leading-relaxed whitespace-pre-line">${escapeHtml(t.body)}</p>
-          <div class="pt-2 text-right">
-            <button onclick="useTemplateInChat('${escapeAttr(t.body)}')" class="px-3 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md transition">
-              Use in Live Chat &rarr;
-            </button>
-          </div>
-        </div>
-      `).join('');
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function useTemplateInChat(text) {
-      switchTab('inbox');
-      const input = document.getElementById('composer-input');
-      input.value = text;
-      input.focus();
-    }
-
-    // Automation Flow Toggle
-    async function toggleFlowState(flowKey, isActive) {
-      try {
-        await fetch('../api/whatsapp_hub.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'toggle_flow', flow_key: flowKey, is_active: isActive })
-        });
-        window.CuboidShell.toast(`Automation Flow ${isActive ? 'Activated' : 'Disabled'}`, 'success');
-      } catch (e) {}
-    }
-
-    // CSV Uploader & Bulk Broadcast
-    function handleCsvFile(fileInput) {
-      const file = fileInput.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const text = e.target.result;
-        uploadCsvString(text);
-      };
-      reader.readAsText(file);
-    }
-
-    async function uploadCsvString(csvString) {
-      try {
-        const res = await fetch('../api/whatsapp_hub.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'upload_csv', csv_data: csvString })
-        });
-        const data = await res.json();
-
-        if (data && data.success) {
-          csvParsedRows = data.leads || [];
-          document.getElementById('csv-count').textContent = data.imported_count;
-          document.getElementById('csv-preview-container').classList.remove('hidden');
-
-          const tbody = document.getElementById('csv-preview-body');
-          tbody.innerHTML = csvParsedRows.map(r => `
-            <tr>
-              <td class="p-2 font-medium">${escapeHtml(r.name)}</td>
-              <td class="p-2">${escapeHtml(r.phone)}</td>
-              <td class="p-2 text-stone-500">${escapeHtml(r.email || '-')}</td>
-              <td class="p-2 text-stone-500">${escapeHtml(r.company || '-')}</td>
-            </tr>
-          `).join('');
-
-          window.CuboidShell.toast(`Successfully imported ${data.imported_count} contacts`, 'success');
-          loadContacts();
-        } else {
-          alert('CSV import failed: ' + (data.error || 'Invalid file format'));
-        }
-      } catch (e) {
-        alert('Network error parsing CSV');
-      }
-    }
-
-    function clearCsvData() {
-      csvParsedRows = [];
-      document.getElementById('csv-preview-container').classList.add('hidden');
-      document.getElementById('csv-file-input').value = '';
-    }
-
-    function insertTokenToBroadcast(token) {
-      const input = document.getElementById('broadcast-template-input');
-      input.value += token;
-      input.focus();
-    }
-
-    async function launchBroadcast() {
-      if (csvParsedRows.length === 0) {
-        alert('Please upload a CSV file with contacts first.');
-        return;
-      }
-      const tpl = document.getElementById('broadcast-template-input').value.trim();
-      if (!tpl) {
-        alert('Please write a message template for the broadcast.');
-        return;
-      }
-
-      if (!confirm(`Are you ready to dispatch this broadcast to ${csvParsedRows.length} contacts via Meta Cloud API?`)) {
-        return;
-      }
-
-      const btn = document.getElementById('broadcast-submit-btn');
-      btn.disabled = true;
-      const progressContainer = document.getElementById('broadcast-progress-container');
-      const progressBar = document.getElementById('broadcast-progress-bar');
-      const progressPct = document.getElementById('broadcast-progress-pct');
-      const progressStatus = document.getElementById('broadcast-progress-status');
-
-      progressContainer.classList.remove('hidden');
-      progressBar.style.width = '30%';
-      progressPct.textContent = '30%';
-
-      try {
-        const res = await fetch('../api/whatsapp_hub.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'broadcast_send',
-            recipients: csvParsedRows,
-            template: tpl
-          })
-        });
-        const data = await res.json();
-
-        progressBar.style.width = '100%';
-        progressPct.textContent = '100%';
-
-        if (data && data.success) {
-          progressStatus.textContent = `Completed! ${data.sent} sent, ${data.failed} failed.`;
-          window.CuboidShell.toast(`Broadcast completed: ${data.sent} sent`, 'success');
-          loadThreads(true);
-        } else {
-          alert('Broadcast error: ' + (data.error || 'Failed'));
-        }
-      } catch (e) {
-        alert('Network error during broadcast');
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    // Direct New Chat Modal
-    function openNewMessageModal() {
-      document.getElementById('new-msg-modal').classList.remove('hidden');
-    }
-    function closeNewMessageModal() {
-      document.getElementById('new-msg-modal').classList.add('hidden');
-    }
-    async function sendDirectMessage() {
-      const phone = document.getElementById('direct-phone').value.trim();
-      const msg   = document.getElementById('direct-msg').value.trim();
-      if (!phone || !msg) {
-        alert('Phone number and message text are required.');
-        return;
-      }
-
-      try {
-        const res = await fetch('../api/whatsapp_hub.php', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'send_message', phone: phone, message: msg })
-        });
-        const data = await res.json();
-        if (data && data.success) {
-          closeNewMessageModal();
-          window.CuboidShell.toast('WhatsApp message sent live', 'success');
-          switchTab('inbox');
+          closeNewChatModal();
+          document.getElementById('modal-phone').value = '';
+          document.getElementById('modal-msg').value = '';
+          window.CuboidShell.toast('Direct WhatsApp chat started', 'success');
           await loadThreads();
           if (data.conversation_id) {
             selectConversation(data.conversation_id);
           }
         } else {
-          alert('Failed to send: ' + (data.error || 'Meta API rejected request'));
+          alert('Failed to send: ' + (data.error || 'Error'));
         }
       } catch (e) {
-        alert('Network error sending direct message');
+        alert('Network error');
       }
     }
 
@@ -1705,13 +790,12 @@
     }
     function escapeAttr(str) {
       if (!str) return '';
-      return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
+      return String(str).replace(/'/g, "\\'").replace(/"/g, '&quot;');
     }
     function formatMessageBody(str) {
       if (!str) return '';
       let escaped = escapeHtml(str);
       escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-      escaped = escaped.replace(/\n/g, '<br>');
       return escaped;
     }
     function formatTime(isoStr) {
@@ -1728,10 +812,6 @@
       const diffHr = Math.floor(diffMin / 60);
       if (diffHr < 24) return `${diffHr}h`;
       return `${Math.floor(diffHr / 24)}d`;
-    }
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text);
-      window.CuboidShell.toast('Copied to clipboard', 'info');
     }
   </script>
 </body>
