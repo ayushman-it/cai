@@ -97,9 +97,12 @@ try {
     $entitlements = getCompanyEntitlements($pdo, $companyId);
 
     // Fetch widget settings for custom assistant name and branding
-    $wStmt = $pdo->prepare("SELECT assistant_name, brand_name, quick_actions_json FROM `widget_settings` WHERE `company_id` = ? LIMIT 1");
-    $wStmt->execute([$companyId]);
-    $widgetRow = $wStmt->fetch();
+    $widgetRow = [];
+    try {
+        $wStmt = $pdo->prepare("SELECT * FROM `widget_settings` WHERE `company_id` = ? LIMIT 1");
+        $wStmt->execute([$companyId]);
+        $widgetRow = $wStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    } catch (Throwable $e) {}
 
     // Fetch AI Brain Configuration & Custom Instructions (Sections 2 & 3)
     $aiConfigStmt = $pdo->prepare("SELECT * FROM `ai_configs` WHERE `company_id` = ? LIMIT 1");

@@ -274,6 +274,9 @@ function ensureExtendedSchema(PDO $pdo) {
     if (!in_array('logo_light_url', $widgetCols)) {
         $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `logo_light_url` VARCHAR(255) NULL AFTER `logo_dark_url`");
     }
+    if (!in_array('quick_actions_json', $widgetCols)) {
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `quick_actions_json` LONGTEXT NULL AFTER `greeting_subheading`");
+    }
 
     // Ensure logo_dark_url, logo_light_url columns in companies
     $compCols = $pdo->query("SHOW COLUMNS FROM `companies`")->fetchAll(PDO::FETCH_COLUMN);

@@ -528,15 +528,17 @@ class WorkflowEngine {
         } catch (Throwable $e) {}
 
         // 2. Check widget_settings quick_actions_json
-        $ws = $pdo->prepare("SELECT quick_actions_json FROM `widget_settings` WHERE `company_id` = ? LIMIT 1");
-        $ws->execute([$companyId]);
-        $row = $ws->fetch(PDO::FETCH_ASSOC);
-        if (!empty($row['quick_actions_json'])) {
-            $dec = json_decode($row['quick_actions_json'], true);
-            if (is_array($dec) && count($dec) > 0) {
-                return $dec;
+        try {
+            $ws = $pdo->prepare("SELECT * FROM `widget_settings` WHERE `company_id` = ? LIMIT 1");
+            $ws->execute([$companyId]);
+            $row = $ws->fetch(PDO::FETCH_ASSOC);
+            if (!empty($row['quick_actions_json'])) {
+                $dec = json_decode($row['quick_actions_json'], true);
+                if (is_array($dec) && count($dec) > 0) {
+                    return $dec;
+                }
             }
-        }
+        } catch (Throwable $e) {}
 
         // 3. Fallback to clean, universal business chips (Zero hardcoded course/tuition bias)
         return [
