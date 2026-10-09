@@ -7938,7 +7938,11 @@
           });
           chipsBox.appendChild(chipBtn);
         });
-        bubble.appendChild(chipsBox);
+        if (contentCol) {
+          contentCol.appendChild(chipsBox);
+        } else {
+          bubble.appendChild(chipsBox);
+        }
       }
 
       // Interactive Intercom-Style Product Carousel (Cai AI Commerce)
@@ -9134,7 +9138,8 @@
 
   function attachChipsToBubble(bubble, forceRefresh = false) {
     if (!bubble) return;
-    const existing = bubble.querySelector('.cp-action-chips-container');
+    const parentContainer = bubble.closest('.cp-bubble-content-col') || bubble.parentNode || bubble;
+    const existing = parentContainer.querySelector('.cp-action-chips-container') || bubble.querySelector('.cp-action-chips-container');
     if (existing) {
       if (forceRefresh) {
         existing.remove();
@@ -9167,7 +9172,13 @@
       });
       chipsBox.appendChild(chipBtn);
     });
-    bubble.appendChild(chipsBox);
+    if (bubble.closest('.cp-bubble-content-col')) {
+      bubble.closest('.cp-bubble-content-col').appendChild(chipsBox);
+    } else if (bubble.parentNode) {
+      bubble.parentNode.appendChild(chipsBox);
+    } else {
+      bubble.appendChild(chipsBox);
+    }
   }
 
   function ensureStarterQuickActionChips() {
@@ -10503,9 +10514,9 @@
 
     navigateTo('human-chat', { agent: selectedAgent });
 
-    // 1. Initial immediate acknowledgment
-    const lastMsgBubble = chatStream ? chatStream.querySelector('.cp-msg-row.ai:last-child .cp-bubble') : null;
-    const hasAck = lastMsgBubble && lastMsgBubble.textContent.includes("Sure! I'm connecting you with our team.");
+    // 1. Initial immediate acknowledgment (clean deduplication)
+    const allBubbles = chatStream ? Array.from(chatStream.querySelectorAll('.cp-msg-row.ai .cp-bubble')) : [];
+    const hasAck = allBubbles.some(b => b.textContent && b.textContent.includes("connecting you with our team"));
     if (!hasAck) {
       appendAIMessage({
         reply: "Sure! I'm connecting you with our team. Please wait a moment.",
@@ -10698,7 +10709,7 @@
             return;
           }
 
-          if (agentReplied || data.ownership === 'human' || data.status === 'human_active') {
+          if (agentReplied || (data.messages && data.messages.some(m => m.sender === 'human_agent'))) {
             stopHumanCountdown();
             isHumanChatActive = true;
             resetHumanInactivityTimer();

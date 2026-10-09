@@ -829,7 +829,7 @@ try {
             $insConv = $pdo->prepare("
                 INSERT INTO `conversations` 
                 (`company_id`, `customer_id`, `channel`, `status`, `ownership`, `quick_action_token`, `assigned_user_id`, `unread_human`, `last_message_preview`, `last_message_at`, `created_at`)
-                VALUES (?, ?, 'widget', 'human_requested', 'human', ?, ?, 1, 'Visitor requested human assistance', NOW(), NOW())
+                VALUES (?, ?, 'widget', 'human_requested', 'ai', ?, ?, 1, 'Visitor requested human assistance', NOW(), NOW())
             ");
             $insConv->execute([$companyId, $customerId, $quickActionToken, $userId ?: null]);
             $conversationId = (int)$pdo->lastInsertId();
@@ -837,7 +837,7 @@ try {
             $pdo->prepare("
                 UPDATE `conversations`
                 SET `status` = 'human_requested',
-                    `ownership` = 'human',
+                    `ownership` = 'ai',
                     `quick_action_token` = COALESCE(quick_action_token, ?),
                     `assigned_user_id` = ?,
                     `unread_human` = unread_human + 1,
@@ -908,20 +908,23 @@ try {
             if (empty($targetPhone)) {
                 $uStmt = $pdo->prepare("SELECT phone FROM `users` WHERE `company_id` = ? AND `role` IN ('owner', 'admin', 'manager') AND `phone` IS NOT NULL AND `phone` != '' ORDER BY id ASC LIMIT 1");
                 $uStmt->execute([$companyId]);
-                $targetPhone = $uStmt->fetchColumn() ?: '';
+                $targetPhone = $uStmt->fetchColumn() ?: '9238695500';
             }
 
             $waSent = false;
             if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token']) && !empty($targetPhone)) {
                 $cleanRecipient = preg_replace('/[^0-9]/', '', $targetPhone);
-                $waMsg = "🚨 *HUMAN SUPPORT REQUESTED* (Live Chat)\n\n"
-                    . "• Customer: *{$custDispName}*\n"
-                    . "• Phone: {$custDispPhone}\n"
-                    . "• Email: {$custDispEmail}\n"
-                    . "• Conversation ID: #{$conversationId}\n\n"
-                    . "👉 Join & Reply in Dashboard: {$dashConvoUrl}\n"
-                    . "Or reply directly here with:\n"
-                    . "`REPLY #{$conversationId} <your message>`";
+                if (strlen($cleanRecipient) === 10) {
+                    $cleanRecipient = '91' . $cleanRecipient;
+                }
+                $waMsg = "🚨 *One lead is waiting for you!*\n\n"
+                    . "• *Lead Name:* {$custDispName}\n"
+                    . "• *Phone:* {$custDispPhone}\n"
+                    . "• *Email:* {$custDispEmail}\n"
+                    . "• *Conversation:* #CONV-{$conversationId}\n\n"
+                    . "💬 *Reply directly to this WhatsApp message* to chat live with this visitor!\n"
+                    . "(e.g., `REPLY #{$conversationId} Hello!` or simply reply if this is your active lead)\n\n"
+                    . "Or open in Dashboard: {$dashConvoUrl}";
 
                 $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
                 $payload = [

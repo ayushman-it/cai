@@ -35,7 +35,9 @@ class AssetHelper {
         $query = mb_strtolower(trim($message));
         $terms = array_filter(preg_split('/[\s,\.\?!_\-]+/u', $query), fn($w) => mb_strlen($w) >= 2);
 
-        $hasDocIntent = (bool)preg_match('/\b(syllabus|curriculum|brochure|fees|fee|chart|document|doc|pdf|file|details|prospectus|content|overview|share|download|bhejo|bhejna|chahiye|de do|send|email|haan|yes|please|sure)\b/iu', $query);
+        // Explicit Document Request Intent Check:
+        // Do NOT attach document/brochure cards unless the visitor explicitly asks for documents, brochure, syllabus, catalog, pdf, etc.
+        $hasExplicitDocIntent = (bool)preg_match('/\b(syllabus|curriculum|brochure|prospectus|pamphlet|catalog|catalogue|document|doc|pdf|file|download|bhejo|bhejna|send\s*(?:doc|brochure|syllabus|pdf|file|catalog)|share\s*(?:doc|brochure|syllabus|pdf|file)|email\s*par\s*bhej|mail\s*pe\s*bhej|email\s*pe\s*send)\b/iu', $query);
 
         $bestAsset = null;
         $bestScore = 0;
@@ -49,11 +51,11 @@ class AssetHelper {
 
             // 1. Direct Category Match
             if ($catLower === 'syllabus' && preg_match('/\b(syllabus|curriculum|roadmap)\b/iu', $query)) {
-                $score += 5;
+                $score += 8;
             } elseif ($catLower === 'fee_chart' && preg_match('/\b(fee|fees|cost|pricing|price|chart)\b/iu', $query)) {
-                $score += 5;
-            } elseif ($catLower === 'brochure' && preg_match('/\b(brochure|prospectus|pamphlet)\b/iu', $query)) {
-                $score += 5;
+                $score += 8;
+            } elseif ($catLower === 'brochure' && preg_match('/\b(brochure|prospectus|pamphlet|catalog)\b/iu', $query)) {
+                $score += 8;
             }
 
             // 2. Token Matching against Title and Keywords
@@ -95,8 +97,8 @@ class AssetHelper {
             }
         }
 
-        // If score exceeds confidence threshold and intent aligns
-        if ($bestScore >= 6 && ($hasDocIntent || $bestScore >= 15)) {
+        // Only return asset if visitor explicitly requested documents/files and score is sufficient
+        if ($bestScore >= 6 && $hasExplicitDocIntent) {
             return $bestAsset;
         }
 
