@@ -1786,6 +1786,29 @@ try {
     $emailDispatched = false;
     $assetRecipientEmail = !empty($visitorEmail) ? $visitorEmail : (!empty($customer['email']) ? $customer['email'] : '');
 
+    // Check if company has active assets to offer
+    $allCompanyAssets = [];
+    try {
+        $allAssetsStmt = $pdo->prepare("SELECT id, title, category, file_name, file_size FROM company_assets WHERE company_id = ? AND is_active = 1 ORDER BY id ASC");
+        $allAssetsStmt->execute([$companyId]);
+        $allCompanyAssets = $allAssetsStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Throwable $aEx) {}
+
+    $isDocInquiry = (bool)preg_match('/\b(syllabus|curriculum|brochure|brochures|prospectus|pamphlet|catalog|catalogue|document|documents|documentation|doc|docs|pdf|file|files|overview|whitepaper|deck|profile|guide|guidelines|download|bhejo|bhejna)\b/i', $messageText);
+
+    // If company has multiple documents and user asks for documentation/overview/docs, provide action chips for all documents
+    if ($isDocInquiry && count($allCompanyAssets) > 1) {
+        if (!isset($actionChipsPayload) || !is_array($actionChipsPayload)) {
+            $actionChipsPayload = [];
+        }
+        foreach ($allCompanyAssets as $cAsset) {
+            $actionChipsPayload[] = [
+                'label' => $cAsset['title'],
+                'text'  => 'Download ' . $cAsset['title']
+            ];
+        }
+    }
+
     if ($matchedAsset) {
         $isUserAskingForEmail = (bool)preg_match('/\b(email|mail|inbox|send\s*to\s*email|email\s*par|email\s*pe|mail\s*pe|send\s*on\s*email|email\s*kardo|mail\s*kardo|bhej\s*do\s*email)\b/i', $messageText);
 
@@ -1809,7 +1832,7 @@ try {
                 ]);
                 $publicReply = "Certainly! Please share your **email address** so I can dispatch **{$matchedAsset['title']}** directly to your inbox.";
             } elseif (mb_strpos($publicReply, 'email') === false && mb_strpos($publicReply, 'inbox') === false && mb_strpos($publicReply, 'download') === false) {
-                $publicReply .= "\n\n**{$matchedAsset['title']}** is ready for you below. If you would like an official copy sent to your email, simply share your email address.";
+                $publicReply .= "\n\n**{$matchedAsset['title']}** is ready for you below. You can download it directly, or reply with your email to receive an official copy.";
             }
         }
 
@@ -1825,7 +1848,7 @@ try {
             'description'      => $matchedAsset['description'] ?? '',
             'file_name'        => $matchedAsset['file_name'],
             'file_size'        => (int)$matchedAsset['file_size'],
-            'file_type'        => $matchedAsset['file_type'],
+            'file_type'        => $matchedAsset['file_type'] ?? 'application/pdf',
             'download_url'     => 'api/assets.php?action=download&id=' . (int)$matchedAsset['id'],
             'email_dispatched' => (bool)$emailDispatched,
             'recipient_email'  => $assetRecipientEmail ?: null
@@ -1847,7 +1870,7 @@ try {
 
     if (!empty($companyProductsList)) {
         $isCommerceInquiry = (bool)preg_match('/\b(course|courses|product|products|service|services|package|packages|consultation|program|training|batch|batches|fee|fees|cost|price|pricing|prining|plan|plans|recommend|recommendation|best for|suggest|join|enroll|admission|emi|installment|split|pay|payment|kharidna|lena|paisa)\b/i', $messageText);
-        $isEmiInquiry = (bool)preg_match('/\b(emi|installment|installments|split|monthly|down payment|per month|parts|kiston|kist)\b/i', $messageText);
+        $isEmiInquiry = !$isHumanRequest && (bool)preg_match('/\b(emi|installment|installments|down payment|kiston|kist)\b/i', $messageText);
         $isPurchaseIntent = (bool)preg_match('/\b(enroll|buy|purchase|payment link|pay now|how to pay|proceed with payment|admission lena|join karna|link bhej do|bhejo link)\b/i', $messageText);
 
         // Explicit request to send/show cards or catalog vs. general inquiry
@@ -1856,10 +1879,12 @@ try {
         $isActionTriggered = ($action === 'show_plans' || $action === 'view_catalog');
 
         // Only attach interactive product cards when specifically requested or affirmatively confirmed!
-        $shouldAttachProductCards = $isActionTriggered || 
+        $shouldAttachProductCards = !$isHumanRequest && (
+                                    $isActionTriggered || 
                                     $isAffirmativePlanConfirmation || 
                                     ($isExplicitCardRequest && $isCommerceInquiry) ||
-                                    ($isCommerceInquiry && preg_match('/\b(which plan|recommend|best for me)\b/i', $messageText));
+                                    ($isCommerceInquiry && preg_match('/\b(which plan|recommend|best for me)\b/i', $messageText))
+        );
 
         $qTokens = array_filter(preg_split('/[\s,\.\?!_\-]+/u', mb_strtolower($messageText)), fn($w) => mb_strlen($w) >= 3);
         $scoredProds = [];

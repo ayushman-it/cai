@@ -36,8 +36,8 @@ class AssetHelper {
         $terms = array_filter(preg_split('/[\s,\.\?!_\-]+/u', $query), fn($w) => mb_strlen($w) >= 2);
 
         // Explicit Document Request Intent Check:
-        // Do NOT attach document/brochure cards unless the visitor explicitly asks for documents, brochure, syllabus, catalog, pdf, etc.
-        $hasExplicitDocIntent = (bool)preg_match('/\b(syllabus|curriculum|brochure|prospectus|pamphlet|catalog|catalogue|document|doc|pdf|file|download|bhejo|bhejna|send\s*(?:doc|brochure|syllabus|pdf|file|catalog)|share\s*(?:doc|brochure|syllabus|pdf|file)|email\s*par\s*bhej|mail\s*pe\s*bhej|email\s*pe\s*send)\b/iu', $query);
+        // Matches any explicit document, brochure, syllabus, overview, guide, catalog, or pdf request
+        $hasExplicitDocIntent = (bool)preg_match('/\b(syllabus|curriculum|brochure|brochures|prospectus|pamphlet|catalog|catalogue|document|documents|documentation|doc|docs|pdf|file|files|overview|whitepaper|deck|profile|guide|guidelines|download|bhejo|bhejna|send\s*(?:doc|brochure|syllabus|pdf|file|catalog|overview)|share\s*(?:doc|brochure|syllabus|pdf|file|overview|documentation)|email\s*par\s*bhej|mail\s*pe\s*bhej|email\s*pe\s*send)\b/iu', $query);
 
         $bestAsset = null;
         $bestScore = 0;
@@ -49,12 +49,12 @@ class AssetHelper {
             $kwLower    = mb_strtolower($asset['keywords'] ?? '');
             $descLower  = mb_strtolower($asset['description'] ?? '');
 
-            // 1. Direct Category Match
+            // 1. Direct Category & Type Match
             if ($catLower === 'syllabus' && preg_match('/\b(syllabus|curriculum|roadmap)\b/iu', $query)) {
                 $score += 8;
             } elseif ($catLower === 'fee_chart' && preg_match('/\b(fee|fees|cost|pricing|price|chart)\b/iu', $query)) {
                 $score += 8;
-            } elseif ($catLower === 'brochure' && preg_match('/\b(brochure|prospectus|pamphlet|catalog)\b/iu', $query)) {
+            } elseif ($catLower === 'brochure' && preg_match('/\b(brochure|brochures|prospectus|pamphlet|catalog|catalogue|overview|documentation|guide|whitepaper|deck|profile)\b/iu', $query)) {
                 $score += 8;
             }
 
@@ -97,9 +97,18 @@ class AssetHelper {
             }
         }
 
-        // Only return asset if visitor explicitly requested documents/files and score is sufficient
-        if ($bestScore >= 6 && $hasExplicitDocIntent) {
-            return $bestAsset;
+        // Return asset if visitor explicitly requested documents/files and score is sufficient
+        if ($hasExplicitDocIntent) {
+            if ($bestScore >= 6) {
+                return $bestAsset;
+            }
+            // If visitor explicitly asks for docs and company has only 1 active asset or there is a positive match
+            if ($bestScore > 0 && $bestAsset) {
+                return $bestAsset;
+            }
+            if (count($assets) === 1) {
+                return $assets[0];
+            }
         }
 
         // Check conversation history if user just provided an email

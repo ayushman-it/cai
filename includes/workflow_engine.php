@@ -258,7 +258,7 @@ class WorkflowEngine {
         }
 
         // 2. Real Human Advisor Request Interceptor
-        if (preg_match('/\b(human|counselor|counsellor|call\s*me|call|advisor|talk\s*to\s*(someone|person|human|counselor)|founder|baat\s*karni|real\s*human)\b/i', $messageText)) {
+        if (preg_match('/\b(human|counselor|counsellor|call\s*me|call|advisor|representative|specialist|agent|executive|operator|talk\s*to\s*(?:someone|person|human|counselor|advisor|representative|agent|specialist|team)|speak\s*(?:with|to)\s*(?:someone|person|human|representative|agent|specialist|team)|founder|baat\s*karni|real\s*human)\b/i', $messageText)) {
             if (!empty($activeExec['conversation_id'])) {
                 $pdo->prepare("UPDATE `conversations` SET `status` = 'human_handling', `ownership` = 'human' WHERE `id` = ? AND `company_id` = ?")
                     ->execute([(int)$activeExec['conversation_id'], $companyId]);
@@ -591,9 +591,44 @@ Instruction:
                     $variables['ai'][$data['output_variable']] = $aiResp;
                 }
 
+                // Check for explicit document matching or asset inquiry during AI response generation
+                $nodeMatchedAsset = AssetHelper::matchAsset($pdo, $companyId, $messageText, []);
+                $nodeSharedAssetPayload = null;
+                $nodeDocChips = [];
+
+                if ($nodeMatchedAsset) {
+                    $nodeSharedAssetPayload = [
+                        'id'               => (int)$nodeMatchedAsset['id'],
+                        'title'            => $nodeMatchedAsset['title'],
+                        'category'         => $nodeMatchedAsset['category'] ?? 'brochure',
+                        'description'      => $nodeMatchedAsset['description'] ?? '',
+                        'file_name'        => $nodeMatchedAsset['file_name'],
+                        'file_size'        => (int)($nodeMatchedAsset['file_size'] ?? 0),
+                        'file_type'        => $nodeMatchedAsset['file_type'] ?? 'application/pdf',
+                        'download_url'     => 'api/assets.php?action=download&id=' . (int)$nodeMatchedAsset['id'],
+                        'email_dispatched' => false,
+                        'recipient_email'  => $variables['customer']['email'] ?? null
+                    ];
+                }
+
+                $isDocInquiry = (bool)preg_match('/\b(syllabus|curriculum|brochure|brochures|prospectus|pamphlet|catalog|catalogue|document|documents|documentation|doc|docs|pdf|file|files|overview|whitepaper|deck|profile|guide|guidelines|download|bhejo|bhejna)\b/i', $messageText);
+                if ($isDocInquiry) {
+                    $allCompanyAssets = self::getCompanyAssets($pdo, $companyId);
+                    if (count($allCompanyAssets) > 1) {
+                        foreach ($allCompanyAssets as $ca) {
+                            $nodeDocChips[] = [
+                                'label' => $ca['title'],
+                                'text'  => 'Download ' . $ca['title']
+                            ];
+                        }
+                    }
+                }
+
                 return [
-                    'status' => 'success',
-                    'reply' => $aiResp,
+                    'status'         => 'success',
+                    'reply'          => $aiResp,
+                    'shared_asset'   => $nodeSharedAssetPayload,
+                    'action_chips'   => $nodeDocChips,
                     'wait_for_reply' => !empty($data['wait_for_reply'])
                 ];
 
@@ -705,6 +740,16 @@ Instruction:
                 ];
 
             case 'msg_emi_card':
+                // Only trigger EMI card if visitor inquiry actually pertains to EMI/installments/pricing
+                $isEmiInquiry = (bool)preg_match('/\b(emi|installment|installments|down payment|split|kiston|kist)\b/i', $messageText);
+                if (!$isEmiInquiry) {
+                    return [
+                        'status' => 'success',
+                        'reply' => '',
+                        'wait_for_reply' => false
+                    ];
+                }
+
                 $prodId = (int)($data['product_id'] ?? ($variables['product']['id'] ?? 0));
                 $prod = self::getProductById($pdo, $companyId, $prodId);
                 if (!$prod) {
@@ -767,20 +812,51 @@ Instruction:
 
             case 'msg_document_card':
             case 'msg_brochure_download':
+                $isDocInquiry = (bool)preg_match('/\b(syllabus|curriculum|brochure|brochures|prospectus|pamphlet|catalog|catalogue|document|documents|documentation|doc|docs|pdf|file|files|overview|whitepaper|deck|profile|guide|guidelines|download|bhejo|bhejna)\b/i', $messageText);
+                if (!$isDocInquiry) {
+                    return [
+                        'status' => 'success',
+                        'reply' => '',
+                        'wait_for_reply' => false
+                    ];
+                }
+
                 $assets = self::getCompanyAssets($pdo, $companyId);
-                $asset = !empty($assets) ? $assets[0] : null;
+                $matchedAsset = AssetHelper::matchAsset($pdo, $companyId, $messageText, []);
+                $asset = $matchedAsset ?: (!empty($assets) ? $assets[0] : null);
+
+                $assetChips = [];
+                if (count($assets) > 1) {
+                    foreach ($assets as $a) {
+                        $assetChips[] = [
+                            'label' => $a['title'],
+                            'text'  => 'Download ' . $a['title']
+                        ];
+                    }
+                }
+
                 $assetPayload = $asset ? [
-                    'id' => $asset['id'],
-                    'title' => $asset['title'],
-                    'file_name' => $asset['file_name'],
-                    'file_path' => $asset['file_path'],
-                    'category' => $asset['category'] ?? 'Brochure'
+                    'id'               => (int)$asset['id'],
+                    'title'            => $asset['title'],
+                    'category'         => $asset['category'] ?? 'brochure',
+                    'description'      => $asset['description'] ?? '',
+                    'file_name'        => $asset['file_name'],
+                    'file_size'        => (int)($asset['file_size'] ?? 0),
+                    'file_type'        => $asset['file_type'] ?? 'application/pdf',
+                    'download_url'     => 'api/assets.php?action=download&id=' . (int)$asset['id'],
+                    'email_dispatched' => false,
+                    'recipient_email'  => $variables['customer']['email'] ?? null
                 ] : null;
+
+                $replyText = $asset 
+                    ? "Here is the official document you requested ({$asset['title']}). You can download it directly below:" 
+                    : "Here are our available documents:";
 
                 return [
                     'status' => 'success',
-                    'reply' => "Here is the official brochure you requested:",
+                    'reply' => $replyText,
                     'shared_asset' => $assetPayload,
+                    'action_chips' => $assetChips,
                     'wait_for_reply' => true
                 ];
 
