@@ -6097,12 +6097,12 @@
   function resetHumanInactivityTimer() {
     stopHumanInactivityTimer();
     if (!isHumanChatActive) return;
-    // 60-second bidirectional inactivity timer for human support
+    // 5-minute bidirectional inactivity timer for human support (gives agent realistic time to respond)
     humanInactivityTimer = setTimeout(() => {
       if (isHumanChatActive) {
         closeConversationSession('inactivity');
       }
-    }, 60000);
+    }, 300000);
   }
 
   function bindTap(el, fn) {

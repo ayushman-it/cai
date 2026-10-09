@@ -159,11 +159,13 @@ try {
                 VALUES (?, ?, 'human', ?, ?, 'whatsapp', NOW())
             ")->execute([$convCompanyId, $targetConvId, $agentUserId, $agentReplyBody]);
 
-            // Update conversation to human_active
+            // Update conversation to human_active and reopen if closed
             $pdo->prepare("
                 UPDATE `conversations`
                 SET `ownership` = 'human',
                     `status` = 'human_active',
+                    `closure_reason` = NULL,
+                    `closed_at` = NULL,
                     `assigned_user_id` = COALESCE(?, `assigned_user_id`),
                     `last_message_preview` = ?,
                     `last_message_at` = NOW(),
@@ -231,21 +233,33 @@ try {
         FROM `users` u 
         WHERE REPLACE(REPLACE(REPLACE(u.phone, '+', ''), ' ', ''), '-', '') LIKE ? 
           AND u.is_active = 1 
-        ORDER BY u.id ASC LIMIT 1
+        ORDER BY (u.company_id IS NOT NULL AND u.company_id > 0) DESC, u.id DESC 
+        LIMIT 1
     ");
     $checkAgentStmt->execute(['%' . $sender10]);
     $matchedTeamUser = $checkAgentStmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($matchedTeamUser) {
+    // If company_id is NULL or 0 (e.g. super admin), attempt fallback to the first active tenant
+    if ($matchedTeamUser && empty($matchedTeamUser['company_id'])) {
+        $firstCompId = (int)$pdo->query("SELECT id FROM `companies` WHERE `status` = 'active' ORDER BY id ASC LIMIT 1")->fetchColumn();
+        if ($firstCompId) {
+            $matchedTeamUser['company_id'] = $firstCompId;
+        }
+    }
+
+    if ($matchedTeamUser && !empty($matchedTeamUser['company_id'])) {
         $agentCompanyId = (int)$matchedTeamUser['company_id'];
         
-        // Find most recent pending or active human handoff conversation for this company
+        // Find most recent pending, active or recently closed human handoff conversation for this company
         $pendingConvStmt = $pdo->prepare("
             SELECT c.*, cust.name as customer_name 
             FROM `conversations` c 
             LEFT JOIN `customers` cust ON cust.id = c.customer_id 
             WHERE c.company_id = ? 
-              AND c.status IN ('human_requested', 'human_active') 
+              AND (
+                c.status IN ('human_requested', 'human_active') 
+                OR (c.status = 'closed' AND c.closed_at >= NOW() - INTERVAL 15 MINUTE)
+              )
               AND (c.assigned_user_id = ? OR c.assigned_user_id IS NULL OR c.assigned_user_id = 0)
             ORDER BY c.last_message_at DESC, c.id DESC 
             LIMIT 1
@@ -265,11 +279,13 @@ try {
                 VALUES (?, ?, 'human', ?, ?, 'whatsapp', NOW())
             ")->execute([$agentCompanyId, $targetConvId, $agentUserId, $agentReplyBody]);
 
-            // Update conversation to human_active
+            // Reopen and update conversation to human_active
             $pdo->prepare("
                 UPDATE `conversations`
                 SET `ownership` = 'human',
                     `status` = 'human_active',
+                    `closure_reason` = NULL,
+                    `closed_at` = NULL,
                     `assigned_user_id` = ?,
                     `last_message_preview` = ?,
                     `last_message_at` = NOW(),
