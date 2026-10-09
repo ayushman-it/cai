@@ -708,50 +708,82 @@ try {
             $title       = trim($body['title'] ?? 'WhatsApp Follow-Up Reminder');
             $messageTpl  = trim($body['message_template'] ?? ($body['message'] ?? ''));
             $scheduledAt = trim($body['scheduled_at'] ?? date('Y-m-d H:i:s', strtotime('+2 hours')));
-            $phone       = trim($body['phone'] ?? '');
-            $name        = trim($body['name'] ?? 'Client');
+            $recipients  = $body['recipients'] ?? [];
 
             if (empty($messageTpl)) {
                 echo json_encode(['success' => false, 'error' => 'Reminder message cannot be empty']);
                 exit;
             }
 
-            // Resolve or create customer
-            $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
-            $cId = 0;
-            if (!empty($cleanPhone)) {
-                $chk = $pdo->prepare("SELECT id FROM `customers` WHERE company_id = ? AND (phone LIKE ? OR whatsapp_number LIKE ?) LIMIT 1");
-                $chk->execute([$companyId, "%{$cleanPhone}%", "%{$cleanPhone}%"]);
-                $cId = (int)$chk->fetchColumn();
-
-                if ($cId <= 0) {
-                    $custUuid = 'cust_' . bin2hex(random_bytes(16));
-                    $pdo->prepare("INSERT INTO `customers` (`company_id`, `customer_uuid`, `name`, `phone`, `whatsapp_number`, `first_seen_at`, `last_seen_at`) VALUES (?, ?, ?, ?, ?, NOW(), NOW())")
-                        ->execute([$companyId, $custUuid, $name, $phone, $phone]);
-                    $cId = (int)$pdo->lastInsertId();
+            // Normalise recipients: if not provided as list, use phone and name
+            if (empty($recipients) || !is_array($recipients)) {
+                $phone = trim($body['phone'] ?? '');
+                $name  = trim($body['name'] ?? 'Client');
+                $cId   = (int)($body['customer_id'] ?? 0);
+                if (!empty($phone)) {
+                    $recipients = [[
+                        'phone'       => $phone,
+                        'name'        => $name,
+                        'customer_id' => $cId
+                    ]];
                 }
             }
 
+            if (empty($recipients)) {
+                echo json_encode(['success' => false, 'error' => 'At least one recipient phone number is required']);
+                exit;
+            }
+
+            $createdCount = 0;
             $ins = $pdo->prepare("
                 INSERT INTO `reminders` 
                     (`company_id`, `customer_id`, `title`, `message_template`, `scheduled_at`, `due_date`, `channels`, `status`, `created_by_user_id`, `created_at`)
                 VALUES 
                     (?, ?, ?, ?, ?, DATE(?), 'whatsapp', 'PENDING', ?, NOW())
             ");
-            $ins->execute([
-                $companyId,
-                $cId ?: null,
-                $title,
-                $messageTpl,
-                $scheduledAt,
-                $scheduledAt,
-                $userId ?: null
-            ]);
+
+            foreach ($recipients as $rec) {
+                $recPhone = trim($rec['phone'] ?? '');
+                $recName  = trim($rec['name'] ?? 'Client');
+                $cId      = (int)($rec['customer_id'] ?? 0);
+
+                if (empty($recPhone)) continue;
+
+                $cleanPhone = preg_replace('/[^0-9]/', '', $recPhone);
+                if (strlen($cleanPhone) === 10) $cleanPhone = '91' . $cleanPhone;
+
+                if ($cId <= 0 && !empty($cleanPhone)) {
+                    $chk = $pdo->prepare("SELECT id FROM `customers` WHERE company_id = ? AND (phone LIKE ? OR whatsapp_number LIKE ?) LIMIT 1");
+                    $chk->execute([$companyId, "%{$cleanPhone}%", "%{$cleanPhone}%"]);
+                    $cId = (int)$chk->fetchColumn();
+
+                    if ($cId <= 0) {
+                        $custUuid = 'cust_' . bin2hex(random_bytes(16));
+                        $pdo->prepare("INSERT INTO `customers` (`company_id`, `customer_uuid`, `name`, `phone`, `whatsapp_number`, `first_seen_at`, `last_seen_at`) VALUES (?, ?, ?, ?, ?, NOW(), NOW())")
+                            ->execute([$companyId, $custUuid, $recName, '+' . $cleanPhone, '+' . $cleanPhone]);
+                        $cId = (int)$pdo->lastInsertId();
+                    }
+                }
+
+                // Personalise message template with contact name if tag exists
+                $personalizedMsg = str_replace(['{{name}}', '{{Name}}'], $recName, $messageTpl);
+
+                $ins->execute([
+                    $companyId,
+                    $cId ?: null,
+                    $title,
+                    $personalizedMsg,
+                    $scheduledAt,
+                    $scheduledAt,
+                    $userId ?: null
+                ]);
+                $createdCount++;
+            }
 
             echo json_encode([
-                'success'     => true,
-                'reminder_id' => (int)$pdo->lastInsertId(),
-                'message'     => 'WhatsApp reminder scheduled successfully.'
+                'success'       => true,
+                'created_count' => $createdCount,
+                'message'       => "Scheduled WhatsApp reminder for {$createdCount} recipient(s) successfully."
             ]);
             break;
 
@@ -1120,7 +1152,7 @@ try {
 
             // Query custom replies & automations
             $stmt = $pdo->prepare("
-                SELECT id, title, shortcut as rule_name, category, reply_content, keywords, is_active, created_at
+                SELECT id, title, shortcut as rule_name, category, reply_content, keywords, media_type, media_url, media_payload_json, is_active, created_at
                 FROM `custom_replies`
                 WHERE company_id = ?
                 ORDER BY id DESC
@@ -1154,7 +1186,10 @@ try {
                     'rule_name'   => $r['rule_name'] ?: 'WhatsApp Rule #' . $r['id'],
                     'trigger'     => 'Contains keyword',
                     'keywords'    => $r['keywords'] ?: 'general',
-                    'action_type' => 'Template',
+                    'action_type' => !empty($r['media_type']) && $r['media_type'] !== 'none' ? ucfirst($r['media_type']) : 'Text Reply',
+                    'media_type'  => $r['media_type'] ?? 'none',
+                    'media_url'   => $r['media_url'] ?? '',
+                    'media_payload_json' => $r['media_payload_json'] ?? null,
                     'content'     => $r['reply_content'],
                     'category'    => $r['category'] ?: 'General',
                     'is_active'   => (bool)$r['is_active'],
@@ -1185,13 +1220,17 @@ try {
             break;
 
         case 'save_automation_rule':
-            $ruleId   = (int)($body['id'] ?? 0);
-            $name     = trim($body['name'] ?? 'WhatsApp Keyword Reply');
-            $keywords = trim($body['keywords'] ?? '');
-            $trigger  = trim($body['trigger'] ?? 'Contains keyword');
-            $actionT  = trim($body['action_type'] ?? 'Template');
-            $content  = trim($body['content'] ?? '');
-            $category = trim($body['category'] ?? 'General');
+            $ruleId    = (int)($body['id'] ?? 0);
+            $name      = trim($body['name'] ?? ($body['title'] ?? 'WhatsApp Keyword Reply'));
+            $keywords  = trim($body['keywords'] ?? '');
+            $trigger   = trim($body['trigger'] ?? 'Contains keyword');
+            $actionT   = trim($body['action_type'] ?? 'text');
+            $content   = trim($body['content'] ?? ($body['reply_content'] ?? ''));
+            $category  = trim($body['category'] ?? 'General');
+            $mediaType = trim($body['media_type'] ?? 'none');
+            $mediaUrl  = trim($body['media_url'] ?? '');
+            $mediaPayload = !empty($body['media_payload']) ? (is_string($body['media_payload']) ? $body['media_payload'] : json_encode($body['media_payload'])) : null;
+            $isActive  = isset($body['is_active']) ? (int)$body['is_active'] : 1;
 
             if (empty($name) || empty($content)) {
                 echo json_encode(['success' => false, 'error' => 'Rule name and response content are required.']);
@@ -1201,14 +1240,14 @@ try {
             if ($ruleId > 0) {
                 $pdo->prepare("
                     UPDATE `custom_replies`
-                    SET `title` = ?, `reply_content` = ?, `keywords` = ?, `category` = ?
+                    SET `title` = ?, `reply_content` = ?, `keywords` = ?, `category` = ?, `media_type` = ?, `media_url` = ?, `media_payload_json` = ?, `is_active` = ?
                     WHERE id = ? AND company_id = ?
-                ")->execute([$name, $content, $keywords, $category, $ruleId, $companyId]);
+                ")->execute([$name, $content, $keywords, $category, $mediaType, $mediaUrl, $mediaPayload, $isActive, $ruleId, $companyId]);
             } else {
                 $pdo->prepare("
-                    INSERT INTO `custom_replies` (`company_id`, `title`, `shortcut`, `category`, `reply_content`, `keywords`, `is_active`, `created_at`)
-                    VALUES (?, ?, ?, ?, ?, ?, 1, NOW())
-                ")->execute([$companyId, $name, strtolower(preg_replace('/[^a-zA-Z0-9_]/', '_', $name)), $category, $content, $keywords]);
+                    INSERT INTO `custom_replies` (`company_id`, `title`, `shortcut`, `category`, `reply_content`, `keywords`, `media_type`, `media_url`, `media_payload_json`, `is_active`, `created_at`)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                ")->execute([$companyId, $name, strtolower(preg_replace('/[^a-zA-Z0-9_]/', '_', $name)), $category, $content, $keywords, $mediaType, $mediaUrl, $mediaPayload, $isActive]);
                 $ruleId = (int)$pdo->lastInsertId();
             }
 
