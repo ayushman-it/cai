@@ -1353,12 +1353,45 @@ HTML;
         $pdo->exec("ALTER TABLE `lead_events` MODIFY `event_type` VARCHAR(64) NOT NULL");
     } catch (Exception $e) {}
 
-    // Ensure messages table has channel column
+    // Ensure messages table has channel column and session_id column
     try {
         $msgCols = $pdo->query("SHOW COLUMNS FROM `messages`")->fetchAll(PDO::FETCH_COLUMN);
         if (!in_array('channel', $msgCols)) {
             $pdo->exec("ALTER TABLE `messages` ADD COLUMN `channel` VARCHAR(32) NOT NULL DEFAULT 'web' AFTER `message_text`");
         }
+        if (!in_array('session_id', $msgCols)) {
+            $pdo->exec("ALTER TABLE `messages` ADD COLUMN `session_id` VARCHAR(64) NULL AFTER `conversation_id`, ADD INDEX `idx_messages_session` (`session_id`)");
+        }
+    } catch (Exception $e) {}
+
+    // Ensure conversations table has session_id column
+    try {
+        $convCols = $pdo->query("SHOW COLUMNS FROM `conversations`")->fetchAll(PDO::FETCH_COLUMN);
+        if (!in_array('session_id', $convCols)) {
+            $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `session_id` VARCHAR(64) NULL AFTER `customer_id`, ADD INDEX `idx_conv_session` (`session_id`)");
+        }
+    } catch (Exception $e) {}
+
+    // Ensure whatsapp_message_mappings table exists
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS `whatsapp_message_mappings` (
+                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                `company_id` INT NOT NULL,
+                `session_id` VARCHAR(64) NOT NULL,
+                `conversation_id` INT NOT NULL,
+                `message_id` INT NULL,
+                `wa_message_id` VARCHAR(128) NOT NULL,
+                `recipient_phone` VARCHAR(30) NOT NULL,
+                `direction` ENUM('outbound','inbound') NOT NULL DEFAULT 'outbound',
+                `media_type` VARCHAR(30) NULL,
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY `idx_wa_msg_id` (`wa_message_id`),
+                KEY `idx_session_lookup` (`company_id`, `session_id`),
+                KEY `idx_conv_lookup` (`company_id`, `conversation_id`),
+                KEY `idx_phone_lookup` (`company_id`, `recipient_phone`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        ");
     } catch (Exception $e) {}
 
     // 35. Visual AI Workflows & Automation Builder Schema
