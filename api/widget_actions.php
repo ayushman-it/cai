@@ -894,10 +894,9 @@ try {
             $custDispPhone = !empty($customer['phone']) ? $customer['phone'] : ($visitorPhone ?: 'Not shared');
             $custDispEmail = !empty($customer['email']) ? $customer['email'] : ($visitorEmail ?: 'Not shared');
 
-            $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-            $basePath = (strpos($_SERVER['REQUEST_URI'] ?? '', '/cuboidpilot') !== false) ? '/cuboidpilot' : '';
-            $dashBaseUrl = "{$scheme}://{$host}{$basePath}";
+            $rawHost = $_SERVER['HTTP_HOST'] ?? '';
+            $isLocal = ($rawHost === 'localhost' || strpos($rawHost, '127.0.0.1') !== false || empty($rawHost));
+            $dashBaseUrl = $isLocal ? 'http://localhost/cuboidpilot' : 'https://cai.cuboidsoft.in';
             $dashConvoUrl = "{$dashBaseUrl}/app/conversations.html?id={$conversationId}";
 
             // Check if WhatsApp is connected for this tenant
@@ -1367,7 +1366,9 @@ HTML;
                 $replyUrl = "{$dashBase}/app/conversations.html?id={$conversationId}";
                 $waText = "💬 *New Message from {$custLabel}* (Live Chat)\n\n"
                     . "\"{$messageText}\"\n\n"
-                    . "👉 Reply in Dashboard: {$replyUrl}";
+                    . "👉 Dashboard: {$replyUrl}\n\n"
+                    . "Or reply directly here:\n"
+                    . "REPLY #{$conversationId} <your message>";
 
                 $endpoint = "https://graph.facebook.com/v20.0/{$waInfo['phone_number_id']}/messages";
                 $payload = [

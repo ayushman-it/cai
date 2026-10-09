@@ -1123,21 +1123,77 @@
       width: 100% !important;
     }
 
+    .cp-msg-row.ai .cp-bubble-layout {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 10px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .cp-ai-avatar-badge {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    :host([data-theme="dark"]) .cp-ai-avatar-badge,
+    .cp-dark-theme .cp-ai-avatar-badge,
+    .theme-dark .cp-ai-avatar-badge {
+      background: #1e2025;
+      border-color: #2d3039;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    }
+
+    .cp-ai-avatar-badge svg,
+    .cp-ai-avatar-badge img {
+      width: 18px;
+      height: 18px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .cp-msg-row.ai .cp-bubble-content-col {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
     .cp-msg-row.ai .cp-bubble {
+      position: relative;
       background: var(--cp-bg-bubble);
       border: 1px solid var(--cp-border-bubble);
       color: var(--cp-text-primary);
-      border-radius: 16px;
-      border-bottom-left-radius: 4px;
+      border-radius: 18px;
+      border-bottom-left-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
     .cp-msg-row.user .cp-bubble {
+      position: relative;
       background: var(--cp-user-bubble-bg);
       border: 1px solid var(--cp-user-bubble-border);
       color: var(--cp-user-bubble-color);
-      border-radius: 16px;
-      border-bottom-right-radius: 4px;
+      border-radius: 18px;
+      border-bottom-right-radius: 6px;
       text-align: left;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
 
     .cp-meta-line {
@@ -4532,20 +4588,15 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
-    /* Strictly Black & White Single-Row Action Chips & Inactivity Chips */
+    /* Action Chips & Inactivity Chips (Intercom/Cai Pill Design with subtle speech tail) */
     .cp-action-chips-container {
       display: flex !important;
       flex-direction: row !important;
-      flex-wrap: nowrap !important;
-      overflow-x: auto !important;
-      overflow-y: hidden !important;
-      gap: 6px !important;
-      padding: 6px 2px 4px 2px !important;
+      flex-wrap: wrap !important;
+      gap: 8px !important;
+      padding: 8px 2px 4px 2px !important;
       margin-top: 8px !important;
       max-width: 100% !important;
-      -webkit-overflow-scrolling: touch !important;
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
     }
     .cp-action-chips-container::-webkit-scrollbar {
       display: none !important;
@@ -4556,36 +4607,48 @@
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
+      gap: 7px !important;
       flex-shrink: 0 !important;
       white-space: nowrap !important;
       background: #ffffff !important;
-      color: #000000 !important;
-      border: 1px solid #000000 !important;
-      border-radius: 16px !important;
-      padding: 4px 11px !important;
-      font-size: 11px !important;
+      color: #111827 !important;
+      border: 1px solid #d1d5db !important;
+      border-radius: 18px !important;
+      border-bottom-left-radius: 4px !important;
+      padding: 7px 14px !important;
+      font-size: 12.5px !important;
       font-weight: 500 !important;
-      line-height: 1.2 !important;
+      line-height: 1.25 !important;
       cursor: pointer !important;
-      transition: all 0.15s ease-in-out !important;
+      transition: all 0.16s ease-in-out !important;
       font-family: inherit !important;
       letter-spacing: -0.01em !important;
       outline: none !important;
-      box-shadow: none !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
       user-select: none !important;
+    }
+    .cp-action-chip-pill svg {
+      width: 14px !important;
+      height: 14px !important;
+      stroke-width: 2 !important;
+      flex-shrink: 0 !important;
+      color: currentColor !important;
     }
     .cp-action-chip-pill:hover,
     .cp-action-chip-pill:focus-visible {
-      background: #000000 !important;
-      color: #ffffff !important;
-      border-color: #000000 !important;
+      background: #f9fafb !important;
+      color: #000000 !important;
+      border-color: #9ca3af !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+      transform: translateY(-1px) !important;
     }
     :host([data-theme="dark"]) .cp-action-chip-pill,
     .cp-dark-theme .cp-action-chip-pill,
     .theme-dark .cp-action-chip-pill {
-      background: #18181b !important;
-      color: #ffffff !important;
-      border: 1px solid #3f3f46 !important;
+      background: #1e2025 !important;
+      color: #f3f4f6 !important;
+      border: 1px solid #374151 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
     }
     :host([data-theme="dark"]) .cp-action-chip-pill:hover,
     .cp-dark-theme .cp-action-chip-pill:hover,
@@ -4593,9 +4656,9 @@
     :host([data-theme="dark"]) .cp-action-chip-pill:focus-visible,
     .cp-dark-theme .cp-action-chip-pill:focus-visible,
     .theme-dark .cp-action-chip-pill:focus-visible {
-      background: #ffffff !important;
-      color: #000000 !important;
-      border-color: #ffffff !important;
+      background: #282a32 !important;
+      color: #ffffff !important;
+      border-color: #4b5563 !important;
     }
 
     /* 10-Second Inactivity Chips (Monochrome Black & White) */
@@ -7620,6 +7683,25 @@
     pump();
   }
 
+  function getChipIconSvg(label) {
+    const l = (label || '').toLowerCase();
+    if (l.includes('explore')) {
+      return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/></svg>`;
+    } else if (l.includes('plan') || l.includes('pricing') || l.includes('doc')) {
+      return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`;
+    } else if (l.includes('demo') || l.includes('book') || l.includes('schedule') || l.includes('call')) {
+      return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+    } else if (l.includes('whatsapp') || l.includes('wa')) {
+      return `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.46 0 .1 5.36.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.27-1.64a11.9 11.9 0 0 0 5.77 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.47-8.42z"/></svg>`;
+    } else if (l.includes('human') || l.includes('support') || l.includes('agent') || l.includes('talk') || l.includes('help')) {
+      return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+    } else if (l.includes('end') || l.includes('close')) {
+      return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    }
+    // Default sparkle / star for get started / inquiry
+    return `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+  }
+
   function appendAIMessage(data) {
     const isHuman = Boolean(data.is_human || data.agent_name || data.sender === 'human_agent');
     const senderName = data.agent_name || (isHuman ? (selectedAgent?.name || 'Advisor') : (widgetConfig.assistant_name || 'Cai'));
@@ -7628,10 +7710,26 @@
     const row = document.createElement('div');
     row.className = 'cp-msg-row ai' + (isHuman ? ' human-agent-msg' : '');
 
+    const bubbleLayout = document.createElement('div');
+    bubbleLayout.className = 'cp-bubble-layout';
+
+    const avatarBadge = document.createElement('div');
+    avatarBadge.className = 'cp-ai-avatar-badge';
+    if (isHuman && (data.avatar_url || (selectedAgent && selectedAgent.avatar_url))) {
+      const hAvatar = data.avatar_url || selectedAgent.avatar_url;
+      const hSrc = hAvatar.startsWith('http') ? hAvatar : `${baseUrl}/${hAvatar.replace(/^\/+/, '')}`;
+      avatarBadge.innerHTML = `<img src="${hSrc}" alt="${escapeHtml(senderName)}" onerror="this.src='${baseUrl}/assets/avatar-cai.png';" />`;
+    } else {
+      avatarBadge.innerHTML = `<img src="${baseUrl}/assets/avatar-cai.png" alt="Cai AI" onerror="this.src='${baseUrl}/assets/cuboidsoft-cube-logo.png';" />`;
+    }
+
+    const contentCol = document.createElement('div');
+    contentCol.className = 'cp-bubble-content-col';
+
     const fullText = data.reply || data.text || '';
     const bubble = document.createElement('div');
     bubble.className = 'cp-bubble';
-    row.appendChild(bubble);
+    contentCol.appendChild(bubble);
 
     const metaLine = document.createElement('div');
     metaLine.className = 'cp-meta-line';
@@ -7642,6 +7740,10 @@
       <span>•</span>
       <span>${data.timestamp || 'Just now'}</span>
     `;
+
+    bubbleLayout.appendChild(avatarBadge);
+    bubbleLayout.appendChild(contentCol);
+    row.appendChild(bubbleLayout);
 
     chatStream.appendChild(row);
     scrollToBottom();
@@ -7813,37 +7915,19 @@
         bubble.appendChild(assetCard);
       }
 
-      // Interactive Quick Action Chips (Intercom text-button style, ZERO emojis)
+      // Interactive Quick Action Chips (Intercom/Cai Pill Design with tailored icons)
       if (data.action_chips && Array.isArray(data.action_chips) && data.action_chips.length > 0 && !data.chat_ended) {
         const chipsBox = document.createElement('div');
         chipsBox.className = 'cp-action-chips-container';
-        chipsBox.style.cssText = 'display:flex; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:6px; margin-top:8px; padding:4px 2px; max-width:100%; scrollbar-width:none; -webkit-overflow-scrolling:touch;';
         data.action_chips.forEach(chip => {
-          // Clean emoji characters out of chip label
           let cleanLabel = (chip.label || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '').trim();
           if (!cleanLabel) cleanLabel = chip.label || '';
 
           const chipBtn = document.createElement('button');
           chipBtn.type = 'button';
           chipBtn.className = 'cp-action-chip-pill';
-          const isDark = currentTheme === 'dark';
-          const bgNormal = isDark ? '#18181b' : '#ffffff';
-          const borderNormal = isDark ? '#3f3f46' : '#18181b';
-          const textNormal = isDark ? '#ffffff' : '#000000';
-          chipBtn.style.cssText = `display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; white-space:nowrap; background:${bgNormal}; color:${textNormal}; border:1px solid ${borderNormal}; border-radius:16px; padding:4px 11px; font-size:11px; font-weight:500; cursor:pointer; transition:all 0.15s ease; font-family:inherit; letter-spacing:-0.01em; outline:none;`;
-          
-          chipBtn.addEventListener('mouseenter', () => {
-            chipBtn.style.background = isDark ? '#ffffff' : '#000000';
-            chipBtn.style.color = isDark ? '#000000' : '#ffffff';
-            chipBtn.style.borderColor = isDark ? '#ffffff' : '#000000';
-          });
-          chipBtn.addEventListener('mouseleave', () => {
-            chipBtn.style.background = bgNormal;
-            chipBtn.style.color = textNormal;
-            chipBtn.style.borderColor = borderNormal;
-          });
-
-          chipBtn.innerHTML = `<span>${escapeHtml(cleanLabel)}</span>`;
+          const iconSvg = getChipIconSvg(cleanLabel);
+          chipBtn.innerHTML = `${iconSvg}<span>${escapeHtml(cleanLabel)}</span>`;
           chipBtn.addEventListener('click', () => {
             chipsBox.querySelectorAll('.cp-action-chip-pill').forEach(b => {
               b.disabled = true;
@@ -8056,7 +8140,7 @@
           if (connectBtn) {
             connectBtn.addEventListener('click', (e) => {
               e.stopPropagation();
-              startInstantHumanHelpSession({
+              initiateHumanSupportHandoff({
                 id: rep.id,
                 name: cleanName,
                 job_title: rep.job_title || 'Sales Specialist',
@@ -9063,7 +9147,6 @@
 
     const chipsBox = document.createElement('div');
     chipsBox.className = 'cp-action-chips-container';
-    chipsBox.style.cssText = 'display:flex; flex-direction:row; flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; gap:6px; margin-top:8px; padding:4px 2px; max-width:100%; scrollbar-width:none; -webkit-overflow-scrolling:touch;';
     starterChips.forEach(chip => {
       let cleanLabel = (chip.label || '').replace(/[\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E0}-\u{1F1FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}]/gu, '').trim();
       if (!cleanLabel) cleanLabel = chip.label || '';
@@ -9071,24 +9154,9 @@
       const chipBtn = document.createElement('button');
       chipBtn.type = 'button';
       chipBtn.className = 'cp-action-chip-pill';
-      const isDark = currentTheme === 'dark';
-      const bgNormal = isDark ? '#18181b' : '#ffffff';
-      const borderNormal = isDark ? '#3f3f46' : '#18181b';
-      const textNormal = isDark ? '#ffffff' : '#000000';
-      chipBtn.style.cssText = `display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; white-space:nowrap; background:${bgNormal}; color:${textNormal}; border:1px solid ${borderNormal}; border-radius:16px; padding:4px 11px; font-size:11px; font-weight:500; cursor:pointer; transition:all 0.15s ease; font-family:inherit; letter-spacing:-0.01em; outline:none;`;
+      const iconSvg = getChipIconSvg(cleanLabel);
+      chipBtn.innerHTML = `${iconSvg}<span>${escapeHtml(cleanLabel)}</span>`;
 
-      chipBtn.addEventListener('mouseenter', () => {
-        chipBtn.style.background = isDark ? '#ffffff' : '#000000';
-        chipBtn.style.color = isDark ? '#000000' : '#ffffff';
-        chipBtn.style.borderColor = isDark ? '#ffffff' : '#000000';
-      });
-      chipBtn.addEventListener('mouseleave', () => {
-        chipBtn.style.background = bgNormal;
-        chipBtn.style.color = textNormal;
-        chipBtn.style.borderColor = borderNormal;
-      });
-
-      chipBtn.innerHTML = `<span>${escapeHtml(cleanLabel)}</span>`;
       chipBtn.addEventListener('click', () => {
         chipsBox.querySelectorAll('.cp-action-chip-pill').forEach(b => {
           b.disabled = true;
