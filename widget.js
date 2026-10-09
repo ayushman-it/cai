@@ -7692,10 +7692,15 @@
 
     const avatarBadge = document.createElement('div');
     avatarBadge.className = 'cp-ai-avatar-badge';
-    if (isHuman && (data.avatar_url || (selectedAgent && selectedAgent.avatar_url))) {
-      const hAvatar = data.avatar_url || selectedAgent.avatar_url;
-      const hSrc = hAvatar.startsWith('http') ? hAvatar : `${baseUrl}/${hAvatar.replace(/^\/+/, '')}`;
-      avatarBadge.innerHTML = `<img src="${hSrc}" alt="${escapeHtml(senderName)}" onerror="this.src='${baseUrl}/assets/avatar-cai.png';" />`;
+    const fallbackHumanAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
+    if (isHuman) {
+      const hAvatar = data.avatar_url || (selectedAgent && selectedAgent.avatar_url);
+      if (hAvatar) {
+        const hSrc = hAvatar.startsWith('http') ? hAvatar : `${baseUrl}/${hAvatar.replace(/^\/+/, '')}`;
+        avatarBadge.innerHTML = `<img src="${hSrc}" alt="${escapeHtml(senderName)}" onerror="this.src='${fallbackHumanAvatar}';" />`;
+      } else {
+        avatarBadge.innerHTML = `<img src="${fallbackHumanAvatar}" alt="${escapeHtml(senderName)}" onerror="this.src='${baseUrl}/assets/cuboidsoft-cube-logo.png';" />`;
+      }
     } else {
       avatarBadge.innerHTML = `<img src="${baseUrl}/assets/avatar-cai.png" alt="Cai AI" onerror="this.src='${baseUrl}/assets/cuboidsoft-cube-logo.png';" />`;
     }
@@ -8144,7 +8149,7 @@
       }
 
       scrollToBottom();
-      saveHistory('ai', fullText, data.whatsapp_cta, data.chat_ended, null, data.action_chips);
+      saveHistory(isHuman ? 'human_agent' : 'ai', fullText, data.whatsapp_cta, data.chat_ended, null, data.action_chips, isHuman, senderName, data.avatar_url || (selectedAgent && selectedAgent.avatar_url));
       if (!data.skipSound) {
         playReceivedSound();
       }
@@ -8713,10 +8718,21 @@
   }
 
   // 12. Local Storage Persistence
-  function saveHistory(sender, text, whatsappCta, chatEnded, attachment = null, actionChips = null) {
+  function saveHistory(sender, text, whatsappCta, chatEnded, attachment = null, actionChips = null, isHuman = false, agentName = null, avatarUrl = null) {
     try {
       const history = JSON.parse(widgetStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
-      history.push({ sender, text, whatsappCta, chatEnded, attachment, action_chips: actionChips, timestamp: 'Just now' });
+      history.push({
+        sender,
+        text,
+        whatsappCta,
+        chatEnded,
+        attachment,
+        action_chips: actionChips,
+        is_human: Boolean(isHuman || sender === 'human_agent'),
+        agent_name: agentName || null,
+        avatar_url: avatarUrl || null,
+        timestamp: 'Just now'
+      });
       widgetStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(history.slice(-30)));
     } catch (e) {}
   }
@@ -8738,13 +8754,17 @@
           if (item.sender === 'user') {
             appendUserMessage(item.text, item.attachment, true);
           } else {
+            const isHumanMsg = Boolean(item.is_human || item.sender === 'human_agent');
             appendAIMessage({
               reply: item.text,
               timestamp: 'Recent',
               skipSound: true,
               whatsapp_cta: item.whatsappCta,
               chat_ended: item.chatEnded,
-              action_chips: item.action_chips
+              action_chips: item.action_chips,
+              is_human: isHumanMsg,
+              agent_name: item.agent_name || (isHumanMsg ? 'Specialist' : null),
+              avatar_url: item.avatar_url || null
             });
           }
         });
@@ -10689,6 +10709,9 @@
             stopHumanCountdown();
             isHumanChatActive = true;
             resetHumanInactivityTimer();
+            if (subtitleEl) subtitleEl.textContent = `● Online (${latestAgentName})`;
+            if (assistantNameEl) assistantNameEl.textContent = latestAgentName;
+
             const activePill = shadow.getElementById('cp-waiting-pill');
             if (activePill) {
               activePill.classList.remove('pending');
@@ -10697,38 +10720,36 @@
               const timerEl = shadow.getElementById('cp-waiting-timer');
               if (textEl) textEl.textContent = "You're now connected with our team.";
               if (timerEl) timerEl.textContent = 'Live';
-              if (subtitleEl) subtitleEl.textContent = `● Online (${latestAgentName})`;
-              if (assistantNameEl) assistantNameEl.textContent = latestAgentName;
-
-              // Render Intercom Takeover Banner once
-              if (!shadow.getElementById('cp-takeover-banner')) {
-                const banner = document.createElement('div');
-                banner.className = 'cp-takeover-banner';
-                banner.id = 'cp-takeover-banner';
-                const fAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
-                const avUrl = latestAgentAvatar ? (latestAgentAvatar.startsWith('http') ? latestAgentAvatar : `${baseUrl}/${latestAgentAvatar.replace(/^\/+/, '')}`) : fAvatar;
-                banner.innerHTML = `
-                  <div class="cp-takeover-avatar">
-                    <img src="${avUrl}" alt="${escapeHtml(latestAgentName)}" onerror="this.src='${fAvatar}';" />
-                    <span class="cp-takeover-status-dot"></span>
-                  </div>
-                  <div class="cp-takeover-info">
-                    <div class="cp-takeover-name">${escapeHtml(latestAgentName)} joined the conversation</div>
-                    <div class="cp-takeover-desc">${escapeHtml(latestAgentTitle)} • Live Support</div>
-                  </div>
-                `;
-                if (activePill.parentNode) {
-                  activePill.parentNode.insertBefore(banner, activePill);
-                } else if (chatStream) {
-                  chatStream.appendChild(banner);
-                }
-                scrollToBottom();
-              }
 
               setTimeout(() => {
                 const p = shadow.getElementById('cp-waiting-pill');
                 if (p) p.remove();
               }, 1200);
+            }
+
+            // Render Intercom Takeover Banner once
+            if (!shadow.getElementById('cp-takeover-banner')) {
+              const banner = document.createElement('div');
+              banner.className = 'cp-takeover-banner';
+              banner.id = 'cp-takeover-banner';
+              const fAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
+              const avUrl = latestAgentAvatar ? (latestAgentAvatar.startsWith('http') ? latestAgentAvatar : `${baseUrl}/${latestAgentAvatar.replace(/^\/+/, '')}`) : fAvatar;
+              banner.innerHTML = `
+                <div class="cp-takeover-avatar">
+                  <img src="${avUrl}" alt="${escapeHtml(latestAgentName)}" onerror="this.src='${fAvatar}';" />
+                  <span class="cp-takeover-status-dot"></span>
+                </div>
+                <div class="cp-takeover-info">
+                  <div class="cp-takeover-name">${escapeHtml(latestAgentName)} joined the conversation</div>
+                  <div class="cp-takeover-desc">${escapeHtml(latestAgentTitle)} • Live Support</div>
+                </div>
+              `;
+              if (activePill && activePill.parentNode) {
+                activePill.parentNode.insertBefore(banner, activePill);
+              } else if (chatStream) {
+                chatStream.appendChild(banner);
+              }
+              scrollToBottom();
             }
           }
         }
