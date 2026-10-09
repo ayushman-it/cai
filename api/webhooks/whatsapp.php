@@ -133,6 +133,84 @@ try {
         } catch (Throwable $e) {}
     }
 
+    // 2a. Priority Human Support Agent Resolve / Close Conversation via WhatsApp
+    // Supports patterns: "RESOLVE #123", "RESOLVE 123", "CLOSE #123", "END #123"
+    if (preg_match('/^(?:resolve|close|end)\s*#?\s*([0-9]+)$/is', trim($messageText), $resolveMatch)) {
+        $targetConvId = (int)$resolveMatch[1];
+        $tcStmt = $pdo->prepare("SELECT c.*, cust.name as customer_name, comp.name as company_name FROM `conversations` c JOIN `companies` comp ON comp.id = c.company_id LEFT JOIN `customers` cust ON cust.id = c.customer_id WHERE c.id = ? LIMIT 1");
+        $tcStmt->execute([$targetConvId]);
+        $targetConv = $tcStmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($targetConv) {
+            $convCompanyId = (int)$targetConv['company_id'];
+            $compName = $targetConv['company_name'] ?: 'CuboidSoft';
+            $custName = $targetConv['customer_name'] ?: 'Visitor';
+
+            // Mark conversation as resolved
+            $pdo->prepare("
+                UPDATE `conversations`
+                SET `status` = 'closed',
+                    `closure_reason` = 'resolved_by_agent',
+                    `closed_at` = NOW(),
+                    `last_message_at` = NOW()
+                WHERE id = ? AND company_id = ?
+            ")->execute([$targetConvId, $convCompanyId]);
+
+            // Add system note
+            $pdo->prepare("
+                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
+                VALUES (?, ?, 'system', '[System Event] Conversation marked as resolved by support agent via WhatsApp.', 'whatsapp', NOW())
+            ")->execute([$convCompanyId, $targetConvId]);
+
+            // Close handoff
+            try {
+                $pdo->prepare("UPDATE `human_handoffs` SET `status` = 'completed', `call_completed_at` = NOW() WHERE `conversation_id` = ? AND `company_id` = ?")
+                    ->execute([$targetConvId, $convCompanyId]);
+            } catch (Throwable $hEx) {}
+
+            // Send confirmation WhatsApp message back to agent
+            try {
+                $waStmt = $pdo->prepare("SELECT phone_number_id, whatsapp_access_token FROM `whatsapp_accounts` WHERE `company_id` = ? AND `status` = 'connected' LIMIT 1");
+                $waStmt->execute([$convCompanyId]);
+                $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token'])) {
+                    $ackReply = "=== [{$compName} Support Portal] ===\n\n"
+                        . "CONVERSATION RESOLVED\n\n"
+                        . "Conversation #CONV-{$targetConvId} with {$custName} has been successfully closed and marked as resolved.\n\n"
+                        . "------------------------------------\n"
+                        . "Powered by Cai (CuboidSoft AI)";
+                    $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
+                    $payload = [
+                        'messaging_product' => 'whatsapp',
+                        'to'                => $cleanSender,
+                        'type'              => 'text',
+                        'text'              => ['body' => $ackReply]
+                    ];
+                    $ch = curl_init($endpoint);
+                    curl_setopt_array($ch, [
+                        CURLOPT_POST           => true,
+                        CURLOPT_POSTFIELDS     => json_encode($payload),
+                        CURLOPT_RETURNTRANSFER => true,
+                        CURLOPT_HTTPHEADER     => [
+                            'Authorization: Bearer ' . $waAcc['whatsapp_access_token'],
+                            'Content-Type: application/json'
+                        ],
+                        CURLOPT_TIMEOUT        => 4
+                    ]);
+                    @curl_exec($ch);
+                    curl_close($ch);
+                }
+            } catch (Throwable $waAckEx) {}
+
+            echo json_encode([
+                'status' => 'conversation_resolved',
+                'target_conversation_id' => $targetConvId
+            ]);
+            exit;
+        }
+    }
+
     // 2b. Priority Human Support Agent Reply Bridge via WhatsApp
     // Supports patterns: "REPLY #123 Hello" or "reply 123 Hello" or "#123 Hello"
     if (preg_match('/^(?:reply\s*#?|#)\s*([0-9]+)\s+(.+)$/is', $messageText, $agentReplyMatch)) {
@@ -145,6 +223,7 @@ try {
 
         if ($targetConv) {
             $convCompanyId = (int)$targetConv['company_id'];
+            $compName = $targetConv['company_name'] ?: 'CuboidSoft';
 
             // Find which agent this sender phone belongs to
             $agStmt = $pdo->prepare("SELECT id, name, job_title FROM `users` WHERE `company_id` = ? AND REPLACE(REPLACE(REPLACE(phone, '+', ''), ' ', ''), '-', '') LIKE ? LIMIT 1");
@@ -191,7 +270,12 @@ try {
                 $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token'])) {
-                    $ackReply = "✅ *Reply delivered to #CONV-{$targetConvId}* (" . ($targetConv['customer_name'] ?: 'Visitor') . "):\n\"{$agentReplyBody}\"";
+                    $ackReply = "=== [{$compName} Support Portal] ===\n\n"
+                        . "MESSAGE DELIVERED TO #CONV-{$targetConvId} (" . ($targetConv['customer_name'] ?: 'Visitor') . ")\n\n"
+                        . "\"{$agentReplyBody}\"\n\n"
+                        . "Type `RESOLVE #{$targetConvId}` when done.\n"
+                        . "------------------------------------\n"
+                        . "Powered by Cai (CuboidSoft AI)";
                     $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
                     $payload = [
                         'messaging_product' => 'whatsapp',
@@ -311,7 +395,16 @@ try {
                 $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token'])) {
-                    $ackReply = "✅ *Reply delivered to #CONV-{$targetConvId}* (" . ($activeHandoffConv['customer_name'] ?: 'Visitor') . "):\n\"{$agentReplyBody}\"";
+                    $cNameStmt = $pdo->prepare("SELECT name FROM `companies` WHERE id = ? LIMIT 1");
+                    $cNameStmt->execute([$agentCompanyId]);
+                    $agentCompName = $cNameStmt->fetchColumn() ?: 'CuboidSoft';
+
+                    $ackReply = "=== [{$agentCompName} Support Portal] ===\n\n"
+                        . "MESSAGE DELIVERED TO #CONV-{$targetConvId} (" . ($activeHandoffConv['customer_name'] ?: 'Visitor') . ")\n\n"
+                        . "\"{$agentReplyBody}\"\n\n"
+                        . "Type `RESOLVE #{$targetConvId}` when done.\n"
+                        . "------------------------------------\n"
+                        . "Powered by Cai (CuboidSoft AI)";
                     $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
                     $payload = [
                         'messaging_product' => 'whatsapp',

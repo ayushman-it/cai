@@ -4661,88 +4661,72 @@
       border-color: #4b5563 !important;
     }
 
-    /* 10-Second Inactivity Chips (Monochrome Black & White) */
+    /* Inactivity Suggestion Chips (Intercom/Cai Pill Design outside bubble) */
     .cp-inactivity-chips-container {
-      margin: 10px 0 4px 0;
-      padding: 8px 10px;
-      background: #fafafa;
-      border: 1px solid #e4e4e7;
-      border-radius: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      animation: cpSlideUpFade 0.25s ease-out;
-    }
-    :host([data-theme="dark"]) .cp-inactivity-chips-container,
-    .cp-dark-theme .cp-inactivity-chips-container,
-    .theme-dark .cp-inactivity-chips-container {
-      background: #18181b;
-      border-color: #27272a;
-    }
-    @keyframes cpSlideUpFade {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .cp-inactivity-chips-title {
-      font-size: 10.5px;
-      color: #71717a;
-      font-weight: 500;
-      letter-spacing: -0.01em;
-    }
-    :host([data-theme="dark"]) .cp-inactivity-chips-title,
-    .cp-dark-theme .cp-inactivity-chips-title,
-    .theme-dark .cp-inactivity-chips-title {
-      color: #a1a1aa;
+      display: flex !important;
+      flex-direction: row !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      gap: 8px !important;
+      margin: 8px 0 4px 0 !important;
+      padding: 4px 2px !important;
+      max-width: 100% !important;
+      animation: cpSlideUpFade 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .cp-inactivity-chips-pills {
       display: flex !important;
       flex-direction: row !important;
-      flex-wrap: nowrap !important;
-      overflow-x: auto !important;
-      overflow-y: hidden !important;
-      gap: 6px !important;
-      padding: 2px 0 !important;
-      -webkit-overflow-scrolling: touch !important;
-      scrollbar-width: none !important;
-      -ms-overflow-style: none !important;
-    }
-    .cp-inactivity-chips-pills::-webkit-scrollbar {
-      display: none !important;
-      width: 0 !important;
-      height: 0 !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      gap: 8px !important;
+      width: 100% !important;
     }
     .cp-inactivity-chip {
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
+      gap: 7px !important;
       flex-shrink: 0 !important;
       white-space: nowrap !important;
-      gap: 5px !important;
-      padding: 4px 10px !important;
-      border-radius: 14px !important;
-      font-size: 11px !important;
-      font-weight: 500 !important;
-      cursor: pointer !important;
-      border: 1px solid #000000 !important;
       background: #ffffff !important;
-      color: #000000 !important;
-      transition: all 0.15s ease-in-out !important;
+      color: #111827 !important;
+      border: 1px solid #d1d5db !important;
+      border-radius: 18px !important;
+      border-bottom-left-radius: 4px !important;
+      padding: 7px 14px !important;
+      font-size: 12.5px !important;
+      font-weight: 500 !important;
+      line-height: 1.25 !important;
+      cursor: pointer !important;
+      transition: all 0.16s ease-in-out !important;
       font-family: inherit !important;
-      outline: none !important;
       letter-spacing: -0.01em !important;
+      outline: none !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      user-select: none !important;
+    }
+    .cp-inactivity-chip svg {
+      width: 14px !important;
+      height: 14px !important;
+      stroke-width: 2 !important;
+      flex-shrink: 0 !important;
+      color: currentColor !important;
     }
     .cp-inactivity-chip:hover,
     .cp-inactivity-chip:focus-visible {
-      background: #000000 !important;
-      color: #ffffff !important;
-      border-color: #000000 !important;
+      background: #f9fafb !important;
+      color: #000000 !important;
+      border-color: #9ca3af !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
+      transform: translateY(-1px) !important;
     }
     :host([data-theme="dark"]) .cp-inactivity-chip,
     .cp-dark-theme .cp-inactivity-chip,
     .theme-dark .cp-inactivity-chip {
-      background: #18181b !important;
-      color: #ffffff !important;
-      border: 1px solid #3f3f46 !important;
+      background: #1e2025 !important;
+      color: #f3f4f6 !important;
+      border: 1px solid #374151 !important;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
     }
     :host([data-theme="dark"]) .cp-inactivity-chip:hover,
     .cp-dark-theme .cp-inactivity-chip:hover,
@@ -4750,16 +4734,9 @@
     :host([data-theme="dark"]) .cp-inactivity-chip:focus-visible,
     .cp-dark-theme .cp-inactivity-chip:focus-visible,
     .theme-dark .cp-inactivity-chip:focus-visible {
-      background: #ffffff !important;
-      color: #000000 !important;
-      border-color: #ffffff !important;
-    }
-    .cp-chip-wa,
-    .cp-chip-person,
-    .cp-chip-end {
-      background: inherit;
-      color: inherit;
-      border-color: inherit;
+      background: #282a32 !important;
+      color: #ffffff !important;
+      border-color: #4b5563 !important;
     }
 
     /* Visitor Intake Card (Section 1: Intercom / Fin Minimalist Design) */
@@ -8272,18 +8249,17 @@
     chipsRow.className = 'cp-inactivity-chips-container';
 
     chipsRow.innerHTML = `
-      <div class="cp-inactivity-chips-title">Need help?</div>
       <div class="cp-inactivity-chips-pills">
         <button type="button" class="cp-inactivity-chip cp-chip-person" id="cp-btn-inactivity-person">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span>Human</span>
         </button>
         <button type="button" class="cp-inactivity-chip cp-chip-wa" id="cp-btn-inactivity-wa">
-          <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.46 0 .1 5.36.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.27-1.64a11.9 11.9 0 0 0 5.77 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.47-8.42z"/></svg>
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.46 0 .1 5.36.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.27-1.64a11.9 11.9 0 0 0 5.77 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.47-8.42z"/></svg>
           <span>WhatsApp</span>
         </button>
         <button type="button" class="cp-inactivity-chip cp-chip-end" id="cp-btn-inactivity-end">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           <span>End Chat</span>
         </button>
       </div>
