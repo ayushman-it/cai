@@ -6711,6 +6711,16 @@
   }
 
   function resetConversationState() {
+    stopHumanCountdown();
+    stopHumanInactivityTimer();
+    if (humanPollingInterval) {
+      clearInterval(humanPollingInterval);
+      humanPollingInterval = null;
+    }
+    isHumanChatActive = false;
+    isSending = false;
+    lastPolledMessageId = 0;
+
     chatStream.innerHTML = '';
     widgetStorage.removeItem(STORAGE_KEYS.MESSAGES);
     widgetStorage.removeItem(STORAGE_KEYS.CONVO_ID);
@@ -6729,11 +6739,19 @@
     visitorPhone = '';
     isIdentified = false;
     leadStep = 1;
+
     initVisitorState();
     if (inputField) {
-      inputField.placeholder = "Enter your Name & WhatsApp Number...";
+      inputField.placeholder = "Ask a question...";
       inputField.value = '';
     }
+
+    if (currentScreen === 'chat') {
+      ensureStarterQuickActionChips();
+    } else {
+      navigateTo('chat');
+    }
+    scrollToBottom();
   }
 
   if (menuHistory) {
@@ -8649,6 +8667,9 @@
       if (data.conversation_id) {
         conversationId = data.conversation_id;
         widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+        if (!humanPollingInterval) {
+          startHumanPolling();
+        }
       }
       if (data.lead_id) {
         leadId = data.lead_id;

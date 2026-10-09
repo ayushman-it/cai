@@ -490,7 +490,7 @@ try {
 
             $pdo->prepare("
                 UPDATE `conversations`
-                SET `ownership` = ?, `status` = ?
+                SET `ownership` = ?, `status` = ?, `closure_reason` = NULL, `closed_at` = NULL
                 WHERE id = ? AND company_id = ?
             ")->execute([$ownership, $newStatus, $convId, $companyId]);
 
@@ -499,6 +499,34 @@ try {
                 'conversation_id' => $convId,
                 'ownership'       => $ownership,
                 'status'          => $newStatus
+            ]);
+            break;
+
+        case 'resolve_conversation':
+            $convId = (int)($body['conversation_id'] ?? 0);
+            if ($convId <= 0) {
+                echo json_encode(['success' => false, 'error' => 'Invalid conversation ID']);
+                exit;
+            }
+
+            $pdo->prepare("
+                UPDATE `conversations`
+                SET `status` = 'closed',
+                    `closure_reason` = 'agent_resolved',
+                    `closed_at` = NOW()
+                WHERE id = ? AND company_id = ?
+            ")->execute([$convId, $companyId]);
+
+            // Add system message
+            $pdo->prepare("
+                INSERT INTO `messages` (`company_id`, `conversation_id`, `sender_type`, `sender_id`, `message_text`, `channel`, `created_at`)
+                VALUES (?, ?, 'system', ?, '[System Event] Conversation marked as resolved by support agent.', 'whatsapp', NOW())
+            ")->execute([$companyId, $convId, $userId ?: null]);
+
+            echo json_encode([
+                'success'         => true,
+                'conversation_id' => $convId,
+                'status'          => 'closed'
             ]);
             break;
 

@@ -87,41 +87,27 @@
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             <span>New Chat</span>
           </button>
-          <button onclick="switchTab('broadcast')" class="px-3 py-1.5 bg-white border border-stone-200 hover:border-stone-400 text-stone-700 text-xs font-medium rounded-md inline-flex items-center gap-1.5 transition">
-            <i data-lucide="file-up" class="w-3.5 h-3.5 text-stone-500"></i>
-            <span>Bulk CSV</span>
-          </button>
-          <button onclick="switchTab('reminders'); openReminderModal();" class="px-3 py-1.5 bg-stone-900 text-white hover:bg-black text-xs font-semibold rounded-md inline-flex items-center gap-1.5 transition shadow-2xs">
-            <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-            <span>+ Set Reminder</span>
-          </button>
+          <a href="templates.html" class="px-3 py-1.5 bg-white border border-stone-200 hover:border-stone-400 text-stone-700 text-xs font-medium rounded-md inline-flex items-center gap-1.5 transition no-underline">
+            <i data-lucide="layout-template" class="w-3.5 h-3.5 text-stone-500"></i>
+            <span>Meta Templates</span>
+          </a>
+          <a href="automations.html" class="px-3 py-1.5 bg-white border border-stone-200 hover:border-stone-400 text-stone-700 text-xs font-medium rounded-md inline-flex items-center gap-1.5 transition no-underline">
+            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+            <span>Automations</span>
+          </a>
         </div>
       </header>
 
-      <!-- Navigation Tabs (Intercom Pill Navigation) -->
+      <!-- Navigation Tabs (Intercom Clean Navigation) -->
       <nav class="px-5 border-b border-[#e7e5de] bg-white flex items-center gap-1 overflow-x-auto scrollbar-hide shrink-0 text-xs font-medium text-stone-600">
         <button onclick="switchTab('inbox')" id="tab-btn-inbox" class="py-2.5 px-3 border-b-2 border-stone-900 text-stone-900 font-semibold flex items-center gap-1.5 transition">
           <i data-lucide="inbox" class="w-3.5 h-3.5"></i>
           <span>Live Inbox</span>
           <span id="badge-total-threads" class="px-1.5 py-0.2 bg-stone-100 text-stone-700 rounded-full font-mono text-[10px]">0</span>
         </button>
-        <button onclick="switchTab('flows')" id="tab-btn-flows" class="py-2.5 px-3 border-b-2 border-transparent hover:text-stone-900 flex items-center gap-1.5 transition">
-          <i data-lucide="workflow" class="w-3.5 h-3.5"></i>
-          <span>Automation Flows</span>
-          <span class="px-1.5 py-0.2 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-mono text-[10px]">4 Ready</span>
-        </button>
-        <button onclick="switchTab('broadcast')" id="tab-btn-broadcast" class="py-2.5 px-3 border-b-2 border-transparent hover:text-stone-900 flex items-center gap-1.5 transition">
-          <i data-lucide="send" class="w-3.5 h-3.5"></i>
-          <span>CSV Bulk Broadcast</span>
-        </button>
-        <button onclick="switchTab('reminders')" id="tab-btn-reminders" class="py-2.5 px-3 border-b-2 border-transparent hover:text-stone-900 flex items-center gap-1.5 transition">
-          <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
-          <span>Client Reminders</span>
-          <span id="badge-pending-reminders" class="px-1.5 py-0.2 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-mono text-[10px]">0</span>
-        </button>
         <button onclick="switchTab('templates')" id="tab-btn-templates" class="py-2.5 px-3 border-b-2 border-transparent hover:text-stone-900 flex items-center gap-1.5 transition">
           <i data-lucide="bookmark" class="w-3.5 h-3.5"></i>
-          <span>Templates</span>
+          <span>Quick Responses</span>
         </button>
         <div class="h-4 w-px bg-stone-200 mx-1"></div>
         <a href="automations.html" class="py-2.5 px-3 border-b-2 border-transparent hover:text-stone-900 text-stone-500 flex items-center gap-1.5 transition whitespace-nowrap">
@@ -212,6 +198,10 @@
                   <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
                   <span id="ownership-btn-text">Take Over</span>
                 </button>
+                <button id="resolve-chat-btn" onclick="resolveActiveChat()" class="px-2.5 py-1.5 bg-white hover:bg-emerald-50 border border-emerald-300 text-emerald-800 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 transition">
+                  <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+                  <span>Resolve Chat</span>
+                </button>
                 <button onclick="toggleDossierPane()" class="p-1.5 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-md transition" title="Toggle Contact Info">
                   <i data-lucide="panel-right-close" class="w-4 h-4"></i>
                 </button>
@@ -246,10 +236,6 @@
                 <button onclick="insertTemplateText('tpl_followup')" class="px-2.5 py-1 bg-stone-50 hover:bg-stone-100 border border-stone-200 text-stone-700 rounded-md text-[11px] shrink-0 inline-flex items-center gap-1.5 transition">
                   <i data-lucide="bell" class="w-3 h-3 text-stone-600"></i>
                   <span>Follow-Up</span>
-                </button>
-                <button onclick="quickScheduleForCurrent()" class="px-2.5 py-1 bg-stone-900 hover:bg-black text-white rounded-md text-[11px] shrink-0 font-medium inline-flex items-center gap-1.5 transition shadow-2xs">
-                  <i data-lucide="clock" class="w-3 h-3 text-stone-200"></i>
-                  <span>Schedule Reminder</span>
                 </button>
               </div>
 
@@ -306,9 +292,9 @@
             <div class="pt-2 border-t border-[#f0eee8] space-y-2">
               <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400">Actions</div>
               
-              <button onclick="quickScheduleForCurrent()" class="w-full py-2 px-3 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition shadow-2xs">
-                <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-                <span>Set WhatsApp Reminder</span>
+              <button onclick="resolveActiveChat()" class="w-full py-2 px-3 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold rounded-md flex items-center justify-center gap-1.5 transition shadow-2xs">
+                <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                <span>Resolve Conversation</span>
               </button>
 
               <button onclick="toggleOwnership()" class="w-full py-1.5 px-3 bg-white border border-[#e7e5de] hover:border-stone-400 text-stone-700 text-xs font-medium rounded-md flex items-center justify-center gap-1.5 transition">
@@ -1131,6 +1117,30 @@
         }
       } catch (e) {
         console.error('Error toggling ownership:', e);
+      }
+    }
+
+    async function resolveActiveChat() {
+      if (!activeConversationId) return;
+      if (!confirm('Resolve this conversation and mark it as concluded?')) return;
+
+      try {
+        const res = await fetch('../api/whatsapp_hub.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'resolve_conversation',
+            conversation_id: activeConversationId
+          })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          await loadMessages(activeConversationId);
+          await loadThreads(true);
+          window.CuboidShell.toast('Conversation successfully resolved', 'success');
+        }
+      } catch (e) {
+        console.error('Error resolving conversation:', e);
       }
     }
 

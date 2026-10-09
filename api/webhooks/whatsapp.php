@@ -340,14 +340,35 @@ try {
             WHERE c.company_id = ? 
               AND (
                 c.status IN ('human_requested', 'human_active') 
-                OR (c.status = 'closed' AND c.closed_at >= NOW() - INTERVAL 15 MINUTE)
+                OR (c.status = 'closed' AND c.closed_at >= NOW() - INTERVAL 120 MINUTE)
+                OR c.id IN (
+                    SELECT DISTINCT l.conversation_id 
+                    FROM `alert_logs` al 
+                    JOIN `leads` l ON l.id = al.lead_id 
+                    WHERE al.company_id = ? AND al.recipient LIKE ? AND al.sent_at >= NOW() - INTERVAL 120 MINUTE
+                )
               )
               AND (c.assigned_user_id = ? OR c.assigned_user_id IS NULL OR c.assigned_user_id = 0)
-            ORDER BY c.last_message_at DESC, c.id DESC 
+            ORDER BY (c.status IN ('human_requested', 'human_active')) DESC, c.last_message_at DESC, c.id DESC 
             LIMIT 1
         ");
-        $pendingConvStmt->execute([$agentCompanyId, (int)$matchedTeamUser['id']]);
+        $pendingConvStmt->execute([$agentCompanyId, $agentCompanyId, '%' . $sender10, (int)$matchedTeamUser['id']]);
         $activeHandoffConv = $pendingConvStmt->fetch(PDO::FETCH_ASSOC);
+
+        // Fallback: If no conv matched by assigned_user_id, match the latest human_requested/active conversation in the company
+        if (!$activeHandoffConv) {
+            $fallbackConvStmt = $pdo->prepare("
+                SELECT c.*, cust.name as customer_name 
+                FROM `conversations` c 
+                LEFT JOIN `customers` cust ON cust.id = c.customer_id 
+                WHERE c.company_id = ? 
+                  AND (c.status IN ('human_requested', 'human_active') OR c.ownership = 'human')
+                ORDER BY c.last_message_at DESC, c.id DESC 
+                LIMIT 1
+            ");
+            $fallbackConvStmt->execute([$agentCompanyId]);
+            $activeHandoffConv = $fallbackConvStmt->fetch(PDO::FETCH_ASSOC);
+        }
 
         if ($activeHandoffConv) {
             $targetConvId = (int)$activeHandoffConv['id'];
