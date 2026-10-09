@@ -175,11 +175,10 @@ try {
                 $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token'])) {
-                    $ackReply = "=== [{$compName} Support Portal] ===\n\n"
-                        . "CONVERSATION RESOLVED\n\n"
-                        . "Conversation #CONV-{$targetConvId} with {$custName} has been successfully closed and marked as resolved.\n\n"
-                        . "------------------------------------\n"
-                        . "Powered by Cai (CuboidSoft AI)";
+                    $ackReply = "*{$compName} Support Desk*\n\n"
+                        . "*Conversation Resolved*\n"
+                        . "Conversation #CONV-{$targetConvId} with {$custName} has been closed.\n\n"
+                        . "— Powered by Cai (CuboidSoft AI)";
                     $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
                     $payload = [
                         'messaging_product' => 'whatsapp',
@@ -270,12 +269,11 @@ try {
                 $waAcc = $waStmt->fetch(PDO::FETCH_ASSOC);
 
                 if ($waAcc && !empty($waAcc['phone_number_id']) && !empty($waAcc['whatsapp_access_token'])) {
-                    $ackReply = "=== [{$compName} Support Portal] ===\n\n"
-                        . "MESSAGE DELIVERED TO #CONV-{$targetConvId} (" . ($targetConv['customer_name'] ?: 'Visitor') . ")\n\n"
+                    $ackReply = "*{$compName} Support Desk*\n\n"
+                        . "*Message Delivered to #CONV-{$targetConvId}* (" . ($targetConv['customer_name'] ?: 'Visitor') . ")\n\n"
                         . "\"{$agentReplyBody}\"\n\n"
                         . "Type `RESOLVE #{$targetConvId}` when done.\n"
-                        . "------------------------------------\n"
-                        . "Powered by Cai (CuboidSoft AI)";
+                        . "— Powered by Cai (CuboidSoft AI)";
                     $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
                     $payload = [
                         'messaging_product' => 'whatsapp',
@@ -399,12 +397,11 @@ try {
                     $cNameStmt->execute([$agentCompanyId]);
                     $agentCompName = $cNameStmt->fetchColumn() ?: 'CuboidSoft';
 
-                    $ackReply = "=== [{$agentCompName} Support Portal] ===\n\n"
-                        . "MESSAGE DELIVERED TO #CONV-{$targetConvId} (" . ($activeHandoffConv['customer_name'] ?: 'Visitor') . ")\n\n"
+                    $ackReply = "*{$agentCompName} Support Desk*\n\n"
+                        . "*Message Delivered to #CONV-{$targetConvId}* (" . ($activeHandoffConv['customer_name'] ?: 'Visitor') . ")\n\n"
                         . "\"{$agentReplyBody}\"\n\n"
                         . "Type `RESOLVE #{$targetConvId}` when done.\n"
-                        . "------------------------------------\n"
-                        . "Powered by Cai (CuboidSoft AI)";
+                        . "— Powered by Cai (CuboidSoft AI)";
                     $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
                     $payload = [
                         'messaging_product' => 'whatsapp',

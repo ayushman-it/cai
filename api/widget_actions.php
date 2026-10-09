@@ -919,20 +919,20 @@ try {
                 }
                 $dashConvoUrl = "https://cai.cuboidsoft.in/app/conversations.html?id={$conversationId}";
                 $compName = !empty($company['name']) ? $company['name'] : 'CuboidSoft';
-                $waMsg = "=== [{$compName} Support Portal] ===\n\n"
-                    . "*NEW LEAD WAITING FOR LIVE SUPPORT*\n\n"
-                    . "• Lead Name: {$custDispName}\n"
-                    . "• Phone: {$custDispPhone}\n"
-                    . "• Email: {$custDispEmail}\n"
-                    . "• Conversation ID: #CONV-{$conversationId}\n\n"
-                    . "*HOW TO REPLY:*\n"
-                    . "Simply send your reply message here (e.g. `Hello! How can I help you?`), or type `REPLY #{$conversationId} <your message>`.\n\n"
-                    . "*HOW TO CLOSE:*\n"
-                    . "Type `RESOLVE #{$conversationId}` when finished.\n\n"
-                    . "Dashboard Link:\n"
+                $waMsg = "*{$compName} Support Desk*\n"
+                    . "Live Customer Assistance\n\n"
+                    . "*New Lead Waiting*\n"
+                    . "Lead Name: {$custDispName}\n"
+                    . "Phone: {$custDispPhone}\n"
+                    . "Email: {$custDispEmail}\n"
+                    . "Conversation ID: #CONV-{$conversationId}\n\n"
+                    . "*How to Reply*\n"
+                    . "Reply directly to this chat (e.g. `Hello! How can I assist you?`), or type `REPLY #{$conversationId} <your message>`.\n\n"
+                    . "*How to Resolve*\n"
+                    . "Type `RESOLVE #{$conversationId}` when done.\n\n"
+                    . "Live Dashboard:\n"
                     . "{$dashConvoUrl}\n\n"
-                    . "------------------------------------\n"
-                    . "Powered by Cai (CuboidSoft AI)";
+                    . "— Powered by Cai (CuboidSoft AI)";
 
                 $endpoint = "https://graph.facebook.com/v20.0/{$waAcc['phone_number_id']}/messages";
                 $payload = [
