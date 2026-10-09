@@ -1070,13 +1070,45 @@ HTML;
                 CompanyMailer::send($pdo, $companyId, $targetCustEmail, $custSubj, $custHtml);
             }
 
-            // Also trigger standard salesperson alert if lead exists
+            // Also ensure lead exists in pipeline and sync to Google Sheets & external CRMs
             require_once __DIR__ . '/alerts.php';
+            require_once __DIR__ . '/../includes/channel_sync.php';
+
             $leadStmt = $pdo->prepare("SELECT id FROM `leads` WHERE `conversation_id` = ? OR `customer_id` = ? ORDER BY id DESC LIMIT 1");
             $leadStmt->execute([$conversationId, $customerId]);
             $leadId = $leadStmt->fetchColumn();
+
+            if (!$leadId) {
+                $stgStmt = $pdo->prepare("SELECT id, name FROM `pipeline_stages` WHERE `company_id` = ? ORDER BY `stage_order` ASC LIMIT 1");
+                $stgStmt->execute([$companyId]);
+                $firstStage = $stgStmt->fetch();
+                $stageId = $firstStage ? (int)$firstStage['id'] : null;
+                $stageName = $firstStage ? $firstStage['name'] : 'New Inquiry';
+
+                $insLead = $pdo->prepare("
+                    INSERT INTO `leads`
+                    (`company_id`, `customer_id`, `conversation_id`, `title`, `stage_id`, `stage_name`, `intent_level`, `priority`, `opportunity_value`, `source`, `status`, `radar_reason`, `radar_recommended_action`, `last_activity_at`, `created_at`, `updated_at`)
+                    VALUES (?, ?, ?, ?, ?, ?, 'high', 'HIGH', 0, 'WEBSITE_WIDGET', 'open', 'Visitor requested human support specialist', 'Connect immediately', NOW(), NOW(), NOW())
+                ");
+                $insLead->execute([$companyId, $customerId, $conversationId, $custDispName, $stageId, $stageName]);
+                $leadId = (int)$pdo->lastInsertId();
+            }
+
             if ($leadId) {
+                // 1. Send salesperson assignment alert
                 sendSalespersonAssignmentAlert($pdo, $companyId, (int)$leadId, $agent, 'HUMAN_REQUIRED');
+
+                // 2. Real-time Channel Sync (Google Sheets, Webhooks, CRMs)
+                try {
+                    ChannelSync::dispatchLead($pdo, $companyId, (int)$leadId, [
+                        'phone'  => $custDispPhone,
+                        'email'  => $custDispEmail,
+                        'intent' => 'Human Specialist Requested',
+                        'source' => 'Widget Human Help Form'
+                    ]);
+                } catch (Throwable $csEx) {
+                    error_log('[ChannelSync start_human_chat error] ' . $csEx->getMessage());
+                }
             }
         } catch (Exception $aEx) {
             error_log('[Human Chat Alert Note] ' . $aEx->getMessage());

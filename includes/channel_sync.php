@@ -38,8 +38,7 @@ class ChannelSync {
                     c.name AS customer_name,
                     c.phone AS customer_phone,
                     c.email AS customer_email,
-                    c.city AS customer_city,
-                    c.company_name AS customer_company
+                    c.city AS customer_city
                 FROM `leads` l
                 LEFT JOIN `customers` c ON l.customer_id = c.id
                 WHERE l.id = ? AND l.company_id = ?

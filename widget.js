@@ -1158,11 +1158,18 @@
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
     }
 
-    .cp-ai-avatar-badge svg,
-    .cp-ai-avatar-badge img {
+    .cp-ai-avatar-badge svg {
       width: 18px;
       height: 18px;
       object-fit: contain;
+      display: block;
+    }
+
+    .cp-ai-avatar-badge img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50% !important;
+      object-fit: cover !important;
       display: block;
     }
 
@@ -2882,10 +2889,10 @@
     .cp-action-avatar-img {
       width: 100%;
       height: 100%;
-      border-radius: 50%;
-      object-fit: contain;
+      border-radius: 50% !important;
+      object-fit: cover !important;
       display: block;
-      padding: 3px;
+      padding: 0;
     }
 
     .cp-action-status-dot {
