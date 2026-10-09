@@ -303,7 +303,7 @@ try {
                 $attachmentMeta = $dlResult;
                 $tagType = $dlResult['is_image'] ? 'Image' : 'Document';
                 $attTag = "[Attached {$tagType}: {$dlResult['file_name']}]({$dlResult['url']})";
-                $agentReplyBody = (!empty($agentReplyBody) && $agentReplyBody !== '[Attached Image]' && $agentReplyBody !== '[Attached Document]')
+                $agentReplyBody = (!empty($agentReplyBody) && $agentReplyBody !== '[Attached Image]' && $agentReplyBody !== '[Attached Document]' && $agentReplyBody !== $dlResult['file_name'])
                     ? "{$agentReplyBody}\n{$attTag}"
                     : $attTag;
             }

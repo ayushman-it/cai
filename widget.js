@@ -2127,46 +2127,169 @@
       display: block;
     }
 
-    .cp-bubble-attachment-file {
+    /* Modern Intercom Document Card & Attachment Styles */
+    .cp-intercom-doc-card {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-top: 6px;
-      padding: 8px 12px;
-      background: rgba(0, 0, 0, 0.25);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      color: var(--cp-text-primary);
+      gap: 12px;
+      margin-top: 8px;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
       text-decoration: none;
-      transition: background 0.15s;
+      color: inherit;
+      transition: background 0.18s ease, border-color 0.18s ease, transform 0.15s ease;
+      max-width: 330px;
+      cursor: pointer;
     }
 
-    .cp-bubble-attachment-file:hover {
-      background: rgba(255, 255, 255, 0.08);
+    .cp-intercom-doc-card:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(255, 255, 255, 0.22);
+      transform: translateY(-1px);
     }
 
-    .cp-bubble-file-icon {
-      font-size: 20px;
+    :host([data-theme="light"]) .cp-intercom-doc-card,
+    .cp-window.cp-light-theme .cp-intercom-doc-card,
+    .cp-window.theme-light .cp-intercom-doc-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    :host([data-theme="light"]) .cp-intercom-doc-card:hover,
+    .cp-window.cp-light-theme .cp-intercom-doc-card:hover,
+    .cp-window.theme-light .cp-intercom-doc-card:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .cp-intercom-doc-icon-wrap {
+      width: 40px;
+      height: 40px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       flex-shrink: 0;
     }
 
-    .cp-bubble-file-info {
-      flex: 1;
-      min-width: 0;
+    .cp-intercom-doc-icon-wrap.is-pdf {
+      background: rgba(239, 68, 68, 0.14);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.25);
     }
 
-    .cp-bubble-file-name {
-      font-size: 12px;
-      font-weight: 500;
+    .cp-intercom-doc-icon-wrap.is-other {
+      background: rgba(59, 130, 246, 0.14);
+      color: #3b82f6;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+    }
+
+    .cp-intercom-doc-details {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .cp-intercom-doc-title {
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.35;
+      color: var(--cp-text-title, #f8fafc);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      color: var(--cp-text-title);
     }
 
-    .cp-bubble-file-meta {
-      font-size: 10.5px;
-      color: var(--cp-text-muted);
+    :host([data-theme="light"]) .cp-intercom-doc-title,
+    .cp-window.cp-light-theme .cp-intercom-doc-title,
+    .cp-window.theme-light .cp-intercom-doc-title {
+      color: #0f172a;
+    }
+
+    .cp-intercom-doc-sub {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--cp-text-muted, #94a3b8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    :host([data-theme="light"]) .cp-intercom-doc-sub,
+    .cp-window.cp-light-theme .cp-intercom-doc-sub,
+    .cp-window.theme-light .cp-intercom-doc-sub {
+      color: #64748b;
+    }
+
+    .cp-intercom-doc-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--cp-text-secondary, #cbd5e1);
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+
+    .cp-intercom-doc-card:hover .cp-intercom-doc-btn {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+    }
+
+    :host([data-theme="light"]) .cp-intercom-doc-btn,
+    .cp-window.cp-light-theme .cp-intercom-doc-btn,
+    .cp-window.theme-light .cp-intercom-doc-btn {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      color: #475569;
+    }
+
+    :host([data-theme="light"]) .cp-intercom-doc-card:hover .cp-intercom-doc-btn,
+    .cp-window.cp-light-theme .cp-intercom-doc-card:hover .cp-intercom-doc-btn,
+    .cp-window.theme-light .cp-intercom-doc-card:hover .cp-intercom-doc-btn {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    /* Clean Image Attachment Card */
+    .cp-clean-image-card {
+      margin-top: 6px;
+      max-width: 280px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--cp-border-input, rgba(255, 255, 255, 0.12));
+      background: rgba(0, 0, 0, 0.18);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    :host([data-theme="light"]) .cp-clean-image-card,
+    .cp-window.cp-light-theme .cp-clean-image-card,
+    .cp-window.theme-light .cp-clean-image-card {
+      background: #f8fafc;
+      border-color: #e2e8f0;
+    }
+
+    .cp-clean-image-card:hover {
+      transform: scale(1.015);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+    }
+
+    .cp-clean-image-card img {
+      width: 100%;
+      max-height: 260px;
+      object-fit: cover;
+      display: block;
     }
 
     /* Up-Arrow Send Button */
@@ -4427,8 +4550,9 @@
       color: #64748b;
     }
 
+    /* Human agent message styling */
     .cp-msg-row.ai.human-agent-msg .cp-bubble {
-      border-left: 2.5px solid #10b981;
+      /* Clean neutral bubble styling matching Intercom standards */
     }
 
     :host([data-theme="light"]) .cp-ask-icon-bubble,
@@ -7425,21 +7549,33 @@
       } else if (attachment.is_image) {
         const imgSrc = attachment.display_url || attachment.url;
         contentHtml += `
-          <div class="cp-bubble-attachment-img" onclick="window.open('${escapeHtml(attachment.url)}', '_blank')">
-            <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(attachment.name || 'Image')}" loading="lazy" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';" />
-            <span class="cp-bubble-attachment-fallback" style="display:none; align-items:center; gap:6px; font-size:12px; color:inherit; text-decoration:underline; cursor:pointer;">🖼️ ${escapeHtml(attachment.name || 'Image')}</span>
+          <div class="cp-clean-image-card" onclick="window.open('${escapeHtml(attachment.url)}', '_blank')">
+            <img src="${escapeHtml(imgSrc)}" alt="${escapeHtml(attachment.name || 'Image')}" loading="lazy" onerror="this.parentElement.style.display='none';" />
           </div>
         `;
       } else {
+        const isPdf = /\.pdf$/i.test(attachment.name || '') || /\.pdf$/i.test(attachment.url || '');
+        const docTypeLabel = isPdf ? 'PDF Document' : (attachment.size_formatted || 'Document');
+        const iconWrapClass = isPdf ? 'cp-intercom-doc-icon-wrap is-pdf' : 'cp-intercom-doc-icon-wrap is-other';
+        const docIconSvg = isPdf
+          ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="13" y2="17"></line></svg>`
+          : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
+
         contentHtml += `
-          <a class="cp-bubble-attachment-file" href="${escapeHtml(attachment.url)}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(attachment.name || 'file')}">
-            <span class="cp-bubble-file-icon">📄</span>
-            <div class="cp-bubble-file-info">
-              <div class="cp-bubble-file-name">${escapeHtml(attachment.name || 'Attached File')}</div>
-              <div class="cp-bubble-file-meta">${escapeHtml(attachment.size_formatted || 'Document')} • Click to view</div>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          </a>
+          <div class="cp-bubble-attachment-doc">
+            <a class="cp-intercom-doc-card" href="${escapeHtml(attachment.url)}" target="_blank" rel="noopener noreferrer" download="${escapeHtml(attachment.name || 'file')}">
+              <div class="${iconWrapClass}">
+                ${docIconSvg}
+              </div>
+              <div class="cp-intercom-doc-details">
+                <div class="cp-intercom-doc-title">${escapeHtml(attachment.name || 'Document')}</div>
+                <div class="cp-intercom-doc-sub">${escapeHtml(docTypeLabel)}</div>
+              </div>
+              <div class="cp-intercom-doc-btn" title="Download">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              </div>
+            </a>
+          </div>
         `;
       }
     }
@@ -8948,15 +9084,15 @@
     esc = esc.replace(/\n/g, '<br/>');
     esc = esc.replace(/<br\s*\/?>\s*(<div class="cp-table-responsive">)/g, '$1');
     esc = esc.replace(/(<\/div>)\s*<br\s*\/?>/g, '$1');
+    // Deduplicate leading filename text if followed immediately by an attachment tag
+    esc = esc.replace(/^([^\n<]+?\.(?:pdf|docx?|xlsx?|pptx?|txt|csv|zip|png|jpe?g|webp|gif))\s*(?:<br\s*\/?>\s*)+(?=\[Attached (?:Document|File|Image):)/gi, '');
+    esc = esc.replace(/(?:<br\s*\/?>)+([^\n<]+?\.(?:pdf|docx?|xlsx?|pptx?|txt|csv|zip|png|jpe?g|webp|gif))\s*(?:<br\s*\/?>\s*)+(?=\[Attached (?:Document|File|Image):)/gi, '<br/>');
+
     // Parse attached images [Attached Image: filename.jpg] (url) or [Attached Image: filename.jpg](url)
     esc = esc.replace(/\[Attached Image:\s*([\s\S]*?)\](?:\s*|<br\s*\/?>)*\((https?:\/\/[^\s\)<]+)\)/gi, (match, rawName, url) => {
       const fileName = (rawName || 'Image').replace(/<br\s*\/?>/gi, ' ').trim();
-      return `<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:280px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.25); cursor:pointer;" onclick="window.open('${url}','_blank')">
-        <img src="${url}" alt="${fileName}" style="width:100%; max-height:240px; object-fit:cover; display:block;" loading="lazy" onerror="this.style.display='none';" />
-        <div style="padding:6px 10px; font-size:11px; color:#cbd5e1; display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.3); backdrop-filter:blur(4px);">
-          <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">🖼️ ${fileName}</span>
-          <span style="font-size:10px; color:#38bdf8; text-decoration:underline;">View full ↗</span>
-        </div>
+      return `<div class="cp-clean-image-card" onclick="window.open('${url}','_blank')">
+        <img src="${url}" alt="${fileName}" loading="lazy" onerror="this.parentElement.style.display='none';" />
       </div>`;
     });
 
@@ -8964,22 +9100,22 @@
     esc = esc.replace(/\[Attached (?:Document|File):\s*([\s\S]*?)\](?:\s*|<br\s*\/?>)*\((https?:\/\/[^\s\)<]+)\)/gi, (match, rawName, url) => {
       const fileName = (rawName || 'Document').replace(/<br\s*\/?>/gi, ' ').trim();
       const isPdf = /\.pdf$/i.test(fileName) || /\.pdf$/i.test(url);
-      const badgeColor = isPdf ? '#ef4444' : '#3b82f6';
-      const iconLetter = isPdf ? 'PDF' : 'DOC';
-      return `<div class="cp-bubble-attachment-doc" style="margin:8px 0; max-width:320px;">
-        <a href="${url}" target="_blank" download="${fileName}" rel="noopener noreferrer" style="display:flex; align-items:center; gap:10px; padding:10px 13px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:10px; color:inherit; text-decoration:none; transition:all 0.15s ease;">
-          <div style="width:36px; height:36px; border-radius:8px; background:${isPdf ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)'}; border:1px solid ${isPdf ? 'rgba(239,68,68,0.35)' : 'rgba(59,130,246,0.35)'}; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
-            <span style="font-size:9.5px; font-weight:800; color:${badgeColor};">${iconLetter}</span>
+      const docTypeLabel = isPdf ? 'PDF Document' : 'Document';
+      const iconWrapClass = isPdf ? 'cp-intercom-doc-icon-wrap is-pdf' : 'cp-intercom-doc-icon-wrap is-other';
+      const docIconSvg = isPdf
+        ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="13" y2="17"></line></svg>`
+        : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
+
+      return `<div class="cp-bubble-attachment-doc">
+        <a class="cp-intercom-doc-card" href="${url}" target="_blank" download="${fileName}" rel="noopener noreferrer">
+          <div class="${iconWrapClass}">
+            ${docIconSvg}
           </div>
-          <div style="flex:1; min-width:0;">
-            <div style="font-size:12px; font-weight:600; color:#f1f5f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${fileName}</div>
-            <div style="font-size:10.5px; color:#94a3b8; display:flex; align-items:center; gap:4px; margin-top:2px;">
-              <span>Document</span>
-              <span>•</span>
-              <span style="color:#38bdf8;">Download / View ↗</span>
-            </div>
+          <div class="cp-intercom-doc-details">
+            <div class="cp-intercom-doc-title">${fileName}</div>
+            <div class="cp-intercom-doc-sub">${docTypeLabel}</div>
           </div>
-          <div style="color:#94a3b8; flex-shrink:0;">
+          <div class="cp-intercom-doc-btn" title="Download">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           </div>
         </a>
@@ -8989,8 +9125,8 @@
     // Parse standard markdown images ![alt](https://...)
     esc = esc.replace(/!\[([^\]]*)\](?:\s*|<br\s*\/?>)*\((https?:\/\/[^\s\)<]+)\)/gi, (match, alt, url) => {
       const fileName = (alt || 'Image').replace(/<br\s*\/?>/gi, ' ').trim();
-      return `<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:280px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.25); cursor:pointer;" onclick="window.open('${url}','_blank')">
-        <img src="${url}" alt="${fileName}" style="width:100%; max-height:240px; object-fit:cover; display:block;" loading="lazy" />
+      return `<div class="cp-clean-image-card" onclick="window.open('${url}','_blank')">
+        <img src="${url}" alt="${fileName}" loading="lazy" onerror="this.parentElement.style.display='none';" />
       </div>`;
     });
 
@@ -8999,24 +9135,29 @@
       const isImg = /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url);
       const isDoc = /\.(pdf|docx?|xlsx?|csv|pptx?)(\?.*)?$/i.test(url);
       if (isImg) {
-        return `<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:280px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.25); cursor:pointer;" onclick="window.open('${url}','_blank')">
-          <img src="${url}" alt="${label}" style="width:100%; max-height:240px; object-fit:cover; display:block;" loading="lazy" />
-          <div style="padding:6px 10px; font-size:11px; color:#cbd5e1; display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.3);">
-            <span>🖼️ ${label}</span>
-            <span style="font-size:10px; color:#38bdf8;">View full ↗</span>
-          </div>
+        return `<div class="cp-clean-image-card" onclick="window.open('${url}','_blank')">
+          <img src="${url}" alt="${label}" loading="lazy" onerror="this.parentElement.style.display='none';" />
         </div>`;
       }
       if (isDoc) {
         const isPdf = /\.pdf$/i.test(url) || /\.pdf$/i.test(label);
-        return `<div class="cp-bubble-attachment-doc" style="margin:8px 0; max-width:320px;">
-          <a href="${url}" target="_blank" download="${label}" rel="noopener noreferrer" style="display:flex; align-items:center; gap:10px; padding:10px 13px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:10px; color:inherit; text-decoration:none;">
-            <div style="width:34px; height:34px; border-radius:8px; background:${isPdf ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
-              <span style="font-size:9.5px; font-weight:800; color:${isPdf ? '#ef4444' : '#3b82f6'};">${isPdf ? 'PDF' : 'DOC'}</span>
+        const docTypeLabel = isPdf ? 'PDF Document' : 'Document';
+        const iconWrapClass = isPdf ? 'cp-intercom-doc-icon-wrap is-pdf' : 'cp-intercom-doc-icon-wrap is-other';
+        const docIconSvg = isPdf
+          ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="9" y1="13" x2="15" y2="13"></line><line x1="9" y1="17" x2="13" y2="17"></line></svg>`
+          : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>`;
+
+        return `<div class="cp-bubble-attachment-doc">
+          <a class="cp-intercom-doc-card" href="${url}" target="_blank" download="${label}" rel="noopener noreferrer">
+            <div class="${iconWrapClass}">
+              ${docIconSvg}
             </div>
-            <div style="flex:1; min-width:0;">
-              <div style="font-size:12px; font-weight:600; color:#f1f5f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label}</div>
-              <div style="font-size:10.5px; color:#38bdf8; margin-top:2px;">Download Document ↗</div>
+            <div class="cp-intercom-doc-details">
+              <div class="cp-intercom-doc-title">${label}</div>
+              <div class="cp-intercom-doc-sub">${docTypeLabel}</div>
+            </div>
+            <div class="cp-intercom-doc-btn" title="Download">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             </div>
           </a>
         </div>`;
@@ -9028,13 +9169,14 @@
     esc = esc.replace(/(?<!(?:href|src)=")(https?:\/\/[^\s<)]+)/gi, (match, url) => {
       const isImg = /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url);
       if (isImg) {
-        return `<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:280px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); cursor:pointer;" onclick="window.open('${url}','_blank')">
-          <img src="${url}" alt="Image" style="width:100%; max-height:240px; object-fit:cover; display:block;" loading="lazy" />
+        return `<div class="cp-clean-image-card" onclick="window.open('${url}','_blank')">
+          <img src="${url}" alt="Image" loading="lazy" onerror="this.parentElement.style.display='none';" />
         </div>`;
       }
       return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">${url}</a>`;
     });
     return esc;
+
   }
 
 
