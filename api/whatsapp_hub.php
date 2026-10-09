@@ -478,7 +478,7 @@ try {
             $savedMsgBody = $messageText;
             if ($attachment && empty($savedMsgBody)) {
                 $tagType = !empty($attachment['is_image']) ? 'Image' : 'Document';
-                $savedMsgBody = "[Attached {$tagType}: {$attachment['file_name']}] ({$attachment['url']})";
+                $savedMsgBody = "[Attached {$tagType}: {$attachment['file_name']}]({$attachment['url']})";
             }
 
             // Persist message in messages table (include session_id & metadata_json)

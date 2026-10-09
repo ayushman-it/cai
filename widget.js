@@ -2524,7 +2524,7 @@
     }
 
     .cp-hero-greeting-sub {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 500;
       color: rgba(255, 255, 255, 0.7);
       letter-spacing: -0.02em;
@@ -2532,12 +2532,12 @@
     }
 
     .cp-hero-greeting-main {
-      font-size: 26px;
-      font-weight: 650;
+      font-size: 32px;
+      font-weight: 750;
       color: #ffffff;
-      letter-spacing: -0.02em;
-      line-height: 1.18;
-      margin-top: 1px;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+      margin-top: 2px;
     }
 
     :host([data-theme="light"]) .cp-hero-greeting-sub,
@@ -2550,6 +2550,59 @@
     .cp-light-theme .cp-hero-greeting-main,
     .theme-light .cp-hero-greeting-main {
       color: #0f172a;
+    }
+
+    /* Home Screen Team / Counselor Section (Vertical Compact Cards) */
+    .cp-home-team-section {
+      margin-top: 4px;
+      margin-bottom: 6px;
+    }
+
+    .cp-home-team-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 4px 4px 8px 4px;
+    }
+
+    .cp-home-team-title {
+      font-size: 11.5px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--cp-text-muted, #94a3b8);
+    }
+
+    :host([data-theme="light"]) .cp-home-team-title,
+    .cp-light-theme .cp-home-team-title,
+    .theme-light .cp-home-team-title {
+      color: #64748b;
+    }
+
+    .cp-home-team-status {
+      font-size: 11px;
+      color: #10b981;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 600;
+    }
+
+    .cp-home-team-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cp-home-member-card {
+      cursor: pointer;
+      padding: 10px 12px !important;
+      transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .cp-home-member-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
     /* Member LinkedIn Icon Button in Team Directory */
@@ -8595,7 +8648,7 @@
 
     let payloadText = text;
     if (uploadedAttachment) {
-      const attTag = `[Attached ${uploadedAttachment.is_image ? 'Image' : 'Document'}: ${uploadedAttachment.name}] (${uploadedAttachment.url})`;
+      const attTag = `[Attached ${uploadedAttachment.is_image ? 'Image' : 'Document'}: ${uploadedAttachment.name}](${uploadedAttachment.url})`;
       payloadText = text ? `${text}\n${attTag}` : attTag;
     }
 
@@ -8895,13 +8948,92 @@
     esc = esc.replace(/\n/g, '<br/>');
     esc = esc.replace(/<br\s*\/?>\s*(<div class="cp-table-responsive">)/g, '$1');
     esc = esc.replace(/(<\/div>)\s*<br\s*\/?>/g, '$1');
-    // Parse attached images and documents
-    esc = esc.replace(/\[Attached Image:\s*([^\]]+)\]\((https?:\/\/[^\s\)<]+)\)/g, '<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:260px; border-radius:8px; overflow:hidden; cursor:pointer;" onclick="window.open(\'$2\',\'_blank\')"><img src="$2" alt="$1" style="width:100%; display:block; border-radius:8px;" /><span style="font-size:11px; color:#94a3b8; display:block; margin-top:2px;">🖼️ $1</span></div>');
-    esc = esc.replace(/\[Attached Document:\s*([^\]]+)\]\((https?:\/\/[^\s\)<]+)\)/g, '<div style="margin:8px 0;"><a class="cp-bubble-attachment-file" href="$2" target="_blank" download="$1" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:8px; padding:8px 12px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:8px; color:inherit; text-decoration:none;"><span style="font-size:16px;">📄</span><div style="font-size:12px; font-weight:600;">$1</div></a></div>');
+    // Parse attached images [Attached Image: filename.jpg] (url) or [Attached Image: filename.jpg](url)
+    esc = esc.replace(/\[Attached Image:\s*([\s\S]*?)\](?:\s*|<br\s*\/?>)*\((https?:\/\/[^\s\)<]+)\)/gi, (match, rawName, url) => {
+      const fileName = (rawName || 'Image').replace(/<br\s*\/?>/gi, ' ').trim();
+      return `<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:280px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.25); cursor:pointer;" onclick="window.open('${url}','_blank')">
+        <img src="${url}" alt="${fileName}" style="width:100%; max-height:240px; object-fit:cover; display:block;" loading="lazy" onerror="this.style.display='none';" />
+        <div style="padding:6px 10px; font-size:11px; color:#cbd5e1; display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.3); backdrop-filter:blur(4px);">
+          <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;">🖼️ ${fileName}</span>
+          <span style="font-size:10px; color:#38bdf8; text-decoration:underline;">View full ↗</span>
+        </div>
+      </div>`;
+    });
+
+    // Parse attached documents [Attached Document: file.pdf] (url) or [Attached File: file.pdf](url)
+    esc = esc.replace(/\[Attached (?:Document|File):\s*([\s\S]*?)\](?:\s*|<br\s*\/?>)*\((https?:\/\/[^\s\)<]+)\)/gi, (match, rawName, url) => {
+      const fileName = (rawName || 'Document').replace(/<br\s*\/?>/gi, ' ').trim();
+      const isPdf = /\.pdf$/i.test(fileName) || /\.pdf$/i.test(url);
+      const badgeColor = isPdf ? '#ef4444' : '#3b82f6';
+      const iconLetter = isPdf ? 'PDF' : 'DOC';
+      return `<div class="cp-bubble-attachment-doc" style="margin:8px 0; max-width:320px;">
+        <a href="${url}" target="_blank" download="${fileName}" rel="noopener noreferrer" style="display:flex; align-items:center; gap:10px; padding:10px 13px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:10px; color:inherit; text-decoration:none; transition:all 0.15s ease;">
+          <div style="width:36px; height:36px; border-radius:8px; background:${isPdf ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)'}; border:1px solid ${isPdf ? 'rgba(239,68,68,0.35)' : 'rgba(59,130,246,0.35)'}; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0;">
+            <span style="font-size:9.5px; font-weight:800; color:${badgeColor};">${iconLetter}</span>
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:12px; font-weight:600; color:#f1f5f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${fileName}</div>
+            <div style="font-size:10.5px; color:#94a3b8; display:flex; align-items:center; gap:4px; margin-top:2px;">
+              <span>Document</span>
+              <span>•</span>
+              <span style="color:#38bdf8;">Download / View ↗</span>
+            </div>
+          </div>
+          <div style="color:#94a3b8; flex-shrink:0;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          </div>
+        </a>
+      </div>`;
+    });
+
+    // Parse standard markdown images ![alt](https://...)
+    esc = esc.replace(/!\[([^\]]*)\](?:\s*|<br\s*\/?>)*\((https?:\/\/[^\s\)<]+)\)/gi, (match, alt, url) => {
+      const fileName = (alt || 'Image').replace(/<br\s*\/?>/gi, ' ').trim();
+      return `<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:280px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.25); cursor:pointer;" onclick="window.open('${url}','_blank')">
+        <img src="${url}" alt="${fileName}" style="width:100%; max-height:240px; object-fit:cover; display:block;" loading="lazy" />
+      </div>`;
+    });
+
     // Parse markdown links [Title](https://...)
-    esc = esc.replace(/\[([^\]]+)\]\((https?:\/\/[^\s\)<]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:3px; color:#38bdf8; text-decoration:underline; font-weight:600;">$1 ↗</a>');
-    // Standalone URLs not inside href
-    esc = esc.replace(/(?<!href=")(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">$1</a>');
+    esc = esc.replace(/\[([^\]]+)\](?:\s*|<br\s*\/?>)*\((https?:\/\/[^\s\)<]+)\)/gi, (match, label, url) => {
+      const isImg = /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url);
+      const isDoc = /\.(pdf|docx?|xlsx?|csv|pptx?)(\?.*)?$/i.test(url);
+      if (isImg) {
+        return `<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:280px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); background:rgba(0,0,0,0.25); cursor:pointer;" onclick="window.open('${url}','_blank')">
+          <img src="${url}" alt="${label}" style="width:100%; max-height:240px; object-fit:cover; display:block;" loading="lazy" />
+          <div style="padding:6px 10px; font-size:11px; color:#cbd5e1; display:flex; align-items:center; justify-content:space-between; background:rgba(0,0,0,0.3);">
+            <span>🖼️ ${label}</span>
+            <span style="font-size:10px; color:#38bdf8;">View full ↗</span>
+          </div>
+        </div>`;
+      }
+      if (isDoc) {
+        const isPdf = /\.pdf$/i.test(url) || /\.pdf$/i.test(label);
+        return `<div class="cp-bubble-attachment-doc" style="margin:8px 0; max-width:320px;">
+          <a href="${url}" target="_blank" download="${label}" rel="noopener noreferrer" style="display:flex; align-items:center; gap:10px; padding:10px 13px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.14); border-radius:10px; color:inherit; text-decoration:none;">
+            <div style="width:34px; height:34px; border-radius:8px; background:${isPdf ? 'rgba(239,68,68,0.15)' : 'rgba(59,130,246,0.15)'}; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+              <span style="font-size:9.5px; font-weight:800; color:${isPdf ? '#ef4444' : '#3b82f6'};">${isPdf ? 'PDF' : 'DOC'}</span>
+            </div>
+            <div style="flex:1; min-width:0;">
+              <div style="font-size:12px; font-weight:600; color:#f1f5f9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label}</div>
+              <div style="font-size:10.5px; color:#38bdf8; margin-top:2px;">Download Document ↗</div>
+            </div>
+          </a>
+        </div>`;
+      }
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:3px; color:#38bdf8; text-decoration:underline; font-weight:600;">${label} ↗</a>`;
+    });
+
+    // Standalone URLs not inside href or src
+    esc = esc.replace(/(?<!(?:href|src)=")(https?:\/\/[^\s<)]+)/gi, (match, url) => {
+      const isImg = /\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i.test(url);
+      if (isImg) {
+        return `<div class="cp-bubble-attachment-img" style="margin:8px 0; max-width:280px; border-radius:10px; overflow:hidden; border:1px solid rgba(255,255,255,0.14); cursor:pointer;" onclick="window.open('${url}','_blank')">
+          <img src="${url}" alt="Image" style="width:100%; max-height:240px; object-fit:cover; display:block;" loading="lazy" />
+        </div>`;
+      }
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#60a5fa; text-decoration:underline;">${url}</a>`;
+    });
     return esc;
   }
 
@@ -9872,6 +10004,64 @@
         }
       })
       .catch(() => {});
+
+    // Dynamic Team Directory fetch for Home Screen Vertical Help Person cards
+    fetch(`${baseUrl}/api/widget_actions.php?action=get_team&department=all&company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d && d.success && Array.isArray(d.team) && d.team.length > 0) {
+          teamMembersCache = d.team;
+          renderHomeSpecialists(d.team);
+        }
+      })
+      .catch(() => {});
+  }
+
+  function renderHomeSpecialists(teamList) {
+    const container = shadow.getElementById('cp-home-team-cards');
+    if (!container) return;
+    if (!Array.isArray(teamList) || teamList.length === 0) return;
+
+    container.innerHTML = '';
+    teamList.slice(0, 3).forEach(m => {
+      const cleanName = (m.name || 'Specialist').replace(/\s*\([^)]*\)/g, '').trim();
+      const role = m.job_title || (m.department === 'sales' ? 'Counselor & Sales Specialist' : 'Specialist');
+      const deptUpper = (m.department || 'SUPPORT').toUpperCase();
+      const fallbackAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
+      let avatarUrl = m.avatar_url ? (m.avatar_url.startsWith('http') ? m.avatar_url : `${baseUrl}/${m.avatar_url.replace(/^\/+/, '')}`) : fallbackAvatar;
+      const statusClass = (m.availability_status || 'available').toLowerCase();
+
+      const card = document.createElement('div');
+      card.className = 'cp-member-card cp-home-member-card';
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('title', `Chat with ${cleanName}`);
+      card.innerHTML = `
+        <div class="cp-member-left">
+          <div class="cp-action-avatar-wrap">
+            <img src="${avatarUrl}" class="cp-action-avatar-img" alt="${escapeHtml(cleanName)}" onerror="this.onerror=null; this.src='${fallbackAvatar}';" />
+            <div class="cp-action-status-dot ${statusClass}"></div>
+          </div>
+          <div class="cp-action-text-box">
+            <div class="cp-member-name-row">
+              <span class="cp-member-name">${escapeHtml(cleanName)}</span>
+              <span class="cp-dept-tag">${escapeHtml(deptUpper)}</span>
+            </div>
+            <div class="cp-member-role">${escapeHtml(role)}</div>
+          </div>
+        </div>
+        <div class="cp-member-actions">
+          <button class="cp-btn-sm primary cp-home-chat-btn" type="button" style="padding:5px 12px; font-size:11px; font-weight:600; border-radius:6px; pointer-events:none;">Chat</button>
+        </div>
+      `;
+
+      bindTap(card, () => {
+        selectedAgent = m;
+        startHumanChatWithAgent(m);
+      });
+
+      container.appendChild(card);
+    });
   }
 
   function renderActionHome() {
@@ -9944,67 +10134,50 @@
       </div>
       ` : ''}
 
-      <!-- 2. Book an appointment -->
-      <div class="cp-action-card" id="cp-card-book" role="button" tabindex="0">
-        <div class="cp-action-card-left">
-          <div class="cp-action-icon-box">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-              <line x1="16" y1="2" x2="16" y2="6"></line>
-              <line x1="8" y1="2" x2="8" y2="6"></line>
-              <line x1="3" y1="10" x2="21" y2="10"></line>
-            </svg>
-          </div>
-          <div class="cp-action-text-box">
-            <div class="cp-action-card-title">Book an appointment</div>
-            <div class="cp-action-card-desc">Request a meeting with the team</div>
-          </div>
+      <!-- Vertical Help Person / Counselor Cards -->
+      <div class="cp-home-team-section">
+        <div class="cp-home-team-header">
+          <span class="cp-home-team-title">Talk to our team</span>
+          <span class="cp-home-team-status"><span class="cp-convo-status-dot"></span> Online</span>
         </div>
-        <div class="cp-action-card-right">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </div>
-      </div>
-
-      <!-- 3. Instant human help -->
-      <div class="cp-action-card" id="cp-card-human" role="button" tabindex="0">
-        <div class="cp-action-card-left">
-          <div class="cp-action-icon-box">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-            </svg>
+        <div id="cp-home-team-cards" class="cp-home-team-cards">
+          <!-- Default vertical help person cards -->
+          <div class="cp-member-card cp-home-member-card" id="cp-home-rep-1" role="button" tabindex="0" title="Chat with Ayushman">
+            <div class="cp-member-left">
+              <div class="cp-action-avatar-wrap">
+                <img src="${baseUrl}/assets/uploads/avatars/avatar_3_bcf82b79782f17f6.jpeg" class="cp-action-avatar-img" alt="Ayushman" onerror="this.onerror=null; this.src='${baseUrl}/assets/uploads/avatars/avatar_default.svg';" />
+                <div class="cp-action-status-dot available"></div>
+              </div>
+              <div class="cp-action-text-box">
+                <div class="cp-member-name-row">
+                  <span class="cp-member-name">Ayushman</span>
+                  <span class="cp-dept-tag">SALES</span>
+                </div>
+                <div class="cp-member-role">Counselor &amp; Sales Specialist</div>
+              </div>
+            </div>
+            <div class="cp-member-actions">
+              <button class="cp-btn-sm primary cp-home-chat-btn" type="button" style="padding:5px 12px; font-size:11px; font-weight:600; border-radius:6px; pointer-events:none;">Chat</button>
+            </div>
           </div>
-          <div class="cp-action-text-box">
-            <div class="cp-action-card-title">Instant human help</div>
-            <div class="cp-action-card-desc">Speak with an available team member</div>
+          <div class="cp-member-card cp-home-member-card" id="cp-home-rep-2" role="button" tabindex="0" title="Chat with Ayush">
+            <div class="cp-member-left">
+              <div class="cp-action-avatar-wrap">
+                <img src="${baseUrl}/assets/avatar-ayush.png" class="cp-action-avatar-img" alt="Ayush" onerror="this.onerror=null; this.src='${baseUrl}/assets/uploads/avatars/avatar_default.svg';" />
+                <div class="cp-action-status-dot available"></div>
+              </div>
+              <div class="cp-action-text-box">
+                <div class="cp-member-name-row">
+                  <span class="cp-member-name">Ayush</span>
+                  <span class="cp-dept-tag">TECH</span>
+                </div>
+                <div class="cp-member-role">Founder &amp; AI Architect</div>
+              </div>
+            </div>
+            <div class="cp-member-actions">
+              <button class="cp-btn-sm primary cp-home-chat-btn" type="button" style="padding:5px 12px; font-size:11px; font-weight:600; border-radius:6px; pointer-events:none;">Chat</button>
+            </div>
           </div>
-        </div>
-        <div class="cp-action-card-right">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
-        </div>
-      </div>
-
-      <!-- 4. Make a payment -->
-      <div class="cp-action-card" id="cp-card-payment" role="button" tabindex="0">
-        <div class="cp-action-card-left">
-          <div class="cp-action-icon-box">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-              <line x1="1" y1="10" x2="23" y2="10"></line>
-            </svg>
-          </div>
-          <div class="cp-action-text-box">
-            <div class="cp-action-card-title">Make a payment</div>
-            <div class="cp-action-card-desc">Pay online, bank transfer, or invoice</div>
-          </div>
-        </div>
-        <div class="cp-action-card-right">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="9 18 15 12 9 6"></polyline>
-          </svg>
         </div>
       </div>
 
@@ -10070,25 +10243,33 @@
       });
     }
 
-    const bookCard = shadow.getElementById('cp-card-book');
-    if (bookCard) {
-      bindTap(bookCard, () => {
-        navigateTo('book-team');
-      });
-    }
-
-    const humanCard = shadow.getElementById('cp-card-human');
-    if (humanCard) {
-      bindTap(humanCard, () => {
-        navigateTo('human-team');
-      });
-    }
-
-    const paymentCard = shadow.getElementById('cp-card-payment');
-    if (paymentCard) {
-      bindTap(paymentCard, () => {
-        navigateTo('payment-options');
-      });
+    if (teamMembersCache && teamMembersCache.length > 0) {
+      renderHomeSpecialists(teamMembersCache);
+    } else {
+      const rep1 = shadow.getElementById('cp-home-rep-1');
+      if (rep1) {
+        bindTap(rep1, () => {
+          startHumanChatWithAgent({
+            id: 82,
+            name: 'Ayushman',
+            job_title: 'Counselor & Sales Specialist',
+            department: 'sales',
+            avatar_url: 'assets/uploads/avatars/avatar_3_bcf82b79782f17f6.jpeg'
+          });
+        });
+      }
+      const rep2 = shadow.getElementById('cp-home-rep-2');
+      if (rep2) {
+        bindTap(rep2, () => {
+          startHumanChatWithAgent({
+            id: 6,
+            name: 'Ayush',
+            job_title: 'Founder & AI Architect',
+            department: 'technical',
+            avatar_url: 'assets/avatar-ayush.png'
+          });
+        });
+      }
     }
 
     const newsHomeCard = shadow.getElementById('cp-card-news-home');
