@@ -10005,63 +10005,6 @@
       })
       .catch(() => {});
 
-    // Dynamic Team Directory fetch for Home Screen Vertical Help Person cards
-    fetch(`${baseUrl}/api/widget_actions.php?action=get_team&department=all&company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`)
-      .then(r => r.json())
-      .then(d => {
-        if (d && d.success && Array.isArray(d.team) && d.team.length > 0) {
-          teamMembersCache = d.team;
-          renderHomeSpecialists(d.team);
-        }
-      })
-      .catch(() => {});
-  }
-
-  function renderHomeSpecialists(teamList) {
-    const container = shadow.getElementById('cp-home-team-cards');
-    if (!container) return;
-    if (!Array.isArray(teamList) || teamList.length === 0) return;
-
-    container.innerHTML = '';
-    teamList.slice(0, 3).forEach(m => {
-      const cleanName = (m.name || 'Specialist').replace(/\s*\([^)]*\)/g, '').trim();
-      const role = m.job_title || (m.department === 'sales' ? 'Counselor & Sales Specialist' : 'Specialist');
-      const deptUpper = (m.department || 'SUPPORT').toUpperCase();
-      const fallbackAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
-      let avatarUrl = m.avatar_url ? (m.avatar_url.startsWith('http') ? m.avatar_url : `${baseUrl}/${m.avatar_url.replace(/^\/+/, '')}`) : fallbackAvatar;
-      const statusClass = (m.availability_status || 'available').toLowerCase();
-
-      const card = document.createElement('div');
-      card.className = 'cp-member-card cp-home-member-card';
-      card.setAttribute('role', 'button');
-      card.setAttribute('tabindex', '0');
-      card.setAttribute('title', `Chat with ${cleanName}`);
-      card.innerHTML = `
-        <div class="cp-member-left">
-          <div class="cp-action-avatar-wrap">
-            <img src="${avatarUrl}" class="cp-action-avatar-img" alt="${escapeHtml(cleanName)}" onerror="this.onerror=null; this.src='${fallbackAvatar}';" />
-            <div class="cp-action-status-dot ${statusClass}"></div>
-          </div>
-          <div class="cp-action-text-box">
-            <div class="cp-member-name-row">
-              <span class="cp-member-name">${escapeHtml(cleanName)}</span>
-              <span class="cp-dept-tag">${escapeHtml(deptUpper)}</span>
-            </div>
-            <div class="cp-member-role">${escapeHtml(role)}</div>
-          </div>
-        </div>
-        <div class="cp-member-actions">
-          <button class="cp-btn-sm primary cp-home-chat-btn" type="button" style="padding:5px 12px; font-size:11px; font-weight:600; border-radius:6px; pointer-events:none;">Chat</button>
-        </div>
-      `;
-
-      bindTap(card, () => {
-        selectedAgent = m;
-        startHumanChatWithAgent(m);
-      });
-
-      container.appendChild(card);
-    });
   }
 
   function renderActionHome() {
@@ -10134,50 +10077,25 @@
       </div>
       ` : ''}
 
-      <!-- Vertical Help Person / Counselor Cards -->
-      <div class="cp-home-team-section">
-        <div class="cp-home-team-header">
-          <span class="cp-home-team-title">Talk to our team</span>
-          <span class="cp-home-team-status"><span class="cp-convo-status-dot"></span> Online</span>
+      <!-- 2. Instant Human Help / Specialist Card (Clean, Professional, No Fake Data) -->
+      <div class="cp-action-card cp-help-person-card" id="cp-card-instant-human" role="button" tabindex="0" title="Talk to a specialist">
+        <div class="cp-action-card-left">
+          <div class="cp-action-avatar-wrap">
+            <img src="${baseUrl}/assets/avatar-ayush.png" class="cp-action-avatar-img" alt="" onerror="this.onerror=null; this.src='${baseUrl}/assets/avatar-cai.png';" />
+            <div class="cp-action-status-dot available"></div>
+          </div>
+          <div class="cp-action-text-box">
+            <div class="cp-action-card-title">
+              <span>Talk to a specialist</span>
+              <span class="cp-copilot-tag" style="background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.25);">Online</span>
+            </div>
+            <div class="cp-action-card-desc">Speak with an available team member &bull; Replies in minutes</div>
+          </div>
         </div>
-        <div id="cp-home-team-cards" class="cp-home-team-cards">
-          <!-- Default vertical help person cards -->
-          <div class="cp-member-card cp-home-member-card" id="cp-home-rep-1" role="button" tabindex="0" title="Chat with Ayushman">
-            <div class="cp-member-left">
-              <div class="cp-action-avatar-wrap">
-                <img src="${baseUrl}/assets/uploads/avatars/avatar_3_bcf82b79782f17f6.jpeg" class="cp-action-avatar-img" alt="Ayushman" onerror="this.onerror=null; this.src='${baseUrl}/assets/uploads/avatars/avatar_default.svg';" />
-                <div class="cp-action-status-dot available"></div>
-              </div>
-              <div class="cp-action-text-box">
-                <div class="cp-member-name-row">
-                  <span class="cp-member-name">Ayushman</span>
-                  <span class="cp-dept-tag">SALES</span>
-                </div>
-                <div class="cp-member-role">Counselor &amp; Sales Specialist</div>
-              </div>
-            </div>
-            <div class="cp-member-actions">
-              <button class="cp-btn-sm primary cp-home-chat-btn" type="button" style="padding:5px 12px; font-size:11px; font-weight:600; border-radius:6px; pointer-events:none;">Chat</button>
-            </div>
-          </div>
-          <div class="cp-member-card cp-home-member-card" id="cp-home-rep-2" role="button" tabindex="0" title="Chat with Ayush">
-            <div class="cp-member-left">
-              <div class="cp-action-avatar-wrap">
-                <img src="${baseUrl}/assets/avatar-ayush.png" class="cp-action-avatar-img" alt="Ayush" onerror="this.onerror=null; this.src='${baseUrl}/assets/uploads/avatars/avatar_default.svg';" />
-                <div class="cp-action-status-dot available"></div>
-              </div>
-              <div class="cp-action-text-box">
-                <div class="cp-member-name-row">
-                  <span class="cp-member-name">Ayush</span>
-                  <span class="cp-dept-tag">TECH</span>
-                </div>
-                <div class="cp-member-role">Founder &amp; AI Architect</div>
-              </div>
-            </div>
-            <div class="cp-member-actions">
-              <button class="cp-btn-sm primary cp-home-chat-btn" type="button" style="padding:5px 12px; font-size:11px; font-weight:600; border-radius:6px; pointer-events:none;">Chat</button>
-            </div>
-          </div>
+        <div class="cp-action-card-right">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
         </div>
       </div>
 
@@ -10243,33 +10161,11 @@
       });
     }
 
-    if (teamMembersCache && teamMembersCache.length > 0) {
-      renderHomeSpecialists(teamMembersCache);
-    } else {
-      const rep1 = shadow.getElementById('cp-home-rep-1');
-      if (rep1) {
-        bindTap(rep1, () => {
-          startHumanChatWithAgent({
-            id: 82,
-            name: 'Ayushman',
-            job_title: 'Counselor & Sales Specialist',
-            department: 'sales',
-            avatar_url: 'assets/uploads/avatars/avatar_3_bcf82b79782f17f6.jpeg'
-          });
-        });
-      }
-      const rep2 = shadow.getElementById('cp-home-rep-2');
-      if (rep2) {
-        bindTap(rep2, () => {
-          startHumanChatWithAgent({
-            id: 6,
-            name: 'Ayush',
-            job_title: 'Founder & AI Architect',
-            department: 'technical',
-            avatar_url: 'assets/avatar-ayush.png'
-          });
-        });
-      }
+    const instantHumanCard = shadow.getElementById('cp-card-instant-human');
+    if (instantHumanCard) {
+      bindTap(instantHumanCard, () => {
+        initiateHumanSupportHandoff();
+      });
     }
 
     const newsHomeCard = shadow.getElementById('cp-card-news-home');

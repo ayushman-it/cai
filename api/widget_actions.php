@@ -265,6 +265,7 @@ try {
             SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url, is_instant_help_enabled, is_appointment_enabled
             FROM `users`
             WHERE `company_id` = ? 
+              AND `is_active` = 1
               AND (`is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)
         ";
         $params = [$companyId];
