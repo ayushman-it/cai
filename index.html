@@ -186,6 +186,29 @@
     .faq-content.hidden { display: none !important; }
     .faq-icon { transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
     .faq-item.active .faq-icon { transform: rotate(180deg); }
+    
+    @keyframes caiMarqueeTrack {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .cai-marquee-track {
+      display: flex;
+      width: max-content;
+      animation: caiMarqueeTrack 32s linear infinite;
+    }
+    .cai-marquee-track:hover {
+      animation-play-state: paused;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .cai-marquee-track {
+        animation: none;
+      }
+    }
+    .cai-beta-fluid-text {
+      font-size: clamp(3.5rem, 13vw, 11rem);
+      line-height: 0.92;
+      letter-spacing: -0.045em;
+    }
   </style>
   <script>
     // Bulletproof zero-latency FAQ toggle available before external scripts
@@ -717,6 +740,102 @@
 
         </div>
       </div>
+    </section>
+
+    <!-- Full-Width Responsive Auto-Sizing Cai - Beta Showcase Banner -->
+    <section class="w-full bg-[#0a0a0a] text-white border-y border-stone-800/80 overflow-hidden relative select-none">
+      
+      <!-- Top Subdued Status Bar -->
+      <div class="max-w-[1360px] mx-auto px-6 lg:px-12 pt-6 pb-3 flex flex-wrap items-center justify-between gap-4 border-b border-stone-800/60 text-xs font-mono text-stone-400">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-stone-300 font-semibold tracking-wider uppercase text-[11px]">AUTONOMOUS AI RUNTIME</span>
+          <span class="text-stone-600">•</span>
+          <span class="text-stone-400 hidden sm:inline">VERSION 2.8.4</span>
+        </div>
+        <div class="flex items-center gap-4 text-[11.5px] text-stone-400">
+          <span class="hidden md:inline"><span class="text-stone-200 font-medium">&lt; 800ms</span> Grounded Latency</span>
+          <span class="hidden sm:inline"><span class="text-stone-200 font-medium">99.98%</span> Strict Document Faithfulness</span>
+          <button onclick="window.Cai &amp;&amp; window.Cai.open()" class="text-xs font-sans font-medium text-white hover:text-stone-300 underline underline-offset-4 cursor-pointer inline-flex items-center gap-1">
+            <span>Test Cai Live</span>
+            <span class="text-[10px]">&rarr;</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Hero Fluid Typography Marquee Container (Auto-sizing clamp text) -->
+      <div class="py-6 sm:py-8 md:py-10 overflow-hidden relative flex items-center">
+        <!-- Soft Edge Fade Gradients -->
+        <div class="absolute left-0 inset-y-0 w-12 sm:w-24 bg-gradient-to-r from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
+        <div class="absolute right-0 inset-y-0 w-12 sm:w-24 bg-gradient-to-l from-[#0a0a0a] to-transparent z-10 pointer-events-none"></div>
+
+        <div class="cai-marquee-track">
+          <!-- Marquee Block 1 -->
+          <div class="flex items-center gap-8 sm:gap-14 md:gap-18 px-4 sm:px-8">
+            <span class="cai-beta-fluid-text font-medium tracking-tighter text-stone-100 flex items-center gap-3 sm:gap-5 whitespace-nowrap">
+              <span>Cai</span>
+              <span class="text-stone-500 font-light">&mdash;</span>
+              <span class="text-stone-400 font-mono text-[0.42em] tracking-tight border border-stone-700/80 bg-stone-900/90 px-3 sm:px-4 py-1 sm:py-1.5 rounded-[4px] uppercase align-middle text-emerald-400 font-medium">Beta</span>
+            </span>
+            <span class="text-stone-600 text-2xl sm:text-4xl lg:text-5xl font-light select-none">/</span>
+            <span class="cai-beta-fluid-text font-medium tracking-tighter text-stone-400 whitespace-nowrap hover:text-stone-200 transition-colors">
+              Autonomous Helpdesk
+            </span>
+            <span class="text-stone-600 text-2xl sm:text-4xl lg:text-5xl font-light select-none">/</span>
+            <span class="cai-beta-fluid-text font-medium tracking-tighter text-stone-100 flex items-center gap-3 sm:gap-5 whitespace-nowrap">
+              <span>Cai</span>
+              <span class="text-stone-500 font-light">&mdash;</span>
+              <span class="text-stone-400 font-mono text-[0.42em] tracking-tight border border-stone-700/80 bg-stone-900/90 px-3 sm:px-4 py-1 sm:py-1.5 rounded-[4px] uppercase align-middle text-emerald-400 font-medium">Beta</span>
+            </span>
+            <span class="text-stone-600 text-2xl sm:text-4xl lg:text-5xl font-light select-none">/</span>
+            <span class="cai-beta-fluid-text font-medium tracking-tighter text-stone-400 whitespace-nowrap hover:text-stone-200 transition-colors">
+              Human Action Hybrid
+            </span>
+            <span class="text-stone-600 text-2xl sm:text-4xl lg:text-5xl font-light select-none">/</span>
+          </div>
+
+          <!-- Marquee Block 2 (Seamless Infinite Duplicate) -->
+          <div class="flex items-center gap-8 sm:gap-14 md:gap-18 px-4 sm:px-8" aria-hidden="true">
+            <span class="cai-beta-fluid-text font-medium tracking-tighter text-stone-100 flex items-center gap-3 sm:gap-5 whitespace-nowrap">
+              <span>Cai</span>
+              <span class="text-stone-500 font-light">&mdash;</span>
+              <span class="text-stone-400 font-mono text-[0.42em] tracking-tight border border-stone-700/80 bg-stone-900/90 px-3 sm:px-4 py-1 sm:py-1.5 rounded-[4px] uppercase align-middle text-emerald-400 font-medium">Beta</span>
+            </span>
+            <span class="text-stone-600 text-2xl sm:text-4xl lg:text-5xl font-light select-none">/</span>
+            <span class="cai-beta-fluid-text font-medium tracking-tighter text-stone-400 whitespace-nowrap hover:text-stone-200 transition-colors">
+              Autonomous Helpdesk
+            </span>
+            <span class="text-stone-600 text-2xl sm:text-4xl lg:text-5xl font-light select-none">/</span>
+            <span class="cai-beta-fluid-text font-medium tracking-tighter text-stone-100 flex items-center gap-3 sm:gap-5 whitespace-nowrap">
+              <span>Cai</span>
+              <span class="text-stone-500 font-light">&mdash;</span>
+              <span class="text-stone-400 font-mono text-[0.42em] tracking-tight border border-stone-700/80 bg-stone-900/90 px-3 sm:px-4 py-1 sm:py-1.5 rounded-[4px] uppercase align-middle text-emerald-400 font-medium">Beta</span>
+            </span>
+            <span class="text-stone-600 text-2xl sm:text-4xl lg:text-5xl font-light select-none">/</span>
+            <span class="cai-beta-fluid-text font-medium tracking-tighter text-stone-400 whitespace-nowrap hover:text-stone-200 transition-colors">
+              Human Action Hybrid
+            </span>
+            <span class="text-stone-600 text-2xl sm:text-4xl lg:text-5xl font-light select-none">/</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Narrative Bar -->
+      <div class="max-w-[1360px] mx-auto px-6 lg:px-12 py-3.5 border-t border-stone-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-stone-400 font-mono">
+        <div class="flex items-center gap-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-stone-500"></span>
+          <span>Zero hallucinations • Strict semantic grounding on your approved company documents &amp; pricing</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-stone-500 hidden md:inline">Omnichannel Web &amp; WhatsApp Continuity</span>
+          <span class="text-stone-700 hidden md:inline">•</span>
+          <a href="#hire-cai" class="text-stone-300 hover:text-white transition-colors inline-flex items-center gap-1 font-sans font-medium text-xs">
+            <span>Explore Capabilities</span>
+            <span>&darr;</span>
+          </a>
+        </div>
+      </div>
+
     </section>
 
     <!-- Dedicated HIRE CAI Showcase Section (Intercom Fin Inspired) -->
