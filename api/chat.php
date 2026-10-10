@@ -690,21 +690,21 @@ try {
                 $pdo->prepare("INSERT INTO `appointments` (`company_id`, `title`, `appointment_type`, `slot_datetime`, `status`, `notes`, `created_at`, `updated_at`) VALUES (?, ?, 'reminder', ?, 'scheduled', 'Added via Workspace Copilot', NOW(), NOW())")
                     ->execute([$companyId, "Reminder: " . substr($remTitle, 0, 100), $slot]);
 
-                $copilotReply = "**Reminder setup kar diya gaya hai!**\n\n"
-                    . "**Title:** " . htmlspecialchars($remTitle) . "\n"
-                    . "**Scheduled for:** " . date('M j, Y — g:i A', strtotime($slot)) . "\n"
-                    . "Iska record dashboard alerts aur appointments pipeline mein add kar diya gaya hai.";
+                $copilotReply = "**Reminder scheduled successfully.**\n\n"
+                    . "• **Title:** " . htmlspecialchars($remTitle) . "\n"
+                    . "• **Scheduled for:** " . date('M j, Y — g:i A', strtotime($slot)) . "\n\n"
+                    . "Added to your appointments pipeline and dashboard alerts.";
             } catch (Exception $e) {
-                $copilotReply = "Reminder setup karne mein problem aayi: " . $e->getMessage();
+                $copilotReply = "Unable to create reminder: " . $e->getMessage();
             }
         }
 
         // Check for specific queries if reminder wasn't triggered
         if (empty($copilotReply)) {
-            if (preg_match('/(kisko|assign|member|team|counselor|agent)/i', $msgLower)) {
+            if (preg_match('/(kisko|assign|member|team|counselor|agent|allocation|who are)/i', $msgLower)) {
                 $resp = "**Team Lead Allocation & Performance:**\n\n";
                 if (empty($wTeam)) {
-                    $resp .= "Abhi koi team member active nahi hai.\n";
+                    $resp .= "No active team members found in this workspace.\n";
                 } else {
                     $resp .= "| Team Member | Role | Assigned | Won Deals |\n"
                           . "|---|---|---|---|\n";
@@ -714,10 +714,10 @@ try {
                     }
                 }
                 if ($wUnassigned > 0) {
-                    $resp .= "\n**{$wUnassigned} leads** abhi unassigned hain. Aap CRM pipeline se inhe directly team mein distribute kar sakte hain.";
+                    $resp .= "\n**{$wUnassigned} leads** are currently unassigned. You can distribute them to your team from the CRM pipeline.";
                 }
                 $copilotReply = $resp;
-            } elseif (preg_match('/(convert|revenue|pipeline|collection|kamai|paisa|value)/i', $msgLower)) {
+            } elseif (preg_match('/(convert|revenue|pipeline|collection|kamai|paisa|value|earning)/i', $msgLower)) {
                 $wonRev = number_format((float)$wLeads['won_revenue']);
                 $pipeVal = number_format((float)$wLeads['total_pipeline_value']);
                 $wonCnt = (int)$wLeads['won_leads'];
@@ -731,10 +731,10 @@ try {
                     . "| **Won Revenue** | ₹{$wonRev} | Closed won earnings |\n"
                     . "| **Total Collected** | ₹" . number_format((float)$wLeads['total_collected']) . " | Settled amount |\n"
                     . "| **Conversion Rate** | {$convRate}% | {$wonCnt} / {$totCnt} deals closed |\n\n"
-                    . "*Pro Tip:* High intent leads ko timely follow-up karke conversion rate ko improve kiya ja sakta hai.";
-            } elseif (preg_match('/(appointment|meeting|slot|calander|calendar|schedule)/i', $msgLower)) {
+                    . "*Insight:* Timely follow-ups on high-intent leads significantly increase deal conversion rates.";
+            } elseif (preg_match('/(appointment|meeting|slot|calander|calendar|schedule|upcoming)/i', $msgLower)) {
                 if (empty($wAppointments)) {
-                    $copilotReply = "**Upcoming Appointments:**\n\nAapke workspace mein abhi koi aage ki appointment ya scheduled meeting nahi hai.\n\nAap *'Reminder setup kr do [details]'* bolkar yahan se naya reminder ya meeting note schedule kar sakte hain!";
+                    $copilotReply = "**Upcoming Appointments:**\n\nThere are no upcoming appointments or scheduled meetings in your workspace right now.\n\nYou can say *'Set reminder for [details]'* to schedule a new meeting or reminder!";
                 } else {
                     $resp = "**Upcoming Appointments & Reminders:**\n\n";
                     foreach ($wAppointments as $idx => $ap) {
@@ -751,7 +751,7 @@ try {
                     }
                     $copilotReply = trim($resp);
                 }
-            } elseif (preg_match('/(fee|fees|plan|subscription|trial|price|tier|billing)/i', $msgLower)) {
+            } elseif (preg_match('/(fee|fees|plan|subscription|trial|price|tier|billing|status)/i', $msgLower)) {
                 $trialDays = (int)$entitlements['trial_days_remaining'];
                 $status = ucfirst($entitlements['status']);
                 $plan = $entitlements['current_plan_name'];
@@ -764,7 +764,7 @@ try {
                     . ($entitlements['is_trial'] ? "| **Trial Window** | {$trialDays} days remaining | Full Growth Tier |\n" : "| **Access Level** | Active Subscription | Full Access |\n")
                     . "| **WhatsApp Integration** | {$wa} | Live Webhooks |\n"
                     . "| **Next Renewal Cycle** | " . ($entitlements['formatted_trial_end'] ?: "Active") . " | Standard Cycle |\n\n"
-                    . "Sabhi core features (AI Assistant, CRM Pipeline, Appointments, Payments) aapke plan mein fully active hain.";
+                    . "All core features (AI Assistant, CRM Pipeline, Appointments, Payments) are fully active on your workspace.";
             } else {
                 // Default live lead status overview
                 $tot = (int)$wLeads['total_leads'];
@@ -777,12 +777,12 @@ try {
                     . "| Metric | Count / Value | Details |\n"
                     . "|---|---|---|\n"
                     . "| **Total Inquiries** | {$tot} Leads | All-time CRM pipeline |\n"
-                    . "| **Aaj ki Leads (Today)** | {$today} Leads | Received today |\n"
+                    . "| **Today's Inquiries** | {$today} Leads | Received today |\n"
                     . "| **Open Inquiries** | {$open} Active | In progress / follow-up |\n"
                     . "| **Converted (Won)** | {$won} Closed | Successfully converted |\n"
                     . "| **Total Pipeline Value** | ₹{$pipe} | Estimated opportunity |\n\n"
-                    . ($wUnassigned > 0 ? "**Pending Assignment:** {$wUnassigned} leads abhi unassigned hain.\n\n" : "")
-                    . "Aap specific details pooch sakte hain — jaise *'Leads kisko gayi hain?'*, *'Kya revenue hai?'*, ya *'Reminder setup kr do'*!";
+                    . ($wUnassigned > 0 ? "**Pending Assignment:** {$wUnassigned} leads are currently unassigned.\n\n" : "")
+                    . "You can ask for specific insights — such as *'Who are leads assigned to?'*, *'Total revenue?'*, or *'Set a reminder for tomorrow'*!";
             }
         }
 
@@ -1441,11 +1441,11 @@ try {
     }
 
     if (!$aiSuccess && defined('GROQ_API_KEY') && !empty(GROQ_API_KEY) && GROQ_API_KEY !== 'YOUR_GROQ_API_KEY_HERE') {
-        $candidateModels = ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'allam-2-7b'];
+        $candidateModels = ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'allam-2-7b'];
 
         foreach ($candidateModels as $idx => $modelCandidate) {
             if ($idx > 0) {
-                usleep(300000); // 300ms backoff on retry to mitigate rate-limit bursts
+                usleep(150000); // 150ms backoff on retry to mitigate rate-limit bursts
             }
 
             $groqPayload = [
@@ -1467,8 +1467,8 @@ try {
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($groqPayload));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 20);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             $groqResponse = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

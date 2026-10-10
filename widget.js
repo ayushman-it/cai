@@ -124,6 +124,7 @@
   const STORAGE_KEYS = {
     SESSION_ID: 'cp_session_id_' + companyKey,
     CONVO_ID: 'cp_conversation_id_' + companyKey,
+    COPILOT_CONVO_ID: 'cp_copilot_convo_id_' + companyKey,
     LEAD_ID: 'cp_lead_id_' + companyKey,
     CUSTOMER_ID: 'cp_customer_id_' + companyKey,
     VISITOR_NAME: 'cp_visitor_name_' + companyKey,
@@ -132,6 +133,7 @@
     IS_IDENTIFIED: 'cp_is_identified_' + companyKey,
     LEAD_STEP: 'cp_lead_step_' + companyKey,
     MESSAGES: 'cp_chat_history_' + companyKey,
+    COPILOT_MESSAGES: 'cp_copilot_chat_history_' + companyKey,
     STATE: 'cp_widget_open_' + companyKey
   };
 
@@ -6246,6 +6248,7 @@
   let humanAttemptNumber = 1;
   let humanSecondsRemaining = 30;
   let isCopilotActive = false;
+  let copilotConversationId = widgetStorage.getItem(STORAGE_KEYS.COPILOT_CONVO_ID) ? parseInt(widgetStorage.getItem(STORAGE_KEYS.COPILOT_CONVO_ID), 10) : null;
   let humanInactivityTimer = null;
 
   function stopHumanInactivityTimer() {
@@ -6409,15 +6412,8 @@
     const launcherLogo = shadow.querySelector('.cp-launcher-logo');
     if (launcherLogo) launcherLogo.src = fullLogoUrl;
 
-    const teaserAvatar = shadow.querySelector('.cp-teaser-avatar');
-    if (teaserAvatar) {
-      teaserAvatar.innerHTML = `<img src="${fullLogoUrl}" alt="" style="width:100%;height:100%;object-fit:contain;border-radius:50%;" />`;
-    }
-
-    const actionAvatar = shadow.querySelector('.cp-action-avatar-img');
-    if (actionAvatar && currentScreen === 'home') {
-      actionAvatar.src = fullLogoUrl;
-    }
+    // Do NOT overwrite user or human specialist avatars on theme toggle.
+    // Avatars represent people/agents and must remain constant across theme changes.
   }
 
   function applyTheme(theme) {
@@ -8824,9 +8820,10 @@
 
     const postChatMessage = async (attempt = 1) => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000);
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
       try {
         const url = `${baseUrl}/api/chat.php`;
+        const activeCId = isCopilotActive ? copilotConversationId : conversationId;
         const res = await fetch(url, {
           method: 'POST',
           signal: controller.signal,
@@ -8838,7 +8835,7 @@
             company_key: companyKey,
             message: payloadText,
             session_id: sessionId,
-            conversation_id: conversationId,
+            conversation_id: activeCId,
             lead_id: leadId,
             visitor_name: visitorName,
             mode: isCopilotActive ? 'workspace_copilot' : 'visitor'
@@ -8862,17 +8859,22 @@
       const data = await postChatMessage();
 
       if (data.conversation_id) {
-        conversationId = data.conversation_id;
-        widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
-        if (!humanPollingInterval) {
-          startHumanPolling();
+        if (isCopilotActive) {
+          copilotConversationId = data.conversation_id;
+          widgetStorage.setItem(STORAGE_KEYS.COPILOT_CONVO_ID, copilotConversationId);
+        } else {
+          conversationId = data.conversation_id;
+          widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
+          if (!humanPollingInterval) {
+            startHumanPolling();
+          }
         }
       }
-      if (data.lead_id) {
+      if (data.lead_id && !isCopilotActive) {
         leadId = data.lead_id;
         widgetStorage.setItem(STORAGE_KEYS.LEAD_ID, leadId);
       }
-      if (data.lead_artifact && data.lead_artifact.customer_name) {
+      if (data.lead_artifact && data.lead_artifact.customer_name && !isCopilotActive) {
         const cName = data.lead_artifact.customer_name;
         if (!/^(website visitor|prospect|hello|hi|hey|namaste|courses?|fee|fees|pricing|syllabus|python|java|test|null|undefined)/i.test(cName.trim())) {
           visitorName = cName;
@@ -8882,7 +8884,7 @@
           }
         }
       }
-      if (data.lead_captured) {
+      if (data.lead_captured && !isCopilotActive) {
         isIdentified = true;
         widgetStorage.setItem(STORAGE_KEYS.IS_IDENTIFIED, '1');
       }
@@ -8896,14 +8898,14 @@
         hideTyping();
         if (data.success) {
           appendAIMessage(data);
-          if (data.human_handoff_requested && !isHumanChatActive) {
+          if (data.human_handoff_requested && !isHumanChatActive && !isCopilotActive) {
             setTimeout(() => {
               initiateHumanSupportHandoff();
             }, 500);
           }
         } else {
           let chatError = data.error || "Main aapki query process kar raha hoon. Kripya apna sawal ek baar dobara poochein!";
-          if (chatError.toLowerCase().includes('workspace')) {
+          if (chatError.toLowerCase().includes('workspace') && !isCopilotActive) {
             chatError = "How else can I help you today? Please feel free to ask about our services, pricing, or solutions.";
           }
           appendAIMessage({
@@ -8915,16 +8917,24 @@
       }, remainingWait);
 
     } catch (err) {
-      console.warn('[CuboidPilot Widget Alert] Network pause, offering human assistance:', err);
+      console.warn('[CuboidPilot Widget Alert] Network pause, offering self-heal and support:', err);
       // Clear stale conversation ID so subsequent attempt self-heals immediately
-      conversationId = null;
-      try { widgetStorage.removeItem(STORAGE_KEYS.CONVO_ID); } catch(e){}
+      if (isCopilotActive) {
+        copilotConversationId = null;
+        try { widgetStorage.removeItem(STORAGE_KEYS.COPILOT_CONVO_ID); } catch(e){}
+      } else {
+        conversationId = null;
+        try { widgetStorage.removeItem(STORAGE_KEYS.CONVO_ID); } catch(e){}
+      }
       setTimeout(() => {
         hideTyping();
+        const retryReply = isCopilotActive
+          ? "Workspace connection timed out. Please try your query again or refresh the dashboard."
+          : "I'm having a momentary delay connecting to the server. Please try asking again in a moment, or connect with our team directly on WhatsApp!";
         appendAIMessage({
-          reply: "Maaf kijiye, server se connect hone me thoda waqt lag raha hai. Aap apna sawal dobara bhej sakte hain, ya turant connect karne ke liye niche WhatsApp choose kar sakte hain!",
+          reply: retryReply,
           whatsapp_cta: {
-            show: true,
+            show: !isCopilotActive && Boolean(widgetConfig.whatsapp_number),
             url: widgetConfig.whatsapp_number ? `https://wa.me/${widgetConfig.whatsapp_number.replace(/[^0-9]/g, '')}?text=${encodeURIComponent('Hello, I was chatting on your website and would like assistance.')}` : '',
             label: 'Instant WhatsApp Support'
           },
@@ -8938,7 +8948,8 @@
   // 12. Local Storage Persistence
   function saveHistory(sender, text, whatsappCta, chatEnded, attachment = null, actionChips = null, isHuman = false, agentName = null, avatarUrl = null) {
     try {
-      const history = JSON.parse(widgetStorage.getItem(STORAGE_KEYS.MESSAGES) || '[]');
+      const storageKey = isCopilotActive ? STORAGE_KEYS.COPILOT_MESSAGES : STORAGE_KEYS.MESSAGES;
+      const history = JSON.parse(widgetStorage.getItem(storageKey) || '[]');
       history.push({
         sender,
         text,
@@ -8951,18 +8962,20 @@
         avatar_url: avatarUrl || null,
         timestamp: 'Just now'
       });
-      widgetStorage.setItem(STORAGE_KEYS.MESSAGES, JSON.stringify(history.slice(-30)));
+      widgetStorage.setItem(storageKey, JSON.stringify(history.slice(-30)));
     } catch (e) {}
   }
 
-  function restoreHistory() {
+  function restoreHistory(targetMode = null) {
     try {
-      const raw = widgetStorage.getItem(STORAGE_KEYS.MESSAGES);
+      const activeMode = (targetMode !== null) ? targetMode : (isCopilotActive ? 'copilot' : 'visitor');
+      const storageKey = (activeMode === 'copilot') ? STORAGE_KEYS.COPILOT_MESSAGES : STORAGE_KEYS.MESSAGES;
+      const raw = widgetStorage.getItem(storageKey);
       if (!raw) return;
 
       // Cross-tenant history protection: if visiting CuboidSoft, do not restore The Code Munk messages
       if (companyKey === 'cp_live_cuboidsoft' && raw.includes('The Code Munk')) {
-        widgetStorage.removeItem(STORAGE_KEYS.MESSAGES);
+        widgetStorage.removeItem(storageKey);
         return;
       }
 
@@ -9614,7 +9627,7 @@
       if (isCopilotActive) {
         if (assistantNameEl) assistantNameEl.textContent = 'Workspace Copilot';
         if (subtitleEl) subtitleEl.textContent = '● Live Telemetry';
-        if (inputField) inputField.placeholder = "Poochiye: Kitni lead aayi, revenue, reminder...";
+        if (inputField) inputField.placeholder = "Ask: How many leads, revenue, upcoming schedule...";
       } else {
         const asstName = widgetConfig.assistant_name || 'Cai';
         if (assistantNameEl) assistantNameEl.textContent = asstName;
@@ -9626,10 +9639,20 @@
         if (inputField) inputField.placeholder = "Ask a question...";
       }
       if (brandLogo) updateWidgetLogo();
-      if (conversationId) {
+      if (!isCopilotActive && conversationId) {
         startHumanPolling();
       }
-      ensureStarterQuickActionChips();
+
+      // If returning to visitor chat from copilot or home, ensure chatStream reflects visitor messages
+      if (!isCopilotActive) {
+        const hasCopilotChips = chatStream && chatStream.querySelector('.cp-copilot-chips-wrap');
+        if (hasCopilotChips) {
+          chatStream.innerHTML = '';
+          restoreHistory('visitor');
+        }
+        ensureStarterQuickActionChips();
+      }
+
       scrollToBottom();
       return;
     }
@@ -9973,15 +9996,24 @@
     if (assistantNameEl) assistantNameEl.textContent = `${asstName} Copilot`;
     if (subtitleEl) subtitleEl.textContent = '● Live Workspace Telemetry';
 
-    // 1. Inject Clean Markdown Welcome message
-    const welcomeMarkdown = `**Namaste! Main aapka Workspace Copilot hoon.**\n\nAap mujhse apne workspace ki live details aur CRM stats pooch sakte hain:\n• Kitni leads aayi hain aur kisko gayi hain?\n• Kitni convert hui hain aur total revenue kitna hai?\n• Upcoming appointments aur schedule status\n• Reminder setup karne ke liye direct bol sakte hain!`;
+    // Clear visitor stream and restore any past Copilot history for clean isolation
+    if (chatStream) {
+      chatStream.innerHTML = '';
+      restoreHistory('copilot');
+    }
 
-    appendAIMessage({
-      reply: welcomeMarkdown,
-      timestamp: 'Just now'
-    });
+    // 1. Inject Clean English Markdown Welcome message if no past copilot history exists
+    const hasCopilotMsgs = chatStream && chatStream.querySelectorAll('.cp-msg-row').length > 0;
+    if (!hasCopilotMsgs) {
+      const welcomeMarkdown = `**Welcome to Workspace Copilot.**\n\nI can help you monitor live telemetry and CRM insights across your workspace:\n• Total leads and team allocation\n• Revenue, pipeline value, and conversion rate\n• Upcoming appointments and schedule\n• Quick reminder and meeting creation`;
 
-    // 2. Render Interactive Suggestion Chips directly to DOM (No raw HTML string in message)
+      appendAIMessage({
+        reply: welcomeMarkdown,
+        timestamp: 'Just now'
+      });
+    }
+
+    // 2. Render Interactive Suggestion Chips directly to DOM (in English)
     const chipsContainer = document.createElement('div');
     chipsContainer.className = 'cp-copilot-chips-wrap';
     chipsContainer.innerHTML = `
@@ -9994,16 +10026,16 @@
         <span>Suggested workspace queries:</span>
       </div>
       <div class="cp-copilot-chips">
-        <button type="button" class="cp-copilot-chip" data-q="Kitni lead aayi hain?">
+        <button type="button" class="cp-copilot-chip" data-q="How many leads have we received?">
           <span class="cp-copilot-chip-icon cp-chip-blue">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M18 20V10M12 20V4M6 20v-6"></path>
             </svg>
           </span>
-          <span>Kitni lead aayi?</span>
+          <span>How many leads?</span>
           <svg class="cp-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
-        <button type="button" class="cp-copilot-chip" data-q="Leads kisko gayi hain?">
+        <button type="button" class="cp-copilot-chip" data-q="Who are the leads assigned to?">
           <span class="cp-copilot-chip-icon cp-chip-purple">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
@@ -10012,20 +10044,20 @@
               <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
             </svg>
           </span>
-          <span>Leads kisko gayi?</span>
+          <span>Lead allocation</span>
           <svg class="cp-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
-        <button type="button" class="cp-copilot-chip" data-q="Kitni convert hui aur kya revenue hai?">
+        <button type="button" class="cp-copilot-chip" data-q="What is our total revenue and conversion rate?">
           <span class="cp-copilot-chip-icon cp-chip-emerald">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="1" x2="12" y2="23"></line>
               <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
             </svg>
           </span>
-          <span>Revenue &amp; conversion?</span>
+          <span>Revenue &amp; conversions</span>
           <svg class="cp-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
-        <button type="button" class="cp-copilot-chip" data-q="Upcoming appointments aur reminders kya hain?">
+        <button type="button" class="cp-copilot-chip" data-q="What are our upcoming appointments and schedule?">
           <span class="cp-copilot-chip-icon cp-chip-amber">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -10034,10 +10066,10 @@
               <line x1="3" y1="10" x2="21" y2="10"></line>
             </svg>
           </span>
-          <span>Appointments &amp; schedule</span>
+          <span>Upcoming schedule</span>
           <svg class="cp-chip-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </button>
-        <button type="button" class="cp-copilot-chip" data-q="Fees aur plan status kya hai?">
+        <button type="button" class="cp-copilot-chip" data-q="What is our subscription and plan status?">
           <span class="cp-copilot-chip-icon cp-chip-rose">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
@@ -10063,7 +10095,7 @@
 
     setTimeout(() => {
       if (inputField) {
-        inputField.placeholder = "Poochiye: Kitni lead aayi, revenue, reminder...";
+        inputField.placeholder = "Ask: How many leads, revenue, upcoming schedule...";
         inputField.focus();
       }
     }, 120);

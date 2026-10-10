@@ -33,7 +33,7 @@ class GeminiService {
     }
 
     private static ?string $groqApiKey = null;
-    private static array $groqModels = ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'];
+    private static array $groqModels = ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'allam-2-7b'];
 
     public static function getGroqApiKey(): string {
         if (self::$groqApiKey !== null) {
