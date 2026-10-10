@@ -200,7 +200,8 @@ class WhatsAppBridge {
         PDO $pdo,
         ?string $contextWaId,
         string $cleanSender,
-        string $wabaId = ''
+        string $wabaId = '',
+        ?string $messageText = null
     ): array {
         $sender10 = substr($cleanSender, -10);
 
@@ -265,18 +266,35 @@ class WhatsAppBridge {
             ];
         }
 
-        // 3. Fallback without context.id: Check active handoff sessions for this user/company
         $targetUser = $matchingUsers[0];
         $companyId = (int)$targetUser['company_id'];
 
+        // If unquoted message, first check if it explicitly matches an automation rule or greeting trigger!
+        if (!empty($messageText)) {
+            require_once __DIR__ . '/whatsapp_automation_service.php';
+            $autoMatch = WhatsAppAutomationService::matchIncomingMessage($pdo, $companyId, $messageText);
+            $cleanLower = strtolower(trim($messageText));
+            $isGreetingOrMenu = in_array($cleanLower, ['hi', 'hello', 'hey', 'start', 'menu', 'restart', 'help', 'info', '1', '2', '3', '1️⃣', '2️⃣', '3️⃣'], true);
+            if (!empty($autoMatch) || $isGreetingOrMenu) {
+                return [
+                    'status'     => 'automation_trigger',
+                    'company_id' => $companyId,
+                    'rule'       => $autoMatch
+                ];
+            }
+        }
+
+        // 3. Fallback without context.id: Check active handoff sessions specifically assigned to this user in the last 24h
         $activeConvStmt = $pdo->prepare("
             SELECT c.*, cust.name as customer_name, comp.name as company_name
             FROM `conversations` c
             JOIN `companies` comp ON comp.id = c.company_id
             LEFT JOIN `customers` cust ON cust.id = c.customer_id
             WHERE c.company_id = ? 
-              AND (c.status IN ('human_requested', 'human_active') OR c.ownership = 'human')
-              AND (c.assigned_user_id = ? OR c.assigned_user_id IS NULL OR c.assigned_user_id = 0)
+              AND c.status IN ('human_requested', 'human_active')
+              AND c.status != 'closed'
+              AND c.assigned_user_id = ?
+              AND c.last_message_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
             ORDER BY c.last_message_at DESC
             LIMIT 5
         ");

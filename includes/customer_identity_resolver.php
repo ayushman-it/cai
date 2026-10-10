@@ -194,7 +194,10 @@ class CustomerIdentityResolver {
         $wabaId = null;
         $businessPhone = null;
 
-        if (is_numeric($senderPhoneOrCompanyId) && !empty($messageTextOrPhone) && is_string($messageTextOrPhone) && preg_match('/^[0-9+\s\-]+$/', $messageTextOrPhone)) {
+        $isCompanyIdFirst = (is_int($senderPhoneOrCompanyId) && $senderPhoneOrCompanyId < 1000000)
+            || (is_numeric($senderPhoneOrCompanyId) && strlen((string)$senderPhoneOrCompanyId) <= 6 && !empty($messageTextOrPhone) && strlen((string)$messageTextOrPhone) >= 7);
+
+        if ($isCompanyIdFirst) {
             // Pattern A: ($pdo, int $companyId, string $senderPhone, ?string $messageText, ?string $wabaId)
             $companyId = (int)$senderPhoneOrCompanyId;
             $senderPhone = $messageTextOrPhone;
@@ -252,19 +255,30 @@ class CustomerIdentityResolver {
                 }
             }
 
-            // Check via channels table
+            // Check via whatsapp_accounts table
             if (!$companyId && !empty($businessPhone)) {
                 $cleanDest = preg_replace('/[^0-9]/', '', $businessPhone);
-                $stmt = $pdo->prepare("SELECT company_id FROM `channels` WHERE channel = 'whatsapp' AND (credentials LIKE ? OR account_id = ?) LIMIT 1");
-                $stmt->execute(["%{$cleanDest}%", $cleanDest]);
-                $companyId = $stmt->fetchColumn() ?: null;
+                try {
+                    $stmt = $pdo->prepare("SELECT company_id FROM `whatsapp_accounts` WHERE (`phone_number_id` LIKE ? OR `display_phone_number` LIKE ?) AND `status` != 'disconnected' LIMIT 1");
+                    $stmt->execute(["%{$cleanDest}%", "%{$cleanDest}%"]);
+                    $companyId = $stmt->fetchColumn() ?: null;
+                } catch (Throwable $e) {}
             }
 
-            // Check via companies table (whatsapp_number or whatsapp_business_account_id)
+            // Check via whatsapp_accounts or companies table (waba_account_id)
             if (!$companyId && !empty($wabaId)) {
-                $stmt = $pdo->prepare("SELECT id FROM `companies` WHERE whatsapp_business_account_id = ? LIMIT 1");
-                $stmt->execute([$wabaId]);
-                $companyId = $stmt->fetchColumn() ?: null;
+                try {
+                    $stmt = $pdo->prepare("SELECT company_id FROM `whatsapp_accounts` WHERE `waba_account_id` = ? AND `status` != 'disconnected' LIMIT 1");
+                    $stmt->execute([$wabaId]);
+                    $companyId = $stmt->fetchColumn() ?: null;
+                } catch (Throwable $e) {}
+                if (!$companyId) {
+                    try {
+                        $stmt = $pdo->prepare("SELECT id FROM `companies` WHERE whatsapp_business_account_id = ? LIMIT 1");
+                        $stmt->execute([$wabaId]);
+                        $companyId = $stmt->fetchColumn() ?: null;
+                    } catch (Throwable $e) {}
+                }
             }
 
             // Check customers phone match

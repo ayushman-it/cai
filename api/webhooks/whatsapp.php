@@ -74,6 +74,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 // 2. Incoming Event Processing (POST)
 $rawPayload = file_get_contents('php://input');
+if (empty($rawPayload) && !empty($GLOBALS['TEST_PAYLOAD'])) {
+    $rawPayload = is_string($GLOBALS['TEST_PAYLOAD']) ? $GLOBALS['TEST_PAYLOAD'] : json_encode($GLOBALS['TEST_PAYLOAD']);
+}
 $data = json_decode($rawPayload, true) ?? [];
 
 if (empty($data)) {
@@ -251,10 +254,13 @@ try {
     }
 
     // 2b. Two-Way WhatsApp Bridge for Team Members (Native Reply & Contextual Mapping)
-    $context = WhatsAppBridge::resolveIncomingContext($pdo, $contextWaId, $cleanSender, $wabaId);
+    $context = WhatsAppBridge::resolveIncomingContext($pdo, $contextWaId, $cleanSender, $wabaId, $messageText);
 
-    // If ambiguous sessions detected, do NOT guess or send to another visitor!
-    if ($context['status'] === 'ambiguous_sessions') {
+    // If message is an automation trigger or user is testing bot automations, bypass agent bridge and process automation
+    if (($context['status'] ?? '') === 'automation_trigger') {
+        // Fall through cleanly to Customer Identity & Automation Engine
+    } elseif ($context['status'] === 'ambiguous_sessions') {
+        // If ambiguous sessions detected for unquoted agent message, do NOT guess or send to another visitor!
         WhatsAppBridge::sendAgentRejection(
             $pdo,
             $context['company_id'],
