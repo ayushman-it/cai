@@ -837,10 +837,42 @@ try {
     $autoConfig = WhatsAppAutomationService::getConfig($pdo, $resolvedCompanyId);
     $autoSettings = $autoConfig['settings'] ?? [];
     $matchedRule = null;
-    $isHighIntent = false;
+    // Phase 2 Priority: Evaluate matched automation rules first (keywords, menu numbers)
+    $matchedRule = !empty($earlyMatchedRule) ? $earlyMatchedRule : WhatsAppAutomationService::matchIncomingMessage($pdo, $resolvedCompanyId, $messageText);
+    if ($matchedRule) {
+        $aiReply = str_replace(
+            ['{{name}}', '{{company}}', '{{company_name}}'],
+            [$customerName, $company['name'], $company['name']],
+            $matchedRule['response_text']
+        );
 
-    // Phase 1: Greeting & Introduction when visitor first enters from website handoff
-    if ($matchedHandoff && !empty($autoSettings['greeting_message'])) {
+        // Real attachments & links (Document, Image, External Link)
+        if ($matchedRule['attachment_type'] !== 'none' && !empty($matchedRule['attachment_url'])) {
+            $attLabel = !empty($matchedRule['attachment_name']) ? $matchedRule['attachment_name'] : 'Resource';
+            if ($matchedRule['attachment_type'] === 'document') {
+                $aiReply .= "\n\n📄 [Attached Document: {$attLabel}]({$matchedRule['attachment_url']})";
+            } elseif ($matchedRule['attachment_type'] === 'image') {
+                $aiReply .= "\n\n🖼️ [Attached Image: {$attLabel}]({$matchedRule['attachment_url']})";
+            } elseif ($matchedRule['attachment_type'] === 'link') {
+                $aiReply .= "\n\n🔗 *{$attLabel}*: {$matchedRule['attachment_url']}";
+            }
+        }
+
+        // Display available next reply options / numbers
+        if (!empty($matchedRule['next_options_json'])) {
+            $opts = json_decode($matchedRule['next_options_json'], true);
+            if (!empty($opts) && is_array($opts)) {
+                $aiReply .= "\n\n" . implode("\n", $opts);
+            }
+        }
+
+        if (!empty($matchedRule['is_high_intent'])) {
+            $isHighIntent = true;
+        }
+    }
+
+    // Phase 1: Greeting & Introduction when visitor first enters from website handoff (only if no specific rule matched)
+    if (empty($aiReply) && $matchedHandoff && !empty($autoSettings['greeting_message'])) {
         $aiReply = str_replace(
             ['{{name}}', '{{company}}', '{{company_name}}'],
             [$customerName, $company['name'], $company['name']],
@@ -848,41 +880,7 @@ try {
         );
     }
 
-    // Phase 2: Information Delivery — Keyword triggers and Number-based menus
-    if (empty($aiReply)) {
-        $matchedRule = !empty($earlyMatchedRule) ? $earlyMatchedRule : WhatsAppAutomationService::matchIncomingMessage($pdo, $resolvedCompanyId, $messageText);
-        if ($matchedRule) {
-            $aiReply = str_replace(
-                ['{{name}}', '{{company}}', '{{company_name}}'],
-                [$customerName, $company['name'], $company['name']],
-                $matchedRule['response_text']
-            );
 
-            // Real attachments & links (Document, Image, External Link)
-            if ($matchedRule['attachment_type'] !== 'none' && !empty($matchedRule['attachment_url'])) {
-                $attLabel = !empty($matchedRule['attachment_name']) ? $matchedRule['attachment_name'] : 'Resource';
-                if ($matchedRule['attachment_type'] === 'document') {
-                    $aiReply .= "\n\n📄 [Attached Document: {$attLabel}]({$matchedRule['attachment_url']})";
-                } elseif ($matchedRule['attachment_type'] === 'image') {
-                    $aiReply .= "\n\n🖼️ [Attached Image: {$attLabel}]({$matchedRule['attachment_url']})";
-                } elseif ($matchedRule['attachment_type'] === 'link') {
-                    $aiReply .= "\n\n🔗 *{$attLabel}*: {$matchedRule['attachment_url']}";
-                }
-            }
-
-            // Display available next reply options / numbers
-            if (!empty($matchedRule['next_options_json'])) {
-                $opts = json_decode($matchedRule['next_options_json'], true);
-                if (!empty($opts) && is_array($opts)) {
-                    $aiReply .= "\n\n" . implode("\n", $opts);
-                }
-            }
-
-            if (!empty($matchedRule['is_high_intent'])) {
-                $isHighIntent = true;
-            }
-        }
-    }
 
     // Phase 4: Lead Qualification & Human Handoff Trigger Detection
     if (!$isHighIntent && !empty($autoSettings['high_intent_keywords'])) {
