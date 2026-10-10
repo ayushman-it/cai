@@ -73,6 +73,7 @@ class WhatsAppAutomationService {
                   `followup_count` INT NOT NULL DEFAULT 0,
                   `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                   `sent_at` DATETIME NULL,
+                  `last_synced_at` DATETIME NULL,
                   KEY `idx_company_status` (`company_id`, `status`),
                   KEY `idx_scheduled` (`scheduled_at`, `status`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -91,6 +92,26 @@ class WhatsAppAutomationService {
                   KEY `idx_company_status` (`company_id`, `status`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
             ");
+
+            // Safe column additions for WhatsApp automation rules
+            $colRows = $pdo->query("SHOW COLUMNS FROM `whatsapp_automation_rules`")->fetchAll(PDO::FETCH_COLUMN);
+            $existingCols = array_map('strtolower', $colRows);
+
+            if (!in_array('rule_name', $existingCols, true)) {
+                $pdo->exec("ALTER TABLE `whatsapp_automation_rules` ADD COLUMN `rule_name` VARCHAR(150) NULL AFTER `company_id`");
+            }
+            if (!in_array('channel', $existingCols, true)) {
+                $pdo->exec("ALTER TABLE `whatsapp_automation_rules` ADD COLUMN `channel` VARCHAR(50) NOT NULL DEFAULT 'whatsapp' AFTER `rule_name`");
+            }
+            if (!in_array('match_type', $existingCols, true)) {
+                $pdo->exec("ALTER TABLE `whatsapp_automation_rules` ADD COLUMN `match_type` VARCHAR(50) NOT NULL DEFAULT 'contains' AFTER `channel`");
+            }
+            if (!in_array('action_type', $existingCols, true)) {
+                $pdo->exec("ALTER TABLE `whatsapp_automation_rules` ADD COLUMN `action_type` VARCHAR(50) NOT NULL DEFAULT 'text' AFTER `match_type`");
+            }
+            if (!in_array('payload_json', $existingCols, true)) {
+                $pdo->exec("ALTER TABLE `whatsapp_automation_rules` ADD COLUMN `payload_json` LONGTEXT NULL AFTER `next_options_json`");
+            }
         } catch (Throwable $e) {
             error_log("[WhatsAppAutomationService] Table ensure error: " . $e->getMessage());
         }
@@ -133,9 +154,10 @@ class WhatsAppAutomationService {
             $settings['follow_up_options'] = [];
         }
 
-        // 2. Rules (Phase 2 Information Delivery)
+        // 2. Rules
         $rStmt = $pdo->prepare("
-            SELECT id, company_id, phase, trigger_type, trigger_value, response_text,
+            SELECT id, company_id, rule_name, channel, match_type, action_type, payload_json,
+                   phase, trigger_type, trigger_value, response_text,
                    attachment_type, attachment_url, attachment_name, next_options_json,
                    is_high_intent, is_active, sort_order,
                    DATE_FORMAT(updated_at, '%b %e, %Y %H:%i') as updated_formatted
@@ -149,87 +171,83 @@ class WhatsAppAutomationService {
         if (count($rules) === 0) {
             $starterRules = [
                 [
-                    'phase' => 'info_delivery',
+                    'rule_name' => 'Welcome flow',
+                    'channel' => 'whatsapp',
+                    'match_type' => 'contains',
+                    'action_type' => 'text',
+                    'phase' => 'greeting',
                     'trigger_type' => 'keyword',
-                    'trigger_value' => 'pricing, price, fees, cost',
-                    'response_text' => "Here are our standard packages:\n• Starter AI: ₹4,999/mo\n• Growth Autonomous: ₹14,999/mo\n• Enterprise Custom: Flexible EMI available.\n\nWould you like an official quotation or to discuss an installment plan?",
-                    'attachment_type' => 'link',
-                    'attachment_url' => 'https://cai.cuboidsoft.in/pricing.html',
-                    'attachment_name' => 'View Detailed Pricing',
-                    'next_options_json' => json_encode(["1. Request EMI Plan", "2. Talk to Counselor"], JSON_UNESCAPED_UNICODE),
-                    'is_high_intent' => 1,
+                    'trigger_value' => 'hi, hello, hey, start, menu, info, namaste, help',
+                    'response_text' => "Hello {{name}}! 👋 Welcome to CuboidSoft AI Support Desk.\nHow can we help your business today?\n\nReply with a number:\n1️⃣ Pricing & Packages\n2️⃣ Platform Brochure & Overview\n3️⃣ Speak with a Solutions Counselor",
+                    'attachment_type' => 'none',
+                    'attachment_url' => null,
+                    'attachment_name' => null,
+                    'next_options_json' => json_encode(["1. Pricing & Packages", "2. Platform Brochure", "3. Speak with Counselor"], JSON_UNESCAPED_UNICODE),
+                    'is_high_intent' => 0,
                     'sort_order' => 1
                 ],
                 [
+                    'rule_name' => 'Pricing request',
+                    'channel' => 'whatsapp',
+                    'match_type' => 'contains',
+                    'action_type' => 'media_pack',
                     'phase' => 'info_delivery',
-                    'trigger_type' => 'menu_number',
-                    'trigger_value' => '1',
-                    'response_text' => "Here is our verified pricing breakdown:\n• Starter AI: ₹4,999/mo\n• Growth Autonomous: ₹14,999/mo\n• Enterprise: Custom\n\nReply 3 to connect directly with our sales team.",
+                    'trigger_type' => 'keyword',
+                    'trigger_value' => '1, pricing, price, fees, cost, packages, plan, charge',
+                    'response_text' => "Here are our standard packages:\n• Starter AI: ₹4,999/mo (Smart chatbot + Lead capture)\n• Growth Autonomous: ₹14,999/mo (WhatsApp bridge + Auto sync)\n• Enterprise: Custom Dedicated Deployment\n\nFlexible installment/EMI plans are available. Would you like an official quotation?",
                     'attachment_type' => 'link',
                     'attachment_url' => 'https://cai.cuboidsoft.in/pricing.html',
-                    'attachment_name' => 'Live Pricing Calculator',
-                    'next_options_json' => json_encode(["2. Download Brochure", "3. Speak with Counselor"], JSON_UNESCAPED_UNICODE),
-                    'is_high_intent' => 1,
+                    'attachment_name' => 'View Detailed Pricing & Plans',
+                    'next_options_json' => json_encode(["2. View Brochure", "3. Speak with Counselor"], JSON_UNESCAPED_UNICODE),
+                    'is_high_intent' => 0,
                     'sort_order' => 2
                 ],
                 [
+                    'rule_name' => 'Catalog & Brochure request',
+                    'channel' => 'whatsapp',
+                    'match_type' => 'contains',
+                    'action_type' => 'media_pack',
                     'phase' => 'info_delivery',
                     'trigger_type' => 'keyword',
-                    'trigger_value' => 'brochure, catalog, syllabus, details',
-                    'response_text' => "Please find our complete official solutions brochure attached below. It covers all autonomous AI workflows, WhatsApp bridge setup, and security compliance.",
+                    'trigger_value' => '2, catalog, brochure, pdf, details, syllabus, overview, deck',
+                    'response_text' => "Here is our official platform overview and capabilities brochure attached for your review. It covers all autonomous AI workflows, WhatsApp bridge setup, and enterprise security compliance.",
                     'attachment_type' => 'document',
                     'attachment_url' => 'https://cai.cuboidsoft.in/assets/CuboidPilot_Platform_Overview.pdf',
                     'attachment_name' => 'CuboidPilot_Platform_Overview.pdf',
-                    'next_options_json' => json_encode(["1. Pricing & Plans", "3. Speak with Counselor"], JSON_UNESCAPED_UNICODE),
+                    'next_options_json' => json_encode(["1. View Pricing", "3. Speak with Counselor"], JSON_UNESCAPED_UNICODE),
                     'is_high_intent' => 0,
                     'sort_order' => 3
                 ],
                 [
-                    'phase' => 'info_delivery',
-                    'trigger_type' => 'menu_number',
-                    'trigger_value' => '2',
-                    'response_text' => "Here is our official platform overview and capabilities brochure attached for your review.",
-                    'attachment_type' => 'document',
-                    'attachment_url' => 'https://cai.cuboidsoft.in/assets/CuboidPilot_Platform_Overview.pdf',
-                    'attachment_name' => 'CuboidPilot_Platform_Overview.pdf',
-                    'next_options_json' => json_encode(["1. Pricing & Plans", "3. Speak with Counselor"], JSON_UNESCAPED_UNICODE),
-                    'is_high_intent' => 0,
-                    'sort_order' => 4
-                ],
-                [
-                    'phase' => 'info_delivery',
+                    'rule_name' => 'Counselor & Human handoff',
+                    'channel' => 'whatsapp',
+                    'match_type' => 'contains',
+                    'action_type' => 'text',
+                    'phase' => 'handoff',
                     'trigger_type' => 'keyword',
-                    'trigger_value' => 'counselor, human, agent, talk to human, speak with expert',
-                    'response_text' => "Connecting you with a specialist right away! Our senior counselor has been notified on WhatsApp with your context and will message you shortly.",
+                    'trigger_value' => '3, counselor, human, agent, expert, talk to human, speak with expert, call, representative',
+                    'response_text' => "Connecting you with a senior solutions counselor right away! Our specialist has been notified on WhatsApp with your context and will message you shortly.",
                     'attachment_type' => 'none',
                     'attachment_url' => null,
                     'attachment_name' => null,
-                    'next_options_json' => json_encode(["1. View Pricing Meanwhile"], JSON_UNESCAPED_UNICODE),
+                    'next_options_json' => json_encode(["1. View Pricing Meanwhile", "2. Platform Brochure"], JSON_UNESCAPED_UNICODE),
                     'is_high_intent' => 1,
-                    'sort_order' => 5
-                ],
-                [
-                    'phase' => 'info_delivery',
-                    'trigger_type' => 'menu_number',
-                    'trigger_value' => '3',
-                    'response_text' => "Connecting you with a specialist right away! Our senior counselor has been notified on WhatsApp with your context and will message you shortly.",
-                    'attachment_type' => 'none',
-                    'attachment_url' => null,
-                    'attachment_name' => null,
-                    'next_options_json' => json_encode(["1. View Pricing Meanwhile"], JSON_UNESCAPED_UNICODE),
-                    'is_high_intent' => 1,
-                    'sort_order' => 6
+                    'sort_order' => 4
                 ]
             ];
 
             $insR = $pdo->prepare("
                 INSERT INTO `whatsapp_automation_rules`
-                (`company_id`, `phase`, `trigger_type`, `trigger_value`, `response_text`, `attachment_type`, `attachment_url`, `attachment_name`, `next_options_json`, `is_high_intent`, `is_active`, `sort_order`, `created_at`, `updated_at`)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NOW(), NOW())
+                (`company_id`, `rule_name`, `channel`, `match_type`, `action_type`, `phase`, `trigger_type`, `trigger_value`, `response_text`, `attachment_type`, `attachment_url`, `attachment_name`, `next_options_json`, `is_high_intent`, `is_active`, `sort_order`, `created_at`, `updated_at`)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NOW(), NOW())
             ");
             foreach ($starterRules as $sr) {
                 $insR->execute([
                     $companyId,
+                    $sr['rule_name'],
+                    $sr['channel'],
+                    $sr['match_type'],
+                    $sr['action_type'],
                     $sr['phase'],
                     $sr['trigger_type'],
                     $sr['trigger_value'],
@@ -248,7 +266,12 @@ class WhatsAppAutomationService {
         }
 
         foreach ($rules as &$r) {
+            $r['rule_name'] = !empty($r['rule_name']) ? $r['rule_name'] : ($r['trigger_value'] ? ucfirst($r['trigger_value']) : 'Automation #' . $r['id']);
+            $r['channel'] = !empty($r['channel']) ? $r['channel'] : 'whatsapp';
+            $r['match_type'] = !empty($r['match_type']) ? $r['match_type'] : 'contains';
+            $r['action_type'] = !empty($r['action_type']) ? $r['action_type'] : ($r['attachment_type'] !== 'none' ? 'media_pack' : 'text');
             $r['next_options'] = !empty($r['next_options_json']) ? (json_decode($r['next_options_json'], true) ?: []) : [];
+            $r['payload'] = !empty($r['payload_json']) ? json_decode($r['payload_json'], true) : null;
             $r['is_high_intent'] = (bool)$r['is_high_intent'];
             $r['is_active'] = (bool)$r['is_active'];
         }
@@ -337,17 +360,34 @@ class WhatsAppAutomationService {
         self::ensureTables($pdo);
 
         $ruleId     = (int)($data['id'] ?? 0);
+        $ruleName   = trim($data['rule_name'] ?? ($data['name'] ?? ($data['title'] ?? '')));
+        $channel    = trim($data['channel'] ?? 'whatsapp');
+        $matchType  = trim($data['match_type'] ?? ($data['trigger'] ?? 'contains'));
+        if (strpos(strtolower($matchType), 'exact') !== false) {
+            $matchType = 'exact';
+        } elseif (strpos(strtolower($matchType), 'starts') !== false) {
+            $matchType = 'starts_with';
+        } elseif (strpos(strtolower($matchType), 'menu') !== false || strpos(strtolower($matchType), 'number') !== false) {
+            $matchType = 'menu_number';
+        } else {
+            $matchType = 'contains';
+        }
+
+        $actionType = trim($data['action_type'] ?? 'text');
         $phase      = in_array($data['phase'] ?? '', ['greeting', 'info_delivery', 'follow_up', 'handoff']) ? $data['phase'] : 'info_delivery';
-        $triggerType= in_array($data['trigger_type'] ?? '', ['keyword', 'menu_number', 'intent', 'default']) ? $data['trigger_type'] : 'keyword';
-        $triggerVal = trim($data['trigger_value'] ?? '');
-        $responseTxt= trim($data['response_text'] ?? '');
-        $attType    = in_array($data['attachment_type'] ?? '', ['none', 'document', 'image', 'link']) ? $data['attachment_type'] : 'none';
-        $attUrl     = trim($data['attachment_url'] ?? '');
-        $attName    = trim($data['attachment_name'] ?? '');
+        $triggerType= in_array($data['trigger_type'] ?? '', ['keyword', 'menu_number', 'intent', 'default']) ? $data['trigger_type'] : ($matchType === 'menu_number' ? 'menu_number' : 'keyword');
+        $triggerVal = trim($data['trigger_value'] ?? ($data['keywords'] ?? ''));
+        $responseTxt= trim($data['response_text'] ?? ($data['content'] ?? ($data['reply_content'] ?? '')));
+        $attType    = in_array($data['attachment_type'] ?? ($data['media_type'] ?? ''), ['none', 'document', 'image', 'link']) ? ($data['attachment_type'] ?? $data['media_type']) : 'none';
+        $attUrl     = trim($data['attachment_url'] ?? ($data['media_url'] ?? ''));
+        $attName    = trim($data['attachment_name'] ?? ($data['media_title'] ?? ''));
         $isHighIntent = !empty($data['is_high_intent']) ? 1 : 0;
         $isActive   = isset($data['is_active']) ? (int)$data['is_active'] : 1;
         $sortOrder  = (int)($data['sort_order'] ?? 0);
 
+        if (empty($ruleName)) {
+            $ruleName = !empty($triggerVal) ? 'Rule: ' . substr($triggerVal, 0, 30) : 'Automation Rule';
+        }
         if (empty($triggerVal)) {
             return ['success' => false, 'error' => 'Trigger keyword or menu selection is required.'];
         }
@@ -362,11 +402,20 @@ class WhatsAppAutomationService {
             $optionsJson = json_encode($opts, JSON_UNESCAPED_UNICODE);
         }
 
+        $payloadJson = null;
+        if (!empty($data['payload']) || !empty($data['payload_json'])) {
+            $payloadJson = !empty($data['payload_json']) ? (is_string($data['payload_json']) ? $data['payload_json'] : json_encode($data['payload_json'])) : json_encode($data['payload']);
+        }
+
         if ($ruleId > 0) {
-            // Update existing rule with tenant isolation
             $stmt = $pdo->prepare("
                 UPDATE `whatsapp_automation_rules`
-                SET `phase` = ?,
+                SET `rule_name` = ?,
+                    `channel` = ?,
+                    `match_type` = ?,
+                    `action_type` = ?,
+                    `payload_json` = ?,
+                    `phase` = ?,
                     `trigger_type` = ?,
                     `trigger_value` = ?,
                     `response_text` = ?,
@@ -380,22 +429,24 @@ class WhatsAppAutomationService {
                 WHERE `id` = ? AND `company_id` = ?
             ");
             $stmt->execute([
+                $ruleName, $channel, $matchType, $actionType, $payloadJson,
                 $phase, $triggerType, $triggerVal, $responseTxt,
                 $attType, $attUrl, $attName, $optionsJson,
                 $isHighIntent, $isActive, $sortOrder, $ruleId, $companyId
             ]);
             return ['success' => true, 'id' => $ruleId, 'message' => 'Automation rule updated.'];
         } else {
-            // Insert new rule
             $stmt = $pdo->prepare("
                 INSERT INTO `whatsapp_automation_rules`
-                (`company_id`, `phase`, `trigger_type`, `trigger_value`, `response_text`,
+                (`company_id`, `rule_name`, `channel`, `match_type`, `action_type`, `payload_json`,
+                 `phase`, `trigger_type`, `trigger_value`, `response_text`,
                  `attachment_type`, `attachment_url`, `attachment_name`, `next_options_json`,
-                 `is_high_intent`, `is_active`, `sort_order`)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 `is_high_intent`, `is_active`, `sort_order`, `created_at`, `updated_at`)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ");
             $stmt->execute([
-                $companyId, $phase, $triggerType, $triggerVal, $responseTxt,
+                $companyId, $ruleName, $channel, $matchType, $actionType, $payloadJson,
+                $phase, $triggerType, $triggerVal, $responseTxt,
                 $attType, $attUrl, $attName, $optionsJson,
                 $isHighIntent, $isActive, $sortOrder
             ]);
@@ -431,6 +482,10 @@ class WhatsAppAutomationService {
         $cleanText = strtolower(trim($messageText));
         if (empty($cleanText)) return null;
 
+        // Normalize emojis like 1️⃣ to standard digit 1
+        $normalizedText = str_replace(['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'], ['1', '2', '3', '4', '5'], $cleanText);
+        $normalizedText = preg_replace('/^([0-9])\.\s*/', '$1', $normalizedText);
+
         // Fetch all active rules for this company
         $stmt = $pdo->prepare("
             SELECT * FROM `whatsapp_automation_rules`
@@ -440,28 +495,44 @@ class WhatsAppAutomationService {
         $stmt->execute([$companyId]);
         $rules = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // 1. First priority: Exact single number / menu digit match (e.g. "1", "2", "3")
-        if (preg_match('/^\s*([0-9]{1,2})\s*$/', $cleanText, $numMatch)) {
-            $num = $numMatch[1];
+        // 1. Single digit / menu number match (e.g. "1", "2", "3")
+        if (preg_match('/^\s*([0-9]{1,2})\s*$/', $normalizedText, $numMatch)) {
+            $digit = $numMatch[1];
             foreach ($rules as $r) {
-                if ($r['trigger_type'] === 'menu_number') {
-                    $triggerNumbers = array_map('trim', explode(',', strtolower($r['trigger_value'])));
-                    if (in_array($num, $triggerNumbers, true)) {
+                $triggerItems = array_map('trim', explode(',', strtolower($r['trigger_value'])));
+                if (in_array($digit, $triggerItems, true) || $r['trigger_type'] === 'menu_number' || ($r['match_type'] ?? '') === 'menu_number') {
+                    if (in_array($digit, $triggerItems, true)) {
                         return $r;
                     }
                 }
             }
         }
 
-        // 2. Second priority: Keyword / phrase match
+        // 2. Keyword & phrase match (handling contains, exact, starts_with)
         foreach ($rules as $r) {
+            $matchMode = $r['match_type'] ?? 'contains';
             $keywords = array_map('trim', explode(',', strtolower($r['trigger_value'])));
+
             foreach ($keywords as $kw) {
                 if (empty($kw)) continue;
-                // Word-boundary match or substring if phrase
-                $pattern = '/\b' . preg_quote($kw, '/') . '\b/i';
-                if (preg_match($pattern, $cleanText) || (strlen($kw) > 3 && strpos($cleanText, $kw) !== false)) {
-                    return $r;
+
+                if ($matchMode === 'exact') {
+                    if ($cleanText === $kw || $normalizedText === $kw) {
+                        return $r;
+                    }
+                } elseif ($matchMode === 'starts_with') {
+                    if (strpos($cleanText, $kw) === 0 || strpos($normalizedText, $kw) === 0) {
+                        return $r;
+                    }
+                } else {
+                    // Default 'contains'
+                    $pattern = '/\b' . preg_quote($kw, '/') . '\b/i';
+                    if (preg_match($pattern, $cleanText) || preg_match($pattern, $normalizedText)) {
+                        return $r;
+                    }
+                    if (strlen($kw) >= 3 && (strpos($cleanText, $kw) !== false || strpos($normalizedText, $kw) !== false)) {
+                        return $r;
+                    }
                 }
             }
         }

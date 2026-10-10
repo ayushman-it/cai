@@ -1194,129 +1194,124 @@ try {
         // 12. AUTOMATIONS & KEYWORD RULES COCKPIT (PAGE 1)
         // ==========================================
         case 'get_automations_cockpit':
+        case 'get_automations':
             $search = trim($_GET['search'] ?? '');
             $state  = $_GET['state'] ?? 'all'; // all | active | paused
             $type   = $_GET['type'] ?? 'all';
 
-            // Query custom replies & automations
-            $stmt = $pdo->prepare("
-                SELECT id, title, shortcut as rule_name, category, reply_content, keywords, media_type, media_url, media_payload_json, is_active, created_at
-                FROM `custom_replies`
-                WHERE company_id = ?
-                ORDER BY id DESC
-            ");
-            $stmt->execute([$companyId]);
-            $dbRules = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // Get complete config via WhatsAppAutomationService
+            $autoConfig = WhatsAppAutomationService::getConfig($pdo, $companyId);
+            $rawRules = $autoConfig['rules'] ?? [];
 
-            // Seed default rules if empty
-            if (empty($dbRules)) {
-                $defaultSeeds = [
-                    ['Welcome flow', 'welcome_rule', 'Welcome', "Hi {{name}}! 👋 Welcome to CuboidSoft. How can our AI assistant Cai assist you today?", 'hi, hello, start, info, hey', 1],
-                    ['Pricing request', 'pricing_rule', 'Pricing', "Here are our active Cai AI tiers:\n• Essential: ₹79/mo\n• Advanced: ₹159/mo\n• Expert: ₹279/mo\n\nAll plans include ₹1/outcome! Would you like a live demo?", 'price, pricing, cost, rate, charges, fee', 1],
-                    ['Catalog request', 'catalog_rule', 'Catalog', "Here is our product catalog: https://cai.cuboidsoft.in/products. We offer automated AI solutions for EdTech, Healthcare, and SaaS.", 'catalog, brochure, product, syllabus, courses', 1],
-                    ['Demo booking', 'demo_rule', 'Meeting', "Book a personalized 30-min live demo with our engineers here: https://cal.com/cuboidpilot/30min", 'demo, call, meeting, appointment, zoom', 1]
-                ];
-                foreach ($defaultSeeds as $seed) {
-                    $pdo->prepare("
-                        INSERT INTO `custom_replies` (`company_id`, `title`, `shortcut`, `category`, `reply_content`, `keywords`, `is_active`, `created_at`)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())
-                    ")->execute([$companyId, $seed[0], $seed[1], $seed[2], $seed[3], $seed[4], $seed[5]]);
+            // Apply search & filters
+            $filteredRules = [];
+            foreach ($rawRules as $r) {
+                if ($state === 'active' && empty($r['is_active'])) continue;
+                if ($state === 'paused' && !empty($r['is_active'])) continue;
+                if ($type !== 'all' && strtolower($r['action_type']) !== strtolower($type)) continue;
+
+                if (!empty($search)) {
+                    $sLower = strtolower($search);
+                    $nameMatch = strpos(strtolower($r['rule_name']), $sLower) !== false;
+                    $kwMatch = strpos(strtolower($r['trigger_value']), $sLower) !== false;
+                    $txtMatch = strpos(strtolower($r['response_text']), $sLower) !== false;
+                    if (!$nameMatch && !$kwMatch && !$txtMatch) continue;
                 }
-                $stmt->execute([$companyId]);
-                $dbRules = $stmt->fetchAll(PDO::FETCH_ASSOC);
-            }
 
-            $rules = [];
-            foreach ($dbRules as $r) {
-                $rules[] = [
-                    'id'          => (int)$r['id'],
-                    'name'        => $r['title'],
-                    'rule_name'   => $r['rule_name'] ?: 'WhatsApp Rule #' . $r['id'],
-                    'trigger'     => 'Contains keyword',
-                    'keywords'    => $r['keywords'] ?: 'general',
-                    'action_type' => !empty($r['media_type']) && $r['media_type'] !== 'none' ? ucfirst($r['media_type']) : 'Text Reply',
-                    'media_type'  => $r['media_type'] ?? 'none',
-                    'media_url'   => $r['media_url'] ?? '',
-                    'media_payload_json' => $r['media_payload_json'] ?? null,
-                    'content'     => $r['reply_content'],
-                    'category'    => $r['category'] ?: 'General',
-                    'is_active'   => (bool)$r['is_active'],
-                    'created_at'  => $r['created_at']
+                $filteredRules[] = [
+                    'id'            => (int)$r['id'],
+                    'name'          => $r['rule_name'],
+                    'rule_name'     => $r['rule_name'],
+                    'channel'       => $r['channel'] ?? 'whatsapp',
+                    'trigger'       => $r['match_type'] === 'exact' ? 'Exact match' : ($r['match_type'] === 'starts_with' ? 'Starts with' : ($r['match_type'] === 'menu_number' ? 'Menu number' : 'Contains keyword')),
+                    'match_type'    => $r['match_type'] ?? 'contains',
+                    'keywords'      => $r['trigger_value'],
+                    'trigger_value' => $r['trigger_value'],
+                    'action_type'   => ucfirst(str_replace('_', ' ', $r['action_type'] ?? 'text')),
+                    'action_key'    => $r['action_type'] ?? 'text',
+                    'content'       => $r['response_text'],
+                    'response_text' => $r['response_text'],
+                    'media_type'    => $r['attachment_type'] ?? 'none',
+                    'media_url'     => $r['attachment_url'] ?? '',
+                    'media_title'   => $r['attachment_name'] ?? '',
+                    'next_options'  => $r['next_options'] ?? [],
+                    'payload'       => $r['payload'] ?? null,
+                    'is_high_intent'=> (bool)$r['is_high_intent'],
+                    'is_active'     => (bool)$r['is_active'],
+                    'created_at'    => $r['updated_formatted'] ?? date('M j, Y')
                 ];
             }
 
             // Stat counters matching Screenshot 1
-            $totalRules = count($rules);
-            $activeRules = count(array_filter($rules, function($r) { return $r['is_active']; }));
+            $totalCount = count($rawRules);
+            $activeCount = count(array_filter($rawRules, function($r) { return !empty($r['is_active']); }));
+            $mediaPackCount = count(array_filter($rawRules, function($r) { return !empty($r['attachment_url']) || ($r['action_type'] ?? '') === 'media_pack'; }));
+            $templateSetCount = count(array_filter($rawRules, function($r) { return ($r['action_type'] ?? '') === 'template' || ($r['action_type'] ?? '') === 'template_set'; }));
+
+            // Fetch synced Meta templates for dropdown
+            $tplStmt = $pdo->prepare("SELECT name, category, language, status FROM `whatsapp_templates_cache` WHERE company_id = ? AND status = 'APPROVED' ORDER BY name ASC");
+            $tplStmt->execute([$companyId]);
+            $syncedTemplates = $tplStmt->fetchAll(PDO::FETCH_ASSOC);
 
             echo json_encode([
                 'success'      => true,
-                'rules'        => $rules,
+                'rules'        => $filteredRules,
+                'all_rules'    => $rawRules,
+                'templates'    => $syncedTemplates,
+                'settings'     => $autoConfig['settings'] ?? [],
+                'account'      => $autoConfig['account'] ?? [],
                 'metrics'      => [
-                    'total_rules'   => $totalRules,
-                    'active_rules'  => $activeRules,
-                    'media_packs'   => 2,
-                    'template_sets' => 4
+                    'total_rules'   => $totalCount,
+                    'active_rules'  => $activeCount,
+                    'media_packs'   => max(1, $mediaPackCount),
+                    'template_sets' => max(1, $templateSetCount)
                 ],
                 'stats'        => [
-                    'total'         => $totalRules,
-                    'active'        => $activeRules,
-                    'media_packs'   => 2,
-                    'template_sets' => 4
+                    'total'         => $totalCount,
+                    'active'        => $activeCount,
+                    'media_packs'   => max(1, $mediaPackCount),
+                    'template_sets' => max(1, $templateSetCount)
                 ]
             ]);
             break;
 
         case 'save_automation_rule':
-            $ruleId    = (int)($body['id'] ?? 0);
-            $name      = trim($body['name'] ?? ($body['title'] ?? 'WhatsApp Keyword Reply'));
-            $keywords  = trim($body['keywords'] ?? '');
-            $trigger   = trim($body['trigger'] ?? 'Contains keyword');
-            $actionT   = trim($body['action_type'] ?? 'text');
-            $content   = trim($body['content'] ?? ($body['reply_content'] ?? ''));
-            $category  = trim($body['category'] ?? 'General');
-            $mediaType = trim($body['media_type'] ?? 'none');
-            $mediaUrl  = trim($body['media_url'] ?? '');
-            $mediaPayload = !empty($body['media_payload']) ? (is_string($body['media_payload']) ? $body['media_payload'] : json_encode($body['media_payload'])) : null;
-            $isActive  = isset($body['is_active']) ? (int)$body['is_active'] : 1;
+            $res = WhatsAppAutomationService::saveRule($pdo, $companyId, $body);
+            if (!empty($res['success'])) {
+                // Also mirror to custom_replies for backward compatibility
+                try {
+                    $pdo->prepare("
+                        INSERT INTO `custom_replies` (`company_id`, `title`, `shortcut`, `category`, `reply_content`, `keywords`, `media_type`, `media_url`, `is_active`, `created_at`)
+                        VALUES (?, ?, ?, 'Automation', ?, ?, ?, ?, ?, NOW())
+                        ON DUPLICATE KEY UPDATE `reply_content` = VALUES(`reply_content`), `keywords` = VALUES(`keywords`), `is_active` = VALUES(`is_active`)
+                    ")->execute([
+                        $companyId,
+                        $body['name'] ?? ($body['rule_name'] ?? 'Rule'),
+                        strtolower(preg_replace('/[^a-zA-Z0-9_]/', '_', $body['name'] ?? 'rule')),
+                        $body['content'] ?? ($body['response_text'] ?? ''),
+                        $body['keywords'] ?? ($body['trigger_value'] ?? ''),
+                        $body['media_type'] ?? ($body['attachment_type'] ?? 'none'),
+                        $body['media_url'] ?? ($body['attachment_url'] ?? ''),
+                        isset($body['is_active']) ? (int)$body['is_active'] : 1
+                    ]);
+                } catch (Throwable $e) {}
 
-            if (empty($name) || empty($content)) {
-                echo json_encode(['success' => false, 'error' => 'Rule name and response content are required.']);
-                exit;
-            }
-
-            if ($ruleId > 0) {
-                $pdo->prepare("
-                    UPDATE `custom_replies`
-                    SET `title` = ?, `reply_content` = ?, `keywords` = ?, `category` = ?, `media_type` = ?, `media_url` = ?, `media_payload_json` = ?, `is_active` = ?
-                    WHERE id = ? AND company_id = ?
-                ")->execute([$name, $content, $keywords, $category, $mediaType, $mediaUrl, $mediaPayload, $isActive, $ruleId, $companyId]);
+                echo json_encode(['success' => true, 'rule_id' => $res['id'], 'message' => 'Automation rule saved successfully!']);
             } else {
-                $pdo->prepare("
-                    INSERT INTO `custom_replies` (`company_id`, `title`, `shortcut`, `category`, `reply_content`, `keywords`, `media_type`, `media_url`, `media_payload_json`, `is_active`, `created_at`)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-                ")->execute([$companyId, $name, strtolower(preg_replace('/[^a-zA-Z0-9_]/', '_', $name)), $category, $content, $keywords, $mediaType, $mediaUrl, $mediaPayload, $isActive]);
-                $ruleId = (int)$pdo->lastInsertId();
+                echo json_encode(['success' => false, 'error' => $res['error'] ?? 'Failed to save automation rule.']);
             }
-
-            echo json_encode(['success' => true, 'rule_id' => $ruleId, 'message' => 'Automation saved successfully!']);
             break;
 
         case 'toggle_automation_rule':
             $ruleId   = (int)($body['id'] ?? 0);
-            $isActive = !empty($body['is_active']) ? 1 : 0;
-            if ($ruleId > 0) {
-                $pdo->prepare("UPDATE `custom_replies` SET `is_active` = ? WHERE id = ? AND company_id = ?")->execute([$isActive, $ruleId, $companyId]);
-            }
-            echo json_encode(['success' => true, 'is_active' => (bool)$isActive]);
+            $success = WhatsAppAutomationService::toggleRule($pdo, $companyId, $ruleId);
+            echo json_encode(['success' => $success]);
             break;
 
         case 'delete_automation_rule':
             $ruleId = (int)($body['id'] ?? 0);
-            if ($ruleId > 0) {
-                $pdo->prepare("DELETE FROM `custom_replies` WHERE id = ? AND company_id = ?")->execute([$ruleId, $companyId]);
-            }
-            echo json_encode(['success' => true, 'message' => 'Rule deleted successfully.']);
+            $success = WhatsAppAutomationService::deleteRule($pdo, $companyId, $ruleId);
+            echo json_encode(['success' => $success, 'message' => 'Rule removed.']);
             break;
 
 

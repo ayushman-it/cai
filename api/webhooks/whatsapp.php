@@ -372,7 +372,7 @@ try {
     }
 
     // 2c. If the sender is an authorized company user but has no active session:
-    // Check if they typed a legacy #ID command, else notify them
+    // Check if they typed a legacy #ID command to reply to a conversation
     if ($context['status'] === 'no_active_session') {
         if (preg_match('/^(?:reply\s*#?|#)\s*([0-9]+)\s+(.+)$/is', $messageText, $cmdMatch)) {
             $targetConvId = (int)$cmdMatch[1];
@@ -403,15 +403,8 @@ try {
                 exit;
             }
         }
-
-        WhatsAppBridge::sendAgentRejection(
-            $pdo,
-            $context['company_id'],
-            $cleanSender,
-            "⚠️ No active human support session found waiting for your reply."
-        );
-        echo json_encode(['status' => 'no_active_session', 'note' => 'Agent notified of no active session']);
-        exit;
+        // If not a #ID reply command, the user (owner/agent) is testing or messaging the bot!
+        // Allow execution to fall through to Customer Identity & Automation Engine below.
     }
 
     // 3. Multi-Tenant & Omnichannel Customer Identity Resolution
@@ -503,8 +496,24 @@ try {
             WHERE id = ? AND company_id = ?
         ")->execute([substr($messageText, 0, 150), $conversationId, $resolvedCompanyId]);
 
-        // If human is actively handling this conversation, silence AI and exit gracefully
-        if ($activeConv && ($activeConv['ownership'] === 'human' || in_array($activeConv['status'], ['human_requested', 'human_active'], true))) {
+        // Evaluate if incoming message explicitly matches an automation rule or reset command
+        $earlyMatchedRule = WhatsAppAutomationService::matchIncomingMessage($pdo, $resolvedCompanyId, $messageText);
+        $isRestartWord = in_array(strtolower(trim($messageText)), ['hi', 'hello', 'hey', 'start', 'menu', 'restart', 'cai'], true);
+
+        if ($earlyMatchedRule && empty($earlyMatchedRule['is_high_intent'])) {
+            // Customer explicitly triggered an automation rule — un-silence AI
+            $pdo->prepare("UPDATE `conversations` SET `ownership` = 'ai', `status` = 'ai_handling' WHERE id = ? AND company_id = ?")->execute([$conversationId, $resolvedCompanyId]);
+            $activeConv['ownership'] = 'ai';
+            $activeConv['status'] = 'ai_handling';
+        } elseif ($isRestartWord && $activeConv && ($activeConv['ownership'] === 'human' || in_array($activeConv['status'], ['human_requested', 'human_active'], true))) {
+            // Customer wants to restart / view menu — switch back to AI
+            $pdo->prepare("UPDATE `conversations` SET `ownership` = 'ai', `status` = 'ai_handling' WHERE id = ? AND company_id = ?")->execute([$conversationId, $resolvedCompanyId]);
+            $activeConv['ownership'] = 'ai';
+            $activeConv['status'] = 'ai_handling';
+        }
+
+        // If human is actively handling this conversation and no automation trigger was sent, silence AI and exit gracefully
+        if ($activeConv && ($activeConv['ownership'] === 'human' || in_array($activeConv['status'], ['human_requested', 'human_active'], true)) && !$earlyMatchedRule) {
             $pdo->prepare("
                 INSERT INTO `messages` 
                 (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `created_at`)
@@ -835,7 +844,7 @@ try {
 
     // Phase 2: Information Delivery — Keyword triggers and Number-based menus
     if (empty($aiReply)) {
-        $matchedRule = WhatsAppAutomationService::matchIncomingMessage($pdo, $resolvedCompanyId, $messageText);
+        $matchedRule = !empty($earlyMatchedRule) ? $earlyMatchedRule : WhatsAppAutomationService::matchIncomingMessage($pdo, $resolvedCompanyId, $messageText);
         if ($matchedRule) {
             $aiReply = str_replace(
                 ['{{name}}', '{{company}}', '{{company_name}}'],
