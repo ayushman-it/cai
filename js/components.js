@@ -772,7 +772,7 @@ window.CuboidShell = {
         <div class="sub-sidebar-nav flex-1 overflow-y-auto space-y-0.5">
           <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pt-1 pb-1">Workflows</div>
           <a href="javascript:void(0)" onclick="window.switchMainTab ? window.switchMainTab('automation') : null" class="sub-nav-item active font-medium" id="side-link-auto">
-            <span class="flex items-center gap-2"><i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-600"></i> WhatsApp Automations</span>
+            <span class="flex items-center gap-2"><i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-600"></i> Automation</span>
             <span id="shell-rules-badge" class="text-[10px] font-mono font-bold px-1.5 py-0.2 bg-emerald-50 text-emerald-800 rounded border border-emerald-200 ml-auto">4</span>
           </a>
           <a href="javascript:void(0)" onclick="window.switchMainTab ? window.switchMainTab('templates') : null" class="sub-nav-item text-stone-600 hover:text-stone-900" id="side-link-tpl">
@@ -891,7 +891,7 @@ window.CuboidShell = {
               <a href="whatsapp.html" class="rail-item ${active === 'whatsapp' ? 'active' : ''}" title="WhatsApp Command Center">
                 <i data-lucide="message-square" class="w-5 h-5"></i>
               </a>
-              <a href="automations.html" class="rail-item ${active === 'automations' ? 'active' : ''}" title="WhatsApp Automations &amp; Rules">
+              <a href="automations.html" class="rail-item ${active === 'automations' ? 'active' : ''}" title="Automation">
                 <i data-lucide="zap" class="w-5 h-5"></i>
               </a>
               <a href="pipeline.html" class="rail-item ${active === 'leads' || active === 'pipeline' ? 'active' : ''}" title="Pipeline Kanban & Contacts">
