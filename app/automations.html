@@ -70,11 +70,31 @@
       transform: translateX(16px);
     }
 
-    /* Action Tab Pill Active */
-    .action-pill-active {
+    /* Action Type Segmented Tabs */
+    .action-type-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #57534e;
+      background: transparent;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .action-type-btn:hover {
+      color: #1c1917;
+      background-color: rgba(255, 255, 255, 0.6);
+    }
+    .action-type-btn.action-pill-active {
       background-color: #ffffff !important;
-      color: #111827 !important;
-      border-color: #111827 !important;
+      color: #1c1917 !important;
+      border-color: #d6d3d1 !important;
       font-weight: 600 !important;
       box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
     }
@@ -276,25 +296,25 @@
                   <!-- Action Type Tabs / Pills (Redesigned Intercom Style with SVG icons) -->
                   <div>
                     <label class="block text-[11px] font-semibold text-stone-700 mb-1.5">Action Type</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 p-1 bg-[#edebe4] rounded-lg border border-[#dedad0]">
-                      <button type="button" onclick="setActionTab('text')" id="act-tab-text" class="px-2.5 py-2 rounded-md font-medium text-stone-700 bg-white border border-stone-200 shadow-2xs text-xs inline-flex items-center justify-center gap-1.5 transition action-pill-active cursor-pointer">
-                        <i data-lucide="message-square" class="w-3.5 h-3.5 text-stone-700"></i>
+                    <div class="flex items-center gap-1 p-1 bg-[#edebe4] rounded-lg border border-[#dedad0] overflow-x-auto">
+                      <button type="button" onclick="setActionTab('text')" id="act-tab-text" class="action-type-btn flex-1 action-pill-active">
+                        <i data-lucide="message-square" class="w-3.5 h-3.5 shrink-0"></i>
                         <span>Text</span>
                       </button>
-                      <button type="button" onclick="setActionTab('template')" id="act-tab-template" class="px-2.5 py-2 rounded-md font-medium text-stone-600 hover:text-stone-900 text-xs inline-flex items-center justify-center gap-1.5 transition cursor-pointer">
-                        <i data-lucide="layout-template" class="w-3.5 h-3.5 text-stone-500"></i>
+                      <button type="button" onclick="setActionTab('template')" id="act-tab-template" class="action-type-btn flex-1">
+                        <i data-lucide="layout-template" class="w-3.5 h-3.5 shrink-0"></i>
                         <span>Template</span>
                       </button>
-                      <button type="button" onclick="setActionTab('template_set')" id="act-tab-template_set" class="px-2.5 py-2 rounded-md font-medium text-stone-600 hover:text-stone-900 text-xs inline-flex items-center justify-center gap-1.5 transition cursor-pointer">
-                        <i data-lucide="layers" class="w-3.5 h-3.5 text-stone-500"></i>
+                      <button type="button" onclick="setActionTab('template_set')" id="act-tab-template_set" class="action-type-btn flex-1">
+                        <i data-lucide="layers" class="w-3.5 h-3.5 shrink-0"></i>
                         <span>Drip Set</span>
                       </button>
-                      <button type="button" onclick="setActionTab('products')" id="act-tab-products" class="px-2.5 py-2 rounded-md font-medium text-stone-600 hover:text-stone-900 text-xs inline-flex items-center justify-center gap-1.5 transition cursor-pointer">
-                        <i data-lucide="shopping-bag" class="w-3.5 h-3.5 text-stone-500"></i>
+                      <button type="button" onclick="setActionTab('products')" id="act-tab-products" class="action-type-btn flex-1">
+                        <i data-lucide="shopping-bag" class="w-3.5 h-3.5 shrink-0"></i>
                         <span>Product</span>
                       </button>
-                      <button type="button" onclick="setActionTab('media_pack')" id="act-tab-media_pack" class="px-2.5 py-2 rounded-md font-medium text-stone-600 hover:text-stone-900 text-xs inline-flex items-center justify-center gap-1.5 transition cursor-pointer">
-                        <i data-lucide="paperclip" class="w-3.5 h-3.5 text-stone-500"></i>
+                      <button type="button" onclick="setActionTab('media_pack')" id="act-tab-media_pack" class="action-type-btn flex-1">
+                        <i data-lucide="paperclip" class="w-3.5 h-3.5 shrink-0"></i>
                         <span>Media</span>
                       </button>
                     </div>
@@ -1108,12 +1128,15 @@
         const res = await fetch('../api/whatsapp_hub.php?action=toggle_automation_rule', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: ruleId, is_active: isActive ? 1 : 0 })
+          body: JSON.stringify({ id: ruleId, rule_id: ruleId, is_active: isActive ? 1 : 0 })
         });
         const data = await res.json();
         if (data.success) {
           const rule = allCockpitRules.find(r => r.id === ruleId);
           if (rule) rule.is_active = isActive;
+        } else {
+          alert(data.error || 'Failed to toggle rule.');
+          await loadCockpit();
         }
       } catch (e) {
         console.error('Toggle error:', e);
@@ -1150,7 +1173,7 @@
         const res = await fetch('../api/whatsapp_hub.php?action=delete_automation_rule', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: ruleId })
+          body: JSON.stringify({ id: ruleId, rule_id: ruleId })
         });
         const data = await res.json();
         if (data.success) {

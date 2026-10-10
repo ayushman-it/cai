@@ -995,7 +995,7 @@ try {
             break;
 
         case 'delete_automation_rule':
-            $ruleId = (int)($body['rule_id'] ?? ($_GET['rule_id'] ?? 0));
+            $ruleId = (int)($body['rule_id'] ?? ($body['id'] ?? ($_GET['rule_id'] ?? ($_GET['id'] ?? 0))));
             if ($ruleId <= 0) {
                 echo json_encode(['success' => false, 'error' => 'Rule ID required.']);
                 break;
@@ -1005,7 +1005,7 @@ try {
             break;
 
         case 'toggle_automation_rule':
-            $ruleId = (int)($body['rule_id'] ?? ($_GET['rule_id'] ?? 0));
+            $ruleId = (int)($body['rule_id'] ?? ($body['id'] ?? ($_GET['rule_id'] ?? ($_GET['id'] ?? 0))));
             if ($ruleId <= 0) {
                 echo json_encode(['success' => false, 'error' => 'Rule ID required.']);
                 break;
