@@ -146,6 +146,107 @@ class WhatsAppAutomationService {
         $rStmt->execute([$companyId]);
         $rules = $rStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        if (count($rules) === 0) {
+            $starterRules = [
+                [
+                    'phase' => 'info_delivery',
+                    'trigger_type' => 'keyword',
+                    'trigger_value' => 'pricing, price, fees, cost',
+                    'response_text' => "Here are our standard packages:\n• Starter AI: ₹4,999/mo\n• Growth Autonomous: ₹14,999/mo\n• Enterprise Custom: Flexible EMI available.\n\nWould you like an official quotation or to discuss an installment plan?",
+                    'attachment_type' => 'link',
+                    'attachment_url' => 'https://cai.cuboidsoft.in/pricing.html',
+                    'attachment_name' => 'View Detailed Pricing',
+                    'next_options_json' => json_encode(["1. Request EMI Plan", "2. Talk to Counselor"], JSON_UNESCAPED_UNICODE),
+                    'is_high_intent' => 1,
+                    'sort_order' => 1
+                ],
+                [
+                    'phase' => 'info_delivery',
+                    'trigger_type' => 'menu_number',
+                    'trigger_value' => '1',
+                    'response_text' => "Here is our verified pricing breakdown:\n• Starter AI: ₹4,999/mo\n• Growth Autonomous: ₹14,999/mo\n• Enterprise: Custom\n\nReply 3 to connect directly with our sales team.",
+                    'attachment_type' => 'link',
+                    'attachment_url' => 'https://cai.cuboidsoft.in/pricing.html',
+                    'attachment_name' => 'Live Pricing Calculator',
+                    'next_options_json' => json_encode(["2. Download Brochure", "3. Speak with Counselor"], JSON_UNESCAPED_UNICODE),
+                    'is_high_intent' => 1,
+                    'sort_order' => 2
+                ],
+                [
+                    'phase' => 'info_delivery',
+                    'trigger_type' => 'keyword',
+                    'trigger_value' => 'brochure, catalog, syllabus, details',
+                    'response_text' => "Please find our complete official solutions brochure attached below. It covers all autonomous AI workflows, WhatsApp bridge setup, and security compliance.",
+                    'attachment_type' => 'document',
+                    'attachment_url' => 'https://cai.cuboidsoft.in/assets/CuboidPilot_Platform_Overview.pdf',
+                    'attachment_name' => 'CuboidPilot_Platform_Overview.pdf',
+                    'next_options_json' => json_encode(["1. Pricing & Plans", "3. Speak with Counselor"], JSON_UNESCAPED_UNICODE),
+                    'is_high_intent' => 0,
+                    'sort_order' => 3
+                ],
+                [
+                    'phase' => 'info_delivery',
+                    'trigger_type' => 'menu_number',
+                    'trigger_value' => '2',
+                    'response_text' => "Here is our official platform overview and capabilities brochure attached for your review.",
+                    'attachment_type' => 'document',
+                    'attachment_url' => 'https://cai.cuboidsoft.in/assets/CuboidPilot_Platform_Overview.pdf',
+                    'attachment_name' => 'CuboidPilot_Platform_Overview.pdf',
+                    'next_options_json' => json_encode(["1. Pricing & Plans", "3. Speak with Counselor"], JSON_UNESCAPED_UNICODE),
+                    'is_high_intent' => 0,
+                    'sort_order' => 4
+                ],
+                [
+                    'phase' => 'info_delivery',
+                    'trigger_type' => 'keyword',
+                    'trigger_value' => 'counselor, human, agent, talk to human, speak with expert',
+                    'response_text' => "Connecting you with a specialist right away! Our senior counselor has been notified on WhatsApp with your context and will message you shortly.",
+                    'attachment_type' => 'none',
+                    'attachment_url' => null,
+                    'attachment_name' => null,
+                    'next_options_json' => json_encode(["1. View Pricing Meanwhile"], JSON_UNESCAPED_UNICODE),
+                    'is_high_intent' => 1,
+                    'sort_order' => 5
+                ],
+                [
+                    'phase' => 'info_delivery',
+                    'trigger_type' => 'menu_number',
+                    'trigger_value' => '3',
+                    'response_text' => "Connecting you with a specialist right away! Our senior counselor has been notified on WhatsApp with your context and will message you shortly.",
+                    'attachment_type' => 'none',
+                    'attachment_url' => null,
+                    'attachment_name' => null,
+                    'next_options_json' => json_encode(["1. View Pricing Meanwhile"], JSON_UNESCAPED_UNICODE),
+                    'is_high_intent' => 1,
+                    'sort_order' => 6
+                ]
+            ];
+
+            $insR = $pdo->prepare("
+                INSERT INTO `whatsapp_automation_rules`
+                (`company_id`, `phase`, `trigger_type`, `trigger_value`, `response_text`, `attachment_type`, `attachment_url`, `attachment_name`, `next_options_json`, `is_high_intent`, `is_active`, `sort_order`, `created_at`, `updated_at`)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, NOW(), NOW())
+            ");
+            foreach ($starterRules as $sr) {
+                $insR->execute([
+                    $companyId,
+                    $sr['phase'],
+                    $sr['trigger_type'],
+                    $sr['trigger_value'],
+                    $sr['response_text'],
+                    $sr['attachment_type'],
+                    $sr['attachment_url'],
+                    $sr['attachment_name'],
+                    $sr['next_options_json'],
+                    $sr['is_high_intent'],
+                    $sr['sort_order']
+                ]);
+            }
+
+            $rStmt->execute([$companyId]);
+            $rules = $rStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+
         foreach ($rules as &$r) {
             $r['next_options'] = !empty($r['next_options_json']) ? (json_decode($r['next_options_json'], true) ?: []) : [];
             $r['is_high_intent'] = (bool)$r['is_high_intent'];
