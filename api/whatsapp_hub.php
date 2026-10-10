@@ -1275,44 +1275,7 @@ try {
             ]);
             break;
 
-        case 'save_automation_rule':
-            $res = WhatsAppAutomationService::saveRule($pdo, $companyId, $body);
-            if (!empty($res['success'])) {
-                // Also mirror to custom_replies for backward compatibility
-                try {
-                    $pdo->prepare("
-                        INSERT INTO `custom_replies` (`company_id`, `title`, `shortcut`, `category`, `reply_content`, `keywords`, `media_type`, `media_url`, `is_active`, `created_at`)
-                        VALUES (?, ?, ?, 'Automation', ?, ?, ?, ?, ?, NOW())
-                        ON DUPLICATE KEY UPDATE `reply_content` = VALUES(`reply_content`), `keywords` = VALUES(`keywords`), `is_active` = VALUES(`is_active`)
-                    ")->execute([
-                        $companyId,
-                        $body['name'] ?? ($body['rule_name'] ?? 'Rule'),
-                        strtolower(preg_replace('/[^a-zA-Z0-9_]/', '_', $body['name'] ?? 'rule')),
-                        $body['content'] ?? ($body['response_text'] ?? ''),
-                        $body['keywords'] ?? ($body['trigger_value'] ?? ''),
-                        $body['media_type'] ?? ($body['attachment_type'] ?? 'none'),
-                        $body['media_url'] ?? ($body['attachment_url'] ?? ''),
-                        isset($body['is_active']) ? (int)$body['is_active'] : 1
-                    ]);
-                } catch (Throwable $e) {}
 
-                echo json_encode(['success' => true, 'rule_id' => $res['id'], 'message' => 'Automation rule saved successfully!']);
-            } else {
-                echo json_encode(['success' => false, 'error' => $res['error'] ?? 'Failed to save automation rule.']);
-            }
-            break;
-
-        case 'toggle_automation_rule':
-            $ruleId   = (int)($body['id'] ?? 0);
-            $success = WhatsAppAutomationService::toggleRule($pdo, $companyId, $ruleId);
-            echo json_encode(['success' => $success]);
-            break;
-
-        case 'delete_automation_rule':
-            $ruleId = (int)($body['id'] ?? 0);
-            $success = WhatsAppAutomationService::deleteRule($pdo, $companyId, $ruleId);
-            echo json_encode(['success' => $success, 'message' => 'Rule removed.']);
-            break;
 
 
         // ==========================================

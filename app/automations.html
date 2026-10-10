@@ -1088,17 +1088,34 @@
           btn.disabled = false;
           return;
         }
-        payload.content = `[Template: ${tplName}]`;
+        payload.content = payload.content || `[Template: ${tplName}]`;
         payload.payload = { template_name: tplName, params: document.getElementById('rule-tpl-params').value.trim() };
       } else if (currentActiveTabAction === 'products') {
-        payload.payload = {
-          title: document.getElementById('rule-prod-title').value.trim(),
-          price: document.getElementById('rule-prod-price').value.trim(),
-          url: document.getElementById('rule-prod-url').value.trim()
-        };
-        payload.content = `Product: ${payload.payload.title} (${payload.payload.price})\n${payload.payload.url}`;
+        const pTitle = document.getElementById('rule-prod-title').value.trim() || 'Product Overview';
+        const pPrice = document.getElementById('rule-prod-price').value.trim();
+        const pUrl = document.getElementById('rule-prod-url').value.trim();
+        payload.payload = { title: pTitle, price: pPrice, url: pUrl };
+        if (!payload.content) {
+          payload.content = `Product: ${pTitle}${pPrice ? ' (' + pPrice + ')' : ''}${pUrl ? '\n' + pUrl : ''}`;
+        }
       } else if (currentActiveTabAction === 'media_pack') {
         payload.attachment_type = 'document';
+        if (!payload.content) {
+          const mTitle = payload.media_title || 'Document & Resources';
+          payload.content = `Here is our resource pack for your review: ${mTitle}`;
+        }
+      } else if (currentActiveTabAction === 'template_set') {
+        const tSet = document.getElementById('rule-template-set').value;
+        payload.payload = { template_set: tSet };
+        if (!payload.content) {
+          payload.content = `Welcome! Your requested sequence has been activated.`;
+        }
+      }
+
+      if (!payload.content) {
+        alert('Please enter reply message content.');
+        btn.disabled = false;
+        return;
       }
 
       try {
