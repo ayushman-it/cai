@@ -18,6 +18,7 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/whatsapp_automation_service.php';
 $pdo = getDbConnection();
 
 // Self-healing migration for legacy/empty customer_uuid
@@ -971,133 +972,89 @@ try {
             echo json_encode(['success' => true, 'flow_key' => $flowKey, 'is_active' => $isActive]);
             break;
 
+        // ====================================================================
+        // TASK 3: WHATSAPP AUTOMATION ENGINE & 4-PHASE FLOWS
+        // ====================================================================
+        case 'get_automation_config':
+            $config = WhatsAppAutomationService::getConfig($pdo, $companyId);
+            echo json_encode(array_merge(['success' => true], $config));
+            break;
 
-        // ==========================================
-        // 10. TEMPLATES & META TEMPLATE LIBRARY
-        // ==========================================
+        case 'save_automation_settings':
+            $ok = WhatsAppAutomationService::saveSettings($pdo, $companyId, $body);
+            if ($ok) {
+                echo json_encode(['success' => true, 'message' => 'Automation settings saved successfully.']);
+            } else {
+                echo json_encode(['success' => false, 'error' => 'Failed to save automation settings.']);
+            }
+            break;
+
+        case 'save_automation_rule':
+            $res = WhatsAppAutomationService::saveRule($pdo, $companyId, $body);
+            echo json_encode($res);
+            break;
+
+        case 'delete_automation_rule':
+            $ruleId = (int)($body['rule_id'] ?? ($_GET['rule_id'] ?? 0));
+            if ($ruleId <= 0) {
+                echo json_encode(['success' => false, 'error' => 'Rule ID required.']);
+                break;
+            }
+            $ok = WhatsAppAutomationService::deleteRule($pdo, $companyId, $ruleId);
+            echo json_encode(['success' => $ok, 'message' => $ok ? 'Rule deleted successfully.' : 'Failed to delete rule.']);
+            break;
+
+        case 'toggle_automation_rule':
+            $ruleId = (int)($body['rule_id'] ?? ($_GET['rule_id'] ?? 0));
+            if ($ruleId <= 0) {
+                echo json_encode(['success' => false, 'error' => 'Rule ID required.']);
+                break;
+            }
+            $ok = WhatsAppAutomationService::toggleRule($pdo, $companyId, $ruleId);
+            echo json_encode(['success' => $ok]);
+            break;
+
+        case 'process_followups':
+            $pRes = WhatsAppAutomationService::processPendingFollowUps($pdo);
+            echo json_encode(array_merge(['success' => true], $pRes));
+            break;
+
+        // ====================================================================
+        // TASK 3: META TEMPLATES (REAL-TIME META GRAPH API INTEGRATION)
+        // ====================================================================
+        case 'sync_meta_templates':
+            $sync = WhatsAppAutomationService::syncMetaTemplates($pdo, $companyId);
+            echo json_encode($sync);
+            break;
+
+        case 'create_meta_template':
+            $draftRes = WhatsAppAutomationService::createMetaTemplate($pdo, $companyId, $body);
+            echo json_encode($draftRes);
+            break;
+
         case 'get_templates':
         case 'get_templates_meta':
-            // Fetch default templates and any custom templates
             $category = trim($_GET['category'] ?? 'all');
             $search = trim($_GET['search'] ?? '');
-
-            $templates = [
-                [
-                    'id'          => 'account_setup_confirmation',
-                    'name'        => 'Finalize account setup',
-                    'category'    => 'Utility',
-                    'language'    => 'English (US)',
-                    'body'        => "Hi {{1}},\n\nYour new account has been created successfully.\n\nPlease verify {{2}} to complete your profile.",
-                    'sample'      => ['John', 'https://cai.cuboidsoft.in/verify'],
-                    'status'      => 'APPROVED',
-                    'button'      => 'Verify account'
-                ],
-                [
-                    'id'          => 'address_update',
-                    'name'        => 'Address update',
-                    'category'    => 'Utility',
-                    'language'    => 'English (US)',
-                    'body'        => "Hi {{1}}, your delivery address has been successfully updated to {{2}}.\n\nContact {{3}} for any inquiries.",
-                    'sample'      => ['Aarav', 'Sector 62, Noida', 'support@cuboidsoft.in'],
-                    'status'      => 'APPROVED'
-                ],
-                [
-                    'id'          => 'appointment_cancelled',
-                    'name'        => 'Appointment cancelled',
-                    'category'    => 'Utility',
-                    'language'    => 'English (US)',
-                    'body'        => "Hi {{1}},\n\nYour appointment scheduled for {{2}} has been cancelled. If you wish to reschedule, please reply to this message.",
-                    'sample'      => ['Priya', 'Tomorrow at 11:00 AM'],
-                    'status'      => 'APPROVED'
-                ],
-                [
-                    'id'          => 'payment_confirmation',
-                    'name'        => 'Payment confirmation',
-                    'category'    => 'Utility',
-                    'language'    => 'English (US)',
-                    'body'        => "Hi {{1}}, we have received your payment of {{2}} for invoice {{3}}. Thank you for choosing our services!",
-                    'sample'      => ['Rohan', '₹15,000', 'INV-2026-091'],
-                    'status'      => 'APPROVED'
-                ],
-                [
-                    'id'          => 'auth_code_verification',
-                    'name'        => 'Security Authentication OTP',
-                    'category'    => 'Authentication',
-                    'language'    => 'English (US)',
-                    'body'        => "{{1}} is your verification security code. For your safety, do not share this OTP with anyone.",
-                    'sample'      => ['842915'],
-                    'status'      => 'APPROVED'
-                ],
-                [
-                    'id'          => 'festival_offer_promo',
-                    'name'        => 'Exclusive Festival Offer',
-                    'category'    => 'Marketing',
-                    'language'    => 'English (US)',
-                    'body'        => "Hey {{1}}! 🎉 Enjoy an exclusive {{2}}% discount on all Cai AI Automation and WhatsApp plans this week. Code: {{3}}.",
-                    'sample'      => ['Vikram', '25', 'FESTIVE25'],
-                    'status'      => 'APPROVED'
-                ],
-                [
-                    'id'          => 'tpl_welcome',
-                    'name'        => 'Welcome & Introduction',
-                    'category'    => 'Marketing',
-                    'language'    => 'English (US)',
-                    'body'        => "Hello {{1}}! 👋 Thank you for connecting with CuboidSoft. I'm Cai, your autonomous AI assistant. How can I help you accelerate your business today?",
-                    'sample'      => ['Client'],
-                    'status'      => 'APPROVED'
-                ],
-                [
-                    'id'          => 'tpl_demo',
-                    'name'        => '30-Minute Live Demo Invitation',
-                    'category'    => 'Marketing',
-                    'language'    => 'English (US)',
-                    'body'        => "Hi {{1}}! 🎬 We'd love to show you how Cai AI can automate 85% of your customer conversations. Pick a quick 30-min live slot here: https://cal.com/cuboidpilot/30min",
-                    'sample'      => ['Client'],
-                    'status'      => 'APPROVED'
-                ]
-            ];
-
-            // Filter if requested
-            if ($category !== 'all' && !empty($category)) {
-                $templates = array_values(array_filter($templates, function($t) use ($category) {
-                    return strtolower($t['category']) === strtolower($category);
-                }));
-            }
-            if (!empty($search)) {
-                $templates = array_values(array_filter($templates, function($t) use ($search) {
-                    return stripos($t['name'], $search) !== false || stripos($t['body'], $search) !== false;
-                }));
-            }
-
-            echo json_encode(['success' => true, 'templates' => $templates]);
+            $tpls = WhatsAppAutomationService::getCachedTemplates($pdo, $companyId, $category, $search);
+            echo json_encode(['success' => true, 'templates' => $tpls]);
             break;
 
         case 'save_template_meta':
             $tplName = trim($body['template_name'] ?? '');
-            $tplCat  = trim($body['category'] ?? 'Utility');
+            $tplCat  = trim($body['category'] ?? 'UTILITY');
             $tplLang = trim($body['language'] ?? 'en_US');
             $tplBody = trim($body['body'] ?? '');
-            $samples = trim($body['sample_values'] ?? '');
+            $btnText = trim($body['button_text'] ?? '');
 
-            if (empty($tplName) || empty($tplBody)) {
-                echo json_encode(['success' => false, 'error' => 'Template name and body cannot be empty.']);
-                exit;
-            }
-
-            // Save to custom_replies or as simulated approved template
-            try {
-                $pdo->prepare("
-                    INSERT INTO `custom_replies` (`company_id`, `title`, `shortcut`, `category`, `reply_content`, `is_active`, `created_at`)
-                    VALUES (?, ?, ?, ?, ?, 1, NOW())
-                ")->execute([$companyId, $tplName, strtolower(preg_replace('/[^a-zA-Z0-9_]/', '_', $tplName)), $tplCat, $tplBody]);
-            } catch (Throwable $e) {}
-
-            echo json_encode([
-                'success' => true,
-                'message' => 'Template submitted to Meta and approved for your WhatsApp WABA.',
-                'template_name' => $tplName,
-                'status' => 'APPROVED'
+            $res = WhatsAppAutomationService::createMetaTemplate($pdo, $companyId, [
+                'name'        => $tplName,
+                'category'    => $tplCat,
+                'language'    => $tplLang,
+                'body'        => $tplBody,
+                'button_text' => $btnText
             ]);
+            echo json_encode($res);
             break;
 
         case 'send_template_meta':

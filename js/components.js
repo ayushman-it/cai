@@ -791,7 +791,7 @@ window.CuboidShell = {
               <a href="contacts.html" class="sub-nav-item text-xs py-1.5 ${active === 'contacts' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
                 <span class="flex items-center gap-2"><i data-lucide="users" class="w-3 h-3 text-blue-500"></i> Contacts CRM</span>
               </a>
-              <a href="templates.html" class="sub-nav-item text-xs py-1.5 ${active === 'templates' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
+              <a href="automations.html?tab=templates" class="sub-nav-item text-xs py-1.5 ${active === 'templates' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">
                 <span class="flex items-center gap-2"><i data-lucide="layout-template" class="w-3 h-3 text-purple-500"></i> Meta Templates</span>
               </a>
               <a href="channels.html" class="sub-nav-item text-xs py-1.5 ${active === 'channels' ? 'active font-medium text-stone-900 bg-stone-100' : 'text-stone-600 hover:text-stone-900'}">

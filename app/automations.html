@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp & Widget Automations Cockpit — Cai AI</title>
+  <title>WhatsApp Automation Engine — CAI Dashboard</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,199 +12,522 @@
   <link rel="stylesheet" href="../css/theme.css">
   <link rel="stylesheet" href="../css/dashboard.css?v=5.0.0">
   <style>
-    body { font-family: 'Inter', -apple-system, sans-serif; }
-    .cockpit-card { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05); }
-    .toggle-checkbox:checked { right: 0; border-color: #059669; }
-    .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .cockpit-card { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04); }
+    .wa-preview-bg {
+      background-color: #efeae2;
+      background-image: radial-gradient(#dfd7cc 1px, transparent 1px);
+      background-size: 16px 16px;
+    }
+    .wa-bubble-received {
+      background-color: #ffffff;
+      border-radius: 0px 12px 12px 12px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.06);
+    }
+    .wa-bubble-sent {
+      background-color: #d9fdd3;
+      border-radius: 12px 0px 12px 12px;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.06);
+    }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="app-body overflow-hidden">
+<body class="app-body overflow-hidden bg-[#faf9f7]">
 
   <div class="app-viewport">
+    <!-- Universal Sidebar Container -->
     <div id="sidebar-container"></div>
 
+    <!-- Main Workspace -->
     <div class="app-main h-screen flex flex-col overflow-hidden bg-[#faf9f7]">
       <div id="topbar-container" class="block lg:hidden shrink-0"></div>
 
       <!-- Top Header -->
-      <header class="px-6 py-4 border-b border-[#e7e5de] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
-        <div>
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 rounded-lg bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-2xs">
-              <i data-lucide="zap" class="w-5 h-5"></i>
+      <header class="px-5 lg:px-7 py-3.5 border-b border-[#e7e5de] bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-stone-900 text-white flex items-center justify-center font-bold shadow-2xs">
+            <i data-lucide="zap" class="w-5 h-5 text-amber-400"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h1 class="text-base font-bold text-stone-900 tracking-tight">WhatsApp Automation</h1>
+              <span id="gateway-badge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-mono font-medium bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="gateway-phone">+91 82249 73413</span> • Meta API Live
+              </span>
             </div>
-            <div>
-              <h1 class="text-base font-bold text-stone-900 tracking-tight flex items-center gap-2">
-                <span>Keyword Replies &amp; Triggers</span>
-                <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-100/70 text-emerald-800 border border-emerald-200">Rule Cockpit</span>
-              </h1>
-              <p class="text-xs text-stone-500 mt-0.5">Automate WhatsApp and web widget conversations with exact keyword matches, catalog intents &amp; instant rich media dispatches.</p>
-            </div>
+            <p class="text-xs text-stone-500 mt-0.5">Production-ready conversational automation, 4-phase routing &amp; Meta templates cockpit.</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-2.5 flex-wrap">
-          <a href="whatsapp.html" class="px-3 py-1.5 bg-white border border-stone-200 hover:border-stone-400 text-stone-700 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 transition">
-            <i data-lucide="arrow-left" class="w-3.5 h-3.5 text-stone-500"></i>
-            <span>WhatsApp Hub</span>
+        <div class="flex items-center gap-2">
+          <a href="whatsapp.html" class="px-3 py-1.5 bg-white border border-stone-200 hover:border-stone-400 text-stone-700 text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 transition">
+            <i data-lucide="message-square" class="w-3.5 h-3.5 text-[#25D366]"></i>
+            <span>Live Inbox</span>
           </a>
-          <button onclick="openRuleModal()" class="px-3.5 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition">
+          <button id="header-primary-btn" onclick="handleHeaderPrimaryAction()" class="px-3.5 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 shadow-2xs transition">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>Create Rule</span>
+            <span id="header-primary-btn-text">Add Rule</span>
           </button>
         </div>
       </header>
 
-      <!-- Sub-Nav Pill Bar -->
-      <div class="px-6 py-2.5 bg-white border-b border-[#e7e5de] flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-2 text-xs">
-          <a href="whatsapp.html" class="px-2.5 py-1 text-stone-600 hover:text-stone-900 rounded font-medium flex items-center gap-1.5">
-            <i data-lucide="inbox" class="w-3.5 h-3.5"></i> Live Inbox
-          </a>
-          <a href="automations.html" class="px-2.5 py-1 bg-stone-100 text-stone-900 rounded font-semibold flex items-center gap-1.5">
-            <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i> Automations
-          </a>
-          <a href="contacts.html" class="px-2.5 py-1 text-stone-600 hover:text-stone-900 rounded font-medium flex items-center gap-1.5">
-            <i data-lucide="users" class="w-3.5 h-3.5 text-blue-500"></i> Contacts CRM
-          </a>
-          <a href="templates.html" class="px-2.5 py-1 text-stone-600 hover:text-stone-900 rounded font-medium flex items-center gap-1.5">
-            <i data-lucide="layout-template" class="w-3.5 h-3.5 text-purple-500"></i> Meta Templates
-          </a>
+      <!-- STRICT TWO TABS NAV BAR -->
+      <div class="px-5 lg:px-7 py-2 bg-white border-b border-[#e7e5de] flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-1 p-0.5 bg-stone-100 rounded-lg border border-stone-200 text-xs">
+          <button onclick="switchTab('custom')" id="tab-btn-custom" class="px-3.5 py-1.5 rounded-md font-semibold text-stone-900 bg-white shadow-2xs inline-flex items-center gap-1.5 transition">
+            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i>
+            <span>Custom Automation</span>
+            <span class="text-[10px] font-mono px-1.5 py-0.2 bg-stone-100 text-stone-600 rounded">4 Phases</span>
+          </button>
+          <button onclick="switchTab('templates')" id="tab-btn-templates" class="px-3.5 py-1.5 rounded-md font-medium text-stone-600 hover:text-stone-900 inline-flex items-center gap-1.5 transition">
+            <i data-lucide="layout-template" class="w-3.5 h-3.5 text-purple-500"></i>
+            <span>Meta Templates</span>
+            <span id="badge-meta-total" class="text-[10px] font-mono px-1.5 py-0.2 bg-stone-200/60 text-stone-700 rounded">5 Live</span>
+          </button>
         </div>
-        <div class="text-[11px] text-stone-400 font-mono hidden md:block">
-          Dual Channel: WhatsApp Business API + Website Widget
+
+        <div class="text-[11px] text-stone-400 font-mono hidden md:flex items-center gap-3">
+          <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-600"></i> Tenant Isolated</span>
+          <span class="text-stone-300">•</span>
+          <span>Zero-Code Routing</span>
         </div>
       </div>
 
-      <!-- Main Content Area -->
-      <main class="flex-1 overflow-y-auto p-6 space-y-6">
+      <!-- MAIN SCROLLABLE CONTENT VIEW -->
+      <main class="flex-1 overflow-y-auto p-4 lg:p-7 space-y-6">
 
-        <!-- Metric Cards (Screenshot 1: Rules, Active, Media packs, Template sets) -->
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="bg-white border border-[#e7e5de] rounded-xl p-4 cockpit-card">
-            <div class="flex items-center justify-between text-xs text-stone-500 mb-1">
-              <span>Rules</span>
-              <i data-lucide="hash" class="w-4 h-4 text-stone-400"></i>
+        <!-- ==================================================================== -->
+        <!-- TAB 1: CUSTOM AUTOMATION (4 DISTINCT PHASES)                          -->
+        <!-- ==================================================================== -->
+        <div id="tab-content-custom" class="space-y-6">
+
+          <!-- PHASE 1: GREETING & INTRODUCTION -->
+          <div class="bg-white border border-[#e7e5de] rounded-xl p-5 lg:p-6 cockpit-card">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-100 gap-2 mb-5">
+              <div class="flex items-center gap-2.5">
+                <span class="w-6 h-6 rounded-md bg-stone-900 text-white text-xs font-bold flex items-center justify-center font-mono">1</span>
+                <div>
+                  <h2 class="text-sm font-bold text-stone-900 tracking-tight flex items-center gap-2">
+                    <span>Phase 1: Greeting &amp; Introduction</span>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200">First Contact</span>
+                  </h2>
+                  <p class="text-xs text-stone-500">Dispatched when a customer initiates contact or transitions from the website widget.</p>
+                </div>
+              </div>
+              <div class="text-right">
+                <span class="text-[11px] text-stone-400 font-mono">Channel: WhatsApp Cloud API</span>
+              </div>
             </div>
-            <div id="stat-total-rules" class="text-2xl font-bold text-stone-900 font-mono">0</div>
-            <div class="text-[11px] text-stone-400 mt-0.5">Configured keyword triggers</div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <!-- Left: Message Configuration -->
+              <div class="lg:col-span-7 space-y-4">
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-semibold text-stone-800">Custom Greeting Message</label>
+                    <div class="flex items-center gap-1">
+                      <button type="button" onclick="insertVariable('greeting_message', '{{name}}')" class="px-2 py-0.5 text-[10px] font-mono bg-stone-100 hover:bg-stone-200 text-stone-700 rounded border border-stone-200">+ {{name}}</button>
+                      <button type="button" onclick="insertVariable('greeting_message', '{{company}}')" class="px-2 py-0.5 text-[10px] font-mono bg-stone-100 hover:bg-stone-200 text-stone-700 rounded border border-stone-200">+ {{company}}</button>
+                    </div>
+                  </div>
+                  <textarea id="p1-greeting-message" rows="5" oninput="updateGreetingPreview()" placeholder="Enter your welcome greeting and numbered options..." class="w-full p-3 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 focus:bg-white transition text-stone-900 leading-relaxed font-sans"></textarea>
+                  <p class="text-[11px] text-stone-400 mt-1">Hint: List numbered options like <code class="font-mono text-stone-600">1. Services</code>, <code class="font-mono text-stone-600">2. Brochure</code>, <code class="font-mono text-stone-600">3. Talk to human</code> for seamless Phase 2 choice routing.</p>
+                </div>
+
+                <div class="p-3.5 bg-stone-50/70 border border-stone-200 rounded-lg space-y-2">
+                  <div class="flex items-center justify-between">
+                    <label class="block text-xs font-semibold text-stone-800 flex items-center gap-1.5">
+                      <i data-lucide="share-2" class="w-3.5 h-3.5 text-stone-600"></i>
+                      <span>Website Widget → WhatsApp Prefilled Text</span>
+                    </label>
+                    <span class="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Ref Protected</span>
+                  </div>
+                  <input type="text" id="p1-prefilled-template" placeholder="Hi, I was exploring your website and would like assistance." class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 text-stone-800 font-sans">
+                  <p class="text-[10px] text-stone-400">When visitors click "Continue on WhatsApp" in your web widget, this text opens in WhatsApp with a secure session reference.</p>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                  <div id="p1-save-status" class="text-xs text-stone-500 font-medium"></div>
+                  <button onclick="savePhase1Settings()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 shadow-2xs transition">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                    <span>Save Greeting Flow</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right: Live WhatsApp Bubble Preview -->
+              <div class="lg:col-span-5 flex flex-col">
+                <div class="text-xs font-semibold text-stone-700 mb-2 flex items-center justify-between">
+                  <span>Customer Phone Preview</span>
+                  <span class="text-[10px] font-mono text-stone-400">WhatsApp View</span>
+                </div>
+                <div class="flex-1 wa-preview-bg rounded-xl border border-stone-300 p-4 flex flex-col justify-between space-y-3 min-h-[220px]">
+                  <!-- Prefilled visitor prompt -->
+                  <div class="flex justify-end">
+                    <div class="wa-bubble-sent max-w-[85%] p-2.5 text-xs text-stone-900 relative">
+                      <p id="preview-prefill-text">Hi, I was exploring on your website and would like assistance. Ref: cp-w7x89q2</p>
+                      <span class="block text-[9px] text-stone-500 text-right mt-1 font-mono">10:42 AM ✓✓</span>
+                    </div>
+                  </div>
+
+                  <!-- Automated Greeting reply -->
+                  <div class="flex justify-start">
+                    <div class="wa-bubble-received max-w-[90%] p-3 text-xs text-stone-900 relative">
+                      <div class="text-[10px] font-bold text-emerald-800 mb-1 flex items-center gap-1">
+                        <i data-lucide="bot" class="w-3 h-3 text-emerald-600"></i>
+                        <span>Cai Autonomous Pilot</span>
+                      </div>
+                      <div id="preview-greeting-text" class="whitespace-pre-wrap leading-relaxed text-stone-800">Hello! Thank you for reaching out to CuboidSoft. How can we help you today?
+
+1. View Services
+2. Get AI Solutions Brochure
+3. Speak with a Solution Advisor</div>
+                      <span class="block text-[9px] text-stone-400 text-right mt-1 font-mono">10:42 AM</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="bg-white border border-[#e7e5de] rounded-xl p-4 cockpit-card">
-            <div class="flex items-center justify-between text-xs text-stone-500 mb-1">
-              <span>Active</span>
-              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+
+          <!-- PHASE 2: INFORMATION DELIVERY & CHOICE ROUTING -->
+          <div class="bg-white border border-[#e7e5de] rounded-xl p-5 lg:p-6 cockpit-card space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-100 gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-6 h-6 rounded-md bg-stone-900 text-white text-xs font-bold flex items-center justify-center font-mono">2</span>
+                <div>
+                  <h2 class="text-sm font-bold text-stone-900 tracking-tight flex items-center gap-2">
+                    <span>Phase 2: Information Delivery &amp; Choice Routing</span>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200">Rule Cockpit</span>
+                  </h2>
+                  <p class="text-xs text-stone-500">Maps numbered selections (<code class="font-mono">1</code>, <code class="font-mono">2</code>, <code class="font-mono">3</code>) &amp; keywords directly to responses, brochures, and catalogs before generic AI.</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <button onclick="openRuleModal()" class="px-3 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 shadow-2xs transition">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Add Rule</span>
+                </button>
+              </div>
             </div>
-            <div id="stat-active-rules" class="text-2xl font-bold text-emerald-700 font-mono">0</div>
-            <div class="text-[11px] text-emerald-600/80 mt-0.5">Listening on channels</div>
+
+            <!-- Rules Filter Bar -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 pt-1">
+              <div class="relative flex-1 max-w-sm">
+                <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
+                <input type="text" id="rule-search" oninput="filterRules()" placeholder="Filter by number (1, 2) or keywords..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 focus:bg-white text-stone-900 font-sans">
+              </div>
+
+              <div class="flex items-center gap-2">
+                <select id="rule-type-filter" onchange="filterRules()" class="px-2.5 py-1.5 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 text-stone-700 font-medium">
+                  <option value="all">All Triggers</option>
+                  <option value="menu_number">Number Options (1, 2, 3)</option>
+                  <option value="keyword">Keywords</option>
+                  <option value="high_intent">High Intent Triggers</option>
+                </select>
+                <button onclick="loadConfig()" class="p-1.5 border border-[#e7e5de] hover:bg-stone-50 text-stone-600 rounded-lg transition" title="Refresh Rules">
+                  <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Rules Grid / List -->
+            <div id="rules-container" class="space-y-3 pt-1">
+              <div class="p-8 text-center text-stone-400 text-xs">Loading automation rules...</div>
+            </div>
           </div>
 
-          <div class="bg-white border border-[#e7e5de] rounded-xl p-4 cockpit-card">
-            <div class="flex items-center justify-between text-xs text-stone-500 mb-1">
-              <span>Media Packs</span>
-              <i data-lucide="folder" class="w-4 h-4 text-purple-500"></i>
+
+          <!-- PHASE 3: AUTOMATED FOLLOW-UP -->
+          <div class="bg-white border border-[#e7e5de] rounded-xl p-5 lg:p-6 cockpit-card space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-100 gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-6 h-6 rounded-md bg-stone-900 text-white text-xs font-bold flex items-center justify-center font-mono">3</span>
+                <div>
+                  <h2 class="text-sm font-bold text-stone-900 tracking-tight flex items-center gap-2">
+                    <span>Phase 3: Automated Inactivity Follow-Up</span>
+                    <span id="p3-badge-status" class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Active</span>
+                  </h2>
+                  <p class="text-xs text-stone-500">Automatically re-engages prospects if they stop responding after information delivery.</p>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" id="p3-enabled" onchange="toggleFollowUpActiveState()" class="rounded border-stone-300 text-emerald-600 w-4 h-4">
+                  <span class="text-xs font-semibold text-stone-800">Enable Inactivity Follow-up</span>
+                </label>
+              </div>
             </div>
-            <div id="stat-media-packs" class="text-2xl font-bold text-purple-700 font-mono">3</div>
-            <div class="text-[11px] text-stone-400 mt-0.5">Brochures &amp; Catalogs</div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <div class="lg:col-span-8 space-y-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-800 mb-1">Inactivity Wait Delay</label>
+                    <select id="p3-delay-select" onchange="handleDelayChange()" class="w-full p-2.5 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium text-stone-800">
+                      <option value="20">20 Seconds (Fast Testing)</option>
+                      <option value="60" selected>1 Minute (Recommended for WhatsApp)</option>
+                      <option value="180">3 Minutes (High Engagement)</option>
+                      <option value="300">5 Minutes</option>
+                      <option value="custom">Custom Seconds...</option>
+                    </select>
+                    <div id="p3-custom-delay-box" class="hidden mt-2">
+                      <input type="number" id="p3-custom-delay" min="10" max="86400" placeholder="Seconds (e.g. 120)" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md font-mono">
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-800 mb-1">Maximum Frequency Limit</label>
+                    <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-lg text-xs text-stone-700 flex items-center justify-between">
+                      <span class="font-medium">1 Single Follow-up per session</span>
+                      <span class="text-[10px] font-mono text-emerald-700 bg-emerald-100/70 px-1.5 py-0.5 rounded">Anti-Spam</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-semibold text-stone-800">Follow-up Message Text</label>
+                    <div class="flex items-center gap-1">
+                      <button type="button" onclick="insertVariable('p3-message', '{{name}}')" class="px-2 py-0.5 text-[10px] font-mono bg-stone-100 hover:bg-stone-200 text-stone-700 rounded border border-stone-200">+ {{name}}</button>
+                    </div>
+                  </div>
+                  <textarea id="p3-message" rows="4" placeholder="Enter follow-up message..." class="w-full p-3 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 focus:bg-white text-stone-900 leading-relaxed font-sans"></textarea>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                  <div id="p3-save-status" class="text-xs text-stone-500 font-medium"></div>
+                  <button onclick="savePhase3Settings()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 shadow-2xs transition">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                    <span>Save Follow-up Logic</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right: Anti-Spam & Auto Cancellation Rules Callout -->
+              <div class="lg:col-span-4 space-y-3">
+                <div class="p-4 bg-emerald-50/50 border border-emerald-200/80 rounded-xl space-y-2.5 text-xs text-stone-700">
+                  <div class="flex items-center gap-1.5 font-bold text-emerald-900">
+                    <i data-lucide="shield-alert" class="w-4 h-4 text-emerald-600"></i>
+                    <span>Automatic Cancellation Policy</span>
+                  </div>
+                  <p class="leading-relaxed text-stone-600 text-[11.5px]">
+                    If the customer sends <strong>any message</strong> at all before the delay timer expires, the pending follow-up is immediately cancelled in the queue.
+                  </p>
+                  <div class="pt-2 border-t border-emerald-200/50 text-[11px] text-stone-500 space-y-1">
+                    <div class="flex items-center gap-1.5">
+                      <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                      <span>Respects 24-Hour WhatsApp Service Window</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                      <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i>
+                      <span>Paused if agent takes manual ownership</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div class="bg-white border border-[#e7e5de] rounded-xl p-4 cockpit-card">
-            <div class="flex items-center justify-between text-xs text-stone-500 mb-1">
-              <span>Template Sets</span>
-              <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>
+
+          <!-- PHASE 4: LEAD QUALIFICATION & HUMAN HANDOFF -->
+          <div class="bg-white border border-[#e7e5de] rounded-xl p-5 lg:p-6 cockpit-card space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-100 gap-2">
+              <div class="flex items-center gap-2.5">
+                <span class="w-6 h-6 rounded-md bg-stone-900 text-white text-xs font-bold flex items-center justify-center font-mono">4</span>
+                <div>
+                  <h2 class="text-sm font-bold text-stone-900 tracking-tight flex items-center gap-2">
+                    <span>Phase 4: Lead Qualification &amp; Human Handoff</span>
+                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200">High Intent Alert</span>
+                  </h2>
+                  <p class="text-xs text-stone-500">Detects buying signals, marks lead as HIGH priority, pauses AI, and alerts your team via WhatsApp.</p>
+                </div>
+              </div>
+
+              <div class="text-right">
+                <span class="text-[11px] text-stone-400 font-mono">Instant Internal Routing</span>
+              </div>
             </div>
-            <div id="stat-template-sets" class="text-2xl font-bold text-blue-700 font-mono">5</div>
-            <div class="text-[11px] text-stone-400 mt-0.5">Meta pre-approved messages</div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              <!-- Left: Configuration Inputs -->
+              <div class="lg:col-span-7 space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold text-stone-800 mb-1">High-Intent Trigger Keywords (Comma-separated)</label>
+                  <textarea id="p4-keywords" rows="3" placeholder="pricing, buy, cost, enroll, fee, admission, quotation, human, agent, expert, call me" class="w-full p-2.5 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 focus:bg-white text-stone-900 font-mono leading-relaxed"></textarea>
+                  <p class="text-[11px] text-stone-400 mt-1">Incoming messages matching any of these words or marked Phase 2 rules trigger immediate escalation.</p>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-stone-800 mb-1">Assign &amp; Notify Team Member</label>
+                  <select id="p4-notify-user" onchange="updateAlertPreview()" class="w-full p-2.5 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium text-stone-800">
+                    <option value="0">All Available Admins</option>
+                  </select>
+                  <p class="text-[10px] text-stone-400 mt-1">The assigned teammate will receive a direct WhatsApp ping on their registered phone number.</p>
+                </div>
+
+                <div class="p-3 bg-stone-50 border border-stone-200 rounded-lg text-xs space-y-1.5 text-stone-600">
+                  <div class="font-semibold text-stone-900 flex items-center gap-1.5">
+                    <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-500"></i>
+                    <span>Automatic System Actions on Trigger:</span>
+                  </div>
+                  <ul class="list-disc list-inside space-y-0.5 text-[11.5px] text-stone-600">
+                    <li>Lead CRM priority updated to <strong class="text-rose-700">HIGH</strong> &amp; stage marked as Interested.</li>
+                    <li>Conversation mode switched to <strong class="text-stone-900">Human Active</strong> (AI auto-replies paused).</li>
+                    <li>Direct WhatsApp alert card sent to the assigned team member.</li>
+                  </ul>
+                </div>
+
+                <div class="flex items-center justify-between pt-1">
+                  <div id="p4-save-status" class="text-xs text-stone-500 font-medium"></div>
+                  <button onclick="savePhase4Settings()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 shadow-2xs transition">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                    <span>Save Handoff Settings</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right: Live Internal WhatsApp Alert Preview -->
+              <div class="lg:col-span-5 flex flex-col">
+                <div class="text-xs font-semibold text-stone-700 mb-2 flex items-center justify-between">
+                  <span>Team Member WhatsApp Alert Preview</span>
+                  <span class="text-[10px] font-mono text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">Internal Alert</span>
+                </div>
+                <div class="wa-preview-bg rounded-xl border border-stone-300 p-4 min-h-[220px]">
+                  <div class="wa-bubble-received p-3.5 text-xs text-stone-900 space-y-2 border-l-4 border-rose-600">
+                    <div class="flex items-center justify-between text-[11px] font-bold text-rose-700">
+                      <span class="flex items-center gap-1">🚨 HIGH INTENT LEAD ALERT</span>
+                      <span class="text-[9px] font-mono text-stone-400">NOW</span>
+                    </div>
+                    <div class="text-[11px] text-stone-700 font-mono space-y-1 bg-stone-50 p-2 rounded border border-stone-200">
+                      <div><strong class="text-stone-900">Prospect:</strong> Rahul Sharma</div>
+                      <div><strong class="text-stone-900">Phone:</strong> +91 98200 12345</div>
+                      <div><strong class="text-stone-900">Trigger:</strong> <span class="bg-amber-100 text-amber-900 px-1 rounded">"How much is the pricing for enterprise?"</span></div>
+                      <div><strong class="text-stone-900">Assigned:</strong> <span id="preview-alert-assigned">Solution Specialist</span></div>
+                      <div><strong class="text-stone-900">AI State:</strong> <span class="text-rose-600 font-semibold">Paused (Human Needed)</span></div>
+                    </div>
+                    <div class="text-[10px] text-stone-500 pt-1 flex items-center justify-between">
+                      <span>👉 Reply to visitor or open CAI Live Inbox</span>
+                      <i data-lucide="arrow-right" class="w-3 h-3 text-stone-400"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+
         </div>
 
-        <!-- Quick Chips (Screenshot 1: Welcome flow, Pricing request, Catalog request) -->
-        <div class="bg-white border border-[#e7e5de] rounded-xl p-4 cockpit-card space-y-2">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-stone-700 uppercase tracking-wider">Quick Start Presets</span>
-            <span class="text-[11px] text-stone-400">Click chip to auto-fill create form</span>
-          </div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <button onclick="applyPreset('welcome')" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition">
-              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-emerald-600"></i>
-              <span>Welcome flow</span>
-            </button>
-            <button onclick="applyPreset('pricing')" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition">
-              <i data-lucide="tag" class="w-3.5 h-3.5 text-blue-600"></i>
-              <span>Pricing request</span>
-            </button>
-            <button onclick="applyPreset('catalog')" class="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-800 border border-purple-200 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition">
-              <i data-lucide="book-open" class="w-3.5 h-3.5 text-purple-600"></i>
-              <span>Catalog request</span>
-            </button>
-            <button onclick="applyPreset('support')" class="px-3 py-1.5 bg-stone-100 hover:bg-stone-200 text-stone-800 border border-stone-200 rounded-lg text-xs font-medium inline-flex items-center gap-1.5 transition">
-              <i data-lucide="headphones" class="w-3.5 h-3.5 text-stone-600"></i>
-              <span>Human agent handover</span>
-            </button>
-          </div>
-        </div>
 
-        <!-- Cockpit Search & Filters -->
-        <div class="bg-white border border-[#e7e5de] rounded-xl p-3.5 cockpit-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-          <div class="flex-1 relative">
-            <i data-lucide="search" class="w-4 h-4 text-stone-400 absolute left-3 top-3"></i>
-            <input type="text" id="rule-search" oninput="filterRules()" placeholder="Filter rules by title, keywords or intent..." class="w-full pl-9 pr-4 py-2 text-xs bg-stone-50/50 border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 focus:bg-white transition text-stone-900 placeholder:text-stone-400">
+        <!-- ==================================================================== -->
+        <!-- TAB 2: META TEMPLATES (REAL-TIME META GRAPH API INTEGRATION)           -->
+        <!-- ==================================================================== -->
+        <div id="tab-content-templates" class="hidden space-y-6">
+
+          <!-- Meta WABA Status & Live Counters -->
+          <div class="bg-white border border-[#e7e5de] rounded-xl p-5 lg:p-6 cockpit-card">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-stone-100">
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <h2 class="text-sm font-bold text-stone-900 tracking-tight">Meta WhatsApp Business Platform Templates</h2>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold">Cloud API Verified</span>
+                </div>
+                <p class="text-xs text-stone-500">Live pre-approved templates queried directly from Meta Graph API for outbound engagement and marketing.</p>
+              </div>
+
+              <div class="flex items-center gap-2 flex-wrap">
+                <button id="sync-meta-btn" onclick="syncMetaTemplates()" class="px-3.5 py-1.5 bg-white border border-stone-200 hover:border-stone-400 text-stone-800 text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 transition shadow-2xs">
+                  <i data-lucide="refresh-cw" id="sync-meta-icon" class="w-3.5 h-3.5 text-stone-600"></i>
+                  <span>Sync with Meta</span>
+                </button>
+                <button onclick="openCreateTemplateModal()" class="px-3.5 py-1.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 shadow-2xs transition">
+                  <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                  <span>Create Template Draft</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Metric Counters -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
+              <div class="p-3.5 bg-stone-50 border border-stone-200 rounded-xl">
+                <div class="text-[11px] font-medium text-stone-500">Total Synced</div>
+                <div id="stat-meta-total" class="text-xl font-bold font-mono text-stone-900 mt-0.5">0</div>
+                <div class="text-[10px] text-stone-400 mt-0.5">Meta Graph Catalog</div>
+              </div>
+
+              <div class="p-3.5 bg-emerald-50/70 border border-emerald-200 rounded-xl">
+                <div class="text-[11px] font-medium text-emerald-800">Approved</div>
+                <div id="stat-meta-approved" class="text-xl font-bold font-mono text-emerald-700 mt-0.5">0</div>
+                <div class="text-[10px] text-emerald-600/80 mt-0.5">Ready for Outbound</div>
+              </div>
+
+              <div class="p-3.5 bg-amber-50/70 border border-amber-200 rounded-xl">
+                <div class="text-[11px] font-medium text-amber-800">Pending Review</div>
+                <div id="stat-meta-pending" class="text-xl font-bold font-mono text-amber-700 mt-0.5">0</div>
+                <div class="text-[10px] text-amber-600/80 mt-0.5">In Meta Queue</div>
+              </div>
+
+              <div class="p-3.5 bg-rose-50/70 border border-rose-200 rounded-xl">
+                <div class="text-[11px] font-medium text-rose-800">Rejected / Issues</div>
+                <div id="stat-meta-rejected" class="text-xl font-bold font-mono text-rose-700 mt-0.5">0</div>
+                <div class="text-[10px] text-rose-600/80 mt-0.5">Policy Fix Needed</div>
+              </div>
+            </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <select id="state-filter" onchange="filterRules()" class="px-3 py-2 text-xs bg-stone-50/50 border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 text-stone-700 font-medium">
-              <option value="all">All States</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive Only</option>
-            </select>
+          <!-- Template Filters Toolbar -->
+          <div class="bg-white border border-[#e7e5de] rounded-xl p-3.5 cockpit-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5"></i>
+              <input type="text" id="tpl-search" oninput="filterTemplates()" placeholder="Search template name or message text..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 focus:bg-white text-stone-900 font-sans">
+            </div>
 
-            <select id="type-filter" onchange="filterRules()" class="px-3 py-2 text-xs bg-stone-50/50 border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 text-stone-700 font-medium">
-              <option value="all">All Types</option>
-              <option value="text">Text Response</option>
-              <option value="template">Template Action</option>
-              <option value="products">Product Catalog</option>
-            </select>
+            <div class="flex items-center gap-2 flex-wrap">
+              <select id="tpl-category-filter" onchange="filterTemplates()" class="px-2.5 py-1.5 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 text-stone-700 font-medium">
+                <option value="all">All Categories</option>
+                <option value="MARKETING">Marketing</option>
+                <option value="UTILITY">Utility</option>
+                <option value="AUTHENTICATION">Authentication</option>
+              </select>
 
-            <button onclick="loadRules()" class="p-2 border border-[#e7e5de] hover:bg-stone-50 text-stone-600 rounded-lg transition" title="Refresh Rules">
-              <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-            </button>
+              <select id="tpl-status-filter" onchange="filterTemplates()" class="px-2.5 py-1.5 text-xs bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 text-stone-700 font-medium">
+                <option value="all">All Statuses</option>
+                <option value="APPROVED">Approved Only</option>
+                <option value="PENDING">Pending Only</option>
+                <option value="REJECTED">Rejected Only</option>
+              </select>
+
+              <button onclick="loadTemplates()" class="p-1.5 border border-[#e7e5de] hover:bg-stone-50 text-stone-600 rounded-lg transition" title="Refresh templates">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <!-- Rules Table / Cockpit List -->
-        <div class="bg-white border border-[#e7e5de] rounded-xl overflow-hidden cockpit-card">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-stone-50 border-b border-[#e7e5de] text-[11px] font-semibold text-stone-500 uppercase tracking-wider">
-                <tr>
-                  <th class="p-3.5">Rule / Workflow</th>
-                  <th class="p-3.5">Trigger Condition</th>
-                  <th class="p-3.5">Keywords</th>
-                  <th class="p-3.5">Action / Response Payload</th>
-                  <th class="p-3.5">Active State</th>
-                  <th class="p-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="rules-table-body" class="divide-y divide-[#f0eee8] text-stone-800">
-                <tr>
-                  <td colspan="6" class="p-8 text-center text-stone-400">Loading automation cockpit...</td>
-                </tr>
-              </tbody>
-            </table>
+          <!-- Template Cards Grid -->
+          <div id="templates-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="col-span-full p-12 text-center text-stone-400 text-xs">Loading templates from Meta catalog...</div>
           </div>
+
         </div>
 
       </main>
     </div>
   </div>
 
-  <!-- Create / Edit Rule Modal (Screenshot 1: Form structure) -->
+  <!-- ==================================================================== -->
+  <!-- MODAL: ADD / EDIT AUTOMATION RULE (PHASE 2)                          -->
+  <!-- ==================================================================== -->
   <div id="rule-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-    <div class="bg-white border border-[#e7e5de] rounded-2xl w-full max-w-lg p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+    <div class="bg-white border border-[#e7e5de] rounded-2xl w-full max-w-lg p-6 shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
       <div class="flex items-center justify-between pb-3 border-b border-stone-100">
         <div>
-          <h3 id="modal-title" class="font-bold text-stone-900 text-sm">Create Automation Rule</h3>
-          <p class="text-xs text-stone-500">Configure triggers and automatic response workflows</p>
+          <h3 id="modal-rule-title" class="font-bold text-stone-900 text-sm">Add Automation Rule</h3>
+          <p class="text-xs text-stone-500">Configure numbered choices or keyword responses</p>
         </div>
         <button onclick="closeRuleModal()" class="text-stone-400 hover:text-stone-700 p-1">✕</button>
       </div>
@@ -212,367 +535,417 @@
       <input type="hidden" id="form-rule-id" value="">
 
       <div class="space-y-3.5 text-xs">
-        <div>
-          <label class="block font-semibold text-stone-700 mb-1">Rule Name *</label>
-          <input type="text" id="form-rule-name" placeholder="e.g. Welcome greeting or Pricing dispatch" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900">
-        </div>
-
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block font-semibold text-stone-700 mb-1">Trigger Match *</label>
-            <select id="form-trigger-type" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium text-stone-800">
-              <option value="contains">Contains keyword</option>
-              <option value="exact">Exact match</option>
-              <option value="starts_with">Starts with</option>
+            <label class="block font-semibold text-stone-700 mb-1">Trigger Type *</label>
+            <select id="form-trigger-type" onchange="handleTriggerTypeChange()" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium text-stone-800">
+              <option value="menu_number">Number Option (1, 2, 3)</option>
+              <option value="keyword">Keyword (Contains / Matches)</option>
               <option value="intent">AI Buyer Intent</option>
             </select>
           </div>
           <div>
-            <label class="block font-semibold text-stone-700 mb-1">Action / Media Attachment Type *</label>
-            <select id="form-action-type" onchange="toggleActionFields()" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium text-stone-800">
-              <option value="text">Instant Text Reply (Standard)</option>
-              <option value="document">Document / PDF Brochure</option>
-              <option value="drive">Google Drive Link</option>
-              <option value="payment">Payment Link &amp; UPI QR Code</option>
-              <option value="bank">Bank Account &amp; Transfer Details</option>
-              <option value="template">Meta Template Dispatch</option>
+            <label class="block font-semibold text-stone-700 mb-1">Trigger Choice / Keywords *</label>
+            <input type="text" id="form-trigger-value" placeholder="e.g. 1 or brochure, catalog" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-mono text-xs">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Response Message Text *</label>
+          <textarea id="form-response-text" rows="3" placeholder="Enter the exact reply sent to the customer..." class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 leading-relaxed font-sans"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Attached Media / Asset</label>
+          <select id="form-attachment-type" onchange="toggleAttachmentFields()" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium text-stone-800">
+            <option value="none">None (Standard Text Reply)</option>
+            <option value="document">PDF Document / Brochure</option>
+            <option value="image">Image Attachment</option>
+            <option value="link">Public Web Link</option>
+          </select>
+        </div>
+
+        <!-- Attachment inputs box -->
+        <div id="attachment-inputs-box" class="hidden p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-stone-700 mb-1">Asset URL or Public File Link *</label>
+            <input type="url" id="form-attachment-url" placeholder="https://cai.cuboidsoft.in/docs/brochure.pdf" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 font-mono">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-stone-700 mb-1">Attachment Display Name</label>
+            <input type="text" id="form-attachment-name" placeholder="e.g. CuboidSoft AI Solutions Brochure.pdf" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Next Reply Guidance Options</label>
+          <input type="text" id="form-next-options" placeholder="e.g. Reply 0 to go back • 9 to speak with advisor" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900">
+          <p class="text-[10px] text-stone-400 mt-1">Appended to the reply to guide the prospect toward next steps.</p>
+        </div>
+
+        <div class="pt-2 border-t border-stone-100 space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="form-is-high-intent" class="rounded border-stone-300 text-rose-600">
+            <span class="font-medium text-stone-800">Mark as High-Intent Lead Trigger (Escalate to Human in Phase 4)</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="form-is-active" checked class="rounded border-stone-300 text-emerald-600">
+            <span class="font-medium text-stone-800">Rule is Live &amp; Active</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-stone-100">
+        <button onclick="closeRuleModal()" class="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900">Cancel</button>
+        <button id="save-rule-btn" onclick="saveRuleFromModal()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg shadow-2xs">Save Rule</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ==================================================================== -->
+  <!-- MODAL: CREATE META TEMPLATE DRAFT                                    -->
+  <!-- ==================================================================== -->
+  <div id="template-modal" class="hidden fixed inset-0 bg-black/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+    <div class="bg-white border border-[#e7e5de] rounded-2xl w-full max-w-lg p-6 shadow-xl space-y-4 max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-stone-100">
+        <div>
+          <h3 class="font-bold text-stone-900 text-sm">Create Meta Template Draft</h3>
+          <p class="text-xs text-stone-500">Submit directly to Meta WhatsApp Business API</p>
+        </div>
+        <button onclick="closeTemplateModal()" class="text-stone-400 hover:text-stone-700 p-1">✕</button>
+      </div>
+
+      <div class="space-y-3.5 text-xs">
+        <div>
+          <label class="block font-semibold text-stone-700 mb-1">Template Name (Lowercase &amp; Underscores only) *</label>
+          <input type="text" id="draft-name" placeholder="e.g. course_enrollment_followup" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-mono text-xs">
+          <p class="text-[10px] text-stone-400 mt-1">Must use lowercase letters, numbers, and underscores only.</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-semibold text-stone-700 mb-1">Category *</label>
+            <select id="draft-category" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium text-stone-800">
+              <option value="MARKETING">MARKETING</option>
+              <option value="UTILITY">UTILITY</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-stone-700 mb-1">Language *</label>
+            <select id="draft-language" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-medium text-stone-800">
+              <option value="en_US">English (US)</option>
+              <option value="en">English</option>
+              <option value="hi">Hindi</option>
             </select>
           </div>
         </div>
 
         <div>
-          <label class="block font-semibold text-stone-700 mb-1">Trigger Keywords (Comma-separated) *</label>
-          <input type="text" id="form-keywords" placeholder="e.g. hi, hello, doc, brochure, payment, bank, drive" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-mono text-xs">
-        </div>
-
-        <!-- Dynamic Action / Media Inputs -->
-        <!-- 1. Meta Template -->
-        <div id="field-template-box" class="hidden">
-          <label class="block font-semibold text-stone-700 mb-1">Approved Meta Template</label>
-          <select id="form-template-name" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 font-mono text-xs">
-            <option value="welcome_greeting">welcome_greeting (Marketing)</option>
-            <option value="inactivity_reminder_v1">inactivity_reminder_v1 (Utility)</option>
-            <option value="product_demo_link">product_demo_link (Marketing)</option>
-          </select>
-        </div>
-
-        <!-- 2. Document / PDF / Brochure -->
-        <div id="field-document-box" class="hidden p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-2">
-          <div class="flex items-center justify-between">
-            <label class="block font-semibold text-stone-800 text-[11px] flex items-center gap-1.5">
-              <i data-lucide="file-text" class="w-3.5 h-3.5 text-stone-700"></i>
-              <span>Document / Brochure Attachment</span>
-            </label>
-            <span class="text-[10px] text-stone-400 font-mono">PDF, DOCX, ZIP</span>
-          </div>
-          <div>
-            <label class="block text-[10px] text-stone-500 mb-1">Document URL or Public Asset Link</label>
-            <input type="url" id="form-doc-url" placeholder="https://cai.cuboidsoft.in/docs/brochure.pdf" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 font-mono">
-          </div>
-          <div class="flex items-center gap-2 pt-1">
-            <button type="button" onclick="document.getElementById('form-doc-file').click()" class="px-2.5 py-1 bg-white border border-stone-200 hover:border-stone-400 text-stone-700 rounded text-[11px] font-medium inline-flex items-center gap-1">
-              <i data-lucide="upload" class="w-3 h-3 text-stone-500"></i>
-              <span>Upload Document</span>
-            </button>
-            <span id="form-doc-filename" class="text-[11px] text-stone-400 italic">No file selected</span>
-            <input type="file" id="form-doc-file" accept=".pdf,.doc,.docx,.zip,.png,.jpg" onchange="handleDocUpload(this)" class="hidden">
-          </div>
-        </div>
-
-        <!-- 3. Google Drive Link -->
-        <div id="field-drive-box" class="hidden p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-1.5">
-          <label class="block font-semibold text-stone-800 text-[11px] flex items-center gap-1.5">
-            <i data-lucide="folder" class="w-3.5 h-3.5 text-blue-600"></i>
-            <span>Google Drive / Cloud Folder Link</span>
-          </label>
-          <input type="url" id="form-drive-url" placeholder="https://drive.google.com/drive/folders/..." class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 font-mono">
-          <p class="text-[10px] text-stone-400">Ensure the link has "Anyone with the link can view" permissions enabled.</p>
-        </div>
-
-        <!-- 4. Payment Link / QR Code -->
-        <div id="field-payment-box" class="hidden p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-2">
-          <label class="block font-semibold text-stone-800 text-[11px] flex items-center gap-1.5">
-            <i data-lucide="credit-card" class="w-3.5 h-3.5 text-emerald-600"></i>
-            <span>Payment Link &amp; UPI QR Code</span>
-          </label>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[10px] text-stone-500 mb-0.5">Amount (₹ INR)</label>
-              <input type="number" id="form-payment-amount" placeholder="e.g. 2999" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 font-mono">
-            </div>
-            <div>
-              <label class="block text-[10px] text-stone-500 mb-0.5">UPI ID (VPA)</label>
-              <input type="text" id="form-payment-upi" placeholder="cuboidsoft@icici" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 font-mono">
-            </div>
-          </div>
-          <div>
-            <label class="block text-[10px] text-stone-500 mb-0.5">Direct Payment Gateway Link</label>
-            <input type="url" id="form-payment-link" placeholder="https://rzp.io/l/cuboidpilot" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 font-mono">
-          </div>
-        </div>
-
-        <!-- 5. Bank Account Details -->
-        <div id="field-bank-box" class="hidden p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-2">
-          <label class="block font-semibold text-stone-800 text-[11px] flex items-center gap-1.5">
-            <i data-lucide="building-2" class="w-3.5 h-3.5 text-stone-700"></i>
-            <span>Bank Account &amp; Wire Details</span>
-          </label>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[10px] text-stone-500 mb-0.5">Account Name</label>
-              <input type="text" id="form-bank-beneficiary" placeholder="CuboidSoft Technologies Pvt Ltd" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900">
-            </div>
-            <div>
-              <label class="block text-[10px] text-stone-500 mb-0.5">Bank Name</label>
-              <input type="text" id="form-bank-name" placeholder="ICICI Bank / HDFC" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900">
-            </div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-[10px] text-stone-500 mb-0.5">Account Number</label>
-              <input type="text" id="form-bank-account" placeholder="50200012345678" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 font-mono">
-            </div>
-            <div>
-              <label class="block text-[10px] text-stone-500 mb-0.5">IFSC Code</label>
-              <input type="text" id="form-bank-ifsc" placeholder="ICIC0000123" class="w-full p-2 text-xs bg-white border border-[#e7e5de] rounded-md outline-none focus:border-stone-900 font-mono uppercase">
-            </div>
-          </div>
+          <label class="block font-semibold text-stone-700 mb-1">Template Body Text *</label>
+          <textarea id="draft-body" rows="4" placeholder="Hello {{1}}, thank you for reaching out to us. We have received your inquiry..." class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 leading-relaxed font-sans"></textarea>
+          <p class="text-[10px] text-stone-400 mt-1">Support variables using <code class="font-mono text-stone-600">{{1}}</code>, <code class="font-mono text-stone-600">{{2}}</code>.</p>
         </div>
 
         <div>
-          <label class="block font-semibold text-stone-700 mb-1">Accompanying Message / Caption *</label>
-          <textarea id="form-response-text" rows="3" placeholder="Enter the exact reply sent with the media..." class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 leading-relaxed"></textarea>
-        </div>
-
-        <div class="pt-2 border-t border-stone-100 flex items-center justify-between">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" id="form-is-active" checked class="rounded border-stone-300 text-emerald-600">
-            <span class="font-medium text-stone-800">Rule is Active &amp; Live</span>
-          </label>
-          <span class="text-[10px] text-stone-400 font-mono">Applies to WhatsApp &amp; Widget</span>
+          <label class="block font-semibold text-stone-700 mb-1">Quick Action Button Text (Optional)</label>
+          <input type="text" id="draft-button-text" placeholder="e.g. View Brochure" class="w-full p-2.5 bg-[#fbfaf8] border border-[#e7e5de] rounded-lg outline-none focus:border-stone-900 text-xs">
         </div>
       </div>
 
-      <div class="flex items-center justify-end gap-2 pt-4 border-t border-stone-100">
-        <button onclick="closeRuleModal()" class="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900">Cancel</button>
-        <button id="save-rule-btn" onclick="saveRule()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg shadow-2xs">Save Rule</button>
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-stone-100">
+        <button onclick="closeTemplateModal()" class="px-4 py-2 text-xs font-semibold text-stone-600 hover:text-stone-900">Cancel</button>
+        <button id="create-tpl-btn" onclick="submitTemplateDraft()" class="px-4 py-2 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-lg shadow-2xs">Submit to Meta</button>
       </div>
     </div>
   </div>
 
   <script src="../js/components.js"></script>
   <script>
+    // State management
+    let activeTab = 'custom';
+    let automationConfig = { settings: {}, rules: [], account: {}, team_members: [] };
     let allRules = [];
+    let allTemplates = [];
 
     document.addEventListener('DOMContentLoaded', () => {
-      CuboidShell.initCompanyApp('automations', 'WhatsApp Automations Cockpit', [
+      CuboidShell.initCompanyApp('automations', 'WhatsApp Automations', [
+        { label: 'Channels', href: 'whatsapp.html' },
         { label: 'WhatsApp', href: 'whatsapp.html' },
         { label: 'Automations', href: 'automations.html' }
       ]);
-      loadRules();
+
+      // Check query param for tab
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('tab') === 'templates') {
+        switchTab('templates');
+      }
+
+      loadConfig();
+      loadTemplates();
     });
 
-    async function loadRules() {
-      const tbody = document.getElementById('rules-table-body');
-      tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-stone-400">Loading automation cockpit...</td></tr>';
+    // Tab Switcher
+    function switchTab(tab) {
+      activeTab = tab;
+      const customContent = document.getElementById('tab-content-custom');
+      const tplContent = document.getElementById('tab-content-templates');
+      const customBtn = document.getElementById('tab-btn-custom');
+      const tplBtn = document.getElementById('tab-btn-templates');
+      const primaryBtnText = document.getElementById('header-primary-btn-text');
 
-      try {
-        const res = await fetch('../api/whatsapp_hub.php?action=get_automations_cockpit');
-        const data = await res.json();
-        if (!data.success) {
-          tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-rose-500">' + (data.message || 'Failed to load rules') + '</td></tr>';
-          return;
-        }
+      if (tab === 'custom') {
+        customContent.classList.remove('hidden');
+        tplContent.classList.add('hidden');
 
-        allRules = data.rules || [];
-        updateStats(data.stats || {});
-        renderRules(allRules);
-      } catch (e) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-rose-500">Failed to fetch automations</td></tr>';
+        customBtn.className = 'px-3.5 py-1.5 rounded-md font-semibold text-stone-900 bg-white shadow-2xs inline-flex items-center gap-1.5 transition';
+        tplBtn.className = 'px-3.5 py-1.5 rounded-md font-medium text-stone-600 hover:text-stone-900 inline-flex items-center gap-1.5 transition';
+        primaryBtnText.textContent = 'Add Rule';
+      } else {
+        customContent.classList.add('hidden');
+        tplContent.classList.remove('hidden');
+
+        customBtn.className = 'px-3.5 py-1.5 rounded-md font-medium text-stone-600 hover:text-stone-900 inline-flex items-center gap-1.5 transition';
+        tplBtn.className = 'px-3.5 py-1.5 rounded-md font-semibold text-stone-900 bg-white shadow-2xs inline-flex items-center gap-1.5 transition';
+        primaryBtnText.textContent = 'Create Template';
+      }
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function handleHeaderPrimaryAction() {
+      if (activeTab === 'custom') {
+        openRuleModal();
+      } else {
+        openCreateTemplateModal();
       }
     }
 
-    function updateStats(stats) {
-      document.getElementById('stat-total-rules').textContent = stats.total || allRules.length;
-      document.getElementById('stat-active-rules').textContent = stats.active || allRules.filter(r => parseInt(r.is_active, 10) === 1).length;
+    // Load full automation configuration
+    async function loadConfig() {
+      try {
+        const res = await fetch('../api/whatsapp_hub.php?action=get_automation_config');
+        const data = await res.json();
+        if (!data.success) return;
+
+        automationConfig = data;
+        allRules = data.rules || [];
+
+        // Hydrate Gateway Phone
+        if (data.account && (data.account.display_number || data.account.phone_number)) {
+          const ph = data.account.display_number || data.account.phone_number;
+          const phoneEl = document.getElementById('gateway-phone');
+          if (phoneEl) phoneEl.textContent = ph;
+        }
+
+        // Hydrate Phase 1
+        const s = data.settings || {};
+        const greetingInput = document.getElementById('p1-greeting-message');
+        const prefillInput = document.getElementById('p1-prefilled-template');
+        if (greetingInput && s.greeting_message) greetingInput.value = s.greeting_message;
+        if (prefillInput && s.prefilled_template) prefillInput.value = s.prefilled_template;
+        updateGreetingPreview();
+
+        // Hydrate Phase 3
+        const p3Enabled = document.getElementById('p3-enabled');
+        const p3Delay = document.getElementById('p3-delay-select');
+        const p3CustomBox = document.getElementById('p3-custom-delay-box');
+        const p3CustomDelay = document.getElementById('p3-custom-delay');
+        const p3Msg = document.getElementById('p3-message');
+
+        if (p3Enabled) p3Enabled.checked = parseInt(s.follow_up_enabled, 10) === 1;
+        updateFollowUpBadge(parseInt(s.follow_up_enabled, 10) === 1);
+
+        const delay = parseInt(s.follow_up_delay_seconds, 10) || 60;
+        if (p3Delay) {
+          if ([20, 60, 180, 300].includes(delay)) {
+            p3Delay.value = delay.toString();
+            p3CustomBox.classList.add('hidden');
+          } else {
+            p3Delay.value = 'custom';
+            p3CustomBox.classList.remove('hidden');
+            if (p3CustomDelay) p3CustomDelay.value = delay;
+          }
+        }
+        if (p3Msg && s.follow_up_message) p3Msg.value = s.follow_up_message;
+
+        // Hydrate Phase 4
+        const p4Keywords = document.getElementById('p4-keywords');
+        const p4Notify = document.getElementById('p4-notify-user');
+        if (p4Keywords && s.high_intent_keywords) p4Keywords.value = s.high_intent_keywords;
+
+        const teamList = data.team || data.team_members || [];
+        if (p4Notify) {
+          p4Notify.innerHTML = '<option value="0">All Available Admins</option>' + teamList.map(m => {
+            return `<option value="${m.id}" ${parseInt(s.notify_user_id, 10) === parseInt(m.id, 10) ? 'selected' : ''}>${escapeHtml(m.name)} (${m.role || 'Member'}${m.phone ? ' • ' + m.phone : ''})</option>`;
+          }).join('');
+        }
+        updateAlertPreview();
+
+        // Render Phase 2 rules
+        renderRules(allRules);
+
+      } catch (err) {
+        console.error('Error loading config:', err);
+      }
     }
 
+    // Phase 1 Helpers
+    function updateGreetingPreview() {
+      const text = document.getElementById('p1-greeting-message').value || 'Hello! Thank you for reaching out.';
+      const prefill = document.getElementById('p1-prefilled-template').value || 'Hi, I was exploring on your website...';
+
+      document.getElementById('preview-greeting-text').textContent = text;
+      document.getElementById('preview-prefill-text').textContent = prefill + ' Ref: cp-w7x89q2';
+    }
+
+    async function savePhase1Settings() {
+      const greeting_message = document.getElementById('p1-greeting-message').value.trim();
+      const prefilled_template = document.getElementById('p1-prefilled-template').value.trim();
+      const statusEl = document.getElementById('p1-save-status');
+
+      statusEl.textContent = 'Saving...';
+      try {
+        const res = await fetch('../api/whatsapp_hub.php?action=save_automation_settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ greeting_message, prefilled_template })
+        });
+        const data = await res.json();
+        if (data.success) {
+          statusEl.textContent = '✓ Saved successfully';
+          setTimeout(() => { statusEl.textContent = ''; }, 3000);
+        } else {
+          statusEl.textContent = '✗ ' + (data.error || 'Failed to save');
+        }
+      } catch (e) {
+        statusEl.textContent = '✗ Server error';
+      }
+    }
+
+    // Phase 2: Rules Rendering & Management
     function renderRules(rules) {
-      const tbody = document.getElementById('rules-table-body');
-      if (rules.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="p-12 text-center text-stone-400"><div class="flex flex-col items-center justify-center space-y-2"><i data-lucide="zap" class="w-8 h-8 text-stone-300"></i><div class="font-medium text-stone-600">No automation rules configured</div><div class="text-xs text-stone-400">Click "+ Create Rule" or choose a Quick Start Preset above.</div></div></td></tr>';
+      const container = document.getElementById('rules-container');
+      if (!rules || rules.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-stone-50/50 rounded-xl border border-dashed border-stone-200 text-stone-500 text-xs space-y-2">
+            <i data-lucide="zap-off" class="w-6 h-6 text-stone-300 mx-auto"></i>
+            <div class="font-semibold text-stone-700">No automation rules configured</div>
+            <p class="text-stone-400">Click "+ Add Rule" above to create numbered choices or keyword responses.</p>
+          </div>
+        `;
         if (window.lucide) lucide.createIcons();
         return;
       }
 
-      tbody.innerHTML = rules.map(r => {
+      container.innerHTML = rules.map(r => {
         const isActive = parseInt(r.is_active, 10) === 1;
-        const keywords = (r.keywords || '').split(',').map(k => k.trim()).filter(Boolean);
+        const isHighIntent = parseInt(r.is_high_intent, 10) === 1;
+        const isMenu = r.trigger_type === 'menu_number';
 
-        return '<tr class="hover:bg-stone-50/70 transition">' +
-          '<td class="p-3.5 font-medium text-stone-900">' +
-            '<div class="flex items-center gap-2.5">' +
-              '<div class="w-7 h-7 rounded bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center font-bold text-xs">' +
-                '<i data-lucide="zap" class="w-3.5 h-3.5"></i>' +
-              '</div>' +
-              '<div>' +
-                '<div class="font-semibold text-stone-900">' + (r.title || 'Untitled Rule') + '</div>' +
-                '<div class="text-[11px] text-stone-400 font-mono">Category: ' + (r.category || 'general') + '</div>' +
-              '</div>' +
-            '</div>' +
-          '</td>' +
-          '<td class="p-3.5">' +
-            '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-stone-100 text-stone-700 text-[11px] font-medium">' +
-              (r.intent ? 'Intent: ' + r.intent : 'Contains Keyword') +
-            '</span>' +
-          '</td>' +
-          '<td class="p-3.5">' +
-            '<div class="flex items-center gap-1 flex-wrap">' +
-              (keywords.length ? keywords.map(k => '<span class="px-1.5 py-0.5 bg-stone-100 text-stone-700 rounded font-mono text-[10px] border border-stone-200">' + k + '</span>').join('') : '<span class="text-stone-300">—</span>') +
-            '</div>' +
-          '</td>' +
-          '<td class="p-3.5 text-stone-700 max-w-xs">' +
-            (r.media_type && r.media_type !== 'none' ? '<div class="inline-flex items-center gap-1 px-1.5 py-0.5 mb-1 rounded bg-stone-100 text-stone-800 text-[10px] font-semibold font-mono border border-stone-200 uppercase"><i data-lucide="' + (r.media_type === 'document' ? 'file-text' : (r.media_type === 'drive' ? 'folder' : (r.media_type === 'payment' ? 'credit-card' : 'building-2'))) + '" class="w-3 h-3"></i>' + r.media_type + '</div>' : '') +
-            '<div class="truncate text-xs" title="' + (r.reply_content || '') + '">' + (r.reply_content || '—') + '</div>' +
-          '</td>' +
-          '<td class="p-3.5">' +
-            '<button onclick="toggleRuleState(' + r.id + ', ' + (isActive ? 0 : 1) + ')" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ' + (isActive ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-stone-100 text-stone-500 border border-stone-200') + '">' +
-              '<span class="w-1.5 h-1.5 rounded-full ' + (isActive ? 'bg-emerald-500' : 'bg-stone-400') + '"></span>' +
-              '<span>' + (isActive ? 'Active' : 'Disabled') + '</span>' +
-            '</button>' +
-          '</td>' +
-          '<td class="p-3.5 text-right">' +
-            '<div class="flex items-center justify-end gap-1.5">' +
-              '<button onclick="editRule(' + r.id + ')" class="p-1 hover:bg-stone-100 text-stone-600 rounded transition" title="Edit Rule">' +
-                '<i data-lucide="edit-2" class="w-3.5 h-3.5"></i>' +
-              '</button>' +
-              '<button onclick="deleteRule(' + r.id + ')" class="p-1 hover:bg-rose-50 text-rose-600 rounded transition" title="Delete Rule">' +
-                '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
-              '</button>' +
-            '</div>' +
-          '</td>' +
-        '</tr>';
+        let attachBadge = '';
+        if (r.attachment_type === 'document') {
+          attachBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-50 text-purple-800 border border-purple-200 text-[10px] font-mono"><i data-lucide="file-text" class="w-3 h-3 text-purple-600"></i> ${escapeHtml(r.attachment_name || 'Document PDF')}</span>`;
+        } else if (r.attachment_type === 'image') {
+          attachBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-800 border border-blue-200 text-[10px] font-mono"><i data-lucide="image" class="w-3 h-3 text-blue-600"></i> Image</span>`;
+        } else if (r.attachment_type === 'link') {
+          attachBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-mono"><i data-lucide="link" class="w-3 h-3 text-amber-600"></i> Public Link</span>`;
+        }
+
+        return `
+          <div class="p-4 bg-white border border-[#e7e5de] hover:border-stone-400 rounded-xl transition space-y-2.5 cockpit-card">
+            <div class="flex items-center justify-between gap-3 flex-wrap">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-mono font-bold ${isMenu ? 'bg-stone-900 text-white' : 'bg-stone-100 text-stone-800 border border-stone-200'}">
+                  <span>Trigger:</span> <span>${escapeHtml(r.trigger_value)}</span>
+                </span>
+                <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-stone-100 text-stone-600 border border-stone-200/80">
+                  ${r.trigger_type.replace('_', ' ')}
+                </span>
+                ${isHighIntent ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-semibold"><i data-lucide="flame" class="w-3 h-3 text-rose-500"></i> High Intent</span>' : ''}
+                ${attachBadge}
+              </div>
+
+              <div class="flex items-center gap-3">
+                <label class="flex items-center gap-1.5 cursor-pointer select-none">
+                  <input type="checkbox" onchange="toggleRuleState(${r.id})" ${isActive ? 'checked' : ''} class="rounded border-stone-300 text-emerald-600 w-3.5 h-3.5">
+                  <span class="text-[11px] font-semibold ${isActive ? 'text-emerald-700' : 'text-stone-400'}">${isActive ? 'Active' : 'Disabled'}</span>
+                </label>
+                <div class="flex items-center gap-1">
+                  <button onclick="editRule(${r.id})" class="p-1 hover:bg-stone-100 text-stone-600 rounded transition" title="Edit Rule"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+                  <button onclick="deleteRule(${r.id})" class="p-1 hover:bg-rose-50 text-rose-600 rounded transition" title="Delete Rule"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="text-xs text-stone-800 bg-[#fbfaf8] p-3 rounded-lg border border-[#f0eee8] whitespace-pre-wrap leading-relaxed font-sans">
+              ${escapeHtml(r.response_text)}
+            </div>
+
+            ${r.next_options_json ? `
+              <div class="text-[11px] text-stone-500 flex items-center gap-1.5 pt-0.5">
+                <i data-lucide="corner-down-right" class="w-3 h-3 text-stone-400"></i>
+                <span>Next Guidance: <code class="font-mono text-stone-700">${escapeHtml(r.next_options_json)}</code></span>
+              </div>
+            ` : ''}
+          </div>
+        `;
       }).join('');
 
       if (window.lucide) lucide.createIcons();
     }
 
     function filterRules() {
-      const q = document.getElementById('rule-search').value.toLowerCase().trim();
-      const state = document.getElementById('state-filter').value;
+      const q = (document.getElementById('rule-search').value || '').toLowerCase().trim();
+      const type = document.getElementById('rule-type-filter').value;
 
       const filtered = allRules.filter(r => {
-        const matchesQ = !q || (r.title && r.title.toLowerCase().includes(q)) || (r.keywords && r.keywords.toLowerCase().includes(q)) || (r.reply_content && r.reply_content.toLowerCase().includes(q));
-        const matchesState = state === 'all' || (state === 'active' && parseInt(r.is_active, 10) === 1) || (state === 'inactive' && parseInt(r.is_active, 10) === 0);
-        return matchesQ && matchesState;
+        const matchesQ = !q || (r.trigger_value && r.trigger_value.toLowerCase().includes(q)) || (r.response_text && r.response_text.toLowerCase().includes(q));
+        let matchesType = true;
+        if (type === 'menu_number') matchesType = r.trigger_type === 'menu_number';
+        else if (type === 'keyword') matchesType = r.trigger_type === 'keyword';
+        else if (type === 'high_intent') matchesType = parseInt(r.is_high_intent, 10) === 1;
+
+        return matchesQ && matchesType;
       });
 
       renderRules(filtered);
     }
 
-    function toggleActionFields() {
-      const type = document.getElementById('form-action-type').value;
-      const tplBox = document.getElementById('field-template-box');
-      const docBox = document.getElementById('field-document-box');
-      const driveBox = document.getElementById('field-drive-box');
-      const payBox = document.getElementById('field-payment-box');
-      const bankBox = document.getElementById('field-bank-box');
-
-      tplBox.classList.add('hidden');
-      docBox.classList.add('hidden');
-      driveBox.classList.add('hidden');
-      payBox.classList.add('hidden');
-      bankBox.classList.add('hidden');
-
-      if (type === 'template') tplBox.classList.remove('hidden');
-      else if (type === 'document') docBox.classList.remove('hidden');
-      else if (type === 'drive') driveBox.classList.remove('hidden');
-      else if (type === 'payment') payBox.classList.remove('hidden');
-      else if (type === 'bank') bankBox.classList.remove('hidden');
-
-      if (window.lucide) lucide.createIcons();
-    }
-
-    function handleDocUpload(input) {
-      if (input.files && input.files[0]) {
-        const file = input.files[0];
-        document.getElementById('form-doc-filename').textContent = file.name;
-        // In local/cloud setup, simulate asset URL or provide default
-        if (!document.getElementById('form-doc-url').value) {
-          document.getElementById('form-doc-url').value = `https://cai.cuboidsoft.in/uploads/${encodeURIComponent(file.name)}`;
-        }
-      }
-    }
-
     function openRuleModal() {
-      document.getElementById('modal-title').textContent = 'Create Automation Rule';
+      document.getElementById('modal-rule-title').textContent = 'Add Automation Rule';
       document.getElementById('form-rule-id').value = '';
-      document.getElementById('form-rule-name').value = '';
-      document.getElementById('form-keywords').value = '';
+      document.getElementById('form-trigger-type').value = 'menu_number';
+      document.getElementById('form-trigger-value').value = '';
       document.getElementById('form-response-text').value = '';
+      document.getElementById('form-attachment-type').value = 'none';
+      document.getElementById('form-attachment-url').value = '';
+      document.getElementById('form-attachment-name').value = '';
+      document.getElementById('form-next-options').value = '';
+      document.getElementById('form-is-high-intent').checked = false;
       document.getElementById('form-is-active').checked = true;
-      document.getElementById('form-action-type').value = 'text';
 
-      // Clear media inputs
-      document.getElementById('form-doc-url').value = '';
-      document.getElementById('form-doc-filename').textContent = 'No file selected';
-      document.getElementById('form-drive-url').value = '';
-      document.getElementById('form-payment-amount').value = '';
-      document.getElementById('form-payment-upi').value = '';
-      document.getElementById('form-payment-link').value = '';
-      document.getElementById('form-bank-beneficiary').value = '';
-      document.getElementById('form-bank-name').value = '';
-      document.getElementById('form-bank-account').value = '';
-      document.getElementById('form-bank-ifsc').value = '';
-
-      toggleActionFields();
+      toggleAttachmentFields();
       document.getElementById('rule-modal').classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
     }
 
     function editRule(id) {
-      const r = allRules.find(x => x.id == id);
+      const r = allRules.find(x => parseInt(x.id, 10) === parseInt(id, 10));
       if (!r) return;
 
-      document.getElementById('modal-title').textContent = 'Edit Automation Rule';
+      document.getElementById('modal-rule-title').textContent = 'Edit Automation Rule';
       document.getElementById('form-rule-id').value = r.id;
-      document.getElementById('form-rule-name').value = r.name || r.title || '';
-      document.getElementById('form-keywords').value = r.keywords || '';
-      document.getElementById('form-response-text').value = r.content || r.reply_content || '';
-      document.getElementById('form-is-active').checked = Boolean(r.is_active);
+      document.getElementById('form-trigger-type').value = r.trigger_type || 'keyword';
+      document.getElementById('form-trigger-value').value = r.trigger_value || '';
+      document.getElementById('form-response-text').value = r.response_text || '';
+      document.getElementById('form-attachment-type').value = r.attachment_type || 'none';
+      document.getElementById('form-attachment-url').value = r.attachment_url || '';
+      document.getElementById('form-attachment-name').value = r.attachment_name || '';
+      document.getElementById('form-next-options').value = r.next_options_json || '';
+      document.getElementById('form-is-high-intent').checked = parseInt(r.is_high_intent, 10) === 1;
+      document.getElementById('form-is-active').checked = parseInt(r.is_active, 10) === 1;
 
-      // Set media type and populate values
-      const mType = r.media_type || 'none';
-      if (mType === 'none' || !mType) {
-        document.getElementById('form-action-type').value = 'text';
-      } else {
-        document.getElementById('form-action-type').value = mType;
-      }
-
-      let payload = {};
-      try {
-        if (r.media_payload_json) {
-          payload = typeof r.media_payload_json === 'string' ? JSON.parse(r.media_payload_json) : r.media_payload_json;
-        }
-      } catch (e) {}
-
-      if (mType === 'document') {
-        document.getElementById('form-doc-url').value = r.media_url || '';
-        document.getElementById('form-doc-filename').textContent = payload.filename || 'Existing attachment';
-      } else if (mType === 'drive') {
-        document.getElementById('form-drive-url').value = r.media_url || '';
-      } else if (mType === 'payment') {
-        document.getElementById('form-payment-amount').value = payload.amount || '';
-        document.getElementById('form-payment-upi').value = payload.upi_id || '';
-        document.getElementById('form-payment-link').value = r.media_url || payload.link || '';
-      } else if (mType === 'bank') {
-        document.getElementById('form-bank-beneficiary').value = payload.beneficiary || '';
-        document.getElementById('form-bank-name').value = payload.bank_name || '';
-        document.getElementById('form-bank-account').value = payload.account_number || '';
-        document.getElementById('form-bank-ifsc').value = payload.ifsc || '';
-      }
-
-      toggleActionFields();
+      toggleAttachmentFields();
       document.getElementById('rule-modal').classList.remove('hidden');
       if (window.lucide) lucide.createIcons();
     }
@@ -581,77 +954,41 @@
       document.getElementById('rule-modal').classList.add('hidden');
     }
 
-    function applyPreset(preset) {
-      openRuleModal();
-      if (preset === 'welcome') {
-        document.getElementById('form-rule-name').value = 'Welcome Flow';
-        document.getElementById('form-keywords').value = 'hi, hello, start, hey, namaste';
-        document.getElementById('form-response-text').value = 'Hello! Welcome to CuboidSoft. How may we assist your business today? Type 1 for Products, 2 for Demo.';
-        document.getElementById('form-action-type').value = 'text';
-      } else if (preset === 'pricing') {
-        document.getElementById('form-rule-name').value = 'Pricing Request';
-        document.getElementById('form-keywords').value = 'price, pricing, cost, rate, plans';
-        document.getElementById('form-response-text').value = 'Our plans start with Starter at ₹2,999/mo and Growth at ₹9,999/mo. Would you like a personalized quotation?';
-        document.getElementById('form-action-type').value = 'text';
-      } else if (preset === 'catalog') {
-        document.getElementById('form-rule-name').value = 'Catalog Request';
-        document.getElementById('form-keywords').value = 'catalog, brochure, pdf, products, portfolio, docs';
-        document.getElementById('form-response-text').value = 'Here is our latest product catalog and technical specifications brochure.';
-        document.getElementById('form-action-type').value = 'document';
-        document.getElementById('form-doc-url').value = 'https://cai.cuboidsoft.in/docs/CuboidSoft_AI_Solutions_Brochure.pdf';
-        document.getElementById('form-doc-filename').textContent = 'CuboidSoft_AI_Solutions_Brochure.pdf';
-      } else if (preset === 'support') {
-        document.getElementById('form-rule-name').value = 'Human Specialist Handover';
-        document.getElementById('form-keywords').value = 'human, agent, specialist, call me, support person';
-        document.getElementById('form-response-text').value = 'Connecting you with our support specialist right now. One moment please!';
-        document.getElementById('form-action-type').value = 'text';
+    function handleTriggerTypeChange() {
+      const t = document.getElementById('form-trigger-type').value;
+      const inp = document.getElementById('form-trigger-value');
+      if (t === 'menu_number' && !inp.value) {
+        inp.placeholder = 'e.g. 1 or 2 or 3';
+      } else if (t === 'keyword') {
+        inp.placeholder = 'e.g. brochure, pricing, cost';
       }
-      toggleActionFields();
     }
 
-    async function saveRule() {
-      const id = document.getElementById('form-rule-id').value;
-      const title = document.getElementById('form-rule-name').value.trim();
-      const keywords = document.getElementById('form-keywords').value.trim();
-      const reply = document.getElementById('form-response-text').value.trim();
-      const isActive = document.getElementById('form-is-active').checked ? 1 : 0;
-      const actionType = document.getElementById('form-action-type').value;
-
-      if (!title || !keywords || !reply) {
-        alert('Please fill in Rule Name, Keywords, and Response Message.');
-        return;
+    function toggleAttachmentFields() {
+      const type = document.getElementById('form-attachment-type').value;
+      const box = document.getElementById('attachment-inputs-box');
+      if (type === 'none') {
+        box.classList.add('hidden');
+      } else {
+        box.classList.remove('hidden');
       }
+    }
 
-      let mediaType = 'none';
-      let mediaUrl = '';
-      let mediaPayload = null;
+    async function saveRuleFromModal() {
+      const id = document.getElementById('form-rule-id').value;
+      const trigger_type = document.getElementById('form-trigger-type').value;
+      const trigger_value = document.getElementById('form-trigger-value').value.trim();
+      const response_text = document.getElementById('form-response-text').value.trim();
+      const attachment_type = document.getElementById('form-attachment-type').value;
+      const attachment_url = document.getElementById('form-attachment-url').value.trim();
+      const attachment_name = document.getElementById('form-attachment-name').value.trim();
+      const next_options_json = document.getElementById('form-next-options').value.trim();
+      const is_high_intent = document.getElementById('form-is-high-intent').checked ? 1 : 0;
+      const is_active = document.getElementById('form-is-active').checked ? 1 : 0;
 
-      if (actionType === 'document') {
-        mediaType = 'document';
-        mediaUrl = document.getElementById('form-doc-url').value.trim();
-        const filename = document.getElementById('form-doc-filename').textContent;
-        mediaPayload = { filename: filename !== 'No file selected' ? filename : 'Document.pdf', url: mediaUrl };
-      } else if (actionType === 'drive') {
-        mediaType = 'drive';
-        mediaUrl = document.getElementById('form-drive-url').value.trim();
-        mediaPayload = { link: mediaUrl, provider: 'Google Drive' };
-      } else if (actionType === 'payment') {
-        mediaType = 'payment';
-        mediaUrl = document.getElementById('form-payment-link').value.trim();
-        mediaPayload = {
-          amount: document.getElementById('form-payment-amount').value.trim(),
-          upi_id: document.getElementById('form-payment-upi').value.trim(),
-          link: mediaUrl,
-          qr_enabled: true
-        };
-      } else if (actionType === 'bank') {
-        mediaType = 'bank';
-        mediaPayload = {
-          beneficiary: document.getElementById('form-bank-beneficiary').value.trim(),
-          bank_name: document.getElementById('form-bank-name').value.trim(),
-          account_number: document.getElementById('form-bank-account').value.trim(),
-          ifsc: document.getElementById('form-bank-ifsc').value.trim()
-        };
+      if (!trigger_value || !response_text) {
+        alert('Please fill in both Trigger Value and Response Message.');
+        return;
       }
 
       const btn = document.getElementById('save-rule-btn');
@@ -664,68 +1001,399 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id,
-            title,
-            name: title,
-            keywords,
-            reply_content: reply,
-            content: reply,
-            action_type: actionType,
-            media_type: mediaType,
-            media_url: mediaUrl,
-            media_payload: mediaPayload,
-            is_active: isActive
+            trigger_type,
+            trigger_value,
+            response_text,
+            attachment_type,
+            attachment_url,
+            attachment_name,
+            next_options_json,
+            is_high_intent,
+            is_active
           })
         });
         const data = await res.json();
         if (data.success) {
           closeRuleModal();
-          loadRules();
+          loadConfig();
         } else {
-          alert(data.message || data.error || 'Failed to save rule');
+          alert(data.error || 'Failed to save rule.');
         }
-      } catch (e) {
-        alert('Server communication error');
+      } catch (err) {
+        alert('Server communication error.');
       } finally {
         btn.disabled = false;
         btn.textContent = 'Save Rule';
       }
     }
 
-    async function toggleRuleState(id, newState) {
+    async function toggleRuleState(id) {
       try {
-        const res = await fetch('../api/whatsapp_hub.php?action=toggle_automation_rule', {
+        await fetch('../api/whatsapp_hub.php?action=toggle_automation_rule', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, is_active: newState })
+          body: JSON.stringify({ rule_id: id })
         });
-        const data = await res.json();
-        if (data.success) {
-          loadRules();
-        } else {
-          alert(data.message || 'Failed to toggle rule state');
-        }
-      } catch (e) {
-        alert('Server error');
-      }
+        loadConfig();
+      } catch (e) {}
     }
 
     async function deleteRule(id) {
-      if (!confirm('Are you sure you want to delete this rule?')) return;
+      if (!confirm('Are you sure you want to delete this automation rule?')) return;
       try {
         const res = await fetch('../api/whatsapp_hub.php?action=delete_automation_rule', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id })
+          body: JSON.stringify({ rule_id: id })
         });
         const data = await res.json();
         if (data.success) {
-          loadRules();
+          loadConfig();
         } else {
-          alert(data.message || 'Failed to delete rule');
+          alert(data.error || 'Failed to delete rule.');
         }
       } catch (e) {
-        alert('Server error');
+        alert('Server error.');
       }
+    }
+
+    // Phase 3 Helpers
+    function updateFollowUpBadge(isActive) {
+      const b = document.getElementById('p3-badge-status');
+      if (b) {
+        b.className = isActive 
+          ? 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200'
+          : 'text-[10px] font-mono px-2 py-0.5 rounded bg-stone-100 text-stone-500 border border-stone-200';
+        b.textContent = isActive ? 'Active' : 'Disabled';
+      }
+    }
+
+    function toggleFollowUpActiveState() {
+      const isChecked = document.getElementById('p3-enabled').checked;
+      updateFollowUpBadge(isChecked);
+    }
+
+    function handleDelayChange() {
+      const sel = document.getElementById('p3-delay-select').value;
+      const box = document.getElementById('p3-custom-delay-box');
+      if (sel === 'custom') {
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+    }
+
+    async function savePhase3Settings() {
+      const follow_up_enabled = document.getElementById('p3-enabled').checked ? 1 : 0;
+      const selVal = document.getElementById('p3-delay-select').value;
+      let delay = parseInt(selVal, 10);
+      if (selVal === 'custom') {
+        delay = parseInt(document.getElementById('p3-custom-delay').value, 10) || 60;
+      }
+      const follow_up_message = document.getElementById('p3-message').value.trim();
+      const statusEl = document.getElementById('p3-save-status');
+
+      statusEl.textContent = 'Saving...';
+      try {
+        const res = await fetch('../api/whatsapp_hub.php?action=save_automation_settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            follow_up_enabled,
+            follow_up_delay_seconds: delay,
+            follow_up_message
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          statusEl.textContent = '✓ Saved successfully';
+          setTimeout(() => { statusEl.textContent = ''; }, 3000);
+        } else {
+          statusEl.textContent = '✗ ' + (data.error || 'Failed to save');
+        }
+      } catch (e) {
+        statusEl.textContent = '✗ Server error';
+      }
+    }
+
+    // Phase 4 Helpers
+    function updateAlertPreview() {
+      const sel = document.getElementById('p4-notify-user');
+      const text = sel.options[sel.selectedIndex]?.text || 'Solution Specialist';
+      document.getElementById('preview-alert-assigned').textContent = text.split('(')[0].trim();
+    }
+
+    async function savePhase4Settings() {
+      const high_intent_keywords = document.getElementById('p4-keywords').value.trim();
+      const notify_user_id = parseInt(document.getElementById('p4-notify-user').value, 10) || 0;
+      const statusEl = document.getElementById('p4-save-status');
+
+      statusEl.textContent = 'Saving...';
+      try {
+        const res = await fetch('../api/whatsapp_hub.php?action=save_automation_settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            high_intent_keywords,
+            notify_user_id
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          statusEl.textContent = '✓ Saved successfully';
+          setTimeout(() => { statusEl.textContent = ''; }, 3000);
+        } else {
+          statusEl.textContent = '✗ ' + (data.error || 'Failed to save');
+        }
+      } catch (e) {
+        statusEl.textContent = '✗ Server error';
+      }
+    }
+
+    // TAB 2: META TEMPLATES INTEGRATION
+    async function loadTemplates() {
+      const grid = document.getElementById('templates-grid');
+      const cat = document.getElementById('tpl-category-filter').value;
+      const q = document.getElementById('tpl-search').value.trim();
+
+      try {
+        const res = await fetch(`../api/whatsapp_hub.php?action=get_templates&category=${encodeURIComponent(cat)}&search=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        if (!data.success) {
+          grid.innerHTML = '<div class="col-span-full p-8 text-center text-rose-500">Failed to load templates.</div>';
+          return;
+        }
+
+        allTemplates = data.templates || [];
+        updateTemplateStats();
+        renderTemplates(allTemplates);
+      } catch (err) {
+        grid.innerHTML = '<div class="col-span-full p-8 text-center text-rose-500">Error fetching templates.</div>';
+      }
+    }
+
+    function updateTemplateStats() {
+      const total = allTemplates.length;
+      const approved = allTemplates.filter(t => t.status === 'APPROVED').length;
+      const pending = allTemplates.filter(t => t.status === 'PENDING').length;
+      const rejected = allTemplates.filter(t => t.status === 'REJECTED').length;
+
+      document.getElementById('stat-meta-total').textContent = total;
+      document.getElementById('stat-meta-approved').textContent = approved;
+      document.getElementById('stat-meta-pending').textContent = pending;
+      document.getElementById('stat-meta-rejected').textContent = rejected;
+
+      const badgeMeta = document.getElementById('badge-meta-total');
+      if (badgeMeta) badgeMeta.textContent = `${approved} Live`;
+    }
+
+    function renderTemplates(templates) {
+      const grid = document.getElementById('templates-grid');
+      if (!templates || templates.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full p-12 text-center bg-stone-50/50 rounded-xl border border-dashed border-stone-200 text-stone-500 text-xs space-y-2">
+            <i data-lucide="layout-template" class="w-8 h-8 text-stone-300 mx-auto"></i>
+            <div class="font-semibold text-stone-700">No Meta Templates Found</div>
+            <p class="text-stone-400">Click "Sync with Meta" to fetch templates from your WhatsApp Business Account.</p>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+
+      grid.innerHTML = templates.map(t => {
+        const isApproved = t.status === 'APPROVED';
+        const isPending = t.status === 'PENDING';
+        const statusBadge = isApproved
+          ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">APPROVED</span>'
+          : (isPending
+            ? '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200">PENDING</span>'
+            : '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-rose-50 text-rose-800 border border-rose-200">REJECTED</span>');
+
+        // Extract body text from components or components_json
+        let bodyText = '';
+        let buttons = [];
+        try {
+          const comps = t.components || (typeof t.components_json === 'string' ? JSON.parse(t.components_json) : (t.components_json || []));
+          const bodyComp = comps.find(c => c.type === 'BODY');
+          if (bodyComp && bodyComp.text) bodyText = bodyComp.text;
+          const btnComp = comps.find(c => c.type === 'BUTTONS');
+          if (btnComp && btnComp.buttons) buttons = btnComp.buttons;
+        } catch (e) {}
+
+        return `
+          <div class="bg-white border border-[#e7e5de] hover:border-stone-400 rounded-xl p-4 cockpit-card flex flex-col justify-between space-y-3 transition">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-mono font-bold text-stone-900 truncate" title="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>
+                ${statusBadge}
+              </div>
+
+              <div class="flex items-center gap-1.5 text-[10px] font-mono text-stone-500">
+                <span class="px-1.5 py-0.2 bg-stone-100 rounded border border-stone-200">${escapeHtml(t.category || 'UTILITY')}</span>
+                <span class="px-1.5 py-0.2 bg-stone-100 rounded border border-stone-200">${escapeHtml(t.language || 'en_US')}</span>
+              </div>
+
+              <div class="wa-preview-bg p-3 rounded-lg border border-stone-200 text-xs text-stone-800 relative min-h-[90px]">
+                <div class="wa-bubble-received p-2.5 text-xs text-stone-800 space-y-2 shadow-2xs">
+                  <div class="whitespace-pre-wrap leading-relaxed">${escapeHtml(bodyText || 'Template message content.')}</div>
+                  ${buttons.length ? `
+                    <div class="pt-2 border-t border-stone-100 space-y-1">
+                      ${buttons.map(b => `<div class="w-full py-1 text-center font-medium text-blue-600 bg-white border border-stone-200 rounded text-[11px] shadow-2xs">${escapeHtml(b.text || 'Action')}</div>`).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-stone-100 text-xs">
+              <button onclick="useTemplateInRule('${escapeHtml(t.name)}')" class="text-xs font-semibold text-stone-900 hover:text-emerald-700 inline-flex items-center gap-1">
+                <span>Use in Rule</span>
+                <i data-lucide="arrow-right" class="w-3 h-3"></i>
+              </button>
+              <button onclick="copyToClipboard('${escapeHtml(t.name)}')" class="text-[11px] text-stone-400 hover:text-stone-700 font-mono">
+                Copy Name
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function filterTemplates() {
+      const q = (document.getElementById('tpl-search').value || '').toLowerCase().trim();
+      const cat = document.getElementById('tpl-category-filter').value;
+      const status = document.getElementById('tpl-status-filter').value;
+
+      const filtered = allTemplates.filter(t => {
+        const matchesQ = !q || (t.name && t.name.toLowerCase().includes(q)) || (typeof t.components_json === 'string' && t.components_json.toLowerCase().includes(q));
+        const matchesCat = cat === 'all' || (t.category && t.category.toUpperCase() === cat.toUpperCase());
+        const matchesStatus = status === 'all' || (t.status && t.status.toUpperCase() === status.toUpperCase());
+
+        return matchesQ && matchesCat && matchesStatus;
+      });
+
+      renderTemplates(filtered);
+    }
+
+    async function syncMetaTemplates() {
+      const btn = document.getElementById('sync-meta-btn');
+      const icon = document.getElementById('sync-meta-icon');
+
+      btn.disabled = true;
+      if (icon) icon.classList.add('animate-spin');
+
+      try {
+        const res = await fetch('../api/whatsapp_hub.php?action=sync_meta_templates');
+        const data = await res.json();
+        if (data.success) {
+          alert(`Successfully synced ${data.count || (data.templates ? data.templates.length : 0)} templates from Meta Cloud API!`);
+          loadTemplates();
+        } else {
+          alert(data.error || 'Failed to sync with Meta.');
+        }
+      } catch (err) {
+        alert('Server communication error.');
+      } finally {
+        btn.disabled = false;
+        if (icon) icon.classList.remove('animate-spin');
+      }
+    }
+
+    function openCreateTemplateModal() {
+      document.getElementById('draft-name').value = '';
+      document.getElementById('draft-category').value = 'MARKETING';
+      document.getElementById('draft-language').value = 'en_US';
+      document.getElementById('draft-body').value = '';
+      document.getElementById('draft-button-text').value = '';
+
+      document.getElementById('template-modal').classList.remove('hidden');
+    }
+
+    function closeTemplateModal() {
+      document.getElementById('template-modal').classList.add('hidden');
+    }
+
+    async function submitTemplateDraft() {
+      const name = document.getElementById('draft-name').value.trim().toLowerCase();
+      const category = document.getElementById('draft-category').value;
+      const language = document.getElementById('draft-language').value;
+      const body = document.getElementById('draft-body').value.trim();
+      const button_text = document.getElementById('draft-button-text').value.trim();
+
+      if (!name || !body) {
+        alert('Please fill in Template Name and Body text.');
+        return;
+      }
+
+      if (!/^[a-z0-9_]+$/.test(name)) {
+        alert('Template name must only contain lowercase letters, numbers, and underscores.');
+        return;
+      }
+
+      const btn = document.getElementById('create-tpl-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting to Meta...';
+
+      try {
+        const res = await fetch('../api/whatsapp_hub.php?action=create_meta_template', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, category, language, body, button_text })
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Template draft submitted to Meta WhatsApp Business API successfully!');
+          closeTemplateModal();
+          loadTemplates();
+        } else {
+          alert(data.error || 'Failed to submit template to Meta.');
+        }
+      } catch (e) {
+        alert('Server error.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit to Meta';
+      }
+    }
+
+    function useTemplateInRule(tplName) {
+      switchTab('custom');
+      openRuleModal();
+      document.getElementById('form-trigger-type').value = 'keyword';
+      document.getElementById('form-trigger-value').value = tplName;
+      document.getElementById('form-response-text').value = `[Template: ${tplName}]`;
+    }
+
+    // Utility Helpers
+    function insertVariable(inputId, variableText) {
+      const el = document.getElementById(inputId);
+      if (!el) return;
+      const start = el.selectionStart;
+      const end = el.selectionEnd;
+      const text = el.value;
+      el.value = text.substring(0, start) + variableText + text.substring(end);
+      el.selectionStart = el.selectionEnd = start + variableText.length;
+      el.focus();
+      if (inputId === 'p1-greeting-message') updateGreetingPreview();
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert(`Copied "${text}" to clipboard!`);
+      }).catch(() => {});
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
   </script>
 </body>

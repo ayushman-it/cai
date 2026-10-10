@@ -17,6 +17,7 @@ require_once __DIR__ . '/../../includes/channel_handoff_service.php';
 require_once __DIR__ . '/../../includes/asset_helper.php';
 require_once __DIR__ . '/../../includes/gemini_service.php';
 require_once __DIR__ . '/../../includes/whatsapp_bridge.php';
+require_once __DIR__ . '/../../includes/whatsapp_automation_service.php';
 
 $pdo = getDbConnection();
 
@@ -540,6 +541,9 @@ try {
         CustomerJourneyService::updateJourneyState($pdo, (int)$journey['id'], ['conversation_id' => $conversationId]);
     }
 
+    // Cancel pending follow-ups immediately upon receiving any visitor response
+    WhatsAppAutomationService::cancelFollowUps($pdo, $resolvedCompanyId, $conversationId);
+
     // Record incoming message with channel = 'whatsapp'
     $pdo->prepare("
         INSERT INTO `messages` 
@@ -812,6 +816,111 @@ try {
         ? "- WELCOME BACK CONTINUITY: The customer transitioned to WhatsApp from the website. Warmly welcome them back by name, recognize their ongoing inquiry, and do NOT restart qualification or ask for details already present in memory above!\n"
         : "- Warmly greet the prospect, answer their question helpfully, and guide them with verified facts.\n";
 
+    // ====================================================================
+    // TASK 3: AUTOMATION ENGINE — PHASES 1, 2 & 4
+    // ====================================================================
+    $autoConfig = WhatsAppAutomationService::getConfig($pdo, $resolvedCompanyId);
+    $autoSettings = $autoConfig['settings'] ?? [];
+    $matchedRule = null;
+    $isHighIntent = false;
+
+    // Phase 1: Greeting & Introduction when visitor first enters from website handoff
+    if ($matchedHandoff && !empty($autoSettings['greeting_message'])) {
+        $aiReply = str_replace(
+            ['{{name}}', '{{company}}', '{{company_name}}'],
+            [$customerName, $company['name'], $company['name']],
+            $autoSettings['greeting_message']
+        );
+    }
+
+    // Phase 2: Information Delivery — Keyword triggers and Number-based menus
+    if (empty($aiReply)) {
+        $matchedRule = WhatsAppAutomationService::matchIncomingMessage($pdo, $resolvedCompanyId, $messageText);
+        if ($matchedRule) {
+            $aiReply = str_replace(
+                ['{{name}}', '{{company}}', '{{company_name}}'],
+                [$customerName, $company['name'], $company['name']],
+                $matchedRule['response_text']
+            );
+
+            // Real attachments & links (Document, Image, External Link)
+            if ($matchedRule['attachment_type'] !== 'none' && !empty($matchedRule['attachment_url'])) {
+                $attLabel = !empty($matchedRule['attachment_name']) ? $matchedRule['attachment_name'] : 'Resource';
+                if ($matchedRule['attachment_type'] === 'document') {
+                    $aiReply .= "\n\n📄 [Attached Document: {$attLabel}]({$matchedRule['attachment_url']})";
+                } elseif ($matchedRule['attachment_type'] === 'image') {
+                    $aiReply .= "\n\n🖼️ [Attached Image: {$attLabel}]({$matchedRule['attachment_url']})";
+                } elseif ($matchedRule['attachment_type'] === 'link') {
+                    $aiReply .= "\n\n🔗 *{$attLabel}*: {$matchedRule['attachment_url']}";
+                }
+            }
+
+            // Display available next reply options / numbers
+            if (!empty($matchedRule['next_options_json'])) {
+                $opts = json_decode($matchedRule['next_options_json'], true);
+                if (!empty($opts) && is_array($opts)) {
+                    $aiReply .= "\n\n" . implode("\n", $opts);
+                }
+            }
+
+            if (!empty($matchedRule['is_high_intent'])) {
+                $isHighIntent = true;
+            }
+        }
+    }
+
+    // Phase 4: Lead Qualification & Human Handoff Trigger Detection
+    if (!$isHighIntent && !empty($autoSettings['high_intent_keywords'])) {
+        $hiKeywords = array_map('trim', explode(',', strtolower($autoSettings['high_intent_keywords'])));
+        $cleanMsgLower = strtolower($messageText);
+        foreach ($hiKeywords as $hik) {
+            if (!empty($hik) && (preg_match('/\b' . preg_quote($hik, '/') . '\b/i', $cleanMsgLower) || strpos($cleanMsgLower, $hik) !== false)) {
+                $isHighIntent = true;
+                break;
+            }
+        }
+    }
+
+    if ($isHighIntent) {
+        // 1. Update lead record to HIGH PRIORITY
+        $leadIdToUpdate = $leadId ?: ($journey['lead_id'] ?? 0);
+        if ($leadIdToUpdate) {
+            $pdo->prepare("
+                UPDATE `leads` 
+                SET `priority` = 'HIGH',
+                    `intent_level` = 'high',
+                    `human_attention_required` = 1,
+                    `human_attention_reason` = ?,
+                    `human_attention_at` = NOW()
+                WHERE id = ? AND company_id = ?
+            ")->execute([substr("High Intent Trigger: " . $messageText, 0, 200), $leadIdToUpdate, $resolvedCompanyId]);
+        }
+
+        // 2. Notify assigned team member immediately through WhatsApp
+        $notifyUserId = !empty($autoSettings['notify_user_id']) ? (int)$autoSettings['notify_user_id'] : null;
+        try {
+            WhatsAppBridge::sendNotification(
+                $pdo,
+                $resolvedCompanyId,
+                $conversationId,
+                $identity['session_id'] ?? (string)$conversationId,
+                $customerName,
+                $messageText,
+                $notifyUserId
+            );
+        } catch (Throwable $notifEx) {
+            error_log("[Webhook] Team WhatsApp Notification failed: " . $notifEx->getMessage());
+        }
+
+        // 3. Pause automated replies for that session
+        $pdo->prepare("
+            UPDATE `conversations`
+            SET `ownership` = 'human',
+                `status` = 'human_requested'
+            WHERE id = ? AND company_id = ?
+        ")->execute([$conversationId, $resolvedCompanyId]);
+    }
+
     if (empty($aiReply)) {
         $aiReply = "Welcome to {$company['name']}! I'm {$asstName}, your AI assistant. How can I assist you today?";
 
@@ -985,6 +1094,17 @@ try {
         SET `last_message_preview` = ?, `last_message_at` = NOW()
         WHERE `id` = ?
     ")->execute([substr($aiReply, 0, 150), $conversationId]);
+
+    // Phase 3: Automated Inactivity Follow-Up Scheduling (if AI continues handling)
+    if (empty($isHighIntent) && $conversationId) {
+        WhatsAppAutomationService::scheduleFollowUp(
+            $pdo,
+            $resolvedCompanyId,
+            $conversationId,
+            $identity['session_id'] ?? null,
+            $senderPhone
+        );
+    }
 
     // Log success in webhook_events
     $pdo->prepare("
