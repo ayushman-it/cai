@@ -7044,7 +7044,12 @@
     }
   });
 
-  sendBtn.addEventListener('click', handleSend);
+  if (sendBtn) {
+    bindTap(sendBtn, (e) => {
+      if (e && e.preventDefault) e.preventDefault();
+      handleSend();
+    });
+  }
 
   // 2. ATTACHMENT HANDLER (Paperclip 📎)
   function clearPendingAttachmentUI() {
@@ -8712,14 +8717,20 @@
   async function handleSend(textOverride) {
     clearInactivityChips();
     if (isSending) return;
-    const text = (typeof textOverride === 'string' && textOverride.length > 0) ? textOverride.trim() : inputField.value.trim();
+
+    // Detect if textOverride is an actual text string (ignore click/touch events)
+    const isOverride = (typeof textOverride === 'string' && textOverride.trim().length > 0);
+    const text = isOverride ? textOverride.trim() : (inputField ? inputField.value.trim() : '');
     if (!text && !pendingAttachment) return;
 
-    if (!textOverride) {
+    // Immediately clear and reset input field so user never sees residual text
+    if (inputField) {
       inputField.value = '';
       inputField.style.height = 'auto';
     }
-    sendBtn.classList.remove('active');
+    if (sendBtn) {
+      sendBtn.classList.remove('active');
+    }
     hideAllPopovers();
     if (isVoiceListening) stopVoiceRecording();
 
