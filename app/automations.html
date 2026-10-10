@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WhatsApp Automation Engine — CAI Dashboard</title>
+  <title>WhatsApp Automations &amp; Templates — CAI Dashboard</title>
+  <link rel="icon" type="image/png" href="../assets/logo-black.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -14,22 +15,22 @@
   <style>
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      letter-spacing: -0.011em;
+      -webkit-font-smoothing: antialiased;
     }
-    
-    /* Clean Intercom / Meta cockpit cards */
-    .meta-card {
+
+    /* Intercom Cockpit Cards */
+    .intercom-card {
       background-color: #ffffff;
-      border: 1px solid #e4e2dc;
-      border-radius: 12px;
+      border: 1px solid #e7e5de;
+      border-radius: 10px;
       box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
       transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
-    .meta-card:hover {
+    .intercom-card:hover {
       border-color: #d1cfc7;
     }
 
-    /* iOS / Intercom toggle switch */
+    /* Intercom iOS Toggle Switch */
     .meta-switch {
       position: relative;
       display: inline-block;
@@ -60,7 +61,7 @@
       background-color: #ffffff;
       transition: transform 0.2s ease;
       border-radius: 50%;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.16);
     }
     input:checked + .meta-slider {
       background-color: #059669;
@@ -69,709 +70,722 @@
       transform: translateX(16px);
     }
 
-    /* Custom thin scrollbar */
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #dfdcd4; border-radius: 4px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #c6c3b9; }
-
-    /* Action tab pill active */
+    /* Action Tab Pill Active */
     .action-pill-active {
-      background-color: #ecfdf5 !important;
-      color: #047857 !important;
-      border-color: #10b981 !important;
+      background-color: #ffffff !important;
+      color: #111827 !important;
+      border-color: #111827 !important;
       font-weight: 600 !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* WhatsApp Preview Bubble in Library */
+    .wa-preview-bubble {
+      background-color: #e7fce3;
+      border: 1px solid #d1f4c9;
+      border-radius: 10px 10px 2px 10px;
+      box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03);
     }
   </style>
 </head>
-<body class="app-body overflow-hidden bg-[#faf9f7]">
+<body class="app-body">
 
   <div class="app-viewport">
-    <!-- Universal Sidebar Container -->
+    <!-- Universal Navigation Sidebar (Slim Rail 58px + Secondary Contextual Pane 220px) -->
     <div id="sidebar-container"></div>
 
-    <!-- Main Workspace -->
-    <div class="app-main h-screen flex flex-col overflow-hidden bg-[#faf9f7]">
-      <div id="topbar-container" class="block lg:hidden shrink-0"></div>
+    <!-- Main Application Workspace -->
+    <div class="app-main">
+      <div id="topbar-container"></div>
 
-      <!-- STRICT TWO TABS NAV BAR (Top Navigation) -->
-      <div class="px-5 lg:px-8 py-2.5 bg-white border-b border-[#e4e2dc] flex items-center justify-between shrink-0">
-        <div class="flex items-center gap-1.5 p-1 bg-[#f0ede6] rounded-xl border border-stone-200 text-xs">
-          <button onclick="switchMainTab('automation')" id="tab-btn-automation" class="px-4 py-1.5 rounded-lg font-semibold text-stone-900 bg-white shadow-xs inline-flex items-center gap-2 transition">
-            <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-600"></i>
-            <span>Automation</span>
-            <span id="badge-rules-count" class="text-[10px] font-mono px-1.5 py-0.2 bg-emerald-50 text-emerald-800 rounded font-bold border border-emerald-200">4</span>
-          </button>
-          <button onclick="switchMainTab('templates')" id="tab-btn-templates" class="px-4 py-1.5 rounded-lg font-medium text-stone-600 hover:text-stone-900 inline-flex items-center gap-2 transition">
-            <i data-lucide="layout-template" class="w-3.5 h-3.5 text-purple-600"></i>
-            <span>Templates</span>
-            <span id="badge-tpl-count" class="text-[10px] font-mono px-1.5 py-0.2 bg-stone-200/60 text-stone-700 rounded font-bold">5 Synced</span>
-          </button>
-        </div>
+      <!-- Scrollable Content View with Intercom Padding & Background -->
+      <div class="app-content-scroll bg-[#faf9f7]">
+        <div class="w-full space-y-6 max-w-7xl mx-auto">
 
-        <div class="text-[11px] text-stone-500 font-mono hidden md:flex items-center gap-3">
-          <span class="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 font-medium">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span id="gateway-phone">+91 82249 73413</span> • Meta API Live
-          </span>
-          <a href="whatsapp.html" class="px-2.5 py-1 bg-white hover:bg-stone-50 text-stone-700 rounded-md border border-stone-200 font-medium inline-flex items-center gap-1 transition">
-            <i data-lucide="message-square" class="w-3.5 h-3.5 text-[#25D366]"></i>
-            <span>Live Inbox</span>
-          </a>
-        </div>
-      </div>
-
-      <!-- MAIN SCROLLABLE CONTENT VIEW -->
-      <main class="flex-1 overflow-y-auto p-4 lg:p-7 space-y-6 custom-scroll">
-
-        <!-- ==================================================================== -->
-        <!-- TAB 1: AUTOMATION (EXACT MATCH TO SCREENSHOT 1)                       -->
-        <!-- ==================================================================== -->
-        <div id="tab-content-automation" class="space-y-6 max-w-7xl mx-auto">
-          
-          <!-- Top Header Section matching Screenshot 1 -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 class="text-xl font-bold text-stone-900 tracking-tight">Automation</h1>
-              <p class="text-xs text-stone-500 mt-1 max-w-3xl leading-relaxed">Build keyword replies for any business category with text, templates, product cards, media packs, PDFs, and follow-up template sets.</p>
+          <!-- ==================================================================== -->
+          <!-- TOP UTILITY BAR: INTERCOM TAB CONTROLS & META STATUS                 -->
+          <!-- ==================================================================== -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div class="flex items-center gap-3">
+              <!-- Intercom Pill Tabs -->
+              <div class="inline-flex items-center gap-1 p-1 bg-[#f0ede6] rounded-xl border border-stone-200 text-xs">
+                <button onclick="switchMainTab('automation')" id="tab-btn-automation" class="px-4 py-1.5 rounded-lg font-semibold text-stone-900 bg-white shadow-2xs inline-flex items-center gap-2 transition cursor-pointer">
+                  <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-600"></i>
+                  <span>Automation</span>
+                  <span id="badge-rules-count" class="text-[10px] font-mono px-1.5 py-0.2 bg-emerald-50 text-emerald-800 rounded font-bold border border-emerald-200">4</span>
+                </button>
+                <button onclick="switchMainTab('templates')" id="tab-btn-templates" class="px-4 py-1.5 rounded-lg font-medium text-stone-600 hover:text-stone-900 inline-flex items-center gap-2 transition cursor-pointer">
+                  <i data-lucide="layout-template" class="w-3.5 h-3.5 text-purple-600"></i>
+                  <span>Templates</span>
+                  <span id="badge-tpl-count" class="text-[10px] font-mono px-1.5 py-0.2 bg-stone-200/60 text-stone-700 rounded font-bold">5 Synced</span>
+                </button>
+              </div>
             </div>
-            <div>
-              <button onclick="resetAutomationForm()" class="px-4 py-2 bg-[#008060] hover:bg-[#006e52] text-white text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 shadow-2xs transition">
-                <i data-lucide="plus" class="w-4 h-4"></i>
-                <span>Add rule</span>
-              </button>
+
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <span class="inline-flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-[4px] border border-emerald-200 text-[11px] font-mono font-medium">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="gateway-phone">+91 82249 73413</span> • Meta Cloud API Live
+              </span>
+              <a href="whatsapp.html" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5">
+                <i data-lucide="message-square" class="w-3.5 h-3.5 text-[#25D366]"></i>
+                <span>Open WhatsApp Inbox</span>
+              </a>
             </div>
           </div>
 
-          <!-- Top Row: 4 Metric Cards + Quick Preset Chips (Matching Screenshot 1) -->
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
-            <!-- 4 Metrics in Flex Grid -->
-            <div class="lg:col-span-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="meta-card p-3.5 flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                  <i data-lucide="bot" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div id="stat-rules" class="text-base font-bold text-stone-900 leading-none">0</div>
-                  <div class="text-[11px] text-stone-500 font-medium mt-1">Rules</div>
-                </div>
-              </div>
-
-              <div class="meta-card p-3.5 flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0">
-                  <i data-lucide="check-circle" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div id="stat-active" class="text-base font-bold text-stone-900 leading-none">0</div>
-                  <div class="text-[11px] text-stone-500 font-medium mt-1">Active</div>
-                </div>
-              </div>
-
-              <div class="meta-card p-3.5 flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
-                  <i data-lucide="paperclip" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div id="stat-media" class="text-base font-bold text-stone-900 leading-none">0</div>
-                  <div class="text-[11px] text-stone-500 font-medium mt-1">Media packs</div>
-                </div>
-              </div>
-
-              <div class="meta-card p-3.5 flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center shrink-0">
-                  <i data-lucide="layers" class="w-4 h-4"></i>
-                </div>
-                <div>
-                  <div id="stat-tpl-sets" class="text-base font-bold text-stone-900 leading-none">0</div>
-                  <div class="text-[11px] text-stone-500 font-medium mt-1">Template sets</div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Quick Preset Chips on the Right (Matching Screenshot 1) -->
-            <div class="lg:col-span-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <button onclick="applyFlowPreset('welcome')" class="meta-card p-3 text-left hover:border-emerald-500 transition group flex flex-col justify-center">
-                <div class="text-xs font-semibold text-stone-900 flex items-center gap-1.5 group-hover:text-emerald-700">
-                  <span>✨ Welcome flow</span>
-                </div>
-                <div class="text-[11px] text-stone-400 truncate mt-1">hi, hello, start, info</div>
-              </button>
-
-              <button onclick="applyFlowPreset('pricing')" class="meta-card p-3 text-left hover:border-emerald-500 transition group flex flex-col justify-center">
-                <div class="text-xs font-semibold text-stone-900 flex items-center gap-1.5 group-hover:text-emerald-700">
-                  <span>✨ Pricing request</span>
-                </div>
-                <div class="text-[11px] text-stone-400 truncate mt-1">price, pricing, cost, rat...</div>
-              </button>
-
-              <button onclick="applyFlowPreset('catalog')" class="meta-card p-3 text-left hover:border-emerald-500 transition group flex flex-col justify-center">
-                <div class="text-xs font-semibold text-stone-900 flex items-center gap-1.5 group-hover:text-emerald-700">
-                  <span>✨ Catalog request</span>
-                </div>
-                <div class="text-[11px] text-stone-400 truncate mt-1">catalog, brochure, pro...</div>
-              </button>
-            </div>
-          </div>
-
-          <!-- Main Split Section: Left = Create automation | Right = Automation cockpit (Matching Screenshot 1) -->
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <!-- ==================================================================== -->
+          <!-- TAB 1: AUTOMATION (EXACT MATCH TO REFERENCE SCREENSHOT 1)             -->
+          <!-- ==================================================================== -->
+          <div id="tab-content-automation" class="space-y-6">
             
-            <!-- LEFT COLUMN: Create automation Form (Col 5) -->
-            <div class="lg:col-span-5 meta-card p-5 space-y-4">
-              <div class="border-b border-[#f0eee8] pb-3">
-                <h2 id="form-heading" class="text-sm font-bold text-stone-900 tracking-tight">Create automation</h2>
-                <p class="text-xs text-stone-500 mt-0.5">Pick a trigger, then choose what goes out.</p>
+            <!-- Page Title Section matching Reference Screen 1 -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h1 class="text-xl font-bold text-stone-900 tracking-tight">Automation</h1>
+                <p class="text-xs text-stone-500 mt-1 max-w-3xl leading-relaxed">Build keyword replies for any business category with text, templates, product cards, media packs, PDFs, and follow-up template sets.</p>
               </div>
-
-              <form id="automation-form" onsubmit="handleSaveAutomation(event)" class="space-y-3.5">
-                <input type="hidden" id="rule-id" value="0">
-                <input type="hidden" id="rule-action-type" value="text">
-
-                <!-- Row: Rule Name & Channel Select -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Rule Name</label>
-                    <input type="text" id="rule-name" placeholder="Rule name, e.g. Welcome flow" required class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
-                  </div>
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Channel</label>
-                    <select id="rule-channel" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
-                      <option value="whatsapp" selected>WhatsApp</option>
-                      <option value="web">Web Widget</option>
-                      <option value="all">All Channels</option>
-                    </select>
-                  </div>
-                </div>
-
-                <!-- Trigger Keywords Input -->
-                <div>
-                  <label class="block text-[11px] font-semibold text-stone-700 mb-1">Trigger Keywords (comma-separated)</label>
-                  <input type="text" id="rule-keywords" placeholder="e.g. hi, hello, start, 1" required class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
-                </div>
-
-                <!-- Match Type Dropdown -->
-                <div>
-                  <label class="block text-[11px] font-semibold text-stone-700 mb-1">Match Type</label>
-                  <select id="rule-match-type" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
-                    <option value="contains" selected>Contains keyword</option>
-                    <option value="exact">Exact match</option>
-                    <option value="starts_with">Starts with</option>
-                    <option value="menu_number">Menu number (1, 2, 3...)</option>
-                  </select>
-                </div>
-
-                <!-- Action Type Tabs / Pills (Matching Screenshot 1) -->
-                <div>
-                  <label class="block text-[11px] font-semibold text-stone-700 mb-1.5">Action Type</label>
-                  <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5 p-1 bg-[#f0ede6] rounded-lg border border-stone-200 text-xs">
-                    <button type="button" onclick="setActionTab('text')" id="act-tab-text" class="px-2 py-1.5 rounded-md font-medium text-stone-700 bg-white border border-stone-200 shadow-2xs text-[11px] inline-flex items-center justify-center gap-1 transition action-pill-active">
-                      <span>💬 Text</span>
-                    </button>
-                    <button type="button" onclick="setActionTab('template')" id="act-tab-template" class="px-2 py-1.5 rounded-md font-medium text-stone-600 hover:text-stone-900 text-[11px] inline-flex items-center justify-center gap-1 transition">
-                      <span>📄 Template</span>
-                    </button>
-                    <button type="button" onclick="setActionTab('template_set')" id="act-tab-template_set" class="px-2 py-1.5 rounded-md font-medium text-stone-600 hover:text-stone-900 text-[11px] inline-flex items-center justify-center gap-1 transition">
-                      <span>📦 Template set</span>
-                    </button>
-                    <button type="button" onclick="setActionTab('products')" id="act-tab-products" class="px-2 py-1.5 rounded-md font-medium text-stone-600 hover:text-stone-900 text-[11px] inline-flex items-center justify-center gap-1 transition">
-                      <span>🛍️ Products</span>
-                    </button>
-                    <button type="button" onclick="setActionTab('media_pack')" id="act-tab-media_pack" class="px-2 py-1.5 rounded-md font-medium text-stone-600 hover:text-stone-900 text-[11px] inline-flex items-center justify-center gap-1 transition">
-                      <span>📎 Media pack</span>
-                    </button>
-                  </div>
-                </div>
-
-                <!-- DYNAMIC ACTION PANELS -->
-                <!-- Panel 1: Text Response -->
-                <div id="panel-act-text" class="space-y-2">
-                  <div class="flex items-center justify-between">
-                    <label class="block text-[11px] font-semibold text-stone-700">Reply Message Content</label>
-                    <div class="flex items-center gap-1">
-                      <button type="button" onclick="insertVariableIntoRule('{{name}}')" class="px-1.5 py-0.5 text-[10px] font-mono bg-stone-100 hover:bg-stone-200 text-stone-700 rounded border border-stone-200">+ {{name}}</button>
-                      <button type="button" onclick="insertVariableIntoRule('{{company}}')" class="px-1.5 py-0.5 text-[10px] font-mono bg-stone-100 hover:bg-stone-200 text-stone-700 rounded border border-stone-200">+ {{company}}</button>
-                    </div>
-                  </div>
-                  <textarea id="rule-response-text" rows="4" placeholder="Type automated reply text... Use {{name}} for customer's name." class="w-full p-2.5 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 transition text-stone-900 leading-relaxed font-sans shadow-2xs"></textarea>
-                  
-                  <!-- Quick numbered choices helper -->
-                  <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-lg space-y-1.5">
-                    <div class="text-[11px] font-semibold text-stone-700">Menu Next Options (One per line)</div>
-                    <textarea id="rule-next-options" rows="2" placeholder="1️⃣ Pricing & Packages&#10;2️⃣ Platform Brochure&#10;3️⃣ Speak with a Counselor" class="w-full p-2 text-xs bg-white border border-stone-200 rounded outline-none text-stone-800 font-mono"></textarea>
-                  </div>
-                </div>
-
-                <!-- Panel 2: Meta Template -->
-                <div id="panel-act-template" class="hidden space-y-2.5">
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Select Approved Template</label>
-                    <select id="rule-meta-template" onchange="onTemplateSelected(this.value)" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
-                      <option value="">Select approved template</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Sample Variable Values (comma-separated)</label>
-                    <input type="text" id="rule-tpl-params" placeholder="John, ₹4,999, Order #104" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800">
-                  </div>
-                </div>
-
-                <!-- Panel 3: Template Set / Drip Sequence -->
-                <div id="panel-act-template_set" class="hidden space-y-2.5">
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Select Template Drip Set</label>
-                    <select id="rule-template-set" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
-                      <option value="welcome_series">Welcome &amp; Lead Qualification Series</option>
-                      <option value="dormancy_followup">24-Hour Dormancy Re-engagement</option>
-                      <option value="quote_followup">Quotation &amp; Proposal Nurture Drip</option>
-                    </select>
-                  </div>
-                  <p class="text-[11px] text-stone-400">Sends an initial acknowledgment followed by scheduled reminders if customer remains dormant.</p>
-                </div>
-
-                <!-- Panel 4: Products -->
-                <div id="panel-act-products" class="hidden space-y-2.5">
-                  <div class="grid grid-cols-2 gap-2">
-                    <div>
-                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Product Title</label>
-                      <input type="text" id="rule-prod-title" placeholder="Starter AI Plan" class="w-full px-2.5 py-1.5 text-xs bg-white border border-stone-200 rounded">
-                    </div>
-                    <div>
-                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Price</label>
-                      <input type="text" id="rule-prod-price" placeholder="₹4,999 / mo" class="w-full px-2.5 py-1.5 text-xs bg-white border border-stone-200 rounded">
-                    </div>
-                  </div>
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Product / Catalog URL</label>
-                    <input type="url" id="rule-prod-url" placeholder="https://cai.cuboidsoft.in/pricing.html" class="w-full px-2.5 py-1.5 text-xs bg-white border border-stone-200 rounded">
-                  </div>
-                </div>
-
-                <!-- Panel 5: Media Pack / PDF -->
-                <div id="panel-act-media_pack" class="hidden space-y-2.5">
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Media / PDF Document URL</label>
-                    <input type="url" id="rule-media-url" placeholder="https://cai.cuboidsoft.in/assets/CuboidPilot_Platform_Overview.pdf" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800 font-mono shadow-2xs">
-                  </div>
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Display Title / Filename</label>
-                    <input type="text" id="rule-media-title" placeholder="CuboidPilot_Platform_Overview.pdf" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800 shadow-2xs">
-                  </div>
-                </div>
-
-                <!-- Hand off to human counselor toggle -->
-                <div class="pt-1">
-                  <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" id="rule-high-intent" class="rounded border-stone-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4">
-                    <span class="text-xs font-semibold text-stone-800">Hand off to human counselor &amp; notify team on WhatsApp</span>
-                  </label>
-                </div>
-
-                <!-- Submit Button matching Screenshot 1 -->
-                <div class="pt-2">
-                  <button type="submit" id="btn-save-automation" class="w-full py-2.5 bg-[#008060] hover:bg-[#006e52] text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-2xs transition">
-                    <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                    <span id="btn-save-text">Save automation</span>
-                  </button>
-                </div>
-              </form>
-            </div>
-
-            <!-- RIGHT COLUMN: Automation Cockpit (Col 7) matching Screenshot 1 -->
-            <div class="lg:col-span-7 meta-card p-5 space-y-4">
-              <!-- Cockpit Header & Filters -->
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-[#f0eee8] gap-3">
-                <div>
-                  <h2 class="text-sm font-bold text-stone-900 tracking-tight">Automation cockpit</h2>
-                  <p id="cockpit-stats-text" class="text-xs text-stone-500 mt-0.5">0 of 0 rules shown</p>
-                </div>
-
-                <!-- Search & Filters Toolbar matching Screenshot 1 -->
-                <div class="flex items-center gap-2 flex-wrap">
-                  <div class="relative min-w-[160px]">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
-                    <input type="text" id="cockpit-search" oninput="filterCockpitRules()" placeholder="Search automations" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 text-stone-800">
-                  </div>
-
-                  <select id="cockpit-filter-state" onchange="filterCockpitRules()" class="px-2.5 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 text-stone-700 font-medium">
-                    <option value="all" selected>All states</option>
-                    <option value="active">Active</option>
-                    <option value="paused">Paused</option>
-                  </select>
-
-                  <select id="cockpit-filter-type" onchange="filterCockpitRules()" class="px-2.5 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 text-stone-700 font-medium">
-                    <option value="all" selected>All types</option>
-                    <option value="text">Text</option>
-                    <option value="media_pack">Media pack</option>
-                    <option value="template">Template</option>
-                    <option value="products">Products</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Rules Container -->
-              <div id="cockpit-rules-list" class="space-y-3 min-h-[260px]">
-                <div class="py-12 text-center text-xs text-stone-400">Loading automation cockpit...</div>
+              <div>
+                <button onclick="resetAutomationForm()" class="px-3.5 py-2 bg-[#008060] hover:bg-[#006e52] text-white text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer">
+                  <i data-lucide="plus" class="w-4 h-4"></i>
+                  <span>Add rule</span>
+                </button>
               </div>
             </div>
 
-          </div>
-        </div>
+            <!-- Top Row: 4 Metric Cards + Quick Preset Chips (Matching Screenshot 1) -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+              <!-- 4 Metrics Grid -->
+              <div class="lg:col-span-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="intercom-card p-3.5 flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                    <i data-lucide="bot" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <div id="stat-rules" class="text-base font-bold text-stone-900 leading-none">0</div>
+                    <div class="text-[11px] text-stone-500 font-medium mt-1">Rules</div>
+                  </div>
+                </div>
 
+                <div class="intercom-card p-3.5 flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0">
+                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <div id="stat-active" class="text-base font-bold text-stone-900 leading-none">0</div>
+                    <div class="text-[11px] text-stone-500 font-medium mt-1">Active</div>
+                  </div>
+                </div>
 
-        <!-- ==================================================================== -->
-        <!-- TAB 2: TEMPLATES (EXACT MATCH TO SCREENSHOT 2)                        -->
-        <!-- ==================================================================== -->
-        <div id="tab-content-templates" class="hidden space-y-6 max-w-7xl mx-auto">
-          
-          <!-- Top Header Section matching Screenshot 2 -->
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <h1 class="text-xl font-bold text-stone-900 tracking-tight">Templates</h1>
-              <p class="text-xs text-stone-500 mt-1 max-w-3xl leading-relaxed">Create Meta-approved WhatsApp templates, sync approval status, and send template messages to customers.</p>
+                <div class="intercom-card p-3.5 flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center shrink-0">
+                    <i data-lucide="paperclip" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <div id="stat-media" class="text-base font-bold text-stone-900 leading-none">0</div>
+                    <div class="text-[11px] text-stone-500 font-medium mt-1">Media packs</div>
+                  </div>
+                </div>
+
+                <div class="intercom-card p-3.5 flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-700 flex items-center justify-center shrink-0">
+                    <i data-lucide="layers" class="w-4 h-4"></i>
+                  </div>
+                  <div>
+                    <div id="stat-tpl-sets" class="text-base font-bold text-stone-900 leading-none">0</div>
+                    <div class="text-[11px] text-stone-500 font-medium mt-1">Template sets</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Preset Chips on the Right (Matching Screenshot 1) -->
+              <div class="lg:col-span-6 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <button onclick="applyFlowPreset('welcome')" class="intercom-card p-3 text-left hover:border-emerald-500 transition group flex flex-col justify-center cursor-pointer">
+                  <div class="text-xs font-semibold text-stone-900 flex items-center gap-1.5 group-hover:text-emerald-700">
+                    <span>✨ Welcome flow</span>
+                  </div>
+                  <div class="text-[11px] text-stone-400 truncate mt-1">hi, hello, start, menu</div>
+                </button>
+
+                <button onclick="applyFlowPreset('pricing')" class="intercom-card p-3 text-left hover:border-emerald-500 transition group flex flex-col justify-center cursor-pointer">
+                  <div class="text-xs font-semibold text-stone-900 flex items-center gap-1.5 group-hover:text-emerald-700">
+                    <span>✨ Pricing request</span>
+                  </div>
+                  <div class="text-[11px] text-stone-400 truncate mt-1">1, pricing, packages</div>
+                </button>
+
+                <button onclick="applyFlowPreset('catalog')" class="intercom-card p-3 text-left hover:border-emerald-500 transition group flex flex-col justify-center cursor-pointer">
+                  <div class="text-xs font-semibold text-stone-900 flex items-center gap-1.5 group-hover:text-emerald-700">
+                    <span>✨ Catalog request</span>
+                  </div>
+                  <div class="text-[11px] text-stone-400 truncate mt-1">2, catalog, brochure</div>
+                </button>
+              </div>
             </div>
-            <div>
-              <button onclick="syncMetaTemplatesNow()" id="sync-meta-btn" class="px-3.5 py-2 bg-white border border-stone-200 hover:border-stone-400 text-stone-800 text-xs font-semibold rounded-lg inline-flex items-center gap-1.5 shadow-2xs transition">
-                <i data-lucide="refresh-cw" id="sync-meta-icon" class="w-3.5 h-3.5 text-stone-600"></i>
-                <span>Sync from Meta</span>
-              </button>
-            </div>
-          </div>
 
-          <!-- TOP PANE: Template Library Browser matching Screenshot 2 -->
-          <div class="meta-card p-5 space-y-4">
+            <!-- Main Split Section: Left = Create automation | Right = Automation cockpit (Matching Screenshot 1) -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               
-              <!-- Left Sidebar: Category & Filters -->
-              <div class="lg:col-span-3 space-y-4 border-r-0 lg:border-r border-[#f0eee8] lg:pr-5">
-                <div>
-                  <h3 class="text-sm font-bold text-stone-900 tracking-tight">Template library</h3>
-                  <p class="text-xs text-stone-500 mt-0.5">Pick a ready utility/auth/marketing layout, then submit it to Meta from your workspace.</p>
+              <!-- LEFT COLUMN: Create automation Form (Col 5) -->
+              <div class="lg:col-span-5 intercom-card p-5 space-y-4">
+                <div class="border-b border-[#f0eee8] pb-3">
+                  <h2 id="form-heading" class="text-sm font-bold text-stone-900 tracking-tight">Create automation</h2>
+                  <p class="text-xs text-stone-500 mt-0.5">Pick a trigger keyword, then choose what goes out.</p>
                 </div>
 
-                <div class="space-y-2 pt-1">
-                  <div class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Category</div>
-                  <div class="space-y-1.5 text-xs text-stone-700">
-                    <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-stone-50">
-                      <span class="flex items-center gap-2">
-                        <input type="radio" name="lib-cat" value="UTILITY" checked onchange="filterLibraryTemplates()" class="text-emerald-600 focus:ring-emerald-500">
-                        <span class="font-medium text-stone-900">Utility</span>
-                      </span>
-                      <span class="text-[10px] font-mono text-stone-400">(8)</span>
-                    </label>
-                    <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-stone-50">
-                      <span class="flex items-center gap-2">
-                        <input type="radio" name="lib-cat" value="AUTHENTICATION" onchange="filterLibraryTemplates()" class="text-emerald-600 focus:ring-emerald-500">
-                        <span class="font-medium text-stone-900">Authentication</span>
-                      </span>
-                      <span class="text-[10px] font-mono text-stone-400">(1)</span>
-                    </label>
-                    <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-stone-50">
-                      <span class="flex items-center gap-2">
-                        <input type="radio" name="lib-cat" value="MARKETING" onchange="filterLibraryTemplates()" class="text-emerald-600 focus:ring-emerald-500">
-                        <span class="font-medium text-stone-900">Marketing</span>
-                      </span>
-                      <span class="text-[10px] font-mono text-stone-400">(1)</span>
-                    </label>
-                  </div>
-                </div>
+                <form id="automation-form" onsubmit="handleSaveAutomation(event)" class="space-y-3.5">
+                  <input type="hidden" id="rule-id" value="0">
+                  <input type="hidden" id="rule-action-type" value="text">
 
-                <div class="space-y-3 pt-2">
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Industry</label>
-                    <select id="lib-industry" onchange="filterLibraryTemplates()" class="w-full px-2.5 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-lg text-stone-700">
-                      <option value="all" selected>All</option>
-                      <option value="saas">SaaS / Technology</option>
-                      <option value="ecommerce">E-commerce</option>
-                      <option value="education">Education</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Template type</label>
-                    <select id="lib-type" onchange="filterLibraryTemplates()" class="w-full px-2.5 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-lg text-stone-700">
-                      <option value="all" selected>All</option>
-                      <option value="account">Account updates</option>
-                      <option value="order">Order updates</option>
-                      <option value="payment">Payment confirmations</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Right Grid: Search Bar & Template Cards matching Screenshot 2 -->
-              <div class="lg:col-span-9 space-y-4">
-                <!-- Top Toolbar of Right Pane -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div class="relative flex-1">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5"></i>
-                    <input type="text" id="lib-search" oninput="filterLibraryTemplates()" placeholder="Search utility templates" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none focus:border-stone-900 text-stone-800">
-                  </div>
-                  <select class="px-3 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-700 font-medium">
-                    <option>English (US) template</option>
-                  </select>
-                </div>
-
-                <!-- Subtitle Indicator -->
-                <div class="flex items-center justify-between text-[11px] text-stone-500 pb-1 border-b border-stone-100 font-medium">
-                  <span id="lib-showing-text">Showing 6 of 8 templates</span>
-                  <span class="text-emerald-700 flex items-center gap-1 font-semibold">
-                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                    <span>Click Use template to prepare Meta submission</span>
-                  </span>
-                </div>
-
-                <!-- 2-Column Template Cards Grid matching Screenshot 2 -->
-                <div id="lib-cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[380px] overflow-y-auto custom-scroll pr-1">
-                  <!-- Rendered dynamically by JS -->
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- BOTTOM PANE: Split into Left = Create/Send forms | Right = Synced Meta Templates (Matching Screenshot 2) -->
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            
-            <!-- Left Column: Create template + Send approved template (Col 5) -->
-            <div class="lg:col-span-5 space-y-5">
-              
-              <!-- Card 1: Create template -->
-              <div class="meta-card p-5 space-y-3.5">
-                <div class="border-b border-[#f0eee8] pb-2.5">
-                  <h3 class="text-sm font-bold text-stone-900 tracking-tight">Create template</h3>
-                </div>
-
-                <form onsubmit="handleCreateMetaTemplate(event)" class="space-y-3">
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">WhatsApp Business Number</label>
-                    <select class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800">
-                      <option selected>Primary WhatsApp number (+91 82249 73413)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Template name</label>
-                    <input type="text" id="tpl-create-name" placeholder="Template name, e.g. order_update" required class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800 font-mono">
-                  </div>
-
-                  <div class="grid grid-cols-2 gap-2.5">
+                  <!-- Row: Rule Name & Channel Select -->
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <div>
-                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Category</label>
-                      <select id="tpl-create-cat" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800">
-                        <option value="UTILITY" selected>Utility</option>
-                        <option value="MARKETING">Marketing</option>
-                        <option value="AUTHENTICATION">Authentication</option>
-                      </select>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Rule Name</label>
+                      <input type="text" id="rule-name" placeholder="Rule name, e.g. Welcome flow" required class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
                     </div>
                     <div>
-                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Language</label>
-                      <select id="tpl-create-lang" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800 font-mono">
-                        <option value="en_US" selected>en_US</option>
-                        <option value="hi">hi (Hindi)</option>
-                        <option value="en_GB">en_GB</option>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Channel</label>
+                      <select id="rule-channel" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
+                        <option value="whatsapp" selected>WhatsApp</option>
+                        <option value="web">Web Widget</option>
+                        <option value="all">All Channels</option>
                       </select>
                     </div>
                   </div>
 
+                  <!-- Trigger Keywords Input -->
                   <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Template Body</label>
-                    <textarea id="tpl-create-body" rows="4" placeholder="Body with variables like Hi {{1}}, your order {{2}} is ready." required class="w-full p-2.5 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800 leading-relaxed font-sans shadow-2xs"></textarea>
+                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Trigger Keywords (comma-separated)</label>
+                    <input type="text" id="rule-keywords" placeholder="e.g. hi, hello, start, 1" required class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs font-mono">
                   </div>
 
+                  <!-- Match Type Dropdown -->
                   <div>
-                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Sample variable values</label>
-                    <input type="text" id="tpl-create-sample" placeholder="Sample variable values required by Meta, comma-separated" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800">
+                    <label class="block text-[11px] font-semibold text-stone-700 mb-1">Match Type</label>
+                    <select id="rule-match-type" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
+                      <option value="contains" selected>Contains keyword</option>
+                      <option value="exact">Exact match</option>
+                      <option value="starts_with">Starts with</option>
+                      <option value="menu_number">Menu number (1, 2, 3...)</option>
+                    </select>
                   </div>
 
+                  <!-- Action Type Tabs / Pills (Matching Screenshot 1) -->
+                  <div>
+                    <label class="block text-[11px] font-semibold text-stone-700 mb-1.5">Action Type</label>
+                    <div class="grid grid-cols-3 sm:grid-cols-5 gap-1.5 p-1 bg-[#f0ede6] rounded-md border border-stone-200 text-xs">
+                      <button type="button" onclick="setActionTab('text')" id="act-tab-text" class="px-2 py-1.5 rounded font-medium text-stone-700 bg-white border border-stone-200 shadow-2xs text-[11px] inline-flex items-center justify-center gap-1 transition action-pill-active cursor-pointer">
+                        <span>💬 Text</span>
+                      </button>
+                      <button type="button" onclick="setActionTab('template')" id="act-tab-template" class="px-2 py-1.5 rounded font-medium text-stone-600 hover:text-stone-900 text-[11px] inline-flex items-center justify-center gap-1 transition cursor-pointer">
+                        <span>📄 Template</span>
+                      </button>
+                      <button type="button" onclick="setActionTab('template_set')" id="act-tab-template_set" class="px-2 py-1.5 rounded font-medium text-stone-600 hover:text-stone-900 text-[11px] inline-flex items-center justify-center gap-1 transition cursor-pointer">
+                        <span>📦 Set</span>
+                      </button>
+                      <button type="button" onclick="setActionTab('products')" id="act-tab-products" class="px-2 py-1.5 rounded font-medium text-stone-600 hover:text-stone-900 text-[11px] inline-flex items-center justify-center gap-1 transition cursor-pointer">
+                        <span>🛍️ Product</span>
+                      </button>
+                      <button type="button" onclick="setActionTab('media_pack')" id="act-tab-media_pack" class="px-2 py-1.5 rounded font-medium text-stone-600 hover:text-stone-900 text-[11px] inline-flex items-center justify-center gap-1 transition cursor-pointer">
+                        <span>📎 Media</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- DYNAMIC ACTION PANELS -->
+                  <!-- Panel 1: Text Response -->
+                  <div id="panel-act-text" class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <label class="block text-[11px] font-semibold text-stone-700">Reply Message Content</label>
+                      <div class="flex items-center gap-1">
+                        <button type="button" onclick="insertVariableIntoRule('{{name}}')" class="px-1.5 py-0.5 text-[10px] font-mono bg-stone-100 hover:bg-stone-200 text-stone-700 rounded border border-stone-200 cursor-pointer">+ {{name}}</button>
+                        <button type="button" onclick="insertVariableIntoRule('{{company}}')" class="px-1.5 py-0.5 text-[10px] font-mono bg-stone-100 hover:bg-stone-200 text-stone-700 rounded border border-stone-200 cursor-pointer">+ {{company}}</button>
+                      </div>
+                    </div>
+                    <textarea id="rule-response-text" rows="4" placeholder="Type automated reply text... Use {{name}} for customer's name." class="w-full p-2.5 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 transition text-stone-900 leading-relaxed font-sans shadow-2xs"></textarea>
+                    
+                    <!-- Quick numbered choices helper -->
+                    <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-md space-y-1.5">
+                      <div class="text-[11px] font-semibold text-stone-700">Menu Next Options (One per line)</div>
+                      <textarea id="rule-next-options" rows="2" placeholder="1. Pricing &amp; Packages&#10;2. Platform Brochure&#10;3. Speak with Counselor" class="w-full p-2 text-xs bg-white border border-stone-200 rounded outline-none text-stone-800 font-mono"></textarea>
+                    </div>
+                  </div>
+
+                  <!-- Panel 2: Meta Template -->
+                  <div id="panel-act-template" class="hidden space-y-2.5">
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Select Approved Template</label>
+                      <select id="rule-meta-template" onchange="onTemplateSelected(this.value)" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
+                        <option value="">Select approved template</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Sample Variable Values (comma-separated)</label>
+                      <input type="text" id="rule-tpl-params" placeholder="John, ₹4,999, Order #104" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none text-stone-800">
+                    </div>
+                  </div>
+
+                  <!-- Panel 3: Template Set / Drip Sequence -->
+                  <div id="panel-act-template_set" class="hidden space-y-2.5">
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Select Template Drip Set</label>
+                      <select id="rule-template-set" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 transition text-stone-900 shadow-2xs">
+                        <option value="welcome_series">Welcome &amp; Lead Qualification Series</option>
+                        <option value="dormancy_followup">24-Hour Dormancy Re-engagement</option>
+                        <option value="quote_followup">Quotation &amp; Proposal Nurture Drip</option>
+                      </select>
+                    </div>
+                    <p class="text-[11px] text-stone-400">Sends an initial acknowledgment followed by scheduled reminders if customer remains dormant.</p>
+                  </div>
+
+                  <!-- Panel 4: Products -->
+                  <div id="panel-act-products" class="hidden space-y-2.5">
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <label class="block text-[11px] font-semibold text-stone-700 mb-1">Product Title</label>
+                        <input type="text" id="rule-prod-title" placeholder="Starter AI Plan" class="w-full px-2.5 py-1.5 text-xs bg-white border border-stone-200 rounded">
+                      </div>
+                      <div>
+                        <label class="block text-[11px] font-semibold text-stone-700 mb-1">Price</label>
+                        <input type="text" id="rule-prod-price" placeholder="₹4,999 / mo" class="w-full px-2.5 py-1.5 text-xs bg-white border border-stone-200 rounded">
+                      </div>
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Product / Catalog URL</label>
+                      <input type="url" id="rule-prod-url" placeholder="https://cai.cuboidsoft.in/pricing.html" class="w-full px-2.5 py-1.5 text-xs bg-white border border-stone-200 rounded">
+                    </div>
+                  </div>
+
+                  <!-- Panel 5: Media Pack / PDF -->
+                  <div id="panel-act-media_pack" class="hidden space-y-2.5">
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Media / PDF Document URL</label>
+                      <input type="url" id="rule-media-url" placeholder="https://cai.cuboidsoft.in/assets/CuboidPilot_Platform_Overview.pdf" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none text-stone-800 font-mono shadow-2xs">
+                    </div>
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Display Title / Filename</label>
+                      <input type="text" id="rule-media-title" placeholder="CuboidPilot_Platform_Overview.pdf" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none text-stone-800 shadow-2xs">
+                    </div>
+                  </div>
+
+                  <!-- Hand off to human counselor toggle -->
                   <div class="pt-1">
                     <label class="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" id="tpl-create-submit" checked class="rounded border-stone-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4">
-                      <span class="text-xs font-semibold text-stone-800">Submit to Meta now</span>
+                      <input type="checkbox" id="rule-high-intent" class="rounded border-stone-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer">
+                      <span class="text-xs font-semibold text-stone-800">Hand off to human counselor &amp; notify team on WhatsApp</span>
                     </label>
                   </div>
 
-                  <div class="pt-1">
-                    <button type="submit" id="btn-create-tpl" class="w-full py-2.5 bg-[#008060] hover:bg-[#006e52] text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-2xs transition">
-                      <span>Save template</span>
+                  <!-- Submit Button matching Screenshot 1 -->
+                  <div class="pt-2">
+                    <button type="submit" id="btn-save-automation" class="w-full py-2.5 bg-[#008060] hover:bg-[#006e52] text-white text-xs font-semibold rounded-md inline-flex items-center justify-center gap-2 shadow-2xs transition cursor-pointer">
+                      <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                      <span id="btn-save-text">Save automation</span>
                     </button>
                   </div>
                 </form>
               </div>
 
-              <!-- Card 2: Send approved template -->
-              <div class="meta-card p-5 space-y-3.5">
-                <div class="border-b border-[#f0eee8] pb-2.5">
-                  <h3 class="text-sm font-bold text-stone-900 tracking-tight">Send approved template</h3>
+              <!-- RIGHT COLUMN: Automation Cockpit (Col 7) matching Screenshot 1 -->
+              <div class="lg:col-span-7 intercom-card p-5 space-y-4">
+                <!-- Cockpit Header & Filters -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-[#f0eee8] gap-3">
+                  <div>
+                    <h2 class="text-sm font-bold text-stone-900 tracking-tight">Automation cockpit</h2>
+                    <p id="cockpit-stats-text" class="text-xs text-stone-500 mt-0.5">0 of 0 rules shown</p>
+                  </div>
+
+                  <!-- Search & Filters Toolbar matching Screenshot 1 -->
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <div class="relative min-w-[160px]">
+                      <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
+                      <input type="text" id="cockpit-search" oninput="filterCockpitRules()" placeholder="Search automations" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 text-stone-800">
+                    </div>
+
+                    <select id="cockpit-filter-state" onchange="filterCockpitRules()" class="px-2.5 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 text-stone-700 font-medium">
+                      <option value="all" selected>All states</option>
+                      <option value="active">Active</option>
+                      <option value="paused">Paused</option>
+                    </select>
+
+                    <select id="cockpit-filter-type" onchange="filterCockpitRules()" class="px-2.5 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 text-stone-700 font-medium">
+                      <option value="all" selected>All types</option>
+                      <option value="text">Text replies</option>
+                      <option value="media_pack">Media packs</option>
+                      <option value="template">Templates</option>
+                    </select>
+                  </div>
                 </div>
 
-                <form onsubmit="handleSendApprovedTemplate(event)" class="space-y-3">
-                  <div>
-                    <select class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800">
-                      <option selected>Primary WhatsApp number (+91 82249 73413)</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <input type="text" id="send-tpl-phone" placeholder="Customer phone with country code (e.g. 919238695500)" required class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800 font-mono">
-                  </div>
-
-                  <div>
-                    <select id="send-tpl-select" required class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800 font-mono">
-                      <option value="">Select template</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <input type="text" id="send-tpl-vars" placeholder="Parameters (e.g. Ayushman, ₹4,999)" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800">
-                  </div>
-
-                  <div class="pt-1">
-                    <button type="submit" id="btn-send-tpl" class="w-full py-2.5 bg-[#25D366] hover:bg-[#20ba59] text-white text-xs font-semibold rounded-lg inline-flex items-center justify-center gap-2 shadow-2xs transition">
-                      <i data-lucide="send" class="w-3.5 h-3.5"></i>
-                      <span>Send template</span>
-                    </button>
-                  </div>
-                </form>
+                <!-- RULES LIST CONTAINER -->
+                <div id="cockpit-rules-list" class="space-y-3">
+                  <div class="py-12 text-center text-xs text-stone-400">Loading automation cockpit...</div>
+                </div>
               </div>
-
             </div>
 
-            <!-- Right Column: Approved Templates Table (Col 7) matching Screenshot 2 -->
-            <div class="lg:col-span-7 meta-card p-5 space-y-4">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#f0eee8] gap-3">
-                <h3 class="text-sm font-bold text-stone-900 tracking-tight">Template library</h3>
+          </div>
 
-                <div class="flex items-center gap-2">
-                  <div class="relative">
-                    <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
-                    <input type="text" id="synced-search" oninput="filterSyncedTable()" placeholder="Search templates" class="pl-8 pr-3 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-800">
+          <!-- ==================================================================== -->
+          <!-- TAB 2: TEMPLATES (EXACT MATCH TO REFERENCE SCREENSHOT 2)             -->
+          <!-- ==================================================================== -->
+          <div id="tab-content-templates" class="hidden space-y-6">
+            
+            <!-- Page Title Section matching Screenshot 2 -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h1 class="text-xl font-bold text-stone-900 tracking-tight">WhatsApp Templates</h1>
+                <p class="text-xs text-stone-500 mt-1 max-w-3xl leading-relaxed">Create Meta-approved WhatsApp templates, sync approval status, and send template messages to customers.</p>
+              </div>
+              <div>
+                <button onclick="syncMetaTemplatesNow()" id="sync-meta-btn" class="px-3.5 py-2 bg-white border border-stone-200 hover:border-stone-400 text-stone-800 text-xs font-semibold rounded-md inline-flex items-center gap-1.5 shadow-2xs transition cursor-pointer">
+                  <i data-lucide="refresh-cw" id="sync-meta-icon" class="w-3.5 h-3.5 text-stone-600"></i>
+                  <span>Sync from Meta</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- TOP PANE: Template Library Browser matching Screenshot 2 -->
+            <div class="intercom-card p-5 space-y-4">
+              <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Sidebar: Category & Filters -->
+                <div class="lg:col-span-3 space-y-4 border-r-0 lg:border-r border-[#f0eee8] lg:pr-5">
+                  <div>
+                    <h3 class="text-sm font-bold text-stone-900 tracking-tight">Template library</h3>
+                    <p class="text-xs text-stone-500 mt-0.5">Pick a ready utility/auth/marketing layout, then submit it to Meta from your workspace.</p>
                   </div>
-                  <select id="synced-status" onchange="filterSyncedTable()" class="px-2.5 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-lg outline-none text-stone-700">
-                    <option value="all" selected>All statuses</option>
-                    <option value="APPROVED">Approved</option>
-                    <option value="PENDING">Pending</option>
-                    <option value="REJECTED">Rejected</option>
-                  </select>
+
+                  <div class="space-y-2 pt-1">
+                    <div class="text-[11px] font-bold text-stone-400 uppercase tracking-wider">Category</div>
+                    <div class="space-y-1.5 text-xs text-stone-700">
+                      <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-stone-50">
+                        <span class="flex items-center gap-2">
+                          <input type="radio" name="lib-cat" value="UTILITY" checked onchange="filterLibraryTemplates()" class="text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                          <span class="font-medium text-stone-900">Utility</span>
+                        </span>
+                        <span class="text-[10px] font-mono text-stone-400">(8)</span>
+                      </label>
+                      <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-stone-50">
+                        <span class="flex items-center gap-2">
+                          <input type="radio" name="lib-cat" value="AUTHENTICATION" onchange="filterLibraryTemplates()" class="text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                          <span class="font-medium text-stone-900">Authentication</span>
+                        </span>
+                        <span class="text-[10px] font-mono text-stone-400">(1)</span>
+                      </label>
+                      <label class="flex items-center justify-between cursor-pointer p-1.5 rounded hover:bg-stone-50">
+                        <span class="flex items-center gap-2">
+                          <input type="radio" name="lib-cat" value="MARKETING" onchange="filterLibraryTemplates()" class="text-emerald-600 focus:ring-emerald-500 cursor-pointer">
+                          <span class="font-medium text-stone-900">Marketing</span>
+                        </span>
+                        <span class="text-[10px] font-mono text-stone-400">(1)</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="space-y-3 pt-2">
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Industry</label>
+                      <select id="lib-industry" onchange="filterLibraryTemplates()" class="w-full px-2.5 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-md text-stone-700">
+                        <option value="all" selected>All</option>
+                        <option value="saas">SaaS / Technology</option>
+                        <option value="ecommerce">E-commerce</option>
+                        <option value="education">Education</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Template type</label>
+                      <select id="lib-type" onchange="filterLibraryTemplates()" class="w-full px-2.5 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-md text-stone-700">
+                        <option value="all" selected>All</option>
+                        <option value="account">Account updates</option>
+                        <option value="order">Order updates</option>
+                        <option value="payment">Payment confirmations</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right Grid: Search Bar & Template Cards matching Screenshot 2 -->
+                <div class="lg:col-span-9 space-y-4">
+                  <!-- Top Toolbar of Right Pane -->
+                  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="relative flex-1">
+                      <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-3 top-2.5"></i>
+                      <input type="text" id="lib-search" oninput="filterLibraryTemplates()" placeholder="Search utility templates" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none focus:border-stone-900 text-stone-800">
+                    </div>
+                    <select class="px-3 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none text-stone-700 font-medium">
+                      <option>English (US) template</option>
+                    </select>
+                  </div>
+
+                  <!-- Subtitle Indicator -->
+                  <div class="flex items-center justify-between text-[11px] text-stone-500 pb-1 border-b border-stone-100 font-medium">
+                    <span id="lib-showing-text">Showing 6 of 8 templates</span>
+                    <span class="text-emerald-700 flex items-center gap-1 font-semibold">
+                      <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                      <span>Click Use template to prepare Meta submission</span>
+                    </span>
+                  </div>
+
+                  <!-- 2-Column Cards Grid matching Screenshot 2 -->
+                  <div id="lib-cards-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Dynamic Library Cards injected by JS -->
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- BOTTOM PANE: Split 2 Columns matching Screenshot 2 -->
+            <!-- Left = Create Template + Send Approved Template | Right = Search Template Table -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              
+              <!-- LEFT COLUMN: Forms (Col 5) -->
+              <div class="lg:col-span-5 space-y-5">
+                
+                <!-- 1. Create Template Form -->
+                <div class="intercom-card p-5 space-y-3.5">
+                  <div class="border-b border-[#f0eee8] pb-3">
+                    <h3 class="text-sm font-bold text-stone-900 tracking-tight">Create template</h3>
+                    <p class="text-xs text-stone-500 mt-0.5">Submit custom template directly to Meta for 24h approval.</p>
+                  </div>
+
+                  <form id="create-meta-tpl-form" onsubmit="handleCreateMetaTemplate(event)" class="space-y-3">
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Template Name (lowercase, snake_case)</label>
+                      <input type="text" id="tpl-name" placeholder="e.g. appointment_reminder_v2" required pattern="[a-z0-9_]+" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md font-mono text-stone-800">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                      <div>
+                        <label class="block text-[11px] font-semibold text-stone-700 mb-1">Category</label>
+                        <select id="tpl-cat" class="w-full px-2.5 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md text-stone-700">
+                          <option value="UTILITY" selected>Utility</option>
+                          <option value="MARKETING">Marketing</option>
+                          <option value="AUTHENTICATION">Authentication</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="block text-[11px] font-semibold text-stone-700 mb-1">Language</label>
+                        <select id="tpl-lang" class="w-full px-2.5 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md text-stone-700">
+                          <option value="en_US" selected>English (US)</option>
+                          <option value="hi">Hindi (hi)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Message Body (use {{1}}, {{2}} for variables)</label>
+                      <textarea id="tpl-body" rows="3" required placeholder="Hi {{1}}, your order {{2}} has been confirmed." class="w-full p-2.5 text-xs bg-white border border-[#e4e2dc] rounded-md font-sans text-stone-800 leading-relaxed"></textarea>
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Sample Parameters (comma-separated)</label>
+                      <input type="text" id="tpl-sample" placeholder="Rahul, #ORD-9821" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md text-stone-800">
+                    </div>
+
+                    <button type="submit" id="btn-submit-tpl" class="w-full py-2.5 bg-stone-900 hover:bg-black text-white text-xs font-semibold rounded-md shadow-2xs transition cursor-pointer">
+                      Submit Template to Meta
+                    </button>
+                  </form>
+                </div>
+
+                <!-- 2. Send Approved Template Form -->
+                <div class="intercom-card p-5 space-y-3.5">
+                  <div class="border-b border-[#f0eee8] pb-3">
+                    <h3 class="text-sm font-bold text-stone-900 tracking-tight">Send approved template</h3>
+                    <p class="text-xs text-stone-500 mt-0.5">Dispatches outside 24h window to any WhatsApp number.</p>
+                  </div>
+
+                  <form id="send-meta-tpl-form" onsubmit="handleSendApprovedTemplate(event)" class="space-y-3">
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Recipient Phone Number</label>
+                      <input type="text" id="send-tpl-phone" placeholder="919238695500" required class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md font-mono text-stone-800">
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Approved Template</label>
+                      <select id="send-tpl-select" required class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md text-stone-800">
+                        <option value="">Select template</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label class="block text-[11px] font-semibold text-stone-700 mb-1">Variable Values (comma-separated)</label>
+                      <input type="text" id="send-tpl-vars" placeholder="Rahul, ₹4,999" class="w-full px-3 py-2 text-xs bg-white border border-[#e4e2dc] rounded-md text-stone-800">
+                    </div>
+
+                    <button type="submit" id="btn-send-tpl" class="w-full py-2.5 bg-[#008060] hover:bg-[#006e52] text-white text-xs font-semibold rounded-md shadow-2xs transition cursor-pointer">
+                      Send Template Message
+                    </button>
+                  </form>
+                </div>
+
+              </div>
+
+              <!-- RIGHT COLUMN: Synced Meta Templates Table (Col 7) matching Screenshot 2 -->
+              <div class="lg:col-span-7 intercom-card p-5 space-y-4">
+                <div class="flex items-center justify-between pb-3.5 border-b border-[#f0eee8]">
+                  <div>
+                    <h3 class="text-sm font-bold text-stone-900 tracking-tight">Search template</h3>
+                    <p id="table-count-text" class="text-xs text-stone-500 mt-0.5">5 Meta approved templates synced</p>
+                  </div>
+                  <div class="relative min-w-[200px]">
+                    <i data-lucide="search" class="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-2.5"></i>
+                    <input type="text" id="tbl-search" oninput="filterSyncedTable()" placeholder="Search template name" class="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-[#e4e2dc] rounded-md outline-none text-stone-800">
+                  </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs">
+                    <thead>
+                      <tr class="border-b border-[#f0eee8] text-stone-400 text-[11px] font-semibold uppercase tracking-wider">
+                        <th class="pb-2">Template name</th>
+                        <th class="pb-2">Category</th>
+                        <th class="pb-2">Language</th>
+                        <th class="pb-2">Status</th>
+                        <th class="pb-2 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody id="synced-templates-tbody" class="divide-y divide-[#f7f6f2] text-stone-700">
+                      <tr><td colspan="5" class="py-8 text-center text-stone-400">Loading synced templates...</td></tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
-              <!-- Synced Templates List / Table -->
-              <div id="synced-templates-table" class="min-h-[300px]">
-                <div class="py-12 text-center text-xs text-stone-400">Loading synced Meta templates...</div>
-              </div>
             </div>
 
           </div>
 
         </div>
-
-      </main>
+      </div>
     </div>
   </div>
 
-  <script src="../js/sidebar.js?v=5.1.0"></script>
+  <!-- Shared Application Scripts -->
+  <script src="../js/components.js?v=5.0.0"></script>
+  <script src="../js/dashboard.js?v=5.0.0"></script>
   <script>
-    // Global State
-    let currentMainTab = 'automation';
+    // Cockpit State
     let allCockpitRules = [];
     let allSyncedTemplates = [];
+    let currentTab = 'automation';
     let currentActiveTabAction = 'text';
 
-    // Static Template Library Presets matching Screenshot 2
-    const libraryPresets = [
+    // 8 Pre-Built Meta Templates Library Data (matching Screenshot 2)
+    const libraryTemplates = [
       {
-        id: 'account_setup_confirmation',
-        title: 'Finalize account setup',
+        id: 'lib-1',
+        title: 'Account status update',
         category: 'UTILITY',
-        industry: 'saas',
-        type: 'account',
+        category_label: 'Utility',
+        category_color: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        language: 'English (US)',
+        type: 'Account updates',
+        body: 'Hi {{1}},\n\nYour account status has been updated to {{2}}.\n\nLog in to review your profile.',
+        params: 'Rahul, Active'
+      },
+      {
+        id: 'lib-2',
+        title: 'Account registration confirmation',
+        category: 'UTILITY',
+        category_label: 'Utility',
+        category_color: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        language: 'English (US)',
+        type: 'Account updates',
         body: 'Hi {{1}},\n\nYour new account has been created successfully.\n\nPlease verify {{2}} to complete your profile.',
-        button: 'Verify account'
+        params: 'Priya, your email'
       },
       {
-        id: 'address_update',
-        title: 'Address update',
-        category: 'UTILITY',
-        industry: 'ecommerce',
-        type: 'account',
-        body: 'Hi {{1}}, your delivery address has been successfully updated to {{2}}.\n\nContact {{3}} for any inquiries.',
-        button: null
-      },
-      {
-        id: 'appointment_cancelled',
-        title: 'Appointment cancelled',
-        category: 'UTILITY',
-        industry: 'saas',
-        type: 'account',
-        body: 'Hi {{1}},\n\nYour appointment scheduled for {{2}} has been cancelled as requested. Reply to reschedule.',
-        button: 'Reschedule'
-      },
-      {
-        id: 'payment_confirmation',
-        title: 'Payment confirmation',
-        category: 'UTILITY',
-        industry: 'ecommerce',
-        type: 'payment',
-        body: 'Hi {{1}}, we have received your payment of {{2}} for invoice {{3}}. Your subscription is now active.',
-        button: 'View receipt'
-      },
-      {
-        id: 'order_status_update',
-        title: 'Order status update',
-        category: 'UTILITY',
-        industry: 'ecommerce',
-        type: 'order',
-        body: 'Hi {{1}}, your order #{{2}} has been dispatched via {{3}}. Track delivery here.',
-        button: 'Track package'
-      },
-      {
-        id: 'lead_welcome_intro',
-        title: 'Lead welcome & discovery',
-        category: 'MARKETING',
-        industry: 'saas',
-        type: 'account',
-        body: 'Hi {{1}}, welcome to {{2}}! I am Cai, your AI assistant. Would you like to review our package tiers or book a 30-min live demo?',
-        button: 'Book demo'
-      },
-      {
-        id: 'auth_otp_code',
-        title: 'One-time verification code',
+        id: 'lib-3',
+        title: 'Account verification code',
         category: 'AUTHENTICATION',
-        industry: 'saas',
-        type: 'account',
-        body: '{{1}} is your verification code. For your security, do not share this code with anyone.',
-        button: 'Copy code'
+        category_label: 'Authentication',
+        category_color: 'bg-purple-50 text-purple-800 border-purple-200',
+        language: 'English (US)',
+        type: 'Account updates',
+        body: '{{1}} is your verification code.\n\nFor your security, do not share this code with anyone.',
+        params: '849201'
+      },
+      {
+        id: 'lib-4',
+        title: 'Payment receipt confirmation',
+        category: 'UTILITY',
+        category_label: 'Utility',
+        category_color: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        language: 'English (US)',
+        type: 'Payment confirmations',
+        body: 'Hi {{1}},\n\nWe received your payment of {{2}} for invoice {{3}}.\n\nThank you for choosing CuboidSoft!',
+        params: 'Vikram, ₹14,999, #INV-2041'
+      },
+      {
+        id: 'lib-5',
+        title: 'Appointment reminder alert',
+        category: 'UTILITY',
+        category_label: 'Utility',
+        category_color: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+        language: 'English (US)',
+        type: 'Account updates',
+        body: 'Hi {{1}},\n\nThis is a friendly reminder for your upcoming consultation on {{2}} at {{3}}.\n\nReply YES to confirm.',
+        params: 'Amit, Tomorrow, 4:00 PM'
+      },
+      {
+        id: 'lib-6',
+        title: 'Limited time renewal offer',
+        category: 'MARKETING',
+        category_label: 'Marketing',
+        category_color: 'bg-blue-50 text-blue-800 border-blue-200',
+        language: 'English (US)',
+        type: 'Account updates',
+        body: 'Special offer for {{1}}! Renew your CuboidPilot Growth tier before {{2}} and receive a 20% discount on autonomous AI.',
+        params: 'Ayushman, Oct 15'
       }
     ];
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      if (typeof initSidebar === 'function') {
-        initSidebar('whatsapp');
-      }
-      if (window.lucide) lucide.createIcons();
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Initialize Full CAI Dashboard Shell (Dual Sidebar + Topbar)
+      CuboidShell.initCompanyApp('automations', 'WhatsApp Automations', ['Channels', 'WhatsApp']);
 
-      await loadCockpit();
-      renderLibraryCards(libraryPresets);
+      // 2. Handle Tab Query (?tab=templates or default to automation)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('tab') === 'templates') {
+        switchMainTab('templates');
+      } else {
+        switchMainTab('automation');
+      }
+
+      // 3. Load Live Cockpit Data & Library
+      loadCockpit();
+      filterLibraryTemplates();
     });
 
-    // Main Tab Switching
+    // Switch Between Two Main Tabs (Automation & Templates)
     function switchMainTab(tab) {
-      currentMainTab = tab;
+      currentTab = tab;
       const autoTab = document.getElementById('tab-content-automation');
       const tplTab = document.getElementById('tab-content-templates');
       const btnAuto = document.getElementById('tab-btn-automation');
       const btnTpl = document.getElementById('tab-btn-templates');
 
+      const sideAuto = document.getElementById('side-link-auto');
+      const sideTpl = document.getElementById('side-link-tpl');
+
       if (tab === 'automation') {
         autoTab.classList.remove('hidden');
         tplTab.classList.add('hidden');
-        btnAuto.className = 'px-4 py-1.5 rounded-lg font-semibold text-stone-900 bg-white shadow-xs inline-flex items-center gap-2 transition';
-        btnTpl.className = 'px-4 py-1.5 rounded-lg font-medium text-stone-600 hover:text-stone-900 inline-flex items-center gap-2 transition';
+        btnAuto.className = 'px-4 py-1.5 rounded-lg font-semibold text-stone-900 bg-white shadow-2xs inline-flex items-center gap-2 transition cursor-pointer';
+        btnTpl.className = 'px-4 py-1.5 rounded-lg font-medium text-stone-600 hover:text-stone-900 inline-flex items-center gap-2 transition cursor-pointer';
+        if (sideAuto) { sideAuto.classList.add('active', 'font-medium'); sideAuto.classList.remove('text-stone-600'); }
+        if (sideTpl) { sideTpl.classList.remove('active', 'font-medium'); sideTpl.classList.add('text-stone-600'); }
       } else {
         autoTab.classList.add('hidden');
         tplTab.classList.remove('hidden');
-        btnAuto.className = 'px-4 py-1.5 rounded-lg font-medium text-stone-600 hover:text-stone-900 inline-flex items-center gap-2 transition';
-        btnTpl.className = 'px-4 py-1.5 rounded-lg font-semibold text-stone-900 bg-white shadow-xs inline-flex items-center gap-2 transition';
+        btnAuto.className = 'px-4 py-1.5 rounded-lg font-medium text-stone-600 hover:text-stone-900 inline-flex items-center gap-2 transition cursor-pointer';
+        btnTpl.className = 'px-4 py-1.5 rounded-lg font-semibold text-stone-900 bg-white shadow-2xs inline-flex items-center gap-2 transition cursor-pointer';
+        if (sideAuto) { sideAuto.classList.remove('active', 'font-medium'); sideAuto.classList.add('text-stone-600'); }
+        if (sideTpl) { sideTpl.classList.add('active', 'font-medium'); sideTpl.classList.remove('text-stone-600'); }
       }
       if (window.lucide) lucide.createIcons();
     }
@@ -812,6 +826,10 @@
           document.getElementById('stat-tpl-sets').textContent = m.template_sets || 0;
           document.getElementById('badge-rules-count').textContent = allCockpitRules.length;
 
+          // Sub-sidebar badge sync
+          const sideRulesBadge = document.getElementById('shell-rules-badge');
+          if (sideRulesBadge) sideRulesBadge.textContent = allCockpitRules.length;
+
           // Phone badge
           if (data.account && data.account.display_number) {
             document.getElementById('gateway-phone').textContent = data.account.display_number;
@@ -841,7 +859,7 @@
       document.getElementById('badge-tpl-count').textContent = `${templates.length} Synced`;
     }
 
-    // Render Cockpit Rules in Right Column (Matching Screenshot 1)
+    // Render Cockpit Rules in Right Column (Intercom Design matching Screenshot 1)
     function renderCockpitRules(rules) {
       const container = document.getElementById('cockpit-rules-list');
       const countEl = document.getElementById('cockpit-stats-text');
@@ -862,8 +880,22 @@
           ? `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-800 border border-blue-200">📎 ${escapeHtml(r.action_type || 'Media')}</span>`
           : `<span class="px-2 py-0.5 rounded text-[10px] font-medium bg-stone-100 text-stone-700 border border-stone-200">💬 Text</span>`;
 
+        // Split keywords into clean pill badges
+        const kwList = (r.keywords || r.trigger_value || '').split(',').map(k => k.trim()).filter(Boolean);
+        const kwPills = kwList.map(k => `<span class="px-1.5 py-0.5 rounded text-[10.5px] font-mono bg-stone-100 text-stone-800 border border-stone-200/80 font-medium">${escapeHtml(k)}</span>`).join(' ');
+
+        // Next reply options badges
+        let optionsHtml = '';
+        if (Array.isArray(r.next_options) && r.next_options.length) {
+          optionsHtml = `
+            <div class="flex items-center gap-1.5 flex-wrap pt-0.5">
+              ${r.next_options.map(opt => `<span class="px-2 py-0.5 rounded text-[10px] font-mono bg-white text-stone-700 border border-stone-200 shadow-2xs">${escapeHtml(opt)}</span>`).join('')}
+            </div>
+          `;
+        }
+
         return `
-          <div class="p-3.5 bg-white border border-[#e4e2dc] hover:border-stone-400 rounded-xl space-y-2.5 transition">
+          <div class="p-3.5 bg-white border border-[#e4e2dc] hover:border-stone-400 rounded-lg space-y-2.5 transition shadow-2xs">
             <div class="flex items-start justify-between gap-3">
               <div class="space-y-1">
                 <div class="flex items-center gap-2 flex-wrap">
@@ -872,37 +904,39 @@
                   <span class="px-1.5 py-0.2 rounded text-[10px] font-mono bg-stone-100 text-stone-600 border border-stone-200">${escapeHtml(r.trigger || 'Contains keyword')}</span>
                   ${actionBadge}
                 </div>
-                <div class="flex items-center gap-1.5 text-[11px] text-stone-500 font-mono">
-                  <span class="text-stone-400">Keywords:</span>
-                  <span class="font-semibold text-stone-800 bg-stone-50 px-1.5 py-0.5 rounded border border-stone-200">${escapeHtml(r.keywords || r.trigger_value)}</span>
+                <div class="flex items-center gap-1.5 text-[11px] text-stone-500 flex-wrap">
+                  <span class="text-stone-400">Triggers:</span>
+                  ${kwPills}
                 </div>
               </div>
 
-              <!-- Instant Toggle Switch -->
-              <label class="meta-switch">
+              <!-- Instant iOS Intercom Toggle Switch -->
+              <label class="meta-switch" title="Toggle active status">
                 <input type="checkbox" ${isChecked} onchange="toggleRuleActive(${r.id}, this.checked)">
                 <span class="meta-slider"></span>
               </label>
             </div>
 
             <!-- Content preview -->
-            <div class="text-xs text-stone-700 bg-[#fbfaf8] p-2.5 rounded-lg border border-stone-200 line-clamp-2 leading-relaxed">
+            <div class="text-xs text-stone-700 bg-[#fbfaf8] p-2.5 rounded border border-stone-200 line-clamp-2 leading-relaxed font-sans">
               ${escapeHtml(r.content || r.response_text)}
             </div>
 
+            ${optionsHtml}
+
             ${r.media_url ? `
-              <div class="text-[11px] font-mono text-blue-700 flex items-center gap-1 truncate">
-                <i data-lucide="link" class="w-3 h-3 shrink-0"></i>
+              <div class="text-[11px] font-mono text-emerald-700 flex items-center gap-1 truncate pt-0.5">
+                <i data-lucide="link" class="w-3 h-3 shrink-0 text-emerald-600"></i>
                 <a href="${escapeHtml(r.media_url)}" target="_blank" class="hover:underline truncate">${escapeHtml(r.media_title || r.media_url)}</a>
               </div>
             ` : ''}
 
             <!-- Card Actions -->
             <div class="flex items-center justify-between pt-1 border-t border-stone-100 text-xs">
-              <span class="text-[10px] text-stone-400 font-mono">${r.is_high_intent ? '🚨 Human Specialist Alert' : '⚡ Autonomous'}</span>
+              <span class="text-[10px] text-stone-400 font-mono">${r.is_high_intent ? '🚨 Human Specialist Alert' : '⚡ Autonomous AI'}</span>
               <div class="flex items-center gap-2">
-                <button type="button" onclick="editRule(${r.id})" class="px-2 py-0.5 text-stone-700 hover:text-stone-900 font-medium hover:bg-stone-100 rounded transition">Edit</button>
-                <button type="button" onclick="deleteRule(${r.id})" class="px-2 py-0.5 text-red-600 hover:text-red-800 font-medium hover:bg-red-50 rounded transition">Delete</button>
+                <button type="button" onclick="editRule(${r.id})" class="px-2 py-0.5 text-stone-700 hover:text-stone-900 font-medium hover:bg-stone-100 rounded transition cursor-pointer">Edit</button>
+                <button type="button" onclick="deleteRule(${r.id})" class="px-2 py-0.5 text-red-600 hover:text-red-800 font-medium hover:bg-red-50 rounded transition cursor-pointer">Delete</button>
               </div>
             </div>
           </div>
@@ -952,7 +986,7 @@
       if (preset === 'welcome') {
         document.getElementById('rule-id').value = '0';
         document.getElementById('rule-name').value = 'Welcome flow';
-        document.getElementById('rule-keywords').value = 'hi, hello, start, info, hey';
+        document.getElementById('rule-keywords').value = 'hi, hello, start, menu, info';
         document.getElementById('rule-match-type').value = 'contains';
         document.getElementById('rule-response-text').value = "Hello {{name}}! 👋 Welcome to CuboidSoft AI Support Desk.\nHow can we help your business today?\n\nReply with a number:\n1️⃣ Pricing & Packages\n2️⃣ Platform Brochure & Overview\n3️⃣ Speak with a Solutions Counselor";
         document.getElementById('rule-next-options').value = "1. Pricing & Packages\n2. Platform Brochure\n3. Speak with Counselor";
@@ -961,9 +995,9 @@
       } else if (preset === 'pricing') {
         document.getElementById('rule-id').value = '0';
         document.getElementById('rule-name').value = 'Pricing request';
-        document.getElementById('rule-keywords').value = '1, pricing, price, fees, cost, packages, plan';
+        document.getElementById('rule-keywords').value = '1, pricing, price, packages, fees, plan';
         document.getElementById('rule-match-type').value = 'contains';
-        document.getElementById('rule-response-text').value = "Here are our standard packages:\n• Starter AI: ₹4,999/mo (Chatbot + Lead Capture)\n• Growth Autonomous: ₹14,999/mo (WhatsApp Bridge + CRM Sync)\n• Enterprise: Custom Dedicated Deployment\n\nFlexible installment/EMI plans are available.";
+        document.getElementById('rule-response-text').value = "Here are our standard packages:\n• Starter AI: ₹4,999/mo (Chatbot + Lead Capture)\n• Growth Autonomous: ₹14,999/mo (WhatsApp Bridge + CRM Sync)\n• Enterprise: Custom Dedicated Deployment\n\nFlexible installment/EMI plans are available. Would you like an official quotation?";
         document.getElementById('rule-next-options').value = "2. View Brochure\n3. Speak with Counselor";
         document.getElementById('rule-media-url').value = 'https://cai.cuboidsoft.in/pricing.html';
         document.getElementById('rule-media-title').value = 'View Detailed Pricing & Plans';
@@ -1106,38 +1140,48 @@
       }
     }
 
-    // Render Library Cards in Tab 2 (Matching Screenshot 2)
-    function renderLibraryCards(cards) {
-      const grid = document.getElementById('lib-cards-grid');
-      const countEl = document.getElementById('lib-showing-text');
-      countEl.textContent = `Showing ${cards.length} of ${libraryPresets.length} templates`;
+    // Filter Template Library Cards (matching Screenshot 2)
+    function filterLibraryTemplates() {
+      const selectedCat = document.querySelector('input[name="lib-cat"]:checked')?.value || 'ALL';
+      const search = (document.getElementById('lib-search').value || '').toLowerCase().trim();
 
-      grid.innerHTML = cards.map(c => `
-        <div class="bg-white border border-[#e4e2dc] hover:border-stone-400 rounded-xl p-4 flex flex-col justify-between space-y-3 transition">
+      const filtered = libraryTemplates.filter(t => {
+        const matchCat = (selectedCat === 'ALL') || (t.category === selectedCat);
+        const matchSearch = !search || t.title.toLowerCase().includes(search) || t.body.toLowerCase().includes(search);
+        return matchCat && matchSearch;
+      });
+
+      const grid = document.getElementById('lib-cards-grid');
+      document.getElementById('lib-showing-text').textContent = `Showing ${filtered.length} of ${libraryTemplates.length} templates`;
+
+      if (!filtered.length) {
+        grid.innerHTML = '<div class="col-span-2 py-8 text-center text-xs text-stone-400">No template designs found.</div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(t => `
+        <div class="intercom-card p-4 space-y-3 flex flex-col justify-between">
           <div class="space-y-2">
-            <h4 class="text-xs font-bold text-stone-900 tracking-tight">${escapeHtml(c.title)}</h4>
-            
-            <!-- WhatsApp Chat Bubble Preview -->
-            <div class="bg-[#f0fdf4]/50 border border-emerald-100 rounded-lg p-3 text-xs text-stone-800 whitespace-pre-wrap leading-relaxed shadow-2xs font-sans">
-              ${escapeHtml(c.body)}
-              ${c.button ? `
-                <div class="pt-2 mt-2 border-t border-emerald-200/60 flex items-center justify-center">
-                  <span class="text-blue-600 font-semibold text-[11px] flex items-center gap-1">
-                    <i data-lucide="external-link" class="w-3 h-3"></i>
-                    <span>${escapeHtml(c.button)}</span>
-                  </span>
-                </div>
-              ` : ''}
+            <div class="flex items-start justify-between gap-2">
+              <h4 class="text-xs font-bold text-stone-900 leading-snug">${escapeHtml(t.title)}</h4>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${t.category_color}">${escapeHtml(t.category_label)}</span>
+            </div>
+
+            <!-- WhatsApp preview bubble -->
+            <div class="wa-preview-bubble p-2.5 text-xs text-stone-900 leading-relaxed font-sans whitespace-pre-line">
+              ${escapeHtml(t.body)}
+            </div>
+
+            <div class="text-[11px] text-stone-500 font-mono">
+              <span class="text-stone-400">Variables:</span> <strong>${escapeHtml(t.params)}</strong>
             </div>
           </div>
 
-          <div class="flex items-center justify-between pt-2 border-t border-stone-100">
-            <div>
-              <div class="text-[11px] font-mono font-bold text-stone-800">${escapeHtml(c.id)}</div>
-              <div class="text-[10px] text-stone-400">${escapeHtml(c.category)} · General</div>
-            </div>
-            <button type="button" onclick="useLibraryPreset('${escapeHtml(c.id)}')" class="px-3 py-1.5 bg-[#008060] hover:bg-[#006e52] text-white text-[11px] font-semibold rounded-lg shadow-2xs transition">
-              Use template
+          <div class="pt-2 border-t border-stone-100 flex items-center justify-between">
+            <span class="text-[10px] text-stone-400 font-mono">${escapeHtml(t.language)}</span>
+            <button onclick="useLibraryTemplate('${t.id}')" class="px-3 py-1 bg-stone-900 hover:bg-black text-white text-[11px] font-semibold rounded shadow-2xs inline-flex items-center gap-1 transition cursor-pointer">
+              <span>Use template</span>
+              <i data-lucide="arrow-right" class="w-3 h-3"></i>
             </button>
           </div>
         </div>
@@ -1146,155 +1190,119 @@
       if (window.lucide) lucide.createIcons();
     }
 
-    // Filter Library Cards
-    function filterLibraryTemplates() {
-      const q = (document.getElementById('lib-search').value || '').toLowerCase().trim();
-      const cat = document.querySelector('input[name="lib-cat"]:checked')?.value || 'all';
-      const ind = document.getElementById('lib-industry').value;
+    // Quick Action: Use Template from Library
+    function useLibraryTemplate(libId) {
+      const t = libraryTemplates.find(item => item.id === libId);
+      if (!t) return;
 
-      const filtered = libraryPresets.filter(c => {
-        const matchesQ = !q || c.title.toLowerCase().includes(q) || c.body.toLowerCase().includes(q) || c.id.toLowerCase().includes(q);
-        const matchesCat = cat === 'all' || c.category.toUpperCase() === cat.toUpperCase();
-        const matchesInd = ind === 'all' || c.industry.toLowerCase() === ind.toLowerCase();
+      const safeName = t.title.toLowerCase().replace(/[^a-z0-9]/g, '_').substring(0, 30);
+      document.getElementById('tpl-name').value = safeName;
+      document.getElementById('tpl-cat').value = t.category;
+      document.getElementById('tpl-body').value = t.body;
+      document.getElementById('tpl-sample').value = t.params;
 
-        return matchesQ && matchesCat && matchesInd;
-      });
-
-      renderLibraryCards(filtered);
+      document.getElementById('tpl-name').scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('tpl-name').focus();
     }
 
-    // Use Library Preset in Create Form below
-    function useLibraryPreset(presetId) {
-      const p = libraryPresets.find(item => item.id === presetId);
-      if (!p) return;
-
-      document.getElementById('tpl-create-name').value = p.id;
-      document.getElementById('tpl-create-cat').value = p.category;
-      document.getElementById('tpl-create-body').value = p.body;
-      document.getElementById('tpl-create-sample').value = 'John, ₹4,999, Order #104';
-      
-      // Scroll to create form
-      document.getElementById('tpl-create-name').focus();
-    }
-
-    // Render Synced Meta Templates Table (Tab 2 Bottom Right)
+    // Render Synced Meta Templates Table
     function renderSyncedTable(templates) {
-      const container = document.getElementById('synced-templates-table');
+      const tbody = document.getElementById('synced-templates-tbody');
+      const countEl = document.getElementById('table-count-text');
+      countEl.textContent = `${templates.length} Meta templates synced`;
+
       if (!templates.length) {
-        container.innerHTML = `
-          <div class="py-16 text-center text-xs text-stone-400 bg-[#fbfaf8] border border-dashed border-[#e4e2dc] rounded-xl">
-            No templates match the current filters.
-          </div>
-        `;
+        tbody.innerHTML = '<tr><td colspan="5" class="py-8 text-center text-xs text-stone-400">No synced templates found. Click "Sync from Meta" to fetch.</td></tr>';
         return;
       }
 
-      container.innerHTML = `
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead>
-              <tr class="border-b border-[#f0eee8] text-stone-400 font-mono text-[11px]">
-                <th class="pb-2.5 font-medium">TEMPLATE NAME</th>
-                <th class="pb-2.5 font-medium">CATEGORY</th>
-                <th class="pb-2.5 font-medium">LANG</th>
-                <th class="pb-2.5 font-medium">STATUS</th>
-                <th class="pb-2.5 font-medium text-right">ACTION</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-[#f0eee8]">
-              ${templates.map(t => {
-                const statusBadge = t.status === 'APPROVED'
-                  ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">APPROVED</span>`
-                  : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">${escapeHtml(t.status)}</span>`;
+      tbody.innerHTML = templates.map(t => {
+        let badgeColor = 'bg-stone-100 text-stone-700 border-stone-200';
+        if (t.status === 'APPROVED') badgeColor = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+        else if (t.status === 'PENDING') badgeColor = 'bg-amber-50 text-amber-800 border-amber-200';
+        else if (t.status === 'REJECTED') badgeColor = 'bg-rose-50 text-rose-800 border-rose-200';
 
-                return `
-                  <tr class="hover:bg-stone-50/70 transition">
-                    <td class="py-3 font-mono font-bold text-stone-900">${escapeHtml(t.name)}</td>
-                    <td class="py-3 text-stone-600 font-medium">${escapeHtml(t.category || 'UTILITY')}</td>
-                    <td class="py-3 font-mono text-stone-500">${escapeHtml(t.language || 'en_US')}</td>
-                    <td class="py-3">${statusBadge}</td>
-                    <td class="py-3 text-right">
-                      <button onclick="prefillSendTemplate('${escapeHtml(t.name)}')" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900">Send</button>
-                    </td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
+        return `
+          <tr class="hover:bg-stone-50 transition">
+            <td class="py-2.5 font-mono font-semibold text-stone-900">${escapeHtml(t.name)}</td>
+            <td class="py-2.5 text-stone-600">${escapeHtml(t.category || 'UTILITY')}</td>
+            <td class="py-2.5 text-stone-500 font-mono">${escapeHtml(t.language || 'en_US')}</td>
+            <td class="py-2.5">
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold font-mono border ${badgeColor}">
+                ${escapeHtml(t.status || 'APPROVED')}
+              </span>
+            </td>
+            <td class="py-2.5 text-right space-x-2">
+              <button onclick="copyTemplateName('${escapeHtml(t.name)}')" class="text-stone-500 hover:text-stone-900 text-xs font-medium cursor-pointer">Copy</button>
+              <button onclick="selectTemplateForSend('${escapeHtml(t.name)}')" class="text-emerald-700 hover:text-emerald-900 text-xs font-semibold cursor-pointer">Send</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
-    // Filter Synced Table
     function filterSyncedTable() {
-      const q = (document.getElementById('synced-search').value || '').toLowerCase().trim();
-      const status = document.getElementById('synced-status').value;
-
-      const filtered = allSyncedTemplates.filter(t => {
-        const matchesQ = !q || (t.name && t.name.toLowerCase().includes(q));
-        const matchesStatus = status === 'all' || (t.status && t.status.toUpperCase() === status.toUpperCase());
-        return matchesQ && matchesStatus;
-      });
-
+      const q = (document.getElementById('tbl-search').value || '').toLowerCase().trim();
+      const filtered = allSyncedTemplates.filter(t => !q || (t.name && t.name.toLowerCase().includes(q)));
       renderSyncedTable(filtered);
     }
 
-    // Prefill Send Template Form
-    function prefillSendTemplate(tplName) {
+    function selectTemplateForSend(tplName) {
       document.getElementById('send-tpl-select').value = tplName;
       document.getElementById('send-tpl-phone').focus();
     }
 
-    // Sync from Meta
+    function copyTemplateName(name) {
+      navigator.clipboard.writeText(name);
+      alert('Copied template name: ' + name);
+    }
+
+    // Sync from Meta Cloud API
     async function syncMetaTemplatesNow() {
       const btn = document.getElementById('sync-meta-btn');
       const icon = document.getElementById('sync-meta-icon');
       btn.disabled = true;
-      if (icon) icon.classList.add('animate-spin');
+      icon.classList.add('animate-spin');
 
       try {
-        const res = await fetch('../api/whatsapp_hub.php?action=sync_meta_templates');
+        const res = await fetch('../api/whatsapp_hub.php?action=sync_meta_templates', { method: 'POST' });
         const data = await res.json();
         if (data.success) {
           alert(`Successfully synced ${data.count || 0} templates from Meta Cloud API!`);
           await loadCockpit();
         } else {
-          alert(data.error || 'Failed to sync with Meta API.');
+          alert(data.error || 'Failed to sync templates from Meta.');
         }
       } catch (e) {
-        alert('Server error.');
+        alert('Server communication error.');
       } finally {
         btn.disabled = false;
-        if (icon) icon.classList.remove('animate-spin');
+        icon.classList.remove('animate-spin');
       }
     }
 
-    // Create Meta Template Form
+    // Create New Template and Submit to Meta
     async function handleCreateMetaTemplate(e) {
       e.preventDefault();
-      const btn = document.getElementById('btn-create-tpl');
+      const btn = document.getElementById('btn-submit-tpl');
       btn.disabled = true;
 
-      const name = document.getElementById('tpl-create-name').value.trim().toLowerCase();
-      const category = document.getElementById('tpl-create-cat').value;
-      const language = document.getElementById('tpl-create-lang').value;
-      const body = document.getElementById('tpl-create-body').value.trim();
-
-      if (!/^[a-z0-9_]+$/.test(name)) {
-        alert('Template name must only contain lowercase letters, numbers, and underscores.');
-        btn.disabled = false;
-        return;
-      }
+      const name = document.getElementById('tpl-name').value.trim();
+      const category = document.getElementById('tpl-cat').value;
+      const language = document.getElementById('tpl-lang').value;
+      const body = document.getElementById('tpl-body').value.trim();
+      const sample = document.getElementById('tpl-sample').value.trim();
 
       try {
         const res = await fetch('../api/whatsapp_hub.php?action=create_meta_template', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, category, language, body })
+          body: JSON.stringify({ name, category, language, body, sample_parameters: sample })
         });
         const data = await res.json();
         if (data.success) {
-          alert('Template draft submitted to Meta WhatsApp Business API successfully!');
+          alert(`Template "${name}" submitted to Meta Cloud API! Approval typically completes within 24 hours.`);
+          document.getElementById('create-meta-tpl-form').reset();
           await loadCockpit();
         } else {
           alert(data.error || 'Failed to submit template to Meta.');

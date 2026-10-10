@@ -758,6 +758,51 @@ window.CuboidShell = {
           </div>
         </div>
       `;
+    } else if (active === 'automations') {
+      // 5b. Dedicated Automations & Rules Contextual Pane
+      subNavHtml = `
+        <div class="sub-sidebar-header flex items-center justify-between">
+          <span class="font-semibold text-xs text-stone-900 tracking-tight">Automations &amp; Rules</span>
+          <div class="flex items-center gap-1">
+            <button class="p-1 hover:bg-stone-100 rounded text-stone-600 transition-colors" onclick="window.switchMainTab ? window.switchMainTab('automation') : null; window.resetRuleForm ? window.resetRuleForm() : null;" title="New Automation Rule"><i data-lucide="plus" class="w-3.5 h-3.5"></i></button>
+            <button class="p-1 hover:bg-stone-100 rounded text-stone-400 transition-colors" onclick="window.loadAutomationsCockpit ? window.loadAutomationsCockpit() : null" title="Refresh Rules"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i></button>
+            <button type="button" class="shell-mobile-close lg:hidden p-1 text-stone-400 hover:text-stone-900 rounded transition-colors" title="Close menu"><i data-lucide="x" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+        <div class="sub-sidebar-nav flex-1 overflow-y-auto space-y-0.5">
+          <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pt-1 pb-1">Workflows</div>
+          <a href="javascript:void(0)" onclick="window.switchMainTab ? window.switchMainTab('automation') : null" class="sub-nav-item active font-medium" id="side-link-auto">
+            <span class="flex items-center gap-2"><i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-600"></i> WhatsApp Automations</span>
+            <span id="shell-rules-badge" class="text-[10px] font-mono font-bold px-1.5 py-0.2 bg-emerald-50 text-emerald-800 rounded border border-emerald-200 ml-auto">4</span>
+          </a>
+          <a href="javascript:void(0)" onclick="window.switchMainTab ? window.switchMainTab('templates') : null" class="sub-nav-item text-stone-600 hover:text-stone-900" id="side-link-tpl">
+            <span class="flex items-center gap-2"><i data-lucide="layout-template" class="w-3.5 h-3.5 text-purple-600"></i> Meta Templates</span>
+            <span class="text-[10px] font-mono px-1.5 py-0.2 bg-stone-100 text-stone-600 rounded ml-auto">5</span>
+          </a>
+          
+          <div class="pt-3 pb-1 border-t border-[#f0ede6] mt-2">
+            <div class="text-[10px] font-bold text-stone-400 uppercase tracking-wider px-2 pb-1">WhatsApp Suite</div>
+            <a href="whatsapp.html" class="sub-nav-item text-stone-600 hover:text-stone-900">
+              <span class="flex items-center gap-2"><i data-lucide="message-square" class="w-3.5 h-3.5 text-[#25D366]"></i> WhatsApp Inbox</span>
+            </a>
+            <a href="channels.html" class="sub-nav-item text-stone-600 hover:text-stone-900">
+              <span class="flex items-center gap-2"><i data-lucide="layers" class="w-3.5 h-3.5 text-stone-400"></i> All Channels</span>
+              <span class="text-[9px] font-mono px-1 py-0.2 bg-emerald-50 text-emerald-700 rounded border border-emerald-200 ml-auto">11 APPS</span>
+            </a>
+            <a href="ai-assistant.html" class="sub-nav-item text-stone-600 hover:text-stone-900">
+              <span class="flex items-center gap-2"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i> Cai AI Copilot</span>
+            </a>
+          </div>
+        </div>
+        <div class="p-3 border-t border-[#e7e5de] bg-[#fbfaf8]">
+          <div class="flex items-center justify-between text-xs text-stone-500">
+            <span class="flex items-center gap-1.5 text-emerald-700 font-medium">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Meta Live
+            </span>
+            <span class="text-[10px] font-mono text-stone-400">+91 82249 73413</span>
+          </div>
+        </div>
+      `;
     } else {
       // 6. Default / Settings Contextual Pane
       subNavHtml = `
@@ -845,6 +890,9 @@ window.CuboidShell = {
               </a>
               <a href="whatsapp.html" class="rail-item ${active === 'whatsapp' ? 'active' : ''}" title="WhatsApp Command Center">
                 <i data-lucide="message-square" class="w-5 h-5"></i>
+              </a>
+              <a href="automations.html" class="rail-item ${active === 'automations' ? 'active' : ''}" title="WhatsApp Automations &amp; Rules">
+                <i data-lucide="zap" class="w-5 h-5"></i>
               </a>
               <a href="pipeline.html" class="rail-item ${active === 'leads' || active === 'pipeline' ? 'active' : ''}" title="Pipeline Kanban & Contacts">
                 <i data-lucide="kanban" class="w-5 h-5"></i>
