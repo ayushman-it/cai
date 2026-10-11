@@ -1205,18 +1205,18 @@ AT THE VERY END OF YOUR RESPONSE, provide 2-4 contextual action chips for what t
 
     public static function getCompanyProducts(PDO $pdo, int $companyId, ?string $category = null): array {
         if ($category) {
-            $stmt = $pdo->prepare("SELECT * FROM `products` WHERE `company_id` = ? AND `category` = ? ORDER BY `id` ASC");
+            $stmt = $pdo->prepare("SELECT * FROM `products` WHERE `company_id` = ? AND `category` = ? AND (`is_active` = 1 OR `status` = 'active') ORDER BY `id` ASC");
             $stmt->execute([$companyId, $category]);
             $prods = $stmt->fetchAll(PDO::FETCH_ASSOC);
             if (!empty($prods)) return $prods;
         }
-        $stmt = $pdo->prepare("SELECT * FROM `products` WHERE `company_id` = ? ORDER BY `id` ASC");
+        $stmt = $pdo->prepare("SELECT * FROM `products` WHERE `company_id` = ? AND (`is_active` = 1 OR `status` = 'active') ORDER BY `id` ASC");
         $stmt->execute([$companyId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public static function getProductById(PDO $pdo, int $companyId, int $id): ?array {
-        $stmt = $pdo->prepare("SELECT * FROM `products` WHERE `id` = ? AND `company_id` = ? LIMIT 1");
+        $stmt = $pdo->prepare("SELECT * FROM `products` WHERE `id` = ? AND `company_id` = ? AND (`is_active` = 1 OR `status` = 'active') LIMIT 1");
         $stmt->execute([$id, $companyId]);
         return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
     }
@@ -1228,7 +1228,7 @@ AT THE VERY END OF YOUR RESPONSE, provide 2-4 contextual action chips for what t
     }
 
     public static function formatProductCard(array $prod): array {
-        $features = !empty($prod['features']) ? (is_array($prod['features']) ? $prod['features'] : json_decode($prod['features'], true)) : [];
+        $features = !empty($prod['features']) ? (is_array($prod['features']) ? $prod['features'] : json_decode($prod['features'], true)) : (!empty($prod['features_json']) ? json_decode($prod['features_json'], true) : []);
         return [
             'id' => (int)$prod['id'],
             'name' => $prod['name'],
@@ -1239,7 +1239,7 @@ AT THE VERY END OF YOUR RESPONSE, provide 2-4 contextual action chips for what t
             'emi_available' => !empty($prod['emi_available']),
             'emi_starting_at_inr' => (int)($prod['emi_starting_at_inr'] ?? ceil($prod['price_inr'] / 3)),
             'duration' => $prod['duration'] ?? '',
-            'features' => array_slice($features ?: ['Verified Commercial Offering', 'Instant Access', 'Dedicated Support'], 0, 3)
+            'features' => array_slice(is_array($features) ? $features : [], 0, 3)
         ];
     }
 

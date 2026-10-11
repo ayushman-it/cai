@@ -423,10 +423,10 @@ class WorkflowTemplates {
                     'category' => 'messages',
                     'position' => ['x' => 960, 'y' => 120],
                     'data' => [
-                        'label' => 'Stage 3: Course Recommendation Carousel',
-                        'description' => 'Display matching live courses from catalog',
-                        'title' => 'Here are our industry-accredited flagship cohorts matching your goals:',
-                        'category' => 'course',
+                        'label' => 'Stage 3: Offering Recommendation Carousel',
+                        'description' => 'Display matching live offerings from catalog',
+                        'title' => 'Here are our verified offerings and solutions matching your goals:',
+                        'category' => null,
                         'limit' => 4,
                         'wait_for_reply' => true
                     ]

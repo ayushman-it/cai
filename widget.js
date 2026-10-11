@@ -8190,7 +8190,7 @@
               ${featuresHtml}
             </div>
             <div class="cp-prod-actions">
-              <button type="button" class="cp-prod-btn-primary cp-select-prod-btn">Enroll / Pay Now</button>
+              <button type="button" class="cp-prod-btn-primary cp-select-prod-btn">${(prod.category && /course|cohort|program|batch/i.test(prod.category)) ? 'Enroll / Pay Now' : 'Get Started / Pay Now'}</button>
               <button type="button" class="cp-prod-btn-secondary cp-ask-prod-btn">Ask Cai</button>
             </div>
           `;
