@@ -172,6 +172,7 @@ try {
             'is_premium'         => (bool)($entitlements['is_premium'] || ($entitlements['is_trial'] && !$entitlements['is_trial_expired'])),
             'can_use_whatsapp_continuation' => (bool)($entitlements['capabilities']['can_use_whatsapp_continuation'] ?? false),
             'enable_inactivity_chips' => (bool)($widget['enable_inactivity_chips'] ?? 1),
+            'inactivity_timeout_seconds' => (int)($widget['inactivity_timeout_seconds'] ?? 20),
             'require_phone'      => (bool)($widget['require_phone_for_pricing'] ?? 1),
             'enable_appointments'=> (bool)($widget['enable_appointments'] ?? 1),
             'enable_human_help'  => (bool)($widget['enable_human_help'] ?? 1),

@@ -281,6 +281,9 @@ function ensureExtendedSchema(PDO $pdo) {
     if (!in_array('quick_actions_json', $widgetCols)) {
         $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `quick_actions_json` LONGTEXT NULL AFTER `greeting_subheading`");
     }
+    if (!in_array('inactivity_timeout_seconds', $widgetCols)) {
+        $pdo->exec("ALTER TABLE `widget_settings` ADD COLUMN `inactivity_timeout_seconds` INT DEFAULT 20 AFTER `quick_actions_json`");
+    }
 
     // Ensure logo_dark_url, logo_light_url columns in companies
     $compCols = $pdo->query("SHOW COLUMNS FROM `companies`")->fetchAll(PDO::FETCH_COLUMN);

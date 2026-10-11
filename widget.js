@@ -8419,98 +8419,61 @@
     }
   }
 
-  // Inactivity Action Chips State & Logic (10-Second Timer, Premium Exclusive)
-  let inactivityChipsTimer = null;
+  // 20-Second Inactivity Reminder (Phase 6: Exactly one gentle reminder per unanswered turn)
+  let inactivityReminderTimer = null;
+  let inactivityReminderSentThisTurn = false;
 
-  function clearInactivityChips() {
-    if (inactivityChipsTimer) {
-      clearTimeout(inactivityChipsTimer);
-      inactivityChipsTimer = null;
+  function clearInactivityTimer() {
+    if (inactivityReminderTimer) {
+      clearTimeout(inactivityReminderTimer);
+      inactivityReminderTimer = null;
     }
     const existing = shadow.getElementById('cp-inactivity-chips');
     if (existing) {
       existing.remove();
     }
   }
+  const clearInactivityChips = clearInactivityTimer;
 
   function startInactivityCountdown() {
-    clearInactivityChips();
+    clearInactivityTimer();
 
-    // STRICT CHECK: Action chips are ONLY shown for Premium subscriptions
-    const hasPremium = Boolean(
-      widgetConfig && (
-        widgetConfig.is_premium ||
-        (widgetConfig.company && widgetConfig.company.is_premium) ||
-        widgetConfig.can_use_whatsapp_continuation
-      )
-    );
-
-    const isEnabled = widgetConfig && widgetConfig.enable_inactivity_chips !== false;
-    const hasWhatsApp = Boolean(widgetConfig && (widgetConfig.whatsapp_number || (widgetConfig.company && widgetConfig.company.whatsapp_number)));
-
-    if (!hasPremium || !isEnabled || isHumanChatActive || currentScreen !== 'chat') {
+    if (inactivityReminderSentThisTurn || isHumanChatActive || currentScreen !== 'chat') {
       return;
     }
 
-    inactivityChipsTimer = setTimeout(() => {
+    const isEnabled = !widgetConfig || widgetConfig.enable_inactivity_chips !== false;
+    if (!isEnabled) return;
+
+    const timeoutSecs = (widgetConfig && widgetConfig.inactivity_timeout_seconds) 
+      ? parseInt(widgetConfig.inactivity_timeout_seconds, 10) 
+      : 20;
+    const timeoutMs = Math.max(5, timeoutSecs) * 1000;
+
+    inactivityReminderTimer = setTimeout(() => {
       // Re-verify that user has not typed or changed screen
       if (inputField && inputField.value.trim().length > 0) return;
-      if (currentScreen !== 'chat' || isHumanChatActive) return;
+      if (currentScreen !== 'chat' || isHumanChatActive || inactivityReminderSentThisTurn) return;
 
-      renderInactivityChips();
-    }, 10000);
+      inactivityReminderSentThisTurn = true;
+      renderInactivityReminder();
+    }, timeoutMs);
   }
 
-  function renderInactivityChips() {
-    if (shadow.getElementById('cp-inactivity-chips')) return;
+  function renderInactivityReminder() {
+    const defaultChips = [
+      { label: "Talk to Team", text: "I would like to speak with a human specialist" },
+      { label: "Explore Offerings", text: "What services and programs do you offer?" },
+      { label: "Pricing & Plans", text: "What are your fees and pricing plans?" }
+    ];
 
-    const chipsRow = document.createElement('div');
-    chipsRow.id = 'cp-inactivity-chips';
-    chipsRow.className = 'cp-inactivity-chips-container';
-
-    chipsRow.innerHTML = `
-      <div class="cp-inactivity-chips-pills">
-        <button type="button" class="cp-inactivity-chip cp-chip-person" id="cp-btn-inactivity-person">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          <span>Human</span>
-        </button>
-        <button type="button" class="cp-inactivity-chip cp-chip-wa" id="cp-btn-inactivity-wa">
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor"><path d="M20.52 3.48A11.9 11.9 0 0 0 12.04 0C5.46 0 .1 5.36.1 11.94c0 2.1.55 4.15 1.6 5.96L0 24l6.27-1.64a11.9 11.9 0 0 0 5.77 1.48h.01c6.58 0 11.94-5.36 11.94-11.94 0-3.19-1.24-6.19-3.47-8.42z"/></svg>
-          <span>WhatsApp</span>
-        </button>
-        <button type="button" class="cp-inactivity-chip cp-chip-end" id="cp-btn-inactivity-end">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          <span>End Chat</span>
-        </button>
-      </div>
-    `;
-
-    chatStream.appendChild(chipsRow);
+    appendAIMessage({
+      reply: "Still thinking? No worries! Let me know if anything is unclear. I'm here to help.",
+      action_chips: defaultChips,
+      timestamp: "Just now",
+      is_reminder: true
+    });
     scrollToBottom();
-
-    const personBtn = chipsRow.querySelector('#cp-btn-inactivity-person');
-    if (personBtn) {
-      personBtn.addEventListener('click', () => {
-        chipsRow.remove();
-        initiateHumanSupportHandoff();
-      });
-    }
-
-    const waBtn = chipsRow.querySelector('#cp-btn-inactivity-wa');
-    if (waBtn) {
-      waBtn.addEventListener('click', () => {
-        openWhatsAppChannel('Hi, I was chatting with Cai on your website and would like to continue on WhatsApp.');
-        chipsRow.remove();
-      });
-    }
-
-    const endBtn = chipsRow.querySelector('#cp-btn-inactivity-end');
-    if (endBtn) {
-      endBtn.addEventListener('click', () => {
-        chipsRow.remove();
-        closeConversationSession('user_exit');
-      });
-    }
   }
 
   async function openWhatsAppChannel(customText) {
@@ -8715,6 +8678,7 @@
 
   // 11. Send Message to Backend (Sections 7, 8, 9 & 10)
   async function handleSend(textOverride) {
+    inactivityReminderSentThisTurn = false;
     clearInactivityChips();
     if (isSending) return;
 
