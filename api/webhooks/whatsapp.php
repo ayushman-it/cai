@@ -959,7 +959,17 @@ try {
 
             if (!empty($geminiReply)) {
                 $aiReply = $geminiReply;
-            } elseif (defined('GROQ_API_KEY') && !empty(GROQ_API_KEY)) {
+            } elseif (defined('OPENROUTER_API_KEY') && !empty(OPENROUTER_API_KEY)) {
+                $orReply = GeminiService::callOpenRouter(array_merge(
+                    [['role' => 'system', 'content' => $prompt]],
+                    $recentMsgs,
+                    [['role' => 'user', 'content' => $messageText]]
+                ), ['temperature' => 0.25, 'max_tokens' => 350]);
+                if (!empty($orReply)) {
+                    $aiReply = $orReply;
+                }
+            }
+            if (empty($aiReply) && defined('GROQ_API_KEY') && !empty(GROQ_API_KEY)) {
                 $waModels = ['qwen/qwen3.8-27b', 'openai/gpt-oss-120b', 'openai/gpt-oss-20b'];
             foreach ($waModels as $wModel) {
                 $groqPayload = [

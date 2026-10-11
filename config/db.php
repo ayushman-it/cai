@@ -60,6 +60,10 @@ if (!$isLocal || (!empty($httpHost) && !in_array(strtolower(explode(':', $httpHo
 // Groq AI Engine Key (Configure in .env)
 define('GROQ_API_KEY', getenv('GROQ_API_KEY') ?: '');
 
+// OpenRouter AI Engine Key & Model (Unified multi-model gateway)
+define('OPENROUTER_API_KEY', getenv('OPENROUTER_API_KEY') ?: ($_ENV['OPENROUTER_API_KEY'] ?? ''));
+define('OPENROUTER_MODEL', getenv('OPENROUTER_MODEL') ?: 'meta-llama/llama-3.3-70b-instruct');
+
 // Google Gemini AI Engine Key & Model (Primary AI Engine)
 define('GEMINI_API_KEY', getenv('GEMINI_API_KEY') ?: '');
 define('GEMINI_MODEL', getenv('GEMINI_MODEL') ?: 'gemini-3.8-flash');

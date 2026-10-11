@@ -32,6 +32,89 @@ class GeminiService {
         return getenv('GEMINI_MODEL') ?: self::$model;
     }
 
+    private static ?string $openRouterApiKey = null;
+    private static array $openRouterModels = [
+        'meta-llama/llama-3.3-70b-instruct',
+        'google/gemini-2.0-flash-001',
+        'openai/gpt-4o-mini',
+        'deepseek/deepseek-chat'
+    ];
+
+    public static function getOpenRouterApiKey(): string {
+        if (self::$openRouterApiKey !== null) {
+            return self::$openRouterApiKey;
+        }
+        if (defined('OPENROUTER_API_KEY') && !empty(OPENROUTER_API_KEY)) {
+            self::$openRouterApiKey = OPENROUTER_API_KEY;
+        } else {
+            self::$openRouterApiKey = getenv('OPENROUTER_API_KEY') ?: ($_ENV['OPENROUTER_API_KEY'] ?? ($_SERVER['OPENROUTER_API_KEY'] ?? ''));
+        }
+        return self::$openRouterApiKey;
+    }
+
+    /**
+     * Executes a completion via OpenRouter AI API.
+     */
+    public static function callOpenRouter(array $messages, array $options = []): ?string {
+        $key = self::getOpenRouterApiKey();
+        if (empty($key)) {
+            return null;
+        }
+
+        $models = !empty($options['model']) ? [$options['model']] : self::$openRouterModels;
+        $maxTokens = $options['max_tokens'] ?? 650;
+        $temperature = $options['temperature'] ?? 0.25;
+        $timeout = $options['timeout'] ?? 10;
+
+        foreach ($models as $idx => $candModel) {
+            if ($idx > 0) {
+                usleep(200000); // 200ms backoff
+            }
+
+            $payload = [
+                'model' => $candModel,
+                'messages' => $messages,
+                'max_tokens' => $maxTokens,
+                'temperature' => $temperature
+            ];
+
+            $ch = curl_init('https://openrouter.ai/api/v1/chat/completions');
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => [
+                    'Authorization: Bearer ' . $key,
+                    'Content-Type: application/json',
+                    'HTTP-Referer: https://cuboidpilot.app',
+                    'X-Title: CuboidPilot'
+                ],
+                CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
+                CURLOPT_TIMEOUT => $timeout,
+                CURLOPT_CONNECTTIMEOUT => 4,
+                CURLOPT_SSL_VERIFYPEER => false,
+                CURLOPT_SSL_VERIFYHOST => false
+            ]);
+
+            $rawResp = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlErr = curl_error($ch);
+            curl_close($ch);
+
+            if ($httpCode === 200 && !empty($rawResp)) {
+                $decoded = json_decode($rawResp, true);
+                if (!empty($decoded['choices'][0]['message']['content'])) {
+                    $text = trim($decoded['choices'][0]['message']['content']);
+                    $text = preg_replace('/<think>.*?<\/think>/is', '', $text);
+                    return trim($text);
+                }
+            } else {
+                error_log("[GeminiService::callOpenRouter Model: {$candModel}] HTTP: {$httpCode} | Error: {$curlErr} | Resp: " . substr((string)$rawResp, 0, 150));
+            }
+        }
+
+        return null;
+    }
+
     private static ?string $groqApiKey = null;
     private static array $groqModels = ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'allam-2-7b'];
 
@@ -218,20 +301,27 @@ class GeminiService {
 
     /**
      * Core conversational completion with system instruction and history.
-     * Uses Groq sub-second inference first, falling back to Gemini.
+     * Uses OpenRouter / Groq / Gemini multi-model fallback cascade.
      */
     public static function generateResponse(string $systemPrompt, array $messages, array $options = []): string {
-        // 1. Try Groq ultra-fast sub-second completion
-        $groqMessages = array_merge(
+        $chatMessages = array_merge(
             [['role' => 'system', 'content' => $systemPrompt]],
             $messages
         );
-        $groqResp = self::callGroq($groqMessages, $options);
+
+        // 1. Try OpenRouter (high accuracy, multi-model)
+        $orResp = self::callOpenRouter($chatMessages, $options);
+        if (!empty($orResp)) {
+            return $orResp;
+        }
+
+        // 2. Try Groq sub-second completion
+        $groqResp = self::callGroq($chatMessages, $options);
         if (!empty($groqResp)) {
             return $groqResp;
         }
 
-        // 2. Fallback to Gemini Generative Language
+        // 3. Fallback to Gemini Generative Language
         $contents = [];
         foreach ($messages as $msg) {
             $role = ($msg['role'] ?? 'user') === 'assistant' ? 'model' : 'user';
@@ -277,11 +367,20 @@ Respond ONLY with valid JSON in this exact structure:
   \"explanation\": \"brief 1-sentence reason\"
 }";
 
-        $groqRaw = self::callGroq([
+        $messages = [
             ['role' => 'system', 'content' => $sysPrompt],
             ['role' => 'user', 'content' => "Classify this customer message:\n\"{$text}\""]
-        ], ['temperature' => 0.1, 'max_tokens' => 200]);
+        ];
 
+        $orRaw = self::callOpenRouter($messages, ['temperature' => 0.1, 'max_tokens' => 200]);
+        if (!empty($orRaw) && preg_match('/\{[\s\S]*\}/', $orRaw, $m)) {
+            $parsed = json_decode($m[0], true);
+            if (is_array($parsed) && !empty($parsed['intent'])) {
+                return $parsed;
+            }
+        }
+
+        $groqRaw = self::callGroq($messages, ['temperature' => 0.1, 'max_tokens' => 200]);
         if (!empty($groqRaw) && preg_match('/\{[\s\S]*\}/', $groqRaw, $m)) {
             $parsed = json_decode($m[0], true);
             if (is_array($parsed) && !empty($parsed['intent'])) {
@@ -353,11 +452,20 @@ Respond ONLY in valid JSON format:
   \"best_fit_id\": 1
 }";
 
-        $groqRaw = self::callGroq([
+        $recMessages = [
             ['role' => 'system', 'content' => $sysPrompt],
             ['role' => 'user', 'content' => "Find matching items for: \"{$query}\""]
-        ], ['temperature' => 0.2, 'max_tokens' => 300]);
+        ];
 
+        $orRaw = self::callOpenRouter($recMessages, ['temperature' => 0.2, 'max_tokens' => 300]);
+        if (!empty($orRaw) && preg_match('/\{[\s\S]*\}/', $orRaw, $m)) {
+            $parsed = json_decode($m[0], true);
+            if (is_array($parsed) && !empty($parsed['recommended_product_ids'])) {
+                return $parsed;
+            }
+        }
+
+        $groqRaw = self::callGroq($recMessages, ['temperature' => 0.2, 'max_tokens' => 300]);
         if (!empty($groqRaw) && preg_match('/\{[\s\S]*\}/', $groqRaw, $m)) {
             $parsed = json_decode($m[0], true);
             if (is_array($parsed) && !empty($parsed['recommended_product_ids'])) {
@@ -424,11 +532,20 @@ Respond ONLY in valid JSON:
   \"rationale\": \"brief 1-sentence rationale\"
 }";
 
-        $groqRaw = self::callGroq([
+        $decMessages = [
             ['role' => 'system', 'content' => $sysPrompt],
             ['role' => 'user', 'content' => "Evaluate this input:\n\"{$customerMessage}\""]
-        ], ['temperature' => 0.1, 'max_tokens' => 200]);
+        ];
 
+        $orRaw = self::callOpenRouter($decMessages, ['temperature' => 0.1, 'max_tokens' => 200]);
+        if (!empty($orRaw) && preg_match('/\{[\s\S]*\}/', $orRaw, $m)) {
+            $parsed = json_decode($m[0], true);
+            if (is_array($parsed) && !empty($parsed['selected_branch_id'])) {
+                return $parsed;
+            }
+        }
+
+        $groqRaw = self::callGroq($decMessages, ['temperature' => 0.1, 'max_tokens' => 200]);
         if (!empty($groqRaw) && preg_match('/\{[\s\S]*\}/', $groqRaw, $m)) {
             $parsed = json_decode($m[0], true);
             if (is_array($parsed) && !empty($parsed['selected_branch_id'])) {
@@ -488,11 +605,20 @@ Respond ONLY in valid JSON:
   \"is_qualified\": true
 }";
 
-        $groqRaw = self::callGroq([
+        $leadMessages = [
             ['role' => 'system', 'content' => $sysPrompt],
             ['role' => 'user', 'content' => "Extract info from: \"{$message}\""]
-        ], ['temperature' => 0.1, 'max_tokens' => 200]);
+        ];
 
+        $orRaw = self::callOpenRouter($leadMessages, ['temperature' => 0.1, 'max_tokens' => 200]);
+        if (!empty($orRaw) && preg_match('/\{[\s\S]*\}/', $orRaw, $m)) {
+            $parsed = json_decode($m[0], true);
+            if (is_array($parsed)) {
+                return $parsed;
+            }
+        }
+
+        $groqRaw = self::callGroq($leadMessages, ['temperature' => 0.1, 'max_tokens' => 200]);
         if (!empty($groqRaw) && preg_match('/\{[\s\S]*\}/', $groqRaw, $m)) {
             $parsed = json_decode($m[0], true);
             if (is_array($parsed)) {
@@ -538,6 +664,21 @@ Summarize the customer conversation into a concise 2-3 bullet point briefing hig
 1. Customer interest & requirements
 2. Current status & commercial intent
 3. Recommended next action for the sales/support team.";
+
+        $sumMessages = [
+            ['role' => 'system', 'content' => $sysPrompt],
+            ['role' => 'user', 'content' => "Conversation transcript:\n{$transcript}"]
+        ];
+
+        $orRaw = self::callOpenRouter($sumMessages, ['temperature' => 0.2, 'max_tokens' => 300]);
+        if (!empty($orRaw)) {
+            return $orRaw;
+        }
+
+        $groqRaw = self::callGroq($sumMessages, ['temperature' => 0.2, 'max_tokens' => 300]);
+        if (!empty($groqRaw)) {
+            return $groqRaw;
+        }
 
         $payload = [
             'contents' => [
