@@ -1266,6 +1266,56 @@
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
 
+    .cp-bubble .cp-md-list {
+      margin: 7px 0 7px 0;
+      padding: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .cp-bubble .cp-md-list li {
+      position: relative;
+      padding-left: 15px;
+      line-height: 1.38;
+    }
+
+    .cp-bubble .cp-md-list li::before {
+      content: "";
+      position: absolute;
+      left: 1px;
+      top: 0.68em;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.58;
+      transform: translateY(-50%);
+    }
+
+    .cp-bubble .cp-md-ordered {
+      counter-reset: cp-list;
+    }
+
+    .cp-bubble .cp-md-ordered li {
+      counter-increment: cp-list;
+      padding-left: 22px;
+    }
+
+    .cp-bubble .cp-md-ordered li::before {
+      content: counter(cp-list) ".";
+      top: 0;
+      width: auto;
+      height: auto;
+      border-radius: 0;
+      background: transparent;
+      opacity: 0.72;
+      transform: none;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
     .cp-meta-line {
       font-size: 11px;
       color: var(--cp-text-muted);
@@ -9309,11 +9359,12 @@
     esc = esc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     esc = esc.replace(/\*(.*?)\*/g, '<em>$1</em>');
     esc = esc.replace(/`([^`]+)`/g, '<code style="background:rgba(100,116,139,0.15); padding:2px 6px; border-radius:4px; font-size:11px; font-family:monospace;">$1</code>');
-    esc = esc.replace(/(?:^|\n)[•\-\*]\s+(.*)/g, '<br/>• $1');
-    esc = esc.replace(/(?:^|\n)(\d+)\.\s+(.*)/g, '<br/><strong>$1.</strong> $2');
+    esc = renderMarkdownLists(esc);
     esc = esc.replace(/\n/g, '<br/>');
     esc = esc.replace(/<br\s*\/?>\s*(<div class="cp-table-responsive">)/g, '$1');
     esc = esc.replace(/(<\/div>)\s*<br\s*\/?>/g, '$1');
+    esc = esc.replace(/<br\s*\/?>\s*(<[ou]l class="cp-md-list)/g, '$1');
+    esc = esc.replace(/(<\/[ou]l>)\s*<br\s*\/?>/g, '$1');
     // Deduplicate leading filename text if followed immediately by an attachment tag
     esc = esc.replace(/^([^\n<]+?\.(?:pdf|docx?|xlsx?|pptx?|txt|csv|zip|png|jpe?g|webp|gif))\s*(?:<br\s*\/?>\s*)+(?=\[Attached (?:Document|File|Image):)/gi, '');
     esc = esc.replace(/(?:<br\s*\/?>)+([^\n<]+?\.(?:pdf|docx?|xlsx?|pptx?|txt|csv|zip|png|jpe?g|webp|gif))\s*(?:<br\s*\/?>\s*)+(?=\[Attached (?:Document|File|Image):)/gi, '<br/>');
@@ -9407,6 +9458,49 @@
     });
     return esc;
 
+  }
+
+  function renderMarkdownLists(html) {
+    const lines = String(html || '').split('\n');
+    const output = [];
+    let listType = null;
+
+    function closeList() {
+      if (!listType) return;
+      output.push(listType === 'ol' ? '</ol>' : '</ul>');
+      listType = null;
+    }
+
+    lines.forEach((line) => {
+      const bulletMatch = line.match(/^\s*(?:[-*•])\s+(.+)$/);
+      const orderedMatch = line.match(/^\s*\d+\.\s+(.+)$/);
+
+      if (bulletMatch) {
+        if (listType !== 'ul') {
+          closeList();
+          output.push('<ul class="cp-md-list">');
+          listType = 'ul';
+        }
+        output.push(`<li>${bulletMatch[1].trim()}</li>`);
+        return;
+      }
+
+      if (orderedMatch) {
+        if (listType !== 'ol') {
+          closeList();
+          output.push('<ol class="cp-md-list cp-md-ordered">');
+          listType = 'ol';
+        }
+        output.push(`<li>${orderedMatch[1].trim()}</li>`);
+        return;
+      }
+
+      closeList();
+      output.push(line);
+    });
+
+    closeList();
+    return output.join('\n');
   }
 
 

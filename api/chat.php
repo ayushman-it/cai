@@ -1010,11 +1010,17 @@ try {
                   . "2. ANSWER DIRECTLY FIRST: When asked about pricing, services, or syllabus, answer immediately in the first sentence. No preambles, no robotic intros ('As an AI...', 'According to records...').\n"
                   . "3. NO REPETITIVE GREETINGS: Do not greet ('Hello', 'Namaste') on every turn if conversation is already underway.\n"
                   . "4. MULTI-TURN CONTEXT MEMORY: Remember what course, product, or plan was previously discussed. If visitor asks 'What are the fees?' or 'Can I get the syllabus?', answer regarding the previously discussed item without re-asking.\n"
-                  . "5. SECURE DOCUMENT SHARING: If the visitor asks for a syllabus, brochure, or official document:\n"
+                  . "5. READABLE CHAT FORMATTING: Never send dense comma-separated paragraphs for lists. If the answer contains 3 or more services, programs, courses, features, benefits, plans, or steps, format it as:\n"
+                  . "   Short direct intro line.\n"
+                  . "   - **Item name:** short detail\n"
+                  . "   - **Item name:** short detail\n"
+                  . "   Closing question.\n"
+                  . "   Keep list items on separate lines. Use maximum 6 bullets. Avoid tables in the customer widget unless comparing pricing/plans.\n"
+                  . "6. SECURE DOCUMENT SHARING: If the visitor asks for a syllabus, brochure, or official document:\n"
                   . "   - Check SECTION 2 <downloadable_documents_and_assets>. If a matching document exists, mention in 1 sentence that it is provided below, and append '---DOCUMENT_REQUEST: [Exact Document Title or ID]---'.\n"
                   . "   - Respect each asset's trigger phrases and sharing rule exactly. Share only the matching company's own documents.\n"
                   . "   - If NO matching document exists in SECTION 2, respond: 'We don't have a downloadable brochure for that yet. Would you like me to connect you with our team?'\n"
-                  . "6. SMART HUMAN HANDOFF: If the visitor explicitly asks to talk to a human, counselor, advisor, or agent, or expresses frustration, acknowledge in 1 short sentence that you are connecting them to the team, and append '---HUMAN_HANDOFF_REQUESTED---'.\n\n"
+                  . "7. SMART HUMAN HANDOFF: If the visitor explicitly asks to talk to a human, counselor, advisor, or agent, or expresses frustration, acknowledge in 1 short sentence that you are connecting them to the team, and append '---HUMAN_HANDOFF_REQUESTED---'.\n\n"
                   . $memorySection . "\n\n"
                   . "=== SECTION 5: OUTPUT FORMAT & DYNAMIC ACTION CHIPS ===\n"
                   . "Keep total response strictly 1 to 3 short sentences.\n"
@@ -1461,6 +1467,50 @@ try {
     $structuredMeta = null;
     $actionChipsPayload = [];
 
+    if (!function_exists('formatWidgetListReply')) {
+        function formatWidgetListReply(string $reply): string {
+            $clean = trim($reply);
+            if ($clean === '' || strpos($clean, "\n- ") !== false || strpos($clean, "\n• ") !== false || mb_strlen($clean) < 180) {
+                return $clean;
+            }
+
+            $commaCount = substr_count($clean, ',');
+            $looksLikeListAnswer = $commaCount >= 4 && preg_match('/\b(including|include|includes|offer|offers|available|provide|provides|programs?|courses?|services?|features?|solutions?)\b/i', $clean);
+            if (!$looksLikeListAnswer) {
+                return $clean;
+            }
+
+            $pattern = '/\bincluding\s+(.+?)(?:\.\s+|$)/is';
+            if (!preg_match($pattern, $clean, $match)) {
+                return $clean;
+            }
+
+            $listText = trim($match[1]);
+            $listText = preg_replace('/,\s*(?:and\s+)?many more$/i', '', $listText);
+            $listText = preg_replace('/\s+and\s+many more$/i', '', $listText);
+            $items = array_values(array_filter(array_map('trim', preg_split('/,\s+/', $listText)), function($item) {
+                return $item !== '' && mb_strlen($item) >= 3;
+            }));
+
+            if (count($items) < 3) {
+                return $clean;
+            }
+
+            $items = array_slice($items, 0, 6);
+            $intro = rtrim(trim(substr($clean, 0, strpos($clean, $match[0]))), " \t\n\r\0\x0B,;:-");
+            if ($intro === '') {
+                $intro = 'Here are the key options:';
+            } elseif (!preg_match('/[:.]$/', $intro)) {
+                $intro .= ':';
+            }
+
+            $after = trim(substr($clean, strpos($clean, $match[0]) + strlen($match[0])));
+            $bullets = array_map(fn($item) => '- ' . $item, $items);
+
+            return trim($intro . "\n\n" . implode("\n", $bullets) . ($after !== '' ? "\n\n" . $after : ''));
+        }
+    }
+
     // 1. Extract action chips if present
     $chipData = GeminiService::extractActionChips($rawReply);
     if (!empty($chipData['chips'])) {
@@ -1481,6 +1531,8 @@ try {
         $publicReply = trim($rawReply);
     }
 
+    $publicReply = formatWidgetListReply($publicReply);
+
     // Double check if action chips were embedded inside publicReply
     if (empty($actionChipsPayload)) {
         $chipData = GeminiService::extractActionChips($publicReply);
@@ -1489,6 +1541,7 @@ try {
             $publicReply = $chipData['text'];
         }
     }
+    $publicReply = formatWidgetListReply($publicReply);
 
     // 2B. Parse explicit LLM tags: DOCUMENT_REQUEST and HUMAN_HANDOFF_REQUESTED
     $explicitRequestedDocName = null;
