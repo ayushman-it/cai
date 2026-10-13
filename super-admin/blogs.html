@@ -68,7 +68,7 @@
             </div>
             
             <div class="flex items-center gap-2">
-              <a href="../blog.html" target="_blank" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 no-underline">
+              <a href="../blog.php" target="_blank" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5 no-underline">
                 <i data-lucide="external-link" class="w-3.5 h-3.5 text-stone-500"></i>
                 <span>View Live Blog</span>
               </a>
@@ -179,7 +179,7 @@
           <div>
             <label class="text-[11.5px] font-semibold text-stone-700 block mb-1">URL Slug *</label>
             <div class="flex items-center">
-              <span class="px-2.5 py-1.5 bg-stone-100 border border-r-0 border-[#e7e5de] rounded-l text-[11px] text-stone-400 font-mono">/blog.html?slug=</span>
+              <span class="px-2.5 py-1.5 bg-stone-100 border border-r-0 border-[#e7e5de] rounded-l text-[11px] text-stone-400 font-mono">/blog.php?slug=</span>
               <input type="text" id="blog-slug" required placeholder="meet-cai-autonomous-ai" class="app-input text-xs rounded-l-none font-mono flex-1">
             </div>
           </div>
@@ -377,7 +377,7 @@
             </td>
             <td class="font-medium text-stone-900 py-3 px-3">
               <div class="font-semibold text-xs text-stone-900">${escapeHtml(b.title)}</div>
-              <div class="text-[11px] text-stone-400 font-mono">/blog.html?slug=${escapeHtml(b.slug)}</div>
+              <div class="text-[11px] text-stone-400 font-mono">/blog.php?slug=${escapeHtml(b.slug)}</div>
             </td>
             <td class="text-xs text-stone-600 py-3 px-3">
               <span class="inline-block px-2 py-0.5 bg-stone-100 border border-stone-200 rounded text-[10.5px] font-medium text-stone-700">${escapeHtml(b.category || 'General')}</span>
@@ -399,7 +399,7 @@
             </td>
             <td class="text-right py-3 px-3 whitespace-nowrap">
               <div class="inline-flex items-center gap-1">
-                <a href="../blog.html?slug=${encodeURIComponent(b.slug)}" target="_blank" class="p-1.5 text-stone-400 hover:text-stone-700 rounded hover:bg-stone-100" title="View Live Article">
+                <a href="../blog.php?slug=${encodeURIComponent(b.slug)}" target="_blank" class="p-1.5 text-stone-400 hover:text-stone-700 rounded hover:bg-stone-100" title="View Live Article">
                   <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
                 </a>
                 <button onclick="editBlog(${b.id})" class="p-1.5 text-stone-600 hover:text-stone-900 rounded hover:bg-stone-100" title="Edit Article">

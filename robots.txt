@@ -3,7 +3,6 @@ User-agent: *
 Allow: /
 Allow: /index.html
 Allow: /pricing.html
-Allow: /blog.html
 Allow: /blog.php
 Allow: /docs.html
 Allow: /why-choose-cai.html
@@ -14,12 +13,20 @@ Allow: /assets/
 
 # Restrict sensitive API and admin endpoints
 Disallow: /api/
+Disallow: /app/
+Disallow: /onboarding/
 Disallow: /super-admin/
 Disallow: /scratch/
 Disallow: /config/
 Disallow: /database/
 Disallow: /includes/
 Disallow: /auth/
+Disallow: /migrations/
+Disallow: /tests/
+Disallow: /accept_invite.php
+Disallow: /login.html
+Disallow: /login.php
+Disallow: /logout.php
 
 # Sitemaps
 Sitemap: https://cai.cuboidsoft.in/sitemap.xml

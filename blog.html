@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="js/seo-config.js"></script>
+  <script src="js/seo-analytics.js" defer></script>
   <title id="page-title">The Cai Blog — Autonomous AI, Product & Customer Service</title>
   <meta name="description" id="page-desc" content="Articles and Insights on Autonomous AI Agents, Customer Service, Engineering, Product, and more from the creators of Cai.">
-  
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://cai.cuboidsoft.in/blog.php">
+
   <!-- OpenGraph / Social Meta -->
   <meta property="og:type" content="article">
   <meta property="og:title" id="og-title" content="The Cai Blog — Autonomous AI Helpdesk & SDR Insights">
   <meta property="og:description" id="og-desc" content="Read the latest news, product releases, and engineering stories from the CuboidPilot and Cai AI agent team.">
-  <meta property="og:image" id="og-image" content="assets/blog/meet-cai-founder.png">
+  <meta property="og:image" id="og-image" content="https://cai.cuboidsoft.in/assets/blog/meet-cai-founder.png">
   <meta name="twitter:card" content="summary_large_image">
 
   <!-- Favicon -->
@@ -513,7 +517,7 @@
         <span class="hidden sm:inline-block h-4 w-px bg-stone-300"></span>
 
         <!-- Active Blog Indicator -->
-        <a href="blog.html" class="hidden sm:inline-flex items-center gap-1.5 text-[13px] font-bold tracking-tight text-stone-900 hover:text-black">
+        <a href="blog.php" class="hidden sm:inline-flex items-center gap-1.5 text-[13px] font-bold tracking-tight text-stone-900 hover:text-black">
           <span>The Cai Blog</span>
         </a>
 
@@ -610,7 +614,7 @@
             </button>
             <div class="nav-dropdown" style="width: 400px; top: 100%;">
               <div class="flex flex-col gap-1.5">
-                <a href="blog.html" class="nav-dropdown-link">
+                <a href="blog.php" class="nav-dropdown-link">
                   <div class="w-9 h-9 rounded-lg bg-[#f4f2ec] border border-stone-200 flex items-center justify-center text-black shrink-0">
                     <i data-lucide="newspaper" class="w-4 h-4 text-black"></i>
                   </div>
@@ -758,7 +762,7 @@
         <div class="pt-4 border-t border-stone-100">
           <div class="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2.5">Resources &amp; Learn</div>
           <div class="flex flex-col gap-2 font-medium text-black">
-            <a href="blog.html" class="flex items-center justify-between text-black font-semibold py-1">
+            <a href="blog.php" class="flex items-center justify-between text-black font-semibold py-1">
               <span class="flex items-center gap-2">
                 <i data-lucide="newspaper" class="w-4 h-4 text-blue-600"></i>
                 <span>The Cai Blog</span>
@@ -1057,10 +1061,10 @@
         <div class="md:col-span-3 space-y-3">
           <div class="text-xs font-bold uppercase tracking-wider text-black">Resources</div>
           <ul class="space-y-2 text-xs font-medium text-stone-500">
-            <li><a href="blog.html" class="hover:text-black transition-colors text-black font-semibold">The Cai Blog</a></li>
-            <li><a href="blog.html?category=Product+Launch+%26+AI" class="hover:text-black transition-colors">AI &amp; Automation</a></li>
-            <li><a href="blog.html?category=Support+Automation" class="hover:text-black transition-colors">Customer Service</a></li>
-            <li><a href="blog.html?category=Special+Event" class="hover:text-black transition-colors">Special Events</a></li>
+            <li><a href="blog.php" class="hover:text-black transition-colors text-black font-semibold">The Cai Blog</a></li>
+            <li><a href="blog.php?category=Product+Launch+%26+AI" class="hover:text-black transition-colors">AI &amp; Automation</a></li>
+            <li><a href="blog.php?category=Support+Automation" class="hover:text-black transition-colors">Customer Service</a></li>
+            <li><a href="blog.php?category=Special+Event" class="hover:text-black transition-colors">Special Events</a></li>
           </ul>
         </div>
 
@@ -1095,7 +1099,7 @@
         <div class="flex items-center gap-6">
           <a href="index.html" class="hover:text-black transition-colors">Home</a>
           <a href="pricing.html" class="hover:text-black transition-colors">Pricing</a>
-          <a href="blog.html" class="hover:text-black transition-colors text-black font-semibold">The Cai Blog</a>
+          <a href="blog.php" class="hover:text-black transition-colors text-black font-semibold">The Cai Blog</a>
           <a href="docs.html" class="hover:text-black transition-colors">Docs</a>
         </div>
       </div>

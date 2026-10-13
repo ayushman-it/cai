@@ -10550,7 +10550,7 @@
     const blogCard = shadow.getElementById('cp-card-latest-blog');
     if (blogCard) {
       bindTap(blogCard, () => {
-        window.open(`${baseUrl}/blog.html?slug=${encodeURIComponent(currentBlogSlug)}`, '_blank');
+        window.open(`${baseUrl}/blog.php?slug=${encodeURIComponent(currentBlogSlug)}`, '_blank');
       });
     }
 
@@ -10658,7 +10658,7 @@
           </div>
         </div>
       </div>
-      <a href="${baseUrl}/blog.html" target="_blank" class="cp-news-all-link">Visit Blog &amp; All Articles &rarr;</a>
+      <a href="${baseUrl}/blog.php" target="_blank" class="cp-news-all-link">Visit Blog &amp; All Articles &rarr;</a>
     `;
 
     const listEl = shadow.getElementById('cp-dynamic-news-list');
@@ -10684,7 +10684,7 @@
         listEl.querySelectorAll('.cp-news-card').forEach(card => {
           card.onclick = () => {
             const slug = card.getAttribute('data-slug');
-            window.open(`${baseUrl}/blog.html?slug=${encodeURIComponent(slug)}`, '_blank');
+            window.open(`${baseUrl}/blog.php?slug=${encodeURIComponent(slug)}`, '_blank');
           };
         });
         return;
@@ -10695,7 +10695,7 @@
 
     // Clean Fallback if API unreachable
     listEl.innerHTML = `
-      <div class="cp-news-card" role="button" tabindex="0" onclick="window.open('${baseUrl}/blog.html', '_blank')">
+      <div class="cp-news-card" role="button" tabindex="0" onclick="window.open('${baseUrl}/blog.php', '_blank')">
         <div class="cp-news-card-top">
           <span class="cp-news-badge new">New Feature</span>
           <span class="cp-news-date">This week</span>

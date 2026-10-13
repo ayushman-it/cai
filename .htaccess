@@ -4,7 +4,7 @@
 Options -Indexes
 
 # 2. Block direct access to sensitive extensions and config files
-<FilesMatch "(^\.|\.(sql|env|lock|txt|bak|git|md|yml|yaml|ini|log|sh|bat)$)">
+<FilesMatch "(^\.|\.(sql|env|lock|bak|git|md|yml|yaml|ini|log|sh|bat)$)">
     Order allow,deny
     Deny from all
 </FilesMatch>
@@ -52,6 +52,7 @@ Options -Indexes
 # 5. URL Rewriting for Clean API & Callback Routes
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteRule ^blog\.html$ blog.php [R=301,L,QSA]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^api/auth/meta/callback/?$ api/auth/meta/callback.php [QSA,L]

@@ -26,7 +26,7 @@ $FALLBACK_POSTS = [
         'title' => 'Why Cai is Important for You: The Complete Guide (आसान शब्दों में समझें)',
         'excerpt' => 'Customer queries ka instant reply nahi milta? Leads miss ho rahi hain? Jaaniye kaise Cai aapke business ko 24/7 active rakh kar sales aur customer support ko superfast bana deta hai.',
         'cover_image' => 'assets/blog/why-cai-is-important-for-you.png',
-        'author_name' => 'Ayush',
+        'author_name' => 'Ayushmann Chourasiya',
         'author_role' => 'Founder & AI Architect',
         'published_at' => '2026-10-05 10:00:00'
     ],
@@ -34,7 +34,7 @@ $FALLBACK_POSTS = [
         'title' => 'Gandhi Jayanti Special: Truth, Decentralized Technology & The Spirit of Self-Reliance',
         'excerpt' => "On October 2nd, we honor Mahatma Gandhi's enduring ideals — Satya (Truth), Swavalamban (Self-Reliance), and Sarvodaya (Welfare of All). Here is how these principles guide the future of autonomous, grounded AI at CuboidPilot.",
         'cover_image' => 'assets/blog/gandhi-jayanti-2026.png',
-        'author_name' => 'Ayush',
+        'author_name' => 'Ayushmann Chourasiya',
         'author_role' => 'Founder & AI Architect',
         'published_at' => '2026-10-02 09:00:00'
     ],
@@ -42,7 +42,7 @@ $FALLBACK_POSTS = [
         'title' => 'Meet Cai: Why We Built the World’s First Autonomous AI Helpdesk & SDR Agent',
         'excerpt' => 'Discover how Cai transforms visitor conversations into qualified pipeline, cuts ticket volume by 70%, and bridges autonomous AI support with instant WhatsApp sales handoffs.',
         'cover_image' => 'assets/blog/meet-cai-founder.png',
-        'author_name' => 'Ayush',
+        'author_name' => 'Ayushmann Chourasiya',
         'author_role' => 'Founder & AI Architect',
         'published_at' => '2026-10-02 10:00:00'
     ]
@@ -88,7 +88,7 @@ if ($post) {
         $coverImageUrl = $baseUrl . '/' . ltrim($rawCover, '/');
     }
 
-    $authorName = htmlspecialchars($post['author_name'] ?? 'Ayush', ENT_QUOTES, 'UTF-8');
+    $authorName = htmlspecialchars($post['author_name'] ?? 'Ayushmann Chourasiya', ENT_QUOTES, 'UTF-8');
     $publishedDate = date('c', strtotime($post['published_at'] ?? 'now'));
 
     // Schema.org BlogPosting JSON-LD

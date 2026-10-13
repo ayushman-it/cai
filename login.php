@@ -159,7 +159,11 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="js/seo-config.js"></script>
+  <script src="js/seo-analytics.js" defer></script>
   <title>Sign in to your account — CuboidPilot</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="canonical" href="https://cai.cuboidsoft.in/login.php">
   <link rel="icon" type="image/png" href="assets/logo-black.png">
   
   <!-- Typography: Inter for UI & Serif for Headings matching Intercom -->
@@ -404,7 +408,7 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
         <!-- Top header on desktop to align card tops with left column region selector -->
         <div class="hidden lg:flex items-center justify-between text-[11.5px] text-stone-500 mb-2 px-1">
           <span class="font-medium text-stone-600">Latest from Cai Editorial</span>
-          <a href="blog.html" class="text-stone-500 hover:text-stone-900 transition-colors inline-flex items-center gap-0.5">
+          <a href="blog.php" class="text-stone-500 hover:text-stone-900 transition-colors inline-flex items-center gap-0.5">
             <span>All posts</span>
             <i data-lucide="arrow-right" class="w-3 h-3 text-stone-400"></i>
           </a>
@@ -413,7 +417,7 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
         <div class="bg-white border border-[#e7e5de] rounded-[8px] p-5 sm:p-6 shadow-xs hover:border-[#d7d5ce] transition-all group">
           
           <!-- Hero Banner Media -->
-          <a href="blog.html?slug=<?= urlencode($latestBlog['slug'] ?? 'meet-cai-autonomous-ai-agent') ?>" class="block w-full rounded-[6px] overflow-hidden mb-3.5 bg-stone-100 aspect-[16/10] relative shadow-xs">
+          <a href="blog.php?slug=<?= urlencode($latestBlog['slug'] ?? 'meet-cai-autonomous-ai-agent') ?>" class="block w-full rounded-[6px] overflow-hidden mb-3.5 bg-stone-100 aspect-[16/10] relative shadow-xs">
             <img 
               src="<?= htmlspecialchars($latestBlog['cover_image'] ?? 'assets/blog/meet-cai-founder.png') ?>" 
               alt="<?= htmlspecialchars($latestBlog['title'] ?? 'Cai Blog') ?>" 
@@ -434,7 +438,7 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
 
           <!-- Headline & Editorial Description -->
           <h2 class="text-[15px] sm:text-[15.5px] font-medium text-stone-900 leading-snug mb-2 group-hover:text-black">
-            <a href="blog.html?slug=<?= urlencode($latestBlog['slug'] ?? 'meet-cai-autonomous-ai-agent') ?>" class="hover:underline">
+            <a href="blog.php?slug=<?= urlencode($latestBlog['slug'] ?? 'meet-cai-autonomous-ai-agent') ?>" class="hover:underline">
               <?= htmlspecialchars($latestBlog['title']) ?>
             </a>
           </h2>
@@ -446,7 +450,7 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
           <!-- CTA Link -->
           <div>
             <a 
-              href="blog.html?slug=<?= urlencode($latestBlog['slug'] ?? 'meet-cai-autonomous-ai-agent') ?>" 
+              href="blog.php?slug=<?= urlencode($latestBlog['slug'] ?? 'meet-cai-autonomous-ai-agent') ?>"
               class="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-stone-900 hover:text-black hover:gap-2 transition-all underline underline-offset-4"
             >
               Read full article &rarr;
