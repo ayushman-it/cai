@@ -3958,7 +3958,7 @@ window.CuboidDashboard = {
                 <td class="text-xs font-semibold text-stone-900 font-mono">₹${Number(inv.amount_inr || 0).toLocaleString()}</td>
                 <td><span class="badge-signal-green text-[10px]">Paid</span></td>
                 <td class="text-right">
-                  <button class="btn-secondary btn-sm text-[11px] py-1 px-2" onclick="alert('Downloading invoice INV-${String(inv.id).padStart(5, '0')}.pdf')">Download PDF</button>
+                  <a class="btn-secondary btn-sm text-[11px] py-1 px-2 no-underline" href="../api/ai_usage.php?action=download_invoice&invoice_month=${new Date().toISOString().slice(0, 7)}" target="_blank" rel="noopener">Download PDF</a>
                 </td>
               </tr>
             `).join('');
@@ -4063,7 +4063,12 @@ window.CuboidDashboard = {
             <td class="text-xs font-mono text-stone-700">${this.formatInr(inv.ai_amount_inr || 0)}</td>
             <td class="text-xs font-mono text-stone-700">${this.formatInr(inv.subscription_amount_inr || 0)}</td>
             <td class="text-xs font-semibold text-stone-900 font-mono">${this.formatInr(inv.total_payable_inr || 0)}</td>
-            <td><span class="badge-signal-${inv.status === 'paid' ? 'green' : (inv.status === 'overdue' ? 'amber' : 'blue')} text-[10px] capitalize">${escapeHtml(inv.status || 'draft')}</span></td>
+            <td>
+              <div class="flex items-center justify-between gap-2">
+                <span class="badge-signal-${inv.status === 'paid' ? 'green' : (inv.status === 'overdue' ? 'amber' : 'blue')} text-[10px] capitalize">${escapeHtml(inv.status || 'draft')}</span>
+                <a class="btn-secondary btn-sm text-[10px] py-1 px-2 no-underline" href="../api/ai_usage.php?action=download_invoice&invoice_month=${encodeURIComponent(inv.invoice_month)}" target="_blank" rel="noopener">PDF</a>
+              </div>
+            </td>
           </tr>
         `).join('') : `<tr><td colspan="6" class="p-6 text-center text-xs text-stone-400">No AI billing history yet.</td></tr>`;
       }
@@ -4139,13 +4144,16 @@ window.CuboidDashboard = {
             <td class="text-xs font-semibold text-stone-900 font-mono">${this.formatInr(row.ai_charges_inr || 0)}</td>
             <td class="text-xs font-semibold text-stone-900 font-mono">${this.formatInr(row.total_payable_inr || 0)}</td>
             <td class="text-right">
-              <select class="app-input text-xs w-24 py-1 px-2" onchange="CuboidDashboard.updateAiInvoiceStatus(${row.company_id}, this.value)">
-                <option value="draft" ${row.current_invoice_status === 'draft' ? 'selected' : ''}>Draft</option>
-                <option value="issued" ${row.current_invoice_status === 'issued' ? 'selected' : ''}>Issued</option>
-                <option value="paid" ${row.current_invoice_status === 'paid' ? 'selected' : ''}>Paid</option>
-                <option value="overdue" ${row.current_invoice_status === 'overdue' ? 'selected' : ''}>Overdue</option>
-                <option value="waived" ${row.current_invoice_status === 'waived' ? 'selected' : ''}>Waived</option>
-              </select>
+              <div class="flex items-center justify-end gap-2">
+                <select class="app-input text-xs w-24 py-1 px-2" onchange="CuboidDashboard.updateAiInvoiceStatus(${row.company_id}, this.value)">
+                  <option value="draft" ${row.current_invoice_status === 'draft' ? 'selected' : ''}>Draft</option>
+                  <option value="issued" ${row.current_invoice_status === 'issued' ? 'selected' : ''}>Issued</option>
+                  <option value="paid" ${row.current_invoice_status === 'paid' ? 'selected' : ''}>Paid</option>
+                  <option value="overdue" ${row.current_invoice_status === 'overdue' ? 'selected' : ''}>Overdue</option>
+                  <option value="waived" ${row.current_invoice_status === 'waived' ? 'selected' : ''}>Waived</option>
+                </select>
+                <a class="btn-secondary btn-sm text-[10px] py-1 px-2 no-underline" href="../api/ai_usage.php?action=download_invoice&company_id=${row.company_id}&invoice_month=${new Date().toISOString().slice(0, 7)}" target="_blank" rel="noopener">PDF</a>
+              </div>
             </td>
           </tr>
         `).join('') : `<tr><td colspan="9" class="p-6 text-center text-xs text-stone-400">No companies found.</td></tr>`;

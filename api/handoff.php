@@ -21,6 +21,7 @@ require_once __DIR__ . '/entitlements.php';
 require_once __DIR__ . '/../includes/customer_journey_service.php';
 require_once __DIR__ . '/../includes/channel_handoff_service.php';
 require_once __DIR__ . '/../includes/widget_security.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 try {
     $pdo = getDbConnection();
@@ -43,6 +44,7 @@ try {
     if ($action === 'create_instagram_handoff') {
         $channel = 'instagram';
     }
+    cpRateLimit($pdo, 'widget_handoff', 30, 60, [$companyKey, $sessionId]);
 
     if ($companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
         $companyKey = 'cp_live_cuboidsoft';

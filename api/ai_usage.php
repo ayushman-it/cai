@@ -17,6 +17,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/ai_usage_service.php';
 require_once __DIR__ . '/../includes/widget_security.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -71,6 +72,114 @@ function aiUsageRequireSuperAdmin(PDO $pdo): void {
     if ((int)($stmt->fetchColumn() ?: 0) !== 1) {
         aiUsageRespond(['success' => false, 'error' => 'Super admin authorization required'], 403);
     }
+}
+
+function aiUsageCanAccessCompany(PDO $pdo, int $companyId): bool {
+    if ($companyId <= 0 || empty($_SESSION['user_id'])) {
+        return false;
+    }
+    if (!empty($_SESSION['company_id']) && (int)$_SESSION['company_id'] === $companyId) {
+        return true;
+    }
+    $stmt = $pdo->prepare("SELECT is_super_admin FROM `users` WHERE `id` = ? LIMIT 1");
+    $stmt->execute([(int)$_SESSION['user_id']]);
+    return (int)($stmt->fetchColumn() ?: 0) === 1;
+}
+
+function aiUsagePdfText(string $text): string {
+    $text = str_replace(["\r", "\n", "\t"], ' ', $text);
+    $text = preg_replace('/[^\x20-\x7E]/', '', $text);
+    return str_replace(['\\', '(', ')'], ['\\\\', '\\(', '\\)'], $text);
+}
+
+function aiUsageBuildInvoicePdf(array $lines): string {
+    $content = "BT\n/F1 11 Tf\n14 TL\n50 790 Td\n";
+    foreach ($lines as $idx => $line) {
+        if ($idx > 0) {
+            $content .= "T*\n";
+        }
+        $content .= '(' . aiUsagePdfText($line) . ") Tj\n";
+    }
+    $content .= "ET\n";
+
+    $objects = [
+        "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n",
+        "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n",
+        "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>\nendobj\n",
+        "4 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n",
+        "5 0 obj\n<< /Length " . strlen($content) . " >>\nstream\n{$content}endstream\nendobj\n"
+    ];
+
+    $pdf = "%PDF-1.4\n";
+    $offsets = [0];
+    foreach ($objects as $object) {
+        $offsets[] = strlen($pdf);
+        $pdf .= $object;
+    }
+    $xrefOffset = strlen($pdf);
+    $pdf .= "xref\n0 " . (count($objects) + 1) . "\n";
+    $pdf .= "0000000000 65535 f \n";
+    for ($i = 1; $i <= count($objects); $i++) {
+        $pdf .= sprintf("%010d 00000 n \n", $offsets[$i]);
+    }
+    $pdf .= "trailer\n<< /Size " . (count($objects) + 1) . " /Root 1 0 R >>\nstartxref\n{$xrefOffset}\n%%EOF";
+    return $pdf;
+}
+
+function aiUsageDownloadInvoice(PDO $pdo, int $companyId, string $month): void {
+    [$monthKey, $start, $end] = aiUsageMonthBounds($month);
+    if (!aiUsageCanAccessCompany($pdo, $companyId)) {
+        aiUsageRespond(['success' => false, 'error' => 'Not authorized for this invoice.'], 403);
+    }
+
+    $companyStmt = $pdo->prepare("SELECT id, name, email, slug, plan_tier FROM `companies` WHERE `id` = ? LIMIT 1");
+    $companyStmt->execute([$companyId]);
+    $company = $companyStmt->fetch(PDO::FETCH_ASSOC);
+    if (!$company) {
+        aiUsageRespond(['success' => false, 'error' => 'Company not found.'], 404);
+    }
+
+    $subscriptionAmount = aiUsageGetSubscriptionAmount($pdo, $companyId);
+    $aiAmount = aiUsageScalar($pdo, "SELECT COALESCE(SUM(`amount_inr`), 0) FROM `ai_resolution_ledger` WHERE `company_id` = ? AND `billable` = 1 AND `status` = 'resolved' AND `confirmed_at` >= ? AND `confirmed_at` < ?", [$companyId, $start, $end]);
+    $billable = aiUsageScalar($pdo, "SELECT COUNT(*) FROM `ai_resolution_ledger` WHERE `company_id` = ? AND `billable` = 1 AND `status` = 'resolved' AND `confirmed_at` >= ? AND `confirmed_at` < ?", [$companyId, $start, $end]);
+    $settings = aiUsageGetSettings($pdo, $companyId);
+    $total = round($subscriptionAmount + $aiAmount, 2);
+
+    $invoiceStmt = $pdo->prepare("SELECT status, issued_at, paid_at FROM `ai_billing_invoices` WHERE `company_id` = ? AND `invoice_month` = ? LIMIT 1");
+    $invoiceStmt->execute([$companyId, $monthKey]);
+    $invoice = $invoiceStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $status = $invoice['status'] ?? ($monthKey === date('Y-m') ? 'draft' : 'issued');
+
+    $lines = [
+        'Cai AI Usage Invoice',
+        'Invoice: CAI-' . $monthKey . '-' . str_pad((string)$companyId, 4, '0', STR_PAD_LEFT),
+        'Month: ' . $monthKey,
+        'Status: ' . strtoupper($status),
+        'Generated: ' . date('Y-m-d H:i:s'),
+        '',
+        'Bill To: ' . ($company['name'] ?? 'Workspace'),
+        'Email: ' . ($company['email'] ?? ''),
+        'Plan: ' . ($company['plan_tier'] ?? ''),
+        '',
+        'Subscription / seat fees: INR ' . number_format((float)$subscriptionAmount, 2),
+        'Billable AI resolutions: ' . (int)$billable,
+        'Price per confirmed resolution: INR ' . number_format((float)($settings['outcome_price_inr'] ?? 1), 2),
+        'AI usage charges: INR ' . number_format((float)$aiAmount, 2),
+        'Total payable: INR ' . number_format($total, 2),
+        '',
+        'Billing rule: AI usage is charged only for visitor-confirmed resolved conversations.',
+        'Unresolved, abandoned, or human-handoff conversations are not counted as billable AI outcomes.',
+        '',
+        'CuboidSoft Technologies',
+        'support@cuboidsoft.in'
+    ];
+
+    $pdf = aiUsageBuildInvoicePdf($lines);
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="CAI-' . $monthKey . '-' . $companyId . '.pdf"');
+    header('Content-Length: ' . strlen($pdf));
+    echo $pdf;
+    exit;
 }
 
 function aiUsageDateRange(array $data): array {
@@ -267,6 +376,7 @@ try {
     switch ($action) {
         case 'mark_resolution':
             $companyKey = trim($data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+            cpRateLimit($pdo, 'ai_mark_resolution', 60, 60, [$companyKey, $data['session_id'] ?? $data['session_token'] ?? '']);
             $company = aiUsageResolveCompanyByKey($pdo, $companyKey);
             if (!$company) {
                 aiUsageRespond(['success' => false, 'error' => 'Workspace not found.'], 404);
@@ -299,6 +409,14 @@ try {
                     ? 'Conversation marked as resolved.'
                     : 'Conversation marked as needing more help.'
             ]);
+            break;
+
+        case 'download_invoice':
+            $requestedCompanyId = (int)($data['company_id'] ?? 0);
+            if ($requestedCompanyId <= 0) {
+                $requestedCompanyId = aiUsageRequireCompanySession();
+            }
+            aiUsageDownloadInvoice($pdo, $requestedCompanyId, trim($data['invoice_month'] ?? date('Y-m')));
             break;
 
         case 'summary':

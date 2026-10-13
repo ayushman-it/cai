@@ -29,6 +29,7 @@ require_once __DIR__ . '/../includes/mailer.php';
 require_once __DIR__ . '/../includes/ai_usage_service.php';
 require_once __DIR__ . '/../includes/widget_security.php';
 require_once __DIR__ . '/../includes/asset_helper.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -48,6 +49,7 @@ try {
 
     // 1. Resolve Company / Workspace
     $companyKey = trim($_GET['company_key'] ?? $_POST['company_key'] ?? $data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    cpRateLimit($pdo, 'widget_action_' . preg_replace('/[^a-z0-9_]/i', '', (string)$action), 120, 60, [$companyKey]);
     $widgetToken = cpGetWidgetRequestToken(is_array($data) ? $data : []);
     $company = null;
     $hasExplicitCompanyKey = ($companyKey !== '' && $companyKey !== 'default');

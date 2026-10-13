@@ -899,8 +899,16 @@
                       <div class="flex items-center gap-2">
                         <input type="password" value="cp_live_cuboidsoft" id="settings-key-val" readonly class="app-input font-mono text-xs flex-1 bg-stone-50">
                         <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="toggleApiKeyVisibility('settings-key-val')">Show</button>
-                        <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CuboidShell.copyToClipboard('cp_live_cuboidsoft'); CuboidShell.toast('API Key copied!', 'success')">Copy</button>
+                        <button class="btn-secondary btn-sm text-xs py-1.5 px-3" onclick="CuboidShell.copyToClipboard(document.getElementById('settings-key-val')?.value || ''); CuboidShell.toast('API Key copied!', 'success')">Copy</button>
                       </div>
+                    </div>
+
+                    <div class="p-3 border border-[#e7e5de] bg-stone-50/70 rounded-[6px] flex items-start justify-between gap-4">
+                      <div>
+                        <div class="font-medium text-stone-800">Require Widget Install Token</div>
+                        <div class="text-[11px] text-stone-500 mt-1 leading-relaxed">Only allow widget API calls that include this workspace's install token from the embed snippet.</div>
+                      </div>
+                      <input type="checkbox" id="setting-enforce-widget-token" class="mt-1 rounded-[3px] text-stone-900">
                     </div>
 
                     <div>
@@ -2149,9 +2157,13 @@
         if (c.company_key) {
           const keyEl = document.getElementById('setting-company-key');
           if (keyEl) keyEl.value = c.company_key;
+          const apiKeyEl = document.getElementById('settings-key-val');
+          if (apiKeyEl) apiKeyEl.value = c.company_key;
           if (c.widget_install_token) {
             window.__CP_WIDGET_TOKEN__ = c.widget_install_token;
           }
+          const enforceWidgetTokenEl = document.getElementById('setting-enforce-widget-token');
+          if (enforceWidgetTokenEl) enforceWidgetTokenEl.checked = Boolean(c.enforce_widget_token);
           updateEmbedCodeSnippet();
         }
 
@@ -2496,6 +2508,10 @@
       }
       if (currentUploadedUserAvatarFile) {
         formData.append('user_avatar_file', currentUploadedUserAvatarFile);
+      }
+      const enforceWidgetTokenEl = document.getElementById('setting-enforce-widget-token');
+      if (enforceWidgetTokenEl) {
+        formData.append('enforce_widget_token', enforceWidgetTokenEl.checked ? '1' : '0');
       }
 
       // Dark logo

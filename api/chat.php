@@ -30,6 +30,7 @@ require_once __DIR__ . '/../includes/gemini_service.php';
 require_once __DIR__ . '/../includes/workflow_engine.php';
 require_once __DIR__ . '/../includes/ai_usage_service.php';
 require_once __DIR__ . '/../includes/widget_security.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -44,6 +45,7 @@ try {
     $data = json_decode($rawInput, true) ?? $_POST;
 
     $companyKey     = trim($data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    cpRateLimit($pdo, 'widget_chat', 30, 60, [$companyKey, $data['session_id'] ?? '']);
     $widgetToken    = cpGetWidgetRequestToken(is_array($data) ? $data : []);
     $messageText    = trim($data['message'] ?? '');
     $conversationId = !empty($data['conversation_id']) ? (int)$data['conversation_id'] : null;

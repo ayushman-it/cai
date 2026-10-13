@@ -20,6 +20,7 @@ header("Content-Type: application/json; charset=UTF-8");
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/widget_security.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -34,6 +35,7 @@ try {
 
     $pdo = getDbConnection();
     $companyKey = trim($_POST['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    cpRateLimit($pdo, 'widget_upload', 10, 60, [$companyKey]);
     $company = null;
     if ($companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
         $companyKey = 'cp_live_cuboidsoft';

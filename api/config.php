@@ -19,6 +19,7 @@ header("Content-Type: application/json; charset=UTF-8");
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
 require_once __DIR__ . '/../includes/widget_security.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -35,6 +36,7 @@ try {
         ?? '';
 
     $companyKey = trim($companyKey);
+    cpRateLimit($pdo, 'widget_config', 120, 60, [$companyKey]);
     $hasExplicitCompanyKey = ($companyKey !== '' && $companyKey !== 'default');
     $company = null;
 

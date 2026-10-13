@@ -9,6 +9,7 @@ header("Cache-Control: no-cache, no-store, must-revalidate");
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/asset_helper.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 $pdo = getDbConnection();
 
@@ -19,6 +20,7 @@ if ($action === 'download') {
     $assetId = (int)($_GET['id'] ?? 0);
     $token = trim($_GET['token'] ?? $_GET['download_token'] ?? '');
     $companyKey = trim($_GET['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    cpRateLimit($pdo, 'asset_download', 90, 60, [$companyKey, $assetId]);
     if ($assetId <= 0) {
         http_response_code(404);
         die('Asset not found');

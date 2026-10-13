@@ -19,6 +19,7 @@ header("Content-Type: application/json; charset=UTF-8");
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/widget_security.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -46,6 +47,7 @@ try {
     $data = json_decode($rawInput, true) ?? $_POST;
 
     $companyKey  = trim($data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    cpRateLimit($pdo, 'widget_visitor', 30, 60, [$companyKey, $data['session_id'] ?? '']);
     $widgetToken = cpGetWidgetRequestToken(is_array($data) ? $data : []);
     $name        = trim($data['name'] ?? '');
     $phone       = trim($data['phone'] ?? '');

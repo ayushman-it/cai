@@ -11,7 +11,7 @@ ini_set('display_errors', '0');
 if (php_sapi_name() !== 'cli' && !headers_sent()) {
     header("Access-Control-Allow-Origin: *");
     header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key, X-Widget-Token");
     header("Content-Type: application/json; charset=UTF-8");
 }
 
@@ -22,6 +22,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
+require_once __DIR__ . '/../includes/rate_limit.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -35,6 +36,7 @@ if (!empty($_SESSION['company_id'])) {
     $companyId = (int)$_SESSION['company_id'];
 } else {
     $companyKey = trim($_GET['company_key'] ?? $_POST['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    cpRateLimit($pdo, 'widget_business_config', 90, 60, [$companyKey]);
     if (!empty($companyKey)) {
         if ($companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
             $companyKey = 'cp_live_cuboidsoft';

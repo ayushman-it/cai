@@ -308,6 +308,10 @@ try {
             $compUpdateFields[] = "`logo_light_url` = ?";
             $compParams[] = $logoLightUrl;
         }
+        if (isset($_POST['enforce_widget_token'])) {
+            $compUpdateFields[] = "`enforce_widget_token` = ?";
+            $compParams[] = !empty($_POST['enforce_widget_token']) ? 1 : 0;
+        }
 
         if (!empty($compUpdateFields)) {
             $compParams[] = $companyId;
