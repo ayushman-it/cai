@@ -139,8 +139,8 @@ function getDbConnection() {
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
     static $schemaChecked = false;
     if (!$schemaChecked) {
-        $localLock = __DIR__ . '/.schema_installed_v24';
-        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v24.lock';
+        $localLock = __DIR__ . '/.schema_installed_v25';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v25.lock';
         if (!file_exists($localLock) || !file_exists($tempLock)) {
             initDbSchemaAndUsers($pdo);
             ensureExtendedSchema($pdo);
@@ -444,7 +444,51 @@ function ensureExtendedSchema(PDO $pdo) {
     }
     if (!in_array('document_sharing_policy', $aiCfgCols)) {
         $pdo->exec("ALTER TABLE `ai_configs` ADD COLUMN `document_sharing_policy` TEXT NULL AFTER `training_rules`");
+        $aiCfgCols[] = 'document_sharing_policy';
     }
+    $defaultTrainingRules = implode("\n", [
+        "1. First identify the visitor intent: pricing, product/service fit, document request, appointment, payment, support, or human handoff.",
+        "2. Answer only from this company's verified Knowledge Hub, product catalog, business config, and active assets.",
+        "3. If the visitor gives vague input, ask one concise follow-up question instead of guessing.",
+        "4. If verified data exists, answer directly in the visitor's language and keep it to 1-3 short sentences.",
+        "5. If verified data is missing, say that confirmed information is not available and offer to connect the team.",
+        "6. Never mix data from another company, demo workspace, or unrelated tenant.",
+        "7. Generate next-step chips from verified actions only: pricing, brochure, book demo, talk to team, payment, or relevant catalog details."
+    ]);
+    $defaultDocumentPolicy = implode("\n", [
+        "Share a document only when the visitor explicitly asks for a brochure, syllabus, catalog, guide, profile, PDF, fee chart, or when an asset trigger phrase matches.",
+        "Use only active assets owned by the current company.",
+        "Prefer the most specific matching asset by title, category, keywords, and share trigger phrases.",
+        "If no matching asset exists, do not invent a file or link; offer to connect the visitor with the team."
+    ]);
+    $pdo->prepare("
+        INSERT IGNORE INTO `ai_configs`
+        (`company_id`, `ai_name`, `tone`, `primary_objective`, `info_to_collect_json`, `custom_instructions`, `training_rules`, `document_sharing_policy`, `qualification_rules_json`, `appointment_instructions`, `payment_instructions`, `created_at`, `updated_at`)
+        SELECT `id`, 'Cai', 'professional', 'generate_leads', ?, ?, ?, ?, ?, ?, ?, NOW(), NOW()
+        FROM `companies`
+    ")->execute([
+        json_encode(['name', 'phone', 'email', 'requirement', 'budget', 'timeline']),
+        "Never invent unverified pricing, discounts, guarantees, or delivery dates. When reliable information is unavailable, ask for clarification or offer team specialist assistance.",
+        $defaultTrainingRules,
+        $defaultDocumentPolicy,
+        json_encode([
+            'min_budget' => 25000,
+            'urgent_timeline_days' => 30,
+            'high_priority_keywords' => ['pricing', 'fee', 'demo', 'appointment', 'urgent', 'immediately']
+        ]),
+        "Consultation and discovery calls are available only when scheduling settings or verified company knowledge confirms availability.",
+        "Accept payments only through verified payment instructions configured for the current company."
+    ]);
+    $pdo->prepare("
+        UPDATE `ai_configs`
+        SET `training_rules` = ?
+        WHERE `training_rules` IS NULL OR TRIM(`training_rules`) = ''
+    ")->execute([$defaultTrainingRules]);
+    $pdo->prepare("
+        UPDATE `ai_configs`
+        SET `document_sharing_policy` = ?
+        WHERE `document_sharing_policy` IS NULL OR TRIM(`document_sharing_policy`) = ''
+    ")->execute([$defaultDocumentPolicy]);
 
     // 13. Appointments Table (Section 22)
     $pdo->exec("
@@ -1909,16 +1953,33 @@ function provisionTenantWorkspace(PDO $pdo, array $params): array {
     }
 
     // 7. Seed Default AI Brain Configuration (Section 2 & 3)
+    $provisionTrainingRules = implode("\n", [
+        "1. First identify the visitor intent: pricing, product/service fit, document request, appointment, payment, support, or human handoff.",
+        "2. Answer only from this company's verified Knowledge Hub, product catalog, business config, and active assets.",
+        "3. If the visitor gives vague input, ask one concise follow-up question instead of guessing.",
+        "4. If verified data exists, answer directly in the visitor's language and keep it to 1-3 short sentences.",
+        "5. If verified data is missing, say that confirmed information is not available and offer to connect the team.",
+        "6. Never mix data from another company, demo workspace, or unrelated tenant.",
+        "7. Generate next-step chips from verified actions only: pricing, brochure, book demo, talk to team, payment, or relevant catalog details."
+    ]);
+    $provisionDocumentPolicy = implode("\n", [
+        "Share a document only when the visitor explicitly asks for a brochure, syllabus, catalog, guide, profile, PDF, fee chart, or when an asset trigger phrase matches.",
+        "Use only active assets owned by the current company.",
+        "Prefer the most specific matching asset by title, category, keywords, and share trigger phrases.",
+        "If no matching asset exists, do not invent a file or link; offer to connect the visitor with the team."
+    ]);
     $pdo->prepare("
         INSERT INTO `ai_configs` 
-        (`company_id`, `ai_name`, `tone`, `primary_objective`, `info_to_collect_json`, `custom_instructions`, `qualification_rules_json`, `appointment_instructions`, `payment_instructions`)
-        VALUES (?, ?, 'professional', 'generate_leads', ?, ?, ?, ?, ?)
+        (`company_id`, `ai_name`, `tone`, `primary_objective`, `info_to_collect_json`, `custom_instructions`, `training_rules`, `document_sharing_policy`, `qualification_rules_json`, `appointment_instructions`, `payment_instructions`)
+        VALUES (?, ?, 'professional', 'generate_leads', ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE `updated_at` = NOW()
     ")->execute([
         $companyId,
         $params['widget_assistant_name'] ?? 'Cai',
         json_encode(['name', 'phone', 'email', 'requirement', 'budget', 'timeline']),
         "Never invent unverified pricing, discounts, guarantees, or delivery dates. When reliable information is unavailable, ask for clarification or offer team specialist assistance.",
+        $provisionTrainingRules,
+        $provisionDocumentPolicy,
         json_encode([
             'min_budget' => 25000,
             'urgent_timeline_days' => 30,
