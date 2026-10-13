@@ -113,6 +113,9 @@ window.CuboidShell = {
           if (data.company && data.company.company_key) {
             window.__CP_COMPANY_KEY__ = data.company.company_key;
           }
+          if (data.company && data.company.widget_install_token) {
+            window.__CP_WIDGET_TOKEN__ = data.company.widget_install_token;
+          }
           
           sessionStorage.setItem('cp_workspace_cache', JSON.stringify({
             user: data.user,
@@ -445,7 +448,8 @@ window.CuboidShell = {
         ? `${window.location.origin}/cuboidpilot/widget.js?v=7.5`
         : 'https://cai.cuboidsoft.in/widget.js?v=7.5';
       const theme = (this.company.theme_mode === 'light') ? 'light' : 'dark';
-      const snippetCode = `<script src="${scriptUrl}" data-company="${this.company.company_key}" data-theme="${theme}" async><\/script>`;
+      const tokenAttr = this.company.widget_install_token ? ` data-widget-token="${this.company.widget_install_token}"` : '';
+      const snippetCode = `<script src="${scriptUrl}" data-company="${this.company.company_key}"${tokenAttr} data-theme="${theme}" async><\/script>`;
       if (officialSnippetEl) {
         officialSnippetEl.textContent = snippetCode;
       }
@@ -469,7 +473,7 @@ window.CuboidShell = {
     if (!el) return;
 
     const scriptUrl = 'https://cai.cuboidsoft.in/widget.js';
-    const compKey = (this.company && this.company.company_key) ? this.company.company_key : 'cp_live_cuboidsoft';
+    const compKey = (this.company && this.company.company_key) ? this.company.company_key : '';
 
     let subNavHtml = '';
 
@@ -1230,6 +1234,11 @@ window.CuboidShell = {
     s.id = 'cuboidpilot-widget-script';
     s.src = '../widget.js?v=8.0.' + Date.now();
     s.setAttribute('data-company', companyKey);
+    const widgetToken = (this.company && this.company.widget_install_token) || window.__CP_WIDGET_TOKEN__ || '';
+    if (widgetToken) {
+      window.__CP_WIDGET_TOKEN__ = widgetToken;
+      s.setAttribute('data-widget-token', widgetToken);
+    }
     s.async = true;
     document.body.appendChild(s);
   },
@@ -1263,11 +1272,13 @@ window.CuboidShell = {
       ? `${window.location.origin}/cuboidpilot/widget.js?v=8.0.0` 
       : 'https://cai.cuboidsoft.in/widget.js?v=8.0.0';
     const compKey = (this.company && this.company.company_key) || window.__CP_COMPANY_KEY__ || '';
+    const widgetToken = (this.company && this.company.widget_install_token) || window.__CP_WIDGET_TOKEN__ || '';
     if (!compKey) {
       this.toast('Loading workspace credentials...', 'info');
       return;
     }
-    const snippet = `<script src="${scriptUrl}" data-company="${compKey}" async><\/script>`;
+    const tokenAttr = widgetToken ? ` data-widget-token="${widgetToken}"` : '';
+    const snippet = `<script src="${scriptUrl}" data-company="${compKey}"${tokenAttr} async><\/script>`;
 
     this.copyToClipboard(snippet).then(() => {
       if (btn) {

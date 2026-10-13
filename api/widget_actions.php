@@ -16,7 +16,7 @@
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key, X-Widget-Token");
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
@@ -27,6 +27,8 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
 require_once __DIR__ . '/../includes/mailer.php';
 require_once __DIR__ . '/../includes/ai_usage_service.php';
+require_once __DIR__ . '/../includes/widget_security.php';
+require_once __DIR__ . '/../includes/asset_helper.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -46,9 +48,11 @@ try {
 
     // 1. Resolve Company / Workspace
     $companyKey = trim($_GET['company_key'] ?? $_POST['company_key'] ?? $data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    $widgetToken = cpGetWidgetRequestToken(is_array($data) ? $data : []);
     $company = null;
+    $hasExplicitCompanyKey = ($companyKey !== '' && $companyKey !== 'default');
 
-    if (!empty($companyKey) && $companyKey !== 'default') {
+    if ($hasExplicitCompanyKey) {
         $stmt = $pdo->prepare("
             SELECT * FROM `companies` 
             WHERE `company_key` = ? 
@@ -60,16 +64,9 @@ try {
         $company = $stmt->fetch();
     }
 
-    if (!$company && !empty($_SESSION['company_id'])) {
+    if (!$company && !$hasExplicitCompanyKey && !empty($_SESSION['user_id']) && !empty($_SESSION['company_id'])) {
         $stmt = $pdo->prepare("SELECT * FROM `companies` WHERE `id` = ? LIMIT 1");
         $stmt->execute([(int)$_SESSION['company_id']]);
-        $company = $stmt->fetch();
-    }
-
-    if (!$company && (empty($companyKey) || $companyKey === 'default' || $companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot')) {
-        $companyKey = 'cp_live_cuboidsoft';
-        $stmt = $pdo->prepare("SELECT * FROM `companies` WHERE `company_key` = ? OR `slug` = 'cuboidsoft' LIMIT 1");
-        $stmt->execute([$companyKey]);
         $company = $stmt->fetch();
     }
 
@@ -79,6 +76,7 @@ try {
         echo json_encode(['success' => false, 'error' => 'Workspace not found. Check widget company configuration.']);
         exit;
     }
+    cpValidateWidgetInstallToken($company, $widgetToken);
 
     $companyId = (int)$company['id'];
     $entitlements = getCompanyEntitlements($pdo, $companyId);
@@ -1778,13 +1776,21 @@ HTML;
     // -------------------------------------------------------------
     if ($action === 'get_brochures') {
         $categoryId = (int)($_GET['category_id'] ?? $data['category_id'] ?? 0);
-        
+
+        $assetCols = $pdo->query("SHOW COLUMNS FROM `company_assets`")->fetchAll(PDO::FETCH_COLUMN);
+        $hasLinkedCategories = in_array('linked_category_ids', $assetCols, true);
+        $hasPublishedFlag = in_array('is_published', $assetCols, true);
+
         $sql = "
-            SELECT id, title, description, file_url, original_filename, file_size_bytes, download_count, linked_category_ids
+            SELECT id, company_id, title, category, description, file_name, file_path, file_size, file_type, secure_download_token, download_count"
+            . ($hasLinkedCategories ? ", linked_category_ids" : ", NULL AS linked_category_ids") . "
             FROM `company_assets`
-            WHERE `company_id` = ? AND `asset_type` = 'brochure' AND `is_published` = 1
+            WHERE `company_id` = ? AND `is_active` = 1
         ";
         $params = [$companyId];
+        if ($hasPublishedFlag) {
+            $sql .= " AND `is_published` = 1";
+        }
         $sql .= " ORDER BY `id` DESC";
 
         $bStmt = $pdo->prepare($sql);
@@ -1801,9 +1807,9 @@ HTML;
                 'id'                => (int)$b['id'],
                 'title'             => $b['title'],
                 'description'       => $b['description'] ?? '',
-                'file_url'          => $b['file_url'],
-                'original_filename' => $b['original_filename'] ?? '',
-                'file_size'         => (int)($b['file_size_bytes'] ?? 0),
+                'file_url'          => AssetHelper::buildDownloadUrl($pdo, $companyId, $b, false),
+                'original_filename' => $b['file_name'] ?? '',
+                'file_size'         => (int)($b['file_size'] ?? 0),
                 'download_count'    => (int)($b['download_count'] ?? 0)
             ];
         }

@@ -63,11 +63,56 @@
   }
 
   const urlCompanyParam = (typeof window !== 'undefined' && window.location) ? (new URLSearchParams(window.location.search).get('company') || new URLSearchParams(window.location.search).get('company_key')) : null;
-  let companyKey = urlCompanyParam ||
-                     (typeof window !== 'undefined' && window.__CP_COMPANY_KEY__) ||
-                     (currentScript && currentScript.getAttribute('data-company')) || 
-                     (currentScript && currentScript.getAttribute('data-key')) || 
-                     'cp_live_cuboidsoft';
+  const scriptCompanyKey = (currentScript && (currentScript.getAttribute('data-company') || currentScript.getAttribute('data-key'))) || '';
+  const explicitCompanyKey = (urlCompanyParam || (typeof window !== 'undefined' && window.__CP_COMPANY_KEY__) || scriptCompanyKey || '').trim();
+  let companyKey = (explicitCompanyKey && explicitCompanyKey !== 'default')
+                     ? explicitCompanyKey
+                     : (isCuboidDomain ? 'cp_live_cuboidsoft' : '');
+  let widgetInstallToken = ((currentScript && (currentScript.getAttribute('data-widget-token') || currentScript.getAttribute('data-token'))) ||
+                     (typeof window !== 'undefined' && window.__CP_WIDGET_TOKEN__) ||
+                     '').trim();
+
+  if (!companyKey) {
+    const mountConfigurationError = () => {
+      const errHost = document.createElement('div');
+      errHost.id = 'cuboidpilot-widget-config-error';
+      errHost.style.cssText = 'position:fixed;right:20px;bottom:20px;z-index:2147483647;max-width:320px;background:#111;color:#fff;border:1px solid #333;border-radius:8px;padding:12px 14px;font:12px/1.45 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,sans-serif;box-shadow:0 14px 40px rgba(0,0,0,.22);';
+      errHost.innerHTML = '<strong style="display:block;font-size:13px;margin-bottom:4px;">Cai widget not configured</strong><span>Add your workspace key in the script tag: <code style="background:#222;padding:1px 4px;border-radius:4px;">data-company</code>.</span>';
+      if (document.body && !document.getElementById('cuboidpilot-widget-config-error')) {
+        document.body.appendChild(errHost);
+      }
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mountConfigurationError);
+    } else {
+      mountConfigurationError();
+    }
+    console.warn('[CuboidPilot Widget] Missing data-company. Widget stopped to prevent cross-tenant fallback.');
+    window.__CUBOIDPILOT_INITIALIZED__ = false;
+    return;
+  }
+
+  function withWidgetToken(url) {
+    if (!widgetInstallToken) return url;
+    const glue = url.indexOf('?') === -1 ? '?' : '&';
+    return `${url}${glue}widget_token=${encodeURIComponent(widgetInstallToken)}`;
+  }
+
+  function tenantHeaders(headers) {
+    const merged = Object.assign({}, headers || {}, { 'X-Company-Key': companyKey });
+    if (widgetInstallToken) {
+      merged['X-Widget-Token'] = widgetInstallToken;
+    }
+    return merged;
+  }
+
+  function tenantPayload(payload) {
+    const merged = Object.assign({}, payload || {}, { company_key: companyKey });
+    if (widgetInstallToken) {
+      merged.widget_token = widgetInstallToken;
+    }
+    return merged;
+  }
 
   // 2. Storage Helper (Cross-window & Cross-embed synchronization via localStorage with sessionStorage fallback)
   const widgetStorage = {
@@ -5907,7 +5952,7 @@
 
         <div class="cp-header-actions">
           <!-- Overlapping Executive Avatars with LinkedIn (media_1790919508920.png) -->
-          <div class="cp-team-avatar-stack" id="cp-team-avatar-stack" aria-label="Executive leadership and AI team">
+          <div class="cp-team-avatar-stack" id="cp-team-avatar-stack" aria-label="Executive leadership and AI team" style="display:none;">
             <a href="https://linkedin.com/in/ayushman-varma" target="_blank" rel="noopener noreferrer" class="cp-stack-avatar-link" id="cp-avatar-ayush-link" title="Ayushmann Chourasiya (Founder) — View LinkedIn Profile" style="display:none;">
               <img class="cp-stack-avatar" src="${baseUrl}/assets/avatar-ayush.png" alt="Ayushmann Chourasiya" onerror="this.src='${baseUrl}/assets/uploads/avatars/avatar_default.svg';" />
             </a>
@@ -7395,13 +7440,12 @@
       try {
         await fetch(`${baseUrl}/api/widget_actions.php?action=send_human_message`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
-          body: JSON.stringify({
-            company_key: companyKey,
+          headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(tenantPayload({
             conversation_id: conversationId,
             session_token: sessionId,
             message: gifMessage
-          })
+          }))
         });
       } catch (e) {}
       return;
@@ -7415,19 +7459,15 @@
       const res = await fetch(`${baseUrl}/api/chat.php`, {
         method: 'POST',
         signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Key': companyKey
-        },
-        body: JSON.stringify({
-          company_key: companyKey,
+        headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(tenantPayload({
           message: gifMessage,
           session_id: sessionId,
           conversation_id: conversationId,
           lead_id: leadId,
           visitor_name: visitorName,
           mode: isCopilotActive ? 'workspace_copilot' : 'visitor'
-        })
+        }))
       });
       clearTimeout(timeoutId);
       if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -7642,8 +7682,8 @@
     } catch(e) {}
 
     try {
-      const url = `${baseUrl}/api/config.php?company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`;
-      const res = await fetch(url);
+      const url = withWidgetToken(`${baseUrl}/api/config.php?company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`);
+      const res = await fetch(url, { headers: tenantHeaders() });
       if (!res.ok) throw new Error('Config failed');
       const data = await res.json();
       if (data && data.success && data.widget) {
@@ -7801,17 +7841,13 @@
       try {
         const res = await fetch(`${baseUrl}/api/visitor.php`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Company-Key': companyKey
-          },
-          body: JSON.stringify({
-            company_key: companyKey,
+          headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(tenantPayload({
             name: name,
             phone: phone,
             email: email,
             channel: 'web'
-          })
+          }))
         });
 
         const data = await res.json();
@@ -8554,16 +8590,12 @@
     try {
       const res = await fetch(`${baseUrl}/api/ai_usage.php?action=mark_resolution`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Key': companyKey
-        },
-        body: JSON.stringify({
-          company_key: companyKey,
+        headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(tenantPayload({
           conversation_id: conversationId,
           session_id: sessionId,
           resolved: Boolean(isResolved)
-        })
+        }))
       });
       const data = await res.json();
       if (!data || !data.success) {
@@ -8614,19 +8646,15 @@
     try {
       const res = await fetch(`${baseUrl}/api/chat.php`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Company-Key': companyKey
-        },
-        body: JSON.stringify({
-          company_key: companyKey,
+        headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(tenantPayload({
           action: 'confirm_slot',
           slot_datetime: slotDatetime,
           session_id: sessionId,
           conversation_id: conversationId,
           lead_id: leadId,
           visitor_name: visitorName
-        })
+        }))
       });
       hideTyping();
       const data = await res.json();
@@ -8712,12 +8740,11 @@
     try {
       const res = await fetch(`${baseUrl}/api/whatsapp_hub.php?action=create_widget_handoff`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          company_key: companyKey,
+        headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(tenantPayload({
           conversation_id: conversationId || 0,
           lead_id: currentLeadId || 0
-        })
+        }))
       });
       const data = await res.json();
       if (data && data.success && data.redirect_url) {
@@ -8766,12 +8793,12 @@
       try {
         await fetch(`${baseUrl}/api/widget_actions.php?action=close_conversation`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
-          body: JSON.stringify({
+          headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(tenantPayload({
             conversation_id: conversationId,
             reason: reason,
             session_token: sessionId
-          })
+          }))
         });
       } catch (err) {
         console.warn('[CuboidPilot Widget] Error closing conversation:', err);
@@ -8933,10 +8960,11 @@
         const formData = new FormData();
         formData.append('file', pAtt.file);
         formData.append('company_key', companyKey);
+        if (widgetInstallToken) formData.append('widget_token', widgetInstallToken);
 
         const upRes = await fetch(`${baseUrl}/api/upload.php`, {
           method: 'POST',
-          headers: { 'X-Company-Key': companyKey },
+          headers: tenantHeaders(),
           body: formData
         });
         const upData = await upRes.json();
@@ -8990,14 +9018,13 @@
       try {
         const res = await fetch(`${baseUrl}/api/widget_actions.php?action=send_human_message`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
-          body: JSON.stringify({
-            company_key: companyKey,
+          headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(tenantPayload({
             conversation_id: conversationId,
             session_token: sessionId,
             session_id: sessionId,
             message: payloadText
-          })
+          }))
         });
         const data = await res.json();
         if (data && data.conversation_id) {
@@ -9027,19 +9054,15 @@
         const res = await fetch(url, {
           method: 'POST',
           signal: controller.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Company-Key': companyKey
-          },
-          body: JSON.stringify({
-            company_key: companyKey,
+          headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify(tenantPayload({
             message: payloadText,
             session_id: sessionId,
             conversation_id: activeCId,
             lead_id: leadId,
             visitor_name: visitorName,
             mode: isCopilotActive ? 'workspace_copilot' : 'visitor'
-          })
+          }))
         });
         clearTimeout(timeoutId);
 
@@ -9479,7 +9502,7 @@
     });
 
     try {
-      const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_catalogs&company_key=${encodeURIComponent(companyKey)}`);
+      const res = await fetch(withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_catalogs&company_key=${encodeURIComponent(companyKey)}`), { headers: tenantHeaders() });
       const data = await res.json();
       if (loadRow && loadRow.parentNode) loadRow.remove();
 
@@ -9545,7 +9568,7 @@
     });
 
     try {
-      const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_catalog_items&catalog_id=${catalogId}&company_key=${encodeURIComponent(companyKey)}`);
+      const res = await fetch(withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_catalog_items&catalog_id=${catalogId}&company_key=${encodeURIComponent(companyKey)}`), { headers: tenantHeaders() });
       const data = await res.json();
       if (loadRow && loadRow.parentNode) loadRow.remove();
 
@@ -9589,10 +9612,10 @@
     });
 
     try {
-      let url = `${baseUrl}/api/widget_actions.php?action=get_brochures&company_key=${encodeURIComponent(companyKey)}`;
+      let url = withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_brochures&company_key=${encodeURIComponent(companyKey)}`);
       if (categoryId) url += `&category_id=${categoryId}`;
 
-      const res = await fetch(url);
+      const res = await fetch(url, { headers: tenantHeaders() });
       const data = await res.json();
       if (loadRow && loadRow.parentNode) loadRow.remove();
 
@@ -10301,7 +10324,7 @@
     homeDataLoaded = true;
 
     // Fetch dynamic executive LinkedIn profiles for header avatars & sync settings
-    fetch(`${baseUrl}/api/widget_actions.php?action=get_actions&company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`)
+    fetch(withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_actions&company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`), { headers: tenantHeaders() })
       .then(r => r.json())
       .then(d => {
         if (d && d.success && d.settings) {
@@ -10322,8 +10345,8 @@
             else { lCuboid.style.display = 'none'; }
           }
           const stack = shadow.getElementById('cp-team-avatar-stack');
-          if (stack && !d.settings.linkedin_ayush && !d.settings.linkedin_cai && !d.settings.linkedin_cuboidsoft) {
-            stack.style.display = 'none';
+          if (stack) {
+            stack.style.display = (d.settings.linkedin_ayush || d.settings.linkedin_cai || d.settings.linkedin_cuboidsoft) ? 'flex' : 'none';
           }
         }
       })
@@ -10727,7 +10750,7 @@
       const sessToken = sessionId || (widgetStorage.getItem(STORAGE_KEYS.CONVO_ID) ? 'sess_' + widgetStorage.getItem(STORAGE_KEYS.CONVO_ID) : '');
       const activeConvId = conversationId || (widgetStorage.getItem(STORAGE_KEYS.CONVO_ID) ? parseInt(widgetStorage.getItem(STORAGE_KEYS.CONVO_ID), 10) : 0);
       
-      const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_history&session_token=${encodeURIComponent(sessToken)}&conversation_id=${encodeURIComponent(activeConvId)}&company_key=${encodeURIComponent(companyKey)}`);
+      const res = await fetch(withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_history&session_token=${encodeURIComponent(sessToken)}&conversation_id=${encodeURIComponent(activeConvId)}&company_key=${encodeURIComponent(companyKey)}`), { headers: tenantHeaders() });
       const data = await res.json();
 
       if (!data.success || !data.conversations || data.conversations.length === 0) {
@@ -10815,7 +10838,7 @@
           // Load selected conversation transcript into chatStream
           try {
             card.style.opacity = '0.6';
-            const trRes = await fetch(`${baseUrl}/api/widget_actions.php?action=get_history&session_token=${encodeURIComponent(sessToken)}&conversation_id=${encodeURIComponent(c.id)}&company_key=${encodeURIComponent(companyKey)}`);
+            const trRes = await fetch(withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_history&session_token=${encodeURIComponent(sessToken)}&conversation_id=${encodeURIComponent(c.id)}&company_key=${encodeURIComponent(companyKey)}`), { headers: tenantHeaders() });
             const trData = await trRes.json();
             if (trData.success && Array.isArray(trData.active_transcript) && trData.active_transcript.length > 0) {
               chatStream.innerHTML = '';
@@ -10905,7 +10928,7 @@
     });
 
     try {
-      const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_team&department=${encodeURIComponent(filter)}&company_key=${encodeURIComponent(companyKey)}`);
+      const res = await fetch(withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_team&department=${encodeURIComponent(filter)}&company_key=${encodeURIComponent(companyKey)}`), { headers: tenantHeaders() });
       const data = await res.json();
       const listContainer = shadow.getElementById('cp-team-list-container');
       if (!listContainer) return;
@@ -11043,9 +11066,8 @@
     try {
       const res = await fetch(`${baseUrl}/api/widget_actions.php?action=start_human_chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
-        body: JSON.stringify({
-          company_key: companyKey,
+        headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify(tenantPayload({
           user_id: selectedAgent ? selectedAgent.id : 0,
           session_token: sessionId,
           session_id: sessionId,
@@ -11053,7 +11075,7 @@
           name: visitorName,
           email: visitorEmail,
           phone: visitorPhone
-        })
+        }))
       });
       const data = await res.json();
       if (data.success) {
@@ -11160,8 +11182,8 @@
       }
 
       try {
-        const url = `${baseUrl}/api/widget_actions.php?action=poll_messages&conversation_id=${conversationId}&after_id=${lastPolledMessageId}&company_key=${encodeURIComponent(companyKey)}&session_token=${encodeURIComponent(sessionId)}`;
-        const res = await fetch(url);
+        const url = withWidgetToken(`${baseUrl}/api/widget_actions.php?action=poll_messages&conversation_id=${conversationId}&after_id=${lastPolledMessageId}&company_key=${encodeURIComponent(companyKey)}&session_token=${encodeURIComponent(sessionId)}`);
+        const res = await fetch(url, { headers: tenantHeaders() });
         if (!res.ok) return;
         const data = await res.json();
 
@@ -11295,7 +11317,7 @@
     `;
 
     try {
-      const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_team&department=all&company_key=${encodeURIComponent(companyKey)}`);
+      const res = await fetch(withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_team&department=all&company_key=${encodeURIComponent(companyKey)}`), { headers: tenantHeaders() });
       const data = await res.json();
       const list = shadow.getElementById('cp-book-team-list');
       if (!list) return;
@@ -11453,8 +11475,8 @@
       }
 
       try {
-        const url = `${baseUrl}/api/widget_actions.php?action=get_slots&user_id=${currentAgent.id}&date=${newDate}&company_key=${encodeURIComponent(companyKey)}`;
-        const res = await fetch(url);
+        const url = withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_slots&user_id=${currentAgent.id}&date=${newDate}&company_key=${encodeURIComponent(companyKey)}`);
+        const res = await fetch(url, { headers: tenantHeaders() });
         const data = await res.json();
         if (data.success && Array.isArray(data.slots)) {
           renderSlotsGrid(data.slots);
@@ -11466,8 +11488,8 @@
 
     // Load available slots from backend
     try {
-      const url = `${baseUrl}/api/widget_actions.php?action=get_slots&user_id=${currentAgent.id}&date=${dateStr || ''}&company_key=${encodeURIComponent(companyKey)}`;
-      const res = await fetch(url);
+      const url = withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_slots&user_id=${currentAgent.id}&date=${dateStr || ''}&company_key=${encodeURIComponent(companyKey)}`);
+      const res = await fetch(url, { headers: tenantHeaders() });
       const data = await res.json();
 
       if (data.success) {
@@ -11528,9 +11550,8 @@
         try {
           const res = await fetch(`${baseUrl}/api/widget_actions.php?action=book_appointment`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
-            body: JSON.stringify({
-              company_key: companyKey,
+            headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify(tenantPayload({
               user_id: currentAgent.id,
               slot_datetime: selectedSlot,
               name: nameVal,
@@ -11539,7 +11560,7 @@
               notes: notesVal,
               session_token: sessionId,
               conversation_id: conversationId
-            })
+            }))
           });
           const result = await res.json();
           if (result.success) {
@@ -11789,7 +11810,7 @@
 
     if (!widgetConfig.bank_name && !widgetConfig.bank_account_no && !widgetConfig.bank_upi_id) {
       try {
-        const res = await fetch(`${baseUrl}/api/widget_actions.php?action=get_actions&company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`);
+        const res = await fetch(withWidgetToken(`${baseUrl}/api/widget_actions.php?action=get_actions&company_key=${encodeURIComponent(companyKey)}&_t=${Date.now()}`), { headers: tenantHeaders() });
         const data = await res.json();
         if (data && data.success && data.settings) {
           applyWidgetConfig(data.settings);
@@ -11938,15 +11959,14 @@
         try {
           const res = await fetch(`${baseUrl}/api/widget_actions.php?action=submit_bank_transfer`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Company-Key': companyKey },
-            body: JSON.stringify({
-              company_key: companyKey,
+            headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify(tenantPayload({
               session_token: sessionId,
               conversation_id: conversationId,
               amount: amt,
               payer_name: name,
               utr_number: utr
-            })
+            }))
           });
           const result = await res.json();
           if (result.success) {
@@ -12085,12 +12105,8 @@
         try {
           const res = await fetch(`${baseUrl}/api/payment_requests.php?action=create`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Company-Key': companyKey
-            },
-            body: JSON.stringify({
-              company_key: companyKey,
+            headers: tenantHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify(tenantPayload({
               name: name,
               email: email,
               phone: phone,
@@ -12098,7 +12114,7 @@
               item_title: itemTitle,
               session_id: sessionId,
               conversation_id: conversationId
-            })
+            }))
           });
 
           const result = await res.json();

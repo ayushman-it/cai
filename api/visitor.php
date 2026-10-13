@@ -8,7 +8,7 @@
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key, X-Widget-Token");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -18,6 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 header("Content-Type: application/json; charset=UTF-8");
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/widget_security.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -45,6 +46,7 @@ try {
     $data = json_decode($rawInput, true) ?? $_POST;
 
     $companyKey  = trim($data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    $widgetToken = cpGetWidgetRequestToken(is_array($data) ? $data : []);
     $name        = trim($data['name'] ?? '');
     $phone       = trim($data['phone'] ?? '');
     $email       = strtolower(trim($data['email'] ?? ''));
@@ -56,31 +58,24 @@ try {
 
     // Resolve tenant
     $company = null;
+    $hasExplicitCompanyKey = ($companyKey !== '' && $companyKey !== 'default');
     if ($companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
         $companyKey = 'cp_live_cuboidsoft';
     }
-    if (!empty($companyKey) && $companyKey !== 'default') {
-        if (!empty($_SESSION['company_id']) && ($companyKey === 'cp_live_cuboidsoft' || $companyKey === 'default')) {
-            $stmt = $pdo->prepare("SELECT id, name FROM `companies` WHERE `id` = ? LIMIT 1");
-            $stmt->execute([(int)$_SESSION['company_id']]);
-            $company = $stmt->fetch();
-        }
-
-        if (!$company) {
-            $stmt = $pdo->prepare("
-                SELECT id, name FROM `companies` 
-                WHERE `company_key` = ? 
-                   OR `slug` = ? 
-                   OR (slug = 'cuboidsoft' AND ? IN ('cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'))
-                LIMIT 1
-            ");
-            $stmt->execute([$companyKey, $companyKey, $companyKey]);
-            $company = $stmt->fetch();
-        }
+    if ($hasExplicitCompanyKey) {
+        $stmt = $pdo->prepare("
+            SELECT * FROM `companies`
+            WHERE `company_key` = ?
+               OR `slug` = ?
+               OR (slug = 'cuboidsoft' AND ? IN ('cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'))
+            LIMIT 1
+        ");
+        $stmt->execute([$companyKey, $companyKey, $companyKey]);
+        $company = $stmt->fetch();
     }
 
-    if (!$company && !empty($_SESSION['company_id'])) {
-        $stmt = $pdo->prepare("SELECT id, name FROM `companies` WHERE `id` = ? LIMIT 1");
+    if (!$company && !$hasExplicitCompanyKey && !empty($_SESSION['user_id']) && !empty($_SESSION['company_id'])) {
+        $stmt = $pdo->prepare("SELECT * FROM `companies` WHERE `id` = ? LIMIT 1");
         $stmt->execute([(int)$_SESSION['company_id']]);
         $company = $stmt->fetch();
     }
@@ -90,6 +85,7 @@ try {
         echo json_encode(['success' => false, 'error' => 'Workspace not found. Check widget configuration.']);
         exit;
     }
+    cpValidateWidgetInstallToken($company, $widgetToken);
     $companyId = (int)$company['id'];
 
     // 1. Validation (Section 1: Name Required, Phone Required, Email Optional)

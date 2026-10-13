@@ -7,7 +7,7 @@ header("Content-Type: application/json; charset=UTF-8");
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key, X-Widget-Token");
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
@@ -16,6 +16,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../includes/ai_usage_service.php';
+require_once __DIR__ . '/../includes/widget_security.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -270,6 +271,7 @@ try {
             if (!$company) {
                 aiUsageRespond(['success' => false, 'error' => 'Workspace not found.'], 404);
             }
+            cpValidateWidgetInstallToken($company, cpGetWidgetRequestToken($data));
 
             $conversationId = (int)($data['conversation_id'] ?? 0);
             $sessionId = trim($data['session_id'] ?? $data['session_token'] ?? '');

@@ -1749,7 +1749,9 @@
           ? `${window.location.origin}/cuboidpilot/widget.js?v=8.0.0` 
           : 'https://cai.cuboidsoft.in/widget.js?v=8.0.0';
         const theme = themeEl ? themeEl.value : 'dark';
-        embedEl.value = `<script src="${scriptUrl}" data-company="${keyEl.value}" data-theme="${theme}" async><\/script>`;
+        const token = window.__CP_WIDGET_TOKEN__ || (window.CuboidShell && CuboidShell.company && CuboidShell.company.widget_install_token) || '';
+        const tokenAttr = token ? ` data-widget-token="${token}"` : '';
+        embedEl.value = `<script src="${scriptUrl}" data-company="${keyEl.value}"${tokenAttr} data-theme="${theme}" async><\/script>`;
       }
     }
 
@@ -2147,6 +2149,9 @@
         if (c.company_key) {
           const keyEl = document.getElementById('setting-company-key');
           if (keyEl) keyEl.value = c.company_key;
+          if (c.widget_install_token) {
+            window.__CP_WIDGET_TOKEN__ = c.widget_install_token;
+          }
           updateEmbedCodeSnippet();
         }
 

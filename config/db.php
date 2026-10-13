@@ -139,8 +139,8 @@ function getDbConnection() {
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
     static $schemaChecked = false;
     if (!$schemaChecked) {
-        $localLock = __DIR__ . '/.schema_installed_v22';
-        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v22.lock';
+        $localLock = __DIR__ . '/.schema_installed_v23';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v23.lock';
         if (!file_exists($localLock) || !file_exists($tempLock)) {
             initDbSchemaAndUsers($pdo);
             ensureExtendedSchema($pdo);
@@ -159,6 +159,19 @@ function getDbConnection() {
 function ensureExtendedSchema(PDO $pdo) {
     // 1. Companies columns for 14-day trial & plan tier
     $companyCols = $pdo->query("SHOW COLUMNS FROM `companies`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('company_key', $companyCols)) {
+        try {
+            $pdo->exec("ALTER TABLE `companies` ADD COLUMN `company_key` VARCHAR(100) NULL UNIQUE AFTER `slug`");
+        } catch (Exception $e) {
+            $pdo->exec("ALTER TABLE `companies` ADD COLUMN `company_key` VARCHAR(100) NULL");
+        }
+        $companyCols[] = 'company_key';
+    }
+    $pdo->exec("
+        UPDATE `companies`
+        SET `company_key` = CONCAT('cp_live_', LOWER(SUBSTRING(MD5(CONCAT(`id`, ':', `slug`, ':', COALESCE(`created_at`, NOW()), ':', RAND())), 1, 24)))
+        WHERE `company_key` IS NULL OR `company_key` = ''
+    ");
     if (!in_array('trial_started_at', $companyCols)) {
         $pdo->exec("ALTER TABLE `companies` ADD COLUMN `trial_started_at` DATETIME NULL AFTER `whatsapp_connected`");
     }
@@ -171,6 +184,27 @@ function ensureExtendedSchema(PDO $pdo) {
     if (!in_array('manual_pro_override', $companyCols)) {
         $pdo->exec("ALTER TABLE `companies` ADD COLUMN `manual_pro_override` TINYINT(1) NOT NULL DEFAULT 0 AFTER `plan_tier`");
     }
+    if (!in_array('widget_install_token', $companyCols)) {
+        try {
+            $pdo->exec("ALTER TABLE `companies` ADD COLUMN `widget_install_token` VARCHAR(80) NULL AFTER `company_key`");
+        } catch (Exception $e) {
+            $pdo->exec("ALTER TABLE `companies` ADD COLUMN `widget_install_token` VARCHAR(80) NULL");
+        }
+        $companyCols[] = 'widget_install_token';
+    }
+    if (!in_array('enforce_widget_token', $companyCols)) {
+        try {
+            $pdo->exec("ALTER TABLE `companies` ADD COLUMN `enforce_widget_token` TINYINT(1) NOT NULL DEFAULT 0 AFTER `widget_install_token`");
+        } catch (Exception $e) {
+            $pdo->exec("ALTER TABLE `companies` ADD COLUMN `enforce_widget_token` TINYINT(1) NOT NULL DEFAULT 0");
+        }
+        $companyCols[] = 'enforce_widget_token';
+    }
+    $pdo->exec("
+        UPDATE `companies`
+        SET `widget_install_token` = CONCAT('cpw_', LOWER(SUBSTRING(MD5(CONCAT(`id`, ':', COALESCE(`company_key`, `slug`, `name`), ':', COALESCE(`created_at`, NOW()), ':', RAND())), 1, 32)))
+        WHERE `widget_install_token` IS NULL OR `widget_install_token` = ''
+    ");
     // Update null trial dates based on created_at (14 days)
     $pdo->exec("
         UPDATE `companies` 
@@ -403,6 +437,14 @@ function ensureExtendedSchema(PDO $pdo) {
             KEY `idx_company` (`company_id`)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
     ");
+    $aiCfgCols = $pdo->query("SHOW COLUMNS FROM `ai_configs`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('training_rules', $aiCfgCols)) {
+        $pdo->exec("ALTER TABLE `ai_configs` ADD COLUMN `training_rules` TEXT NULL AFTER `custom_instructions`");
+        $aiCfgCols[] = 'training_rules';
+    }
+    if (!in_array('document_sharing_policy', $aiCfgCols)) {
+        $pdo->exec("ALTER TABLE `ai_configs` ADD COLUMN `document_sharing_policy` TEXT NULL AFTER `training_rules`");
+    }
 
     // 13. Appointments Table (Section 22)
     $pdo->exec("
@@ -1346,6 +1388,9 @@ HTML;
             `category` VARCHAR(64) NOT NULL DEFAULT 'document',
             `description` TEXT NULL,
             `keywords` TEXT NULL,
+            `share_trigger_phrases` TEXT NULL,
+            `share_instructions` TEXT NULL,
+            `secure_download_token` VARCHAR(80) NULL,
             `file_name` VARCHAR(255) NOT NULL,
             `file_path` VARCHAR(500) NOT NULL,
             `file_size` INT DEFAULT 0,
@@ -1358,6 +1403,24 @@ HTML;
             INDEX `idx_asset_category` (`company_id`, `category`),
             CONSTRAINT `fk_asset_company` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+    $assetCols = $pdo->query("SHOW COLUMNS FROM `company_assets`")->fetchAll(PDO::FETCH_COLUMN);
+    if (!in_array('share_trigger_phrases', $assetCols)) {
+        $pdo->exec("ALTER TABLE `company_assets` ADD COLUMN `share_trigger_phrases` TEXT NULL AFTER `keywords`");
+        $assetCols[] = 'share_trigger_phrases';
+    }
+    if (!in_array('share_instructions', $assetCols)) {
+        $pdo->exec("ALTER TABLE `company_assets` ADD COLUMN `share_instructions` TEXT NULL AFTER `share_trigger_phrases`");
+        $assetCols[] = 'share_instructions';
+    }
+    if (!in_array('secure_download_token', $assetCols)) {
+        $pdo->exec("ALTER TABLE `company_assets` ADD COLUMN `secure_download_token` VARCHAR(80) NULL AFTER `share_instructions`");
+        $assetCols[] = 'secure_download_token';
+    }
+    $pdo->exec("
+        UPDATE `company_assets`
+        SET `secure_download_token` = CONCAT('asset_', LOWER(SUBSTRING(MD5(CONCAT(`id`, ':', `company_id`, ':', `file_path`, ':', COALESCE(`created_at`, NOW()), ':', RAND())), 1, 40)))
+        WHERE `secure_download_token` IS NULL OR `secure_download_token` = ''
     ");
 
     // 31. Omnichannel Identity Mapping (Web, WhatsApp, Instagram, Email, Phone)
@@ -1662,6 +1725,7 @@ function provisionTenantWorkspace(PDO $pdo, array $params): array {
         $slug = trim($baseSlug, '-') . '-' . substr(uniqid(), -4);
     }
     $companyKey = trim($params['company_key'] ?? ('cp_live_' . bin2hex(random_bytes(16))));
+    $widgetInstallToken = trim($params['widget_install_token'] ?? ('cpw_' . bin2hex(random_bytes(16))));
     $industry   = trim($params['industry'] ?? 'Technology & SaaS');
     $city       = trim($params['city'] ?? 'Bengaluru');
     $country    = trim($params['country'] ?? 'India');
@@ -1673,11 +1737,11 @@ function provisionTenantWorkspace(PDO $pdo, array $params): array {
     $compUuid = 'comp_' . bin2hex(random_bytes(12));
     $compStmt = $pdo->prepare("
         INSERT INTO `companies` 
-        (`uuid`, `name`, `slug`, `company_key`, `industry`, `city`, `country`, `currency`, `timezone`, `status`, `plan_tier`, `trial_started_at`, `trial_ends_at`, `whatsapp_connected`, `onboarding_completed`, `created_at`, `updated_at`)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'INR', 'Asia/Kolkata', ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 14 DAY), 1, ?, NOW(), NOW())
+        (`uuid`, `name`, `slug`, `company_key`, `widget_install_token`, `industry`, `city`, `country`, `currency`, `timezone`, `status`, `plan_tier`, `trial_started_at`, `trial_ends_at`, `whatsapp_connected`, `onboarding_completed`, `created_at`, `updated_at`)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'INR', 'Asia/Kolkata', ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 14 DAY), 1, ?, NOW(), NOW())
     ");
     $compStmt->execute([
-        $compUuid, $name, $slug, $companyKey, $industry, $city, $country, $status, $planTier, $onboarding
+        $compUuid, $name, $slug, $companyKey, $widgetInstallToken, $industry, $city, $country, $status, $planTier, $onboarding
     ]);
     $companyId = (int)$pdo->lastInsertId();
 

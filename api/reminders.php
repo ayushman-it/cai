@@ -83,7 +83,7 @@ if (!empty($_SESSION['company_id'])) {
 } else {
     $companyKey = trim($_GET['company_key'] ?? $_POST['company_key'] ?? $jsonData['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
     if (!empty($companyKey)) {
-        if ($companyKey === 'default' || $companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
+        if ($companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
             $companyKey = 'cp_live_cuboidsoft';
         }
         $cStmt = $pdo->prepare("SELECT id FROM `companies` WHERE `company_key` = ? OR `slug` = ? LIMIT 1");

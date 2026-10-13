@@ -5678,6 +5678,8 @@ window.CuboidDashboard = {
       filtered = filtered.filter(a => 
         (a.title && a.title.toLowerCase().includes(q)) ||
         (a.keywords && a.keywords.toLowerCase().includes(q)) ||
+        (a.share_trigger_phrases && a.share_trigger_phrases.toLowerCase().includes(q)) ||
+        (a.share_instructions && a.share_instructions.toLowerCase().includes(q)) ||
         (a.description && a.description.toLowerCase().includes(q)) ||
         (a.category && a.category.toLowerCase().includes(q)) ||
         (a.file_name && a.file_name.toLowerCase().includes(q))
@@ -5748,6 +5750,8 @@ window.CuboidDashboard = {
                   <span class="text-[10px] text-stone-400 mr-1.5">AI Triggers:</span>
                   ${kwBadges || '<span class="text-[10px] text-stone-400 italic">None</span>'}
                 </div>
+                ${a.share_trigger_phrases ? `<div class="text-[10px] text-stone-500 line-clamp-1 mt-1">Share when: ${escapeHtml(a.share_trigger_phrases)}</div>` : ''}
+                ${a.share_instructions ? `<div class="text-[10px] text-stone-400 line-clamp-1 mt-0.5">Rule: ${escapeHtml(a.share_instructions)}</div>` : ''}
               </div>
             </div>
           </td>
@@ -5772,10 +5776,10 @@ window.CuboidDashboard = {
             </button>
           </td>
           <td class="text-right space-x-2 whitespace-nowrap">
-            <a href="../api/assets.php?action=download&id=${a.id}" target="_blank" class="text-xs text-stone-700 hover:text-black font-medium inline-flex items-center gap-1" title="Download File">
+            <a href="${escapeHtml(a.download_url || ('../api/assets.php?action=download&id=' + a.id))}" target="_blank" class="text-xs text-stone-700 hover:text-black font-medium inline-flex items-center gap-1" title="Download File">
               <i data-lucide="download" class="w-3 h-3"></i> Download
             </a>
-            <button onclick="CuboidDashboard.copyAssetLink('${escapeHtml(a.file_path)}')" class="text-xs text-stone-600 hover:text-stone-900 font-medium">
+            <button onclick="CuboidDashboard.copyAssetLink('${escapeHtml(a.download_url || a.file_path)}')" class="text-xs text-stone-600 hover:text-stone-900 font-medium">
               Copy Link
             </button>
             <button onclick="CuboidDashboard.deleteAsset(${a.id}, '${escapeHtml(a.title)}')" class="text-xs text-stone-400 hover:text-red-700">
@@ -5855,6 +5859,8 @@ window.CuboidDashboard = {
     const category = document.getElementById('asset-upload-category')?.value;
     const keywords = document.getElementById('asset-upload-keywords')?.value.trim();
     const description = document.getElementById('asset-upload-description')?.value.trim();
+    const shareTriggers = document.getElementById('asset-upload-trigger-phrases')?.value.trim();
+    const shareRules = document.getElementById('asset-upload-share-rules')?.value.trim();
 
     if (!file) {
       window.CuboidShell.toast('Please select a file to upload', 'error');
@@ -5879,6 +5885,8 @@ window.CuboidDashboard = {
       formData.append('category', category || 'document');
       formData.append('keywords', keywords);
       formData.append('description', description);
+      formData.append('share_trigger_phrases', shareTriggers);
+      formData.append('share_instructions', shareRules);
 
       const res = await fetch('../api/assets.php?action=upload', {
         method: 'POST',
@@ -6053,9 +6061,16 @@ window.CuboidDashboard = {
 
   copyAssetLink: function(filePath) {
     if (!filePath) return;
-    const fullUrl = window.location.origin + '/' + filePath.replace(/^\/+/, '');
+    let fullUrl = filePath;
+    if (!/^https?:\/\//i.test(fullUrl)) {
+      if (fullUrl.startsWith('../')) {
+        fullUrl = window.location.origin + '/' + fullUrl.replace(/^\.\.\//, '').replace(/^\/+/, '');
+      } else {
+        fullUrl = window.location.origin + '/' + fullUrl.replace(/^\/+/, '');
+      }
+    }
     navigator.clipboard.writeText(fullUrl).then(() => {
-      window.CuboidShell.toast('Direct asset download link copied to clipboard!', 'success');
+      window.CuboidShell.toast('Secure asset download link copied to clipboard!', 'success');
     }).catch(() => {
       window.CuboidShell.toast('Could not copy link to clipboard', 'warning');
     });
@@ -6278,6 +6293,8 @@ window.CuboidDashboard = {
     const nameInput = document.getElementById('assistant-brand-name');
     const headingInput = document.getElementById('assistant-greeting-heading');
     const subInput = document.getElementById('assistant-greeting-subheading');
+    const trainingRulesInput = document.getElementById('assistant-training-rules');
+    const documentPolicyInput = document.getElementById('assistant-document-policy');
 
     if (!nameInput && !headingInput) return;
 
@@ -6288,6 +6305,7 @@ window.CuboidDashboard = {
       if (data && data.success) {
         const w = data.widget || {};
         const c = data.company || {};
+        const ai = data.ai_config || {};
 
         if (nameInput) {
           nameInput.value = w.brand_name || c.name || '';
@@ -6297,6 +6315,12 @@ window.CuboidDashboard = {
         }
         if (subInput) {
           subInput.value = w.greeting_subheading || 'Instant AI answers powered by verified academy documents.';
+        }
+        if (trainingRulesInput) {
+          trainingRulesInput.value = ai.training_rules || '';
+        }
+        if (documentPolicyInput) {
+          documentPolicyInput.value = ai.document_sharing_policy || '';
         }
 
         this.updateAssistantPreview();
@@ -6357,6 +6381,8 @@ window.CuboidDashboard = {
     const name = document.getElementById('assistant-brand-name')?.value.trim();
     const heading = document.getElementById('assistant-greeting-heading')?.value.trim();
     const subheading = document.getElementById('assistant-greeting-subheading')?.value.trim();
+    const trainingRules = document.getElementById('assistant-training-rules')?.value.trim();
+    const documentPolicy = document.getElementById('assistant-document-policy')?.value.trim();
     const saveBtn = document.getElementById('save-assistant-btn');
 
     if (!name || !heading) {
@@ -6377,8 +6403,11 @@ window.CuboidDashboard = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           brand_name: name,
+          assistant_name: name,
           greeting_heading: heading,
-          greeting_subheading: subheading
+          greeting_subheading: subheading,
+          training_rules: trainingRules,
+          document_sharing_policy: documentPolicy
         })
       });
       const data = await res.json();

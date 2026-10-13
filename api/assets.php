@@ -8,6 +8,7 @@
 header("Cache-Control: no-cache, no-store, must-revalidate");
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/asset_helper.php';
 
 $pdo = getDbConnection();
 
@@ -16,18 +17,48 @@ $action = $_GET['action'] ?? ($_POST['action'] ?? 'list');
 // Download action can be accessed by public visitors or widget users
 if ($action === 'download') {
     $assetId = (int)($_GET['id'] ?? 0);
+    $token = trim($_GET['token'] ?? $_GET['download_token'] ?? '');
+    $companyKey = trim($_GET['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
     if ($assetId <= 0) {
         http_response_code(404);
         die('Asset not found');
     }
 
-    $stmt = $pdo->prepare("SELECT * FROM company_assets WHERE id = ? AND is_active = 1 LIMIT 1");
+    $stmt = $pdo->prepare("
+        SELECT a.*, c.company_key, c.slug
+        FROM company_assets a
+        JOIN companies c ON c.id = a.company_id
+        WHERE a.id = ? AND a.is_active = 1
+        LIMIT 1
+    ");
     $stmt->execute([$assetId]);
     $asset = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$asset) {
         http_response_code(404);
         die('Asset not found or inactive');
+    }
+
+    $expectedToken = AssetHelper::ensureSecureDownloadToken($pdo, $asset);
+    $isDashboardOwner = false;
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+    if (!empty($_SESSION['company_id']) && (int)$_SESSION['company_id'] === (int)$asset['company_id']) {
+        $isDashboardOwner = true;
+    }
+    session_write_close();
+
+    $requestedTenantMatches = $companyKey !== '' && (
+        hash_equals((string)$asset['company_key'], $companyKey)
+        || hash_equals((string)$asset['slug'], $companyKey)
+        || ((string)$asset['slug'] === 'cuboidsoft' && in_array($companyKey, ['cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'], true))
+    );
+    $tokenMatches = $token !== '' && hash_equals($expectedToken, $token);
+
+    if (!$isDashboardOwner && (!$requestedTenantMatches || !$tokenMatches)) {
+        http_response_code(403);
+        die('Secure download link is invalid for this workspace');
     }
 
     $filePath = __DIR__ . '/../' . ltrim($asset['file_path'], '/');
@@ -38,8 +69,8 @@ if ($action === 'download') {
 
     // Increment download counter
     try {
-        $upStmt = $pdo->prepare("UPDATE company_assets SET download_count = download_count + 1 WHERE id = ?");
-        $upStmt->execute([$assetId]);
+        $upStmt = $pdo->prepare("UPDATE company_assets SET download_count = download_count + 1 WHERE id = ? AND company_id = ?");
+        $upStmt->execute([$assetId, (int)$asset['company_id']]);
     } catch (Exception $e) {}
 
     // Stream file
@@ -113,8 +144,10 @@ switch ($action) {
         }
 
         if ($search !== '') {
-            $sql .= " AND (title LIKE ? OR keywords LIKE ? OR description LIKE ?)";
+            $sql .= " AND (title LIKE ? OR keywords LIKE ? OR description LIKE ? OR share_trigger_phrases LIKE ? OR share_instructions LIKE ?)";
             $searchTerm = '%' . $search . '%';
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
             $params[] = $searchTerm;
             $params[] = $searchTerm;
             $params[] = $searchTerm;
@@ -129,10 +162,19 @@ switch ($action) {
         // Calculate summary stats
         $totalDownloads = 0;
         $activeCount = 0;
-        foreach ($assets as $a) {
+        $companyKeyForLinks = '';
+        try {
+            $ckStmt = $pdo->prepare("SELECT company_key FROM companies WHERE id = ? LIMIT 1");
+            $ckStmt->execute([$companyId]);
+            $companyKeyForLinks = (string)($ckStmt->fetchColumn() ?: '');
+        } catch (Throwable $e) {}
+        foreach ($assets as &$a) {
             $totalDownloads += (int)$a['download_count'];
             if ((int)$a['is_active'] === 1) $activeCount++;
+            $a['company_key'] = $companyKeyForLinks;
+            $a['download_url'] = '../' . AssetHelper::buildDownloadUrl($pdo, $companyId, $a, false);
         }
+        unset($a);
 
         echo json_encode([
             'success' => true,
@@ -157,6 +199,8 @@ switch ($action) {
         $category = trim($_POST['category'] ?? 'document');
         $description = trim($_POST['description'] ?? '');
         $keywords = trim($_POST['keywords'] ?? '');
+        $shareTriggers = trim($_POST['share_trigger_phrases'] ?? '');
+        $shareInstructions = trim($_POST['share_instructions'] ?? '');
 
         if ($title === '') {
             http_response_code(400);
@@ -226,9 +270,10 @@ switch ($action) {
 
         $stmt = $pdo->prepare("
             INSERT INTO company_assets 
-            (company_id, title, category, description, keywords, file_name, file_path, file_size, file_type, download_count, is_active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1)
+            (company_id, title, category, description, keywords, share_trigger_phrases, share_instructions, secure_download_token, file_name, file_path, file_size, file_type, download_count, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1)
         ");
+        $secureToken = 'asset_' . bin2hex(random_bytes(20));
 
         $stmt->execute([
             $companyId,
@@ -236,6 +281,9 @@ switch ($action) {
             $category,
             $description,
             $keywords,
+            $shareTriggers,
+            $shareInstructions,
+            $secureToken,
             $originalName,
             $dbPath,
             $fileSize,
@@ -309,6 +357,8 @@ switch ($action) {
         $category = trim($data['category'] ?? 'document');
         $description = trim($data['description'] ?? '');
         $keywords = trim($data['keywords'] ?? '');
+        $shareTriggers = trim($data['share_trigger_phrases'] ?? '');
+        $shareInstructions = trim($data['share_instructions'] ?? '');
 
         if ($assetId <= 0 || $title === '') {
             http_response_code(400);
@@ -318,10 +368,10 @@ switch ($action) {
 
         $stmt = $pdo->prepare("
             UPDATE company_assets 
-            SET title = ?, category = ?, description = ?, keywords = ?
+            SET title = ?, category = ?, description = ?, keywords = ?, share_trigger_phrases = ?, share_instructions = ?
             WHERE id = ? AND company_id = ?
         ");
-        $stmt->execute([$title, $category, $description, $keywords, $assetId, $companyId]);
+        $stmt->execute([$title, $category, $description, $keywords, $shareTriggers, $shareInstructions, $assetId, $companyId]);
 
         echo json_encode(['success' => true, 'message' => 'Asset details updated successfully']);
         break;

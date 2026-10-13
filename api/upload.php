@@ -9,7 +9,7 @@ ini_set('display_errors', '0');
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key, X-Widget-Token");
 
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -19,6 +19,11 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
 header("Content-Type: application/json; charset=UTF-8");
 
 require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../includes/widget_security.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -26,6 +31,35 @@ try {
         echo json_encode(['success' => false, 'error' => 'Method not allowed. Use POST.']);
         exit;
     }
+
+    $pdo = getDbConnection();
+    $companyKey = trim($_POST['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    $company = null;
+    if ($companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
+        $companyKey = 'cp_live_cuboidsoft';
+    }
+    if ($companyKey !== '' && $companyKey !== 'default') {
+        $cStmt = $pdo->prepare("
+            SELECT * FROM `companies`
+            WHERE `company_key` = ?
+               OR `slug` = ?
+               OR (slug = 'cuboidsoft' AND ? IN ('cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'))
+            LIMIT 1
+        ");
+        $cStmt->execute([$companyKey, $companyKey, $companyKey]);
+        $company = $cStmt->fetch(PDO::FETCH_ASSOC);
+    } elseif (!empty($_SESSION['user_id']) && !empty($_SESSION['company_id'])) {
+        $cStmt = $pdo->prepare("SELECT * FROM `companies` WHERE `id` = ? LIMIT 1");
+        $cStmt->execute([(int)$_SESSION['company_id']]);
+        $company = $cStmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    if (!$company) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Workspace not found. Check widget configuration.']);
+        exit;
+    }
+    cpValidateWidgetInstallToken($company, cpGetWidgetRequestToken($_POST));
 
     if (empty($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {
         $errorCode = $_FILES['file']['error'] ?? 'missing';

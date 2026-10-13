@@ -7,7 +7,7 @@
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key, X-Widget-Token");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -20,6 +20,7 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
 require_once __DIR__ . '/../includes/customer_journey_service.php';
 require_once __DIR__ . '/../includes/channel_handoff_service.php';
+require_once __DIR__ . '/../includes/widget_security.php';
 
 try {
     $pdo = getDbConnection();
@@ -43,13 +44,18 @@ try {
         $channel = 'instagram';
     }
 
-    if (empty($companyKey) || $companyKey === 'default' || $companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
+    if ($companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
         $companyKey = 'cp_live_cuboidsoft';
+    }
+    if ($companyKey === '' || $companyKey === 'default') {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Workspace not found. Check handoff configuration.']);
+        exit;
     }
 
     // Resolve tenant
     $stmt = $pdo->prepare("
-        SELECT id, name, slug, company_key, plan_tier FROM `companies` 
+        SELECT * FROM `companies`
         WHERE `company_key` = ? 
            OR `slug` = ? 
            OR (slug = 'cuboidsoft' AND ? IN ('cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'))
@@ -63,6 +69,7 @@ try {
         echo json_encode(['success' => false, 'error' => 'Workspace not found. Check handoff configuration.']);
         exit;
     }
+    cpValidateWidgetInstallToken($company, cpGetWidgetRequestToken($data));
     $companyId = (int)$company['id'];
 
     // Resolve customer and session if missing

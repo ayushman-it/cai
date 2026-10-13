@@ -164,6 +164,8 @@ try {
                 'logo_light_url' => $logoLight,
                 'slug'           => $company['slug'],
                 'company_key'    => $company['company_key'],
+                'widget_install_token' => $company['widget_install_token'] ?? '',
+                'enforce_widget_token' => (bool)($company['enforce_widget_token'] ?? 0),
                 'industry'       => $company['industry'] ?? '',
                 'city'           => $company['city'] ?? '',
                 'country'        => $company['country'] ?? 'India',
@@ -173,6 +175,8 @@ try {
                 'tone'                     => $aiConfig['tone'] ?? 'professional',
                 'primary_objective'        => $aiConfig['primary_objective'] ?? 'generate_leads',
                 'custom_instructions'      => !empty($aiConfig['custom_instructions']) ? $aiConfig['custom_instructions'] : "You are the official conversational advisor. Always maintain a professional, helpful tone. When prospective clients inquire about services, pricing or delivery timelines, answer using verified knowledge sources and encourage booking a consultation or continuing on WhatsApp for direct quotes.",
+                'training_rules'           => $aiConfig['training_rules'] ?? '',
+                'document_sharing_policy'  => $aiConfig['document_sharing_policy'] ?? '',
                 'info_to_collect'          => json_decode($aiConfig['info_to_collect_json'] ?? '["name","phone","email","requirement"]', true) ?: ["name", "phone", "email", "requirement"],
                 'qualification_rules'      => json_decode($aiConfig['qualification_rules_json'] ?? '["High purchase intent","Timeline under 30 days","Budget confirmed"]', true) ?: ["High purchase intent", "Timeline under 30 days", "Budget confirmed"],
                 'appointment_instructions' => $aiConfig['appointment_instructions'] ?? "Offer 1-on-1 consultations with verified consultants for in-depth evaluations.",
@@ -555,9 +559,13 @@ try {
         }
 
         // Update or insert ai_configs (AI Persona, Directives, Tone, Objectives)
-        if (isset($_POST['assistant_name']) || isset($_POST['system_prompt']) || isset($_POST['ai_tone']) || isset($_POST['primary_objective'])) {
+        if (isset($_POST['assistant_name']) || isset($_POST['system_prompt']) || isset($_POST['custom_instructions']) || isset($_POST['training_rules']) || isset($_POST['document_sharing_policy']) || isset($_POST['ai_tone']) || isset($_POST['primary_objective'])) {
             $aiName = trim($_POST['assistant_name'] ?? '');
-            $customInst = trim($_POST['system_prompt'] ?? ($_POST['custom_instructions'] ?? ''));
+            $customInst = isset($_POST['system_prompt']) || isset($_POST['custom_instructions'])
+                ? trim($_POST['system_prompt'] ?? ($_POST['custom_instructions'] ?? ''))
+                : null;
+            $trainingRules = isset($_POST['training_rules']) ? trim($_POST['training_rules']) : null;
+            $documentSharingPolicy = isset($_POST['document_sharing_policy']) ? trim($_POST['document_sharing_policy']) : null;
             $tone = trim($_POST['ai_tone'] ?? 'professional');
             if (!in_array($tone, ['professional', 'friendly', 'casual', 'custom'])) $tone = 'professional';
             $primaryObj = trim($_POST['primary_objective'] ?? 'generate_leads');
@@ -575,7 +583,9 @@ try {
                 $pdo->prepare("
                     UPDATE `ai_configs`
                     SET `ai_name` = COALESCE(NULLIF(?, ''), `ai_name`),
-                        `custom_instructions` = ?,
+                        `custom_instructions` = COALESCE(?, `custom_instructions`),
+                        `training_rules` = COALESCE(?, `training_rules`),
+                        `document_sharing_policy` = COALESCE(?, `document_sharing_policy`),
                         `tone` = ?,
                         `primary_objective` = ?,
                         `info_to_collect_json` = COALESCE(?, `info_to_collect_json`),
@@ -584,13 +594,13 @@ try {
                         `payment_instructions` = COALESCE(?, `payment_instructions`),
                         `updated_at` = NOW()
                     WHERE company_id = ?
-                ")->execute([$aiName, $customInst, $tone, $primaryObj, $infoCollect, $qualRules, $apptInst, $payInst, $companyId]);
+                ")->execute([$aiName, $customInst, $trainingRules, $documentSharingPolicy, $tone, $primaryObj, $infoCollect, $qualRules, $apptInst, $payInst, $companyId]);
             } else {
                 $pdo->prepare("
                     INSERT INTO `ai_configs`
-                    (`company_id`, `ai_name`, `custom_instructions`, `tone`, `primary_objective`, `info_to_collect_json`, `qualification_rules_json`, `appointment_instructions`, `payment_instructions`, `created_at`, `updated_at`)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-                ")->execute([$companyId, $aiName ?: 'Cai', $customInst, $tone, $primaryObj, $infoCollect, $qualRules, $apptInst, $payInst]);
+                    (`company_id`, `ai_name`, `custom_instructions`, `training_rules`, `document_sharing_policy`, `tone`, `primary_objective`, `info_to_collect_json`, `qualification_rules_json`, `appointment_instructions`, `payment_instructions`, `created_at`, `updated_at`)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                ")->execute([$companyId, $aiName ?: 'Cai', $customInst ?? '', $trainingRules, $documentSharingPolicy, $tone, $primaryObj, $infoCollect, $qualRules, $apptInst, $payInst]);
             }
         }
 

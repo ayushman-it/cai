@@ -10,7 +10,7 @@ ini_set('display_errors', '0');
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key, X-Widget-Token");
 
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -29,6 +29,7 @@ require_once __DIR__ . '/../includes/channel_handoff_service.php';
 require_once __DIR__ . '/../includes/gemini_service.php';
 require_once __DIR__ . '/../includes/workflow_engine.php';
 require_once __DIR__ . '/../includes/ai_usage_service.php';
+require_once __DIR__ . '/../includes/widget_security.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -43,6 +44,7 @@ try {
     $data = json_decode($rawInput, true) ?? $_POST;
 
     $companyKey     = trim($data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
+    $widgetToken    = cpGetWidgetRequestToken(is_array($data) ? $data : []);
     $messageText    = trim($data['message'] ?? '');
     $conversationId = !empty($data['conversation_id']) ? (int)$data['conversation_id'] : null;
     $leadId         = !empty($data['lead_id']) ? (int)$data['lead_id'] : null;
@@ -74,10 +76,11 @@ try {
 
     // 1. Identify Tenant Company (Strict Multi-Tenant Isolation)
     $company = null;
+    $hasExplicitCompanyKey = ($companyKey !== '' && $companyKey !== 'default');
     if ($companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
         $companyKey = 'cp_live_cuboidsoft';
     }
-    if (!empty($companyKey) && $companyKey !== 'default') {
+    if ($hasExplicitCompanyKey) {
         $stmt = $pdo->prepare("
             SELECT * FROM `companies` 
             WHERE `company_key` = ? 
@@ -89,7 +92,7 @@ try {
         $company = $stmt->fetch();
     }
 
-    if (!$company && !empty($_SESSION['company_id'])) {
+    if (!$company && !$hasExplicitCompanyKey && !empty($_SESSION['user_id']) && !empty($_SESSION['company_id'])) {
         $stmt = $pdo->prepare("SELECT * FROM `companies` WHERE `id` = ? LIMIT 1");
         $stmt->execute([(int)$_SESSION['company_id']]);
         $company = $stmt->fetch();
@@ -100,6 +103,7 @@ try {
         echo json_encode(['success' => false, 'error' => 'Workspace not found. Check widget configuration.']);
         exit;
     }
+    cpValidateWidgetInstallToken($company, $widgetToken);
     $companyId = (int)$company['id'];
     $entitlements = getCompanyEntitlements($pdo, $companyId);
     if (empty($entitlements['is_full_access'])) {
@@ -133,6 +137,14 @@ try {
     $assistantName = !empty($aiConfig['ai_name']) ? $aiConfig['ai_name'] : (!empty($widgetRow['assistant_name']) ? $widgetRow['assistant_name'] : 'Cai');
     $brandDisplayName = !empty($widgetRow['brand_name']) && $widgetRow['brand_name'] !== 'Cai' ? $widgetRow['brand_name'] : $company['name'];
     $customInstructions = !empty($aiConfig['custom_instructions']) ? $aiConfig['custom_instructions'] : '';
+    $trainingRules = trim($aiConfig['training_rules'] ?? '');
+    $documentSharingPolicy = trim($aiConfig['document_sharing_policy'] ?? '');
+    if ($trainingRules !== '') {
+        $customInstructions = trim($customInstructions . "\n\nTRAINED CAI COMPANY RULES:\n" . $trainingRules);
+    }
+    if ($documentSharingPolicy !== '') {
+        $customInstructions = trim($customInstructions . "\n\nDOCUMENT SHARING POLICY:\n" . $documentSharingPolicy);
+    }
     $aiTone = !empty($aiConfig['tone']) ? $aiConfig['tone'] : 'warm and consultative';
     $aiObjective = !empty($aiConfig['primary_objective']) ? $aiConfig['primary_objective'] : 'consultative_lead_qualification';
 
@@ -147,7 +159,7 @@ try {
     $knowledgeList = $sourcesStmt->fetchAll();
 
     // Fetch Active Digital Assets for Grounding
-    $assetStmt = $pdo->prepare("SELECT id, title, category, keywords, description, file_name FROM `company_assets` WHERE `company_id` = ? AND `is_active` = 1");
+    $assetStmt = $pdo->prepare("SELECT id, company_id, title, category, keywords, share_trigger_phrases, share_instructions, secure_download_token, description, file_name, file_size, file_type FROM `company_assets` WHERE `company_id` = ? AND `is_active` = 1");
     $assetStmt->execute([$companyId]);
     $companyAssetsList = $assetStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -335,7 +347,9 @@ try {
                 $assetLines = [];
                 foreach ($companyAssetsList as $ca) {
                     $catLabel = ucfirst(str_replace('_', ' ', $ca['category']));
-                    $assetLines[] = "- [{$catLabel}] \"{$ca['title']}\" (Keywords: {$ca['keywords']}) Description: {$ca['description']}";
+                    $triggerText = !empty($ca['share_trigger_phrases']) ? " Trigger phrases: {$ca['share_trigger_phrases']}" : "";
+                    $sharePolicy = !empty($ca['share_instructions']) ? " Sharing rule: {$ca['share_instructions']}" : "";
+                    $assetLines[] = "- [{$catLabel}] \"{$ca['title']}\" (ID: {$ca['id']}) (Keywords: {$ca['keywords']}){$triggerText}{$sharePolicy} Description: {$ca['description']}";
                 }
                 $contextBlocks[] = "<downloadable_documents_and_assets>\n" . implode("\n", $assetLines) . "\n</downloadable_documents_and_assets>";
             }
@@ -344,7 +358,7 @@ try {
         }
     }
 
-    $knowledgeContext = !empty($knowledgeList) || !empty($companyProductsList) || !empty($tenantCategoriesList) || !empty($tenantCatalogsList)
+    $knowledgeContext = !empty($knowledgeList) || !empty($companyAssetsList) || !empty($companyProductsList) || !empty($tenantCategoriesList) || !empty($tenantCatalogsList)
         ? buildGroundedKnowledgeContext($knowledgeList, $messageText, $companyAssetsList, $company, $brandDisplayName, $companyProductsList, $tenantCategoriesList, $tenantCatalogsList)
         : "Business Name: {$brandDisplayName}\nIndustry: {$company['industry']}\nLocation: {$company['city']}, {$company['country']}";
 
@@ -996,6 +1010,7 @@ try {
                   . "4. MULTI-TURN CONTEXT MEMORY: Remember what course, product, or plan was previously discussed. If visitor asks 'What are the fees?' or 'Can I get the syllabus?', answer regarding the previously discussed item without re-asking.\n"
                   . "5. SECURE DOCUMENT SHARING: If the visitor asks for a syllabus, brochure, or official document:\n"
                   . "   - Check SECTION 2 <downloadable_documents_and_assets>. If a matching document exists, mention in 1 sentence that it is provided below, and append '---DOCUMENT_REQUEST: [Exact Document Title or ID]---'.\n"
+                  . "   - Respect each asset's trigger phrases and sharing rule exactly. Share only the matching company's own documents.\n"
                   . "   - If NO matching document exists in SECTION 2, respond: 'We don't have a downloadable brochure for that yet. Would you like me to connect you with our team?'\n"
                   . "6. SMART HUMAN HANDOFF: If the visitor explicitly asks to talk to a human, counselor, advisor, or agent, or expresses frustration, acknowledge in 1 short sentence that you are connecting them to the team, and append '---HUMAN_HANDOFF_REQUESTED---'.\n\n"
                   . $memorySection . "\n\n"
@@ -1100,7 +1115,7 @@ try {
             $matchingAsset = null;
             if (!empty($companyAssetsList)) {
                 foreach ($companyAssetsList as $ca) {
-                    $terms = array_filter(preg_split('/[,\s]+/', mb_strtolower($ca['keywords'] . ' ' . $ca['title'] . ' ' . $ca['category'])));
+                    $terms = array_filter(preg_split('/[,\s]+/', mb_strtolower(($ca['keywords'] ?? '') . ' ' . ($ca['share_trigger_phrases'] ?? '') . ' ' . ($ca['title'] ?? '') . ' ' . ($ca['category'] ?? ''))));
                     foreach ($terms as $t) {
                         if (strlen($t) >= 3 && strpos($effectiveQuery, $t) !== false) {
                             $matchingAsset = $ca;
@@ -1871,7 +1886,7 @@ try {
             'file_name'        => $matchedAsset['file_name'],
             'file_size'        => (int)$matchedAsset['file_size'],
             'file_type'        => $matchedAsset['file_type'] ?? 'application/pdf',
-            'download_url'     => 'api/assets.php?action=download&id=' . (int)$matchedAsset['id'],
+            'download_url'     => AssetHelper::buildDownloadUrl($pdo, $companyId, $matchedAsset, false),
             'email_dispatched' => (bool)$emailDispatched,
             'recipient_email'  => $assetRecipientEmail ?: null
         ];

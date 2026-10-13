@@ -89,6 +89,8 @@ try {
             'name'                 => $company['name'],
             'slug'                 => $company['slug'],
             'company_key'          => $company['company_key'],
+            'widget_install_token' => $company['widget_install_token'] ?? '',
+            'enforce_widget_token' => (bool)($company['enforce_widget_token'] ?? 0),
             'industry'             => $company['industry'],
             'status'               => $company['status'],
             'onboarding_completed' => (bool)$company['onboarding_completed'],

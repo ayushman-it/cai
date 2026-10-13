@@ -18,6 +18,7 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'OPTIONS
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
+require_once __DIR__ . '/../includes/asset_helper.php';
 
 if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
     session_start();
@@ -44,7 +45,7 @@ if (!empty($_SESSION['company_id'])) {
     // Check company_key from query, post, json, or headers
     $companyKey = trim($_GET['company_key'] ?? $_POST['company_key'] ?? $jsonData['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
     if (!empty($companyKey)) {
-        if ($companyKey === 'default' || $companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
+        if ($companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
             $companyKey = 'cp_live_cuboidsoft';
         }
         $cStmt = $pdo->prepare("SELECT id FROM `companies` WHERE `company_key` = ? OR `slug` = ? LIMIT 1");
@@ -139,6 +140,18 @@ if (!headers_sent()) {
     header("Content-Type: application/json; charset=UTF-8");
 }
 
+function productBrochureDownloadUrl(PDO $pdo, int $companyId, array $row): ?string {
+    $assetId = (int)($row['brochure_asset_id'] ?? 0);
+    if ($assetId <= 0) {
+        return null;
+    }
+    return '../' . AssetHelper::buildDownloadUrl($pdo, $companyId, [
+        'id' => $assetId,
+        'company_id' => $companyId,
+        'secure_download_token' => $row['brochure_secure_download_token'] ?? ''
+    ], false);
+}
+
 try {
     switch ($action) {
         // =================================================================
@@ -149,7 +162,7 @@ try {
             $activeOnly = isset($_GET['active_only']) ? (int)$_GET['active_only'] : (isset($jsonData['active_only']) ? (int)$jsonData['active_only'] : 1);
             $search = trim($_GET['search'] ?? $jsonData['search'] ?? '');
 
-            $sql = "SELECT p.*, a.file_name as brochure_file_name, a.file_size as brochure_file_size 
+            $sql = "SELECT p.*, a.file_name as brochure_file_name, a.file_size as brochure_file_size, a.secure_download_token as brochure_secure_download_token
                     FROM `products` p
                     LEFT JOIN `company_assets` a ON a.id = p.brochure_asset_id
                     WHERE p.`company_id` = ?";
@@ -240,7 +253,7 @@ try {
                     'emi_plans'                   => is_array($emiPlans) ? $emiPlans : [],
                     'max_discount_allowed_percent'=> (int)$p['max_discount_allowed_percent'],
                     'brochure_asset_id'           => $p['brochure_asset_id'] ? (int)$p['brochure_asset_id'] : null,
-                    'brochure_download_url'       => $p['brochure_asset_id'] ? "../api/assets.php?action=download&id=" . (int)$p['brochure_asset_id'] : null,
+                    'brochure_download_url'       => productBrochureDownloadUrl($pdo, $companyId, $p),
                     'thumbnail_url'               => $p['thumbnail_url'] ?: '',
                     'payment_url'                 => $p['payment_url'] ?: '',
                     'faqs'                        => is_array($faqs) ? $faqs : [],
@@ -270,7 +283,7 @@ try {
             $p = null;
             try {
                 $stmt = $pdo->prepare("
-                    SELECT p.*, a.file_name as brochure_file_name, a.title as brochure_title, a.file_size as brochure_file_size
+                    SELECT p.*, a.file_name as brochure_file_name, a.title as brochure_title, a.file_size as brochure_file_size, a.secure_download_token as brochure_secure_download_token
                     FROM `products` p
                     LEFT JOIN `company_assets` a ON a.id = p.brochure_asset_id
                     WHERE p.`id` = ? AND p.`company_id` = ?
@@ -345,7 +358,7 @@ try {
                     'emi_plans'                   => $emiPlans,
                     'max_discount_allowed_percent'=> (int)$p['max_discount_allowed_percent'],
                     'brochure_asset_id'           => $p['brochure_asset_id'] ? (int)$p['brochure_asset_id'] : null,
-                    'brochure_download_url'       => $p['brochure_asset_id'] ? "../api/assets.php?action=download&id=" . (int)$p['brochure_asset_id'] : null,
+                    'brochure_download_url'       => productBrochureDownloadUrl($pdo, $companyId, $p),
                     'brochure_title'              => $p['brochure_title'] ?? null,
                     'thumbnail_url'               => $p['thumbnail_url'],
                     'payment_url'                 => $p['payment_url'],

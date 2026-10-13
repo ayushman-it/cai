@@ -288,10 +288,12 @@ You are now speaking with Cai. How can I help?</textarea>
             document.getElementById('ctrl-accent-picker').value = w.accent_color;
           }
           const finalKey = comp.company_key || activeKey;
+          const widgetToken = comp.widget_install_token || window.__CP_WIDGET_TOKEN__ || '';
+          if (widgetToken) window.__CP_WIDGET_TOKEN__ = widgetToken;
           if (finalKey) {
             const keyInput = document.getElementById('api-key-input');
             if (keyInput) keyInput.value = finalKey;
-            updateSnippetCode(finalKey, w.theme_mode || 'dark');
+            updateSnippetCode(finalKey, w.theme_mode || 'dark', widgetToken);
           }
         }
       } catch (e) {
@@ -300,13 +302,15 @@ You are now speaking with Cai. How can I help?</textarea>
       onLiveConfigChange();
     }
 
-    function updateSnippetCode(key, theme) {
+    function updateSnippetCode(key, theme, widgetToken = '') {
       if (!key) return;
       const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       const scriptUrl = isLocal 
         ? `${window.location.origin}/cuboidpilot/widget.js?v=8.0.0` 
         : 'https://cai.cuboidsoft.in/widget.js?v=8.0.0';
-      const snippetCode = `<script src="${scriptUrl}" data-company="${key}" async><\/script>`;
+      const token = widgetToken || window.__CP_WIDGET_TOKEN__ || '';
+      const tokenAttr = token ? ` data-widget-token="${token}"` : '';
+      const snippetCode = `<script src="${scriptUrl}" data-company="${key}"${tokenAttr} async><\/script>`;
       const snippetEl = document.getElementById('official-widget-snippet');
       if (snippetEl) {
         snippetEl.textContent = snippetCode;
@@ -364,7 +368,7 @@ You are now speaking with Cai. How can I help?</textarea>
       // 3. Update Snippet Tag
       const compKey = document.getElementById('api-key-input').value || (CuboidShell.company && CuboidShell.company.company_key) || window.__CP_COMPANY_KEY__ || '';
       if (compKey) {
-        updateSnippetCode(compKey, theme);
+        updateSnippetCode(compKey, theme, (CuboidShell.company && CuboidShell.company.widget_install_token) || window.__CP_WIDGET_TOKEN__ || '');
       }
     }
 

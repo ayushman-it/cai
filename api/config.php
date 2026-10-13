@@ -7,7 +7,7 @@
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key, X-Widget-Token");
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
@@ -18,6 +18,7 @@ header("Content-Type: application/json; charset=UTF-8");
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
+require_once __DIR__ . '/../includes/widget_security.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -34,9 +35,10 @@ try {
         ?? '';
 
     $companyKey = trim($companyKey);
+    $hasExplicitCompanyKey = ($companyKey !== '' && $companyKey !== 'default');
     $company = null;
 
-    if (!empty($companyKey) && $companyKey !== 'default') {
+    if ($hasExplicitCompanyKey) {
         $stmt = $pdo->prepare("
             SELECT * FROM `companies` 
             WHERE `company_key` = ? 
@@ -48,7 +50,7 @@ try {
         $company = $stmt->fetch();
     }
 
-    if (!$company && !empty($_SESSION['company_id'])) {
+    if (!$company && !$hasExplicitCompanyKey && !empty($_SESSION['user_id']) && !empty($_SESSION['company_id'])) {
         $stmt = $pdo->prepare("SELECT * FROM `companies` WHERE `id` = ? LIMIT 1");
         $stmt->execute([(int)$_SESSION['company_id']]);
         $company = $stmt->fetch();
@@ -62,6 +64,7 @@ try {
         ]);
         exit;
     }
+    cpValidateWidgetInstallToken($company, cpGetWidgetRequestToken());
 
     $companyId = (int)$company['id'];
     $entitlements = getCompanyEntitlements($pdo, $companyId);

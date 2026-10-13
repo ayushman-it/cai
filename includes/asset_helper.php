@@ -9,6 +9,51 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/mailer.php';
 
 class AssetHelper {
+    public static function ensureSecureDownloadToken(PDO $pdo, array $asset): string {
+        $token = trim((string)($asset['secure_download_token'] ?? ''));
+        if ($token !== '') {
+            return $token;
+        }
+
+        $token = 'asset_' . bin2hex(random_bytes(20));
+        try {
+            $pdo->prepare("
+                UPDATE `company_assets`
+                SET `secure_download_token` = ?
+                WHERE `id` = ? AND `company_id` = ?
+            ")->execute([$token, (int)$asset['id'], (int)$asset['company_id']]);
+        } catch (Throwable $e) {}
+
+        return $token;
+    }
+
+    public static function buildDownloadUrl(PDO $pdo, int $companyId, array $asset, bool $absolute = false): string {
+        $companyKey = trim((string)($asset['company_key'] ?? ''));
+        if ($companyKey === '') {
+            try {
+                $cStmt = $pdo->prepare("SELECT `company_key` FROM `companies` WHERE `id` = ? LIMIT 1");
+                $cStmt->execute([$companyId]);
+                $companyKey = (string)($cStmt->fetchColumn() ?: '');
+            } catch (Throwable $e) {}
+        }
+
+        $token = self::ensureSecureDownloadToken($pdo, ['company_id' => $companyId] + $asset);
+        $query = http_build_query([
+            'action' => 'download',
+            'id' => (int)$asset['id'],
+            'company_key' => $companyKey,
+            'token' => $token
+        ]);
+
+        if (!$absolute) {
+            return 'api/assets.php?' . $query;
+        }
+
+        $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $pathPrefix = (strpos($host, 'localhost') !== false || strpos($host, '127.0.0.1') !== false) ? '/cuboidpilot' : '';
+        return "{$scheme}://{$host}{$pathPrefix}/api/assets.php?{$query}";
+    }
 
     /**
      * Match the best fitting active company asset based on visitor message and history.
@@ -48,6 +93,7 @@ class AssetHelper {
             $catLower   = mb_strtolower($asset['category'] ?? '');
             $kwLower    = mb_strtolower($asset['keywords'] ?? '');
             $descLower  = mb_strtolower($asset['description'] ?? '');
+            $triggerLower = mb_strtolower($asset['share_trigger_phrases'] ?? '');
 
             // 1. Direct Category & Type Match
             if ($catLower === 'syllabus' && preg_match('/\b(syllabus|curriculum|roadmap)\b/iu', $query)) {
@@ -69,8 +115,20 @@ class AssetHelper {
                         $score += 5;
                     }
                 }
+                if (mb_strpos($triggerLower, $t) !== false) {
+                    $score += 7;
+                }
                 if (mb_strpos($descLower, $t) !== false) {
                     $score += 2;
+                }
+            }
+
+            if ($triggerLower !== '') {
+                $triggerPhrases = array_filter(array_map('trim', preg_split('/[\r\n,]+/', $triggerLower)));
+                foreach ($triggerPhrases as $phrase) {
+                    if (mb_strlen($phrase) >= 3 && mb_strpos($query, $phrase) !== false) {
+                        $score += 18;
+                    }
                 }
             }
 
@@ -141,9 +199,7 @@ class AssetHelper {
         }
 
         try {
-            $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-            $downloadUrl = "{$scheme}://{$host}/cuboidpilot/api/assets.php?action=download&id=" . (int)$asset['id'];
+            $downloadUrl = self::buildDownloadUrl($pdo, $companyId, $asset, true);
 
             $subject = "{$asset['title']} — {$brandName}";
             $htmlBody = self::renderEmailTemplate($brandName, $customerName, $asset, $downloadUrl);
