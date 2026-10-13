@@ -28,6 +28,7 @@ require_once __DIR__ . '/../includes/customer_journey_service.php';
 require_once __DIR__ . '/../includes/channel_handoff_service.php';
 require_once __DIR__ . '/../includes/gemini_service.php';
 require_once __DIR__ . '/../includes/workflow_engine.php';
+require_once __DIR__ . '/../includes/ai_usage_service.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -539,6 +540,7 @@ try {
             (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `session_id`, `detected_intent`, `created_at`)
             VALUES (?, ?, 'visitor', ?, 'web', ?, 'confirm_slot', NOW())
         ")->execute([$companyId, $conversationId, $messageText, $sessionId]);
+        aiUsageRecordEvent($pdo, $companyId, $conversationId, 'visitor_message', ['intent' => 'confirm_slot'], $customerId, 'web');
 
         $confirmReply = $bookingResult['message'];
         $pdo->prepare("
@@ -552,6 +554,10 @@ try {
 
         $pdo->prepare("UPDATE `conversations` SET `last_message_preview` = ?, `last_message_at` = NOW() WHERE `id` = ? AND `company_id` = ?")
             ->execute([substr($confirmReply, 0, 150), $conversationId, $companyId]);
+        aiUsageRecordAiMessage($pdo, $companyId, $conversationId, [
+            'intent' => 'appointment_confirmed',
+            'appointment_id' => $bookingResult['appointment_id'] ?? null
+        ], $customerId, 'web');
 
         echo json_encode([
             'success'               => true,
@@ -584,6 +590,7 @@ try {
                 INSERT INTO `messages` (`company_id`, `conversation_id`, `session_id`, `sender_type`, `message_text`, `channel`, `created_at`)
                 VALUES (?, ?, ?, 'visitor', ?, 'web', NOW())
             ")->execute([$companyId, $conversationId, $sessionId, $messageText]);
+            aiUsageRecordEvent($pdo, $companyId, $conversationId, 'visitor_message', ['human_handling' => true], $customerId, 'web');
 
             $pdo->prepare("
                 UPDATE `conversations`
@@ -2036,6 +2043,9 @@ try {
         (`company_id`, `conversation_id`, `sender_type`, `message_text`, `channel`, `session_id`, `detected_intent`, `created_at`)
         VALUES (?, ?, 'visitor', ?, 'web', ?, ?, NOW())
     ")->execute([$companyId, $conversationId, $messageText, $sessionId, $structuredMeta['intent'] ?? 'general']);
+    aiUsageRecordEvent($pdo, $companyId, $conversationId, 'visitor_message', [
+        'intent' => $structuredMeta['intent'] ?? 'general'
+    ], $customerId, 'web');
 
     $pdo->prepare("
         INSERT INTO `messages` 
@@ -2058,6 +2068,12 @@ try {
             'email_dispatched'   => (bool)$emailDispatched
         ])
     ]);
+    aiUsageRecordAiMessage($pdo, $companyId, $conversationId, [
+        'intent' => $structuredMeta['intent'] ?? 'general',
+        'stage' => $resolvedStageName,
+        'human_action' => (bool)$isHumanAction,
+        'chat_ended' => false
+    ], $customerId, 'web');
 
     // Update conversation status:
     // When Human Action is triggered, flag as human_requested while keeping ownership=ai until agent Take Over
@@ -2075,6 +2091,13 @@ try {
             `last_message_at` = NOW()
         WHERE `id` = ? AND `company_id` = ?
     ")->execute([$customerId, $convStatus, $convOwnership, $unreadHuman, substr($publicReply, 0, 150), $conversationId, $companyId]);
+    if ($isHumanAction) {
+        aiUsageRecordHumanHandoff($pdo, $companyId, $conversationId, $customerId, $sessionId, [
+            'source' => 'chat_intent_router',
+            'reason' => $humanActionReason,
+            'priority' => $humanActionPriority
+        ]);
+    }
 
     // 8. CRM Auto-Update & Qualification
     // Determine radar alert activation (High priority, urgent intent, or human intervention needed)
@@ -2287,6 +2310,14 @@ try {
         $instagramUrl = "https://ig.me/m/" . urlencode($igHandle) . "?ref=" . urlencode($instagramHandoffToken);
     }
 
+    $isFallbackAnswer = (bool)preg_match('/(don\'?t have confirmed|confirmed jankari|downloadable brochure for that yet|not confirmed)/i', $publicReply);
+    $showResolutionPrompt = !$isCopilotMode && !$isChatEnding && empty($isHumanAction) && empty($isHumanRequest) && !$isFallbackAnswer;
+    if ($showResolutionPrompt) {
+        aiUsageRecordEvent($pdo, $companyId, $conversationId, 'resolution_prompt', [
+            'intent' => $structuredMeta['intent'] ?? 'general'
+        ], $customerId, 'web');
+    }
+
     $outputPayload = [
         'success'            => true,
         'conversation_id'    => $conversationId,
@@ -2310,6 +2341,12 @@ try {
         'emi_plans'          => $emiPlansPayload,
         'payment_link'       => $paymentLinkPayload,
         'chat_ended'         => $isChatEnding,
+        'resolution_prompt'  => $showResolutionPrompt,
+        'resolution_prompt_text' => 'Did I resolve your query?',
+        'resolution_options' => [
+            ['value' => 'resolved', 'label' => 'Yes, Resolved'],
+            ['value' => 'needs_help', 'label' => 'No, Need More Help']
+        ],
         'human_handoff_requested' => (bool)($isHumanRequest || $isHumanAction),
         'whatsapp_cta'       => [
             'show'          => $showWhatsappCta,

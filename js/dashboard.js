@@ -33,6 +33,8 @@ window.CuboidDashboard = {
       this.loadAutomations();
     } else if (page === 'ai-assistant') {
       this.loadAssistantSettings();
+    } else if (page === 'ai-usage') {
+      this.loadAiUsageBilling();
     } else if (page === 'billing') {
       this.loadBilling();
     } else if (page === 'payments' && typeof window.loadPayments === 'function') {
@@ -3965,6 +3967,231 @@ window.CuboidDashboard = {
       }
     } catch(e) {
       console.warn('[CuboidDashboard] Billing load error:', e);
+    }
+  },
+
+  formatInr: function(value) {
+    return '₹' + Number(value || 0).toLocaleString('en-IN', {
+      minimumFractionDigits: Number(value || 0) % 1 ? 2 : 0,
+      maximumFractionDigits: 2
+    });
+  },
+
+  setText: function(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  },
+
+  renderUsageBars: function(containerId, rows, valueKey, labelKey = 'date') {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const safeRows = Array.isArray(rows) ? rows : [];
+    const max = Math.max(1, ...safeRows.map(r => Number(r[valueKey] || 0)));
+    if (!safeRows.length) {
+      el.innerHTML = `<div class="p-6 text-center text-xs text-stone-400">No usage data in this range.</div>`;
+      return;
+    }
+    el.innerHTML = safeRows.map(r => {
+      const val = Number(r[valueKey] || 0);
+      const h = Math.max(6, Math.round((val / max) * 120));
+      const label = String(r[labelKey] || '').slice(5);
+      return `
+        <div class="flex-1 min-w-[12px] flex flex-col items-center justify-end gap-1" title="${escapeHtml(String(r[labelKey] || ''))}: ${val}">
+          <div class="w-full max-w-[18px] bg-stone-900 rounded-t-[3px]" style="height:${h}px"></div>
+          <div class="text-[9px] text-stone-400 font-mono whitespace-nowrap">${escapeHtml(label)}</div>
+        </div>
+      `;
+    }).join('');
+  },
+
+  loadAiUsageBilling: async function() {
+    const fromEl = document.getElementById('ai-usage-from');
+    const toEl = document.getElementById('ai-usage-to');
+    const params = new URLSearchParams({ action: 'summary' });
+    if (fromEl && fromEl.value) params.set('from', fromEl.value);
+    if (toEl && toEl.value) params.set('to', toEl.value);
+
+    try {
+      const res = await fetch(`../api/ai_usage.php?${params.toString()}`);
+      const data = await res.json();
+      if (!data || !data.success) throw new Error(data?.error || 'Failed to load AI usage.');
+
+      const m = data.metrics || {};
+      const month = data.current_month || {};
+      const settings = data.settings || {};
+
+      if (fromEl && !fromEl.value && data.range) fromEl.value = data.range.from;
+      if (toEl && !toEl.value && data.range) toEl.value = data.range.to;
+
+      this.setText('ai-usage-total-conversations', Number(m.total_conversations || 0).toLocaleString('en-IN'));
+      this.setText('ai-usage-ai-messages', Number(m.ai_messages || 0).toLocaleString('en-IN'));
+      this.setText('ai-usage-resolved', Number(m.resolved_conversations || 0).toLocaleString('en-IN'));
+      this.setText('ai-usage-unresolved', Number(m.unresolved_conversations || 0).toLocaleString('en-IN'));
+      this.setText('ai-usage-rate', `${Number(m.resolution_rate || 0).toFixed(1)}%`);
+      this.setText('ai-usage-billable', Number(m.billable_outcomes || 0).toLocaleString('en-IN'));
+      this.setText('ai-usage-month-charges', this.formatInr(month.ai_charges_inr || 0));
+      this.setText('ai-usage-estimated-bill', this.formatInr(month.estimated_total_inr || 0));
+      this.setText('ai-usage-price', `${this.formatInr(settings.outcome_price_inr || 1)} per confirmed resolution`);
+      this.setText('ai-usage-subscription-fee', this.formatInr(month.subscription_amount_inr || 0));
+      this.setText('ai-usage-open-unconfirmed', Number(m.open_unconfirmed || 0).toLocaleString('en-IN'));
+      this.setText('ai-usage-human-handoffs', Number(m.human_handoffs || 0).toLocaleString('en-IN'));
+
+      const total = Math.max(1, Number(m.total_conversations || 0));
+      const resolvedPct = Math.round((Number(m.resolved_conversations || 0) / total) * 100);
+      const unresolvedPct = Math.round((Number(m.unresolved_conversations || 0) / total) * 100);
+      const handoffPct = Math.round((Number(m.human_handoffs || 0) / total) * 100);
+      const openPct = Math.max(0, 100 - resolvedPct - unresolvedPct - handoffPct);
+      const breakdown = document.getElementById('ai-usage-breakdown-bar');
+      if (breakdown) {
+        breakdown.innerHTML = `
+          <div class="h-full bg-stone-900" style="width:${resolvedPct}%"></div>
+          <div class="h-full bg-stone-500" style="width:${unresolvedPct}%"></div>
+          <div class="h-full bg-stone-300" style="width:${handoffPct}%"></div>
+          <div class="h-full bg-stone-100" style="width:${openPct}%"></div>
+        `;
+      }
+
+      this.renderUsageBars('ai-usage-daily-bars', data.daily || [], 'resolved', 'date');
+
+      const tbody = document.getElementById('ai-usage-invoices-tbody');
+      if (tbody) {
+        const invoices = data.invoices || [];
+        tbody.innerHTML = invoices.length ? invoices.map(inv => `
+          <tr>
+            <td class="font-mono text-stone-800 text-xs">CAI-${escapeHtml(inv.invoice_month)}</td>
+            <td class="text-xs text-stone-600">${Number(inv.billable_outcomes || 0).toLocaleString('en-IN')} outcomes</td>
+            <td class="text-xs font-mono text-stone-700">${this.formatInr(inv.ai_amount_inr || 0)}</td>
+            <td class="text-xs font-mono text-stone-700">${this.formatInr(inv.subscription_amount_inr || 0)}</td>
+            <td class="text-xs font-semibold text-stone-900 font-mono">${this.formatInr(inv.total_payable_inr || 0)}</td>
+            <td><span class="badge-signal-${inv.status === 'paid' ? 'green' : (inv.status === 'overdue' ? 'amber' : 'blue')} text-[10px] capitalize">${escapeHtml(inv.status || 'draft')}</span></td>
+          </tr>
+        `).join('') : `<tr><td colspan="6" class="p-6 text-center text-xs text-stone-400">No AI billing history yet.</td></tr>`;
+      }
+      if (window.lucide) lucide.createIcons();
+    } catch (e) {
+      console.warn('[CuboidDashboard] AI usage billing load error:', e);
+      const errEl = document.getElementById('ai-usage-error');
+      if (errEl) {
+        errEl.textContent = e.message || 'Unable to load AI usage billing.';
+        errEl.classList.remove('hidden');
+      }
+    }
+  },
+
+  loadSuperAdminAiRevenue: async function() {
+    const fromEl = document.getElementById('super-ai-from');
+    const toEl = document.getElementById('super-ai-to');
+    const params = new URLSearchParams({ action: 'super_summary' });
+    if (fromEl && fromEl.value) params.set('from', fromEl.value);
+    if (toEl && toEl.value) params.set('to', toEl.value);
+
+    try {
+      const res = await fetch(`../api/ai_usage.php?${params.toString()}`);
+      const data = await res.json();
+      if (!data || !data.success) throw new Error(data?.error || 'Failed to load Cai revenue.');
+
+      if (fromEl && !fromEl.value && data.range) fromEl.value = data.range.from;
+      if (toEl && !toEl.value && data.range) toEl.value = data.range.to;
+
+      const m = data.metrics || {};
+      this.setText('super-ai-companies', Number(m.companies || 0).toLocaleString('en-IN'));
+      this.setText('super-ai-billable', Number(m.billable_outcomes || 0).toLocaleString('en-IN'));
+      this.setText('super-ai-revenue', this.formatInr(m.ai_revenue_inr || 0));
+      this.setText('super-ai-total-payable', this.formatInr(m.total_payable_inr || 0));
+      this.setText('super-ai-paid', this.formatInr(m.paid_amount_inr || 0));
+      this.setText('super-ai-outstanding', this.formatInr(m.outstanding_amount_inr || 0));
+      this.setText('super-ai-rate', `${Number(m.resolution_rate || 0).toFixed(1)}%`);
+
+      const trendEl = document.getElementById('super-ai-trend-bars');
+      if (trendEl) {
+        const trend = data.trend || [];
+        const max = Math.max(1, ...trend.map(t => Number(t.revenue_inr || 0)));
+        trendEl.innerHTML = trend.map(t => {
+          const h = Math.max(8, Math.round((Number(t.revenue_inr || 0) / max) * 120));
+          return `
+            <div class="flex-1 min-w-[42px] flex flex-col items-center justify-end gap-1">
+              <div class="w-8 bg-stone-900 rounded-t-[3px]" style="height:${h}px"></div>
+              <div class="text-[10px] text-stone-400 font-mono">${escapeHtml(String(t.month || '').slice(5))}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      const tbody = document.getElementById('super-ai-companies-tbody');
+      if (tbody) {
+        const rows = data.companies || [];
+        tbody.innerHTML = rows.length ? rows.map(row => `
+          <tr>
+            <td>
+              <a href="company-detail.html?id=${row.company_id}" class="font-medium text-stone-900 hover:underline text-xs">${escapeHtml(row.company_name)}</a>
+              <div class="text-[11px] text-stone-400 font-mono">${escapeHtml(row.company_slug || '')}.cuboidpilot.com</div>
+            </td>
+            <td class="text-xs font-mono text-stone-700">${Number(row.total_conversations || 0).toLocaleString('en-IN')}</td>
+            <td class="text-xs font-mono text-stone-700">${Number(row.resolved_conversations || 0).toLocaleString('en-IN')}</td>
+            <td class="text-xs font-semibold text-stone-900">${Number(row.resolution_rate || 0).toFixed(1)}%</td>
+            <td class="text-xs font-mono text-stone-700">${Number(row.billable_outcomes || 0).toLocaleString('en-IN')}</td>
+            <td>
+              <div class="flex items-center gap-1.5">
+                <input id="ai-price-${row.company_id}" type="number" min="0" step="0.01" value="${Number(row.outcome_price_inr || 1).toFixed(2)}" class="app-input text-xs w-20 py-1 px-2 font-mono">
+                <button class="btn-secondary btn-sm text-[11px] py-1 px-2" onclick="CuboidDashboard.updateAiOutcomePrice(${row.company_id})">Save</button>
+              </div>
+            </td>
+            <td class="text-xs font-semibold text-stone-900 font-mono">${this.formatInr(row.ai_charges_inr || 0)}</td>
+            <td class="text-xs font-semibold text-stone-900 font-mono">${this.formatInr(row.total_payable_inr || 0)}</td>
+            <td class="text-right">
+              <select class="app-input text-xs w-24 py-1 px-2" onchange="CuboidDashboard.updateAiInvoiceStatus(${row.company_id}, this.value)">
+                <option value="draft" ${row.current_invoice_status === 'draft' ? 'selected' : ''}>Draft</option>
+                <option value="issued" ${row.current_invoice_status === 'issued' ? 'selected' : ''}>Issued</option>
+                <option value="paid" ${row.current_invoice_status === 'paid' ? 'selected' : ''}>Paid</option>
+                <option value="overdue" ${row.current_invoice_status === 'overdue' ? 'selected' : ''}>Overdue</option>
+                <option value="waived" ${row.current_invoice_status === 'waived' ? 'selected' : ''}>Waived</option>
+              </select>
+            </td>
+          </tr>
+        `).join('') : `<tr><td colspan="9" class="p-6 text-center text-xs text-stone-400">No companies found.</td></tr>`;
+      }
+      if (window.lucide) lucide.createIcons();
+    } catch (e) {
+      console.warn('[CuboidDashboard] Super admin AI revenue load error:', e);
+      const errEl = document.getElementById('super-ai-error');
+      if (errEl) {
+        errEl.textContent = e.message || 'Unable to load Cai revenue.';
+        errEl.classList.remove('hidden');
+      }
+    }
+  },
+
+  updateAiOutcomePrice: async function(companyId) {
+    const input = document.getElementById(`ai-price-${companyId}`);
+    const price = input ? Number(input.value || 0) : 0;
+    try {
+      const res = await fetch('../api/ai_usage.php?action=configure_pricing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id: companyId, outcome_price_inr: price })
+      });
+      const data = await res.json();
+      if (!data || !data.success) throw new Error(data?.error || 'Failed to update price.');
+      if (window.CuboidShell) CuboidShell.toast('AI outcome price updated', 'success');
+      this.loadSuperAdminAiRevenue();
+    } catch (e) {
+      alert(e.message || 'Could not update AI price.');
+    }
+  },
+
+  updateAiInvoiceStatus: async function(companyId, status) {
+    try {
+      const res = await fetch('../api/ai_usage.php?action=update_invoice_status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id: companyId, invoice_month: new Date().toISOString().slice(0, 7), status })
+      });
+      const data = await res.json();
+      if (!data || !data.success) throw new Error(data?.error || 'Failed to update invoice status.');
+      if (window.CuboidShell) CuboidShell.toast('Billing status updated', 'success');
+      this.loadSuperAdminAiRevenue();
+    } catch (e) {
+      alert(e.message || 'Could not update invoice status.');
     }
   },
 

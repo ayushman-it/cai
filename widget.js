@@ -4862,6 +4862,92 @@
       color: #ffffff !important;
       border-color: #4b5563 !important;
     }
+    .cp-resolution-card {
+      margin-top: 10px !important;
+      padding: 10px 11px !important;
+      border: 1px solid #e5e7eb !important;
+      border-radius: 8px !important;
+      background: #ffffff !important;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      max-width: 100% !important;
+    }
+    .cp-resolution-title {
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      color: #111827 !important;
+      margin-bottom: 8px !important;
+      line-height: 1.35 !important;
+    }
+    .cp-resolution-actions {
+      display: flex !important;
+      flex-wrap: wrap !important;
+      gap: 7px !important;
+    }
+    .cp-resolution-chip {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      border: 1px solid #d1d5db !important;
+      background: #ffffff !important;
+      color: #111827 !important;
+      border-radius: 18px !important;
+      padding: 6px 12px !important;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      transition: all 0.16s ease !important;
+      font-family: inherit !important;
+    }
+    .cp-resolution-chip:hover,
+    .cp-resolution-chip:focus-visible {
+      border-color: #111827 !important;
+      background: #f9fafb !important;
+      transform: translateY(-1px) !important;
+    }
+    .cp-resolution-chip svg {
+      width: 13px !important;
+      height: 13px !important;
+      stroke-width: 2.3 !important;
+    }
+    .cp-resolution-card.is-locked .cp-resolution-chip {
+      opacity: 0.5 !important;
+      pointer-events: none !important;
+    }
+    .cp-resolution-status {
+      display: none !important;
+      margin-top: 7px !important;
+      font-size: 11px !important;
+      color: #4b5563 !important;
+      line-height: 1.4 !important;
+    }
+    .cp-resolution-card.is-locked .cp-resolution-status {
+      display: block !important;
+    }
+    :host([data-theme="dark"]) .cp-resolution-card,
+    .cp-dark-theme .cp-resolution-card,
+    .theme-dark .cp-resolution-card {
+      background: #1e2025 !important;
+      border-color: #374151 !important;
+    }
+    :host([data-theme="dark"]) .cp-resolution-title,
+    .cp-dark-theme .cp-resolution-title,
+    .theme-dark .cp-resolution-title,
+    :host([data-theme="dark"]) .cp-resolution-chip,
+    .cp-dark-theme .cp-resolution-chip,
+    .theme-dark .cp-resolution-chip {
+      color: #f3f4f6 !important;
+    }
+    :host([data-theme="dark"]) .cp-resolution-chip,
+    .cp-dark-theme .cp-resolution-chip,
+    .theme-dark .cp-resolution-chip {
+      background: #25272f !important;
+      border-color: #4b5563 !important;
+    }
+    :host([data-theme="dark"]) .cp-resolution-status,
+    .cp-dark-theme .cp-resolution-status,
+    .theme-dark .cp-resolution-status {
+      color: #d1d5db !important;
+    }
 
     /* Inactivity Suggestion Chips (Intercom/Cai Pill Design outside bubble) */
     .cp-inactivity-chips-container {
@@ -8406,6 +8492,30 @@
         bubble.appendChild(teamBox);
       }
 
+      if (data.resolution_prompt && !data.chat_ended && !isHuman && conversationId && sessionId) {
+        const promptText = data.resolution_prompt_text || 'Did I resolve your query?';
+        const resolutionCard = document.createElement('div');
+        resolutionCard.className = 'cp-resolution-card';
+        resolutionCard.innerHTML = `
+          <div class="cp-resolution-title">${escapeHtml(promptText)}</div>
+          <div class="cp-resolution-actions">
+            <button type="button" class="cp-resolution-chip" data-resolution="resolved">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              <span>Yes, Resolved</span>
+            </button>
+            <button type="button" class="cp-resolution-chip" data-resolution="needs_help">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              <span>No, Need More Help</span>
+            </button>
+          </div>
+          <div class="cp-resolution-status"></div>
+        `;
+        resolutionCard.querySelectorAll('.cp-resolution-chip').forEach(btn => {
+          btn.addEventListener('click', () => submitResolutionFeedback(btn.dataset.resolution === 'resolved', resolutionCard));
+        });
+        contentCol.appendChild(resolutionCard);
+      }
+
       row.appendChild(metaLine);
 
       // If chat has ended, display concluding wrap-up card at the end
@@ -8432,6 +8542,71 @@
       finishMessage();
     }
     return row;
+  }
+
+  async function submitResolutionFeedback(isResolved, cardEl) {
+    if (!conversationId || !sessionId || !cardEl || cardEl.classList.contains('is-locked')) return;
+
+    const statusEl = cardEl.querySelector('.cp-resolution-status');
+    cardEl.classList.add('is-locked');
+    if (statusEl) statusEl.textContent = 'Saving your response...';
+
+    try {
+      const res = await fetch(`${baseUrl}/api/ai_usage.php?action=mark_resolution`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Company-Key': companyKey
+        },
+        body: JSON.stringify({
+          company_key: companyKey,
+          conversation_id: conversationId,
+          session_id: sessionId,
+          resolved: Boolean(isResolved)
+        })
+      });
+      const data = await res.json();
+      if (!data || !data.success) {
+        throw new Error((data && data.error) || 'Unable to save response.');
+      }
+
+      if (statusEl) {
+        statusEl.textContent = isResolved
+          ? (data.already_recorded ? 'This conversation was already marked resolved.' : 'Thanks. This conversation is marked resolved.')
+          : 'Thanks. Cai will keep helping, and you can also connect with the team.';
+      }
+
+      if (isResolved) {
+        appendAIMessage({
+          reply: 'Thanks. I have marked this conversation as resolved.',
+          timestamp: 'Just now',
+          chat_ended: true,
+          skipSound: true
+        });
+      } else {
+        appendAIMessage({
+          reply: 'No problem. Tell me what is still missing, or I can connect you with a team member.',
+          action_chips: [
+            {
+              label: 'Connect with team',
+              action_type: 'START_HUMAN_HANDOFF',
+              text: 'Please connect me with a team member.'
+            },
+            {
+              label: 'I will explain again',
+              action_type: 'SEND_TEXT_RESPONSE',
+              text: 'I will explain my question again.'
+            }
+          ],
+          timestamp: 'Just now',
+          skipSound: true
+        });
+      }
+    } catch (err) {
+      console.warn('[Cai Resolution Feedback] ', err);
+      cardEl.classList.remove('is-locked');
+      if (statusEl) statusEl.textContent = 'Could not save this response. Please try again.';
+    }
   }
 
   async function confirmSlotBooking(slotDatetime) {

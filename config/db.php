@@ -139,8 +139,8 @@ function getDbConnection() {
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
     static $schemaChecked = false;
     if (!$schemaChecked) {
-        $localLock = __DIR__ . '/.schema_installed_v21';
-        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v21.lock';
+        $localLock = __DIR__ . '/.schema_installed_v22';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v22.lock';
         if (!file_exists($localLock) || !file_exists($tempLock)) {
             initDbSchemaAndUsers($pdo);
             ensureExtendedSchema($pdo);
@@ -1223,6 +1223,27 @@ HTML;
     if (!in_array('session_id', $convCols)) {
         $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `session_id` VARCHAR(64) NULL AFTER `visitor_session_id`");
     }
+    if (!in_array('ai_resolution_status', $convCols)) {
+        try {
+            $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `ai_resolution_status` ENUM('pending','resolved','unresolved','human_handoff') NOT NULL DEFAULT 'pending' AFTER `closure_reason`");
+        } catch (Exception $e) {
+            $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `ai_resolution_status` ENUM('pending','resolved','unresolved','human_handoff') NOT NULL DEFAULT 'pending'");
+        }
+    }
+    if (!in_array('ai_resolution_confirmed_at', $convCols)) {
+        try {
+            $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `ai_resolution_confirmed_at` DATETIME NULL AFTER `ai_resolution_status`");
+        } catch (Exception $e) {
+            $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `ai_resolution_confirmed_at` DATETIME NULL");
+        }
+    }
+    if (!in_array('ai_billable_outcome_id', $convCols)) {
+        try {
+            $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `ai_billable_outcome_id` BIGINT NULL AFTER `ai_resolution_confirmed_at`");
+        } catch (Exception $e) {
+            $pdo->exec("ALTER TABLE `conversations` ADD COLUMN `ai_billable_outcome_id` BIGINT NULL");
+        }
+    }
 
     $msgCols = $pdo->query("SHOW COLUMNS FROM `messages`")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('channel', $msgCols)) {
@@ -1231,6 +1252,85 @@ HTML;
     if (!in_array('session_id', $msgCols)) {
         $pdo->exec("ALTER TABLE `messages` ADD COLUMN `session_id` VARCHAR(64) NULL AFTER `conversation_id`");
     }
+
+    // 28b. AI Resolution Tracking & Usage-Based Billing (per-tenant ledger)
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `ai_billing_settings` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `outcome_price_inr` DECIMAL(10,2) NOT NULL DEFAULT 1.00,
+            `currency` VARCHAR(10) NOT NULL DEFAULT 'INR',
+            `billing_status` ENUM('active','paused') NOT NULL DEFAULT 'active',
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY `uq_ai_billing_company` (`company_id`),
+            KEY `idx_ai_billing_status` (`billing_status`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `ai_usage_events` (
+            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `conversation_id` INT NULL,
+            `customer_id` INT NULL,
+            `event_type` VARCHAR(50) NOT NULL,
+            `channel` VARCHAR(50) NOT NULL DEFAULT 'web',
+            `metadata_json` LONGTEXT NULL,
+            `occurred_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            KEY `idx_ai_usage_company_time` (`company_id`, `occurred_at`),
+            KEY `idx_ai_usage_company_event` (`company_id`, `event_type`),
+            KEY `idx_ai_usage_conversation` (`conversation_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `ai_resolution_ledger` (
+            `id` BIGINT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `conversation_id` INT NOT NULL,
+            `customer_id` INT NULL,
+            `session_id` VARCHAR(64) NULL,
+            `status` ENUM('resolved','unresolved','human_handoff') NOT NULL,
+            `billable` TINYINT(1) NOT NULL DEFAULT 0,
+            `outcome_price_inr` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            `amount_inr` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            `confirmed_by` VARCHAR(50) NOT NULL DEFAULT 'visitor',
+            `confirmed_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            `metadata_json` LONGTEXT NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY `uq_ai_resolution_conversation` (`company_id`, `conversation_id`),
+            KEY `idx_ai_resolution_company_status` (`company_id`, `status`),
+            KEY `idx_ai_resolution_company_time` (`company_id`, `confirmed_at`),
+            KEY `idx_ai_resolution_billable` (`company_id`, `billable`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS `ai_billing_invoices` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `company_id` INT NOT NULL,
+            `invoice_month` CHAR(7) NOT NULL,
+            `subscription_amount_inr` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            `ai_amount_inr` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            `total_payable_inr` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+            `status` ENUM('draft','issued','paid','overdue','waived') NOT NULL DEFAULT 'draft',
+            `notes` TEXT NULL,
+            `issued_at` DATETIME NULL,
+            `paid_at` DATETIME NULL,
+            `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+            `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            UNIQUE KEY `uq_ai_invoice_company_month` (`company_id`, `invoice_month`),
+            KEY `idx_ai_invoice_status` (`status`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        INSERT IGNORE INTO `ai_billing_settings` (`company_id`, `outcome_price_inr`, `currency`, `billing_status`, `created_at`)
+        SELECT `id`, 1.00, COALESCE(NULLIF(`currency`, ''), 'INR'), 'active', NOW()
+        FROM `companies`
+    ");
 
     // 29. Workspace Payments: Ensure payments.customer_id is nullable for workspace subscriptions
     try {

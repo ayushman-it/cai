@@ -26,6 +26,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
 require_once __DIR__ . '/../includes/mailer.php';
+require_once __DIR__ . '/../includes/ai_usage_service.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -932,6 +933,10 @@ try {
                 VALUES (?, ?, 'system', '[System Event] Visitor requested human assistance.', 'widget', NOW())
             ")->execute([$companyId, $conversationId]);
         }
+        aiUsageRecordHumanHandoff($pdo, $companyId, $conversationId, $customerId, $sessionToken, [
+            'source' => 'widget_start_human_chat',
+            'assigned_user_id' => $userId ?: null
+        ]);
 
         // Dispatch alert notification to counselor / support team via WhatsApp (if connected) or fallback to Email
         try {

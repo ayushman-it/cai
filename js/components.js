@@ -851,6 +851,9 @@ window.CuboidShell = {
           <a href="ai-assistant.html" class="sub-nav-item ${active === 'ai-assistant' ? 'active' : ''}">
             <span class="flex items-center gap-2"><i data-lucide="bot" class="w-3.5 h-3.5 text-stone-600"></i> AI Assistant</span>
           </a>
+          <a href="ai-usage.html" class="sub-nav-item ${active === 'ai-usage' ? 'active' : ''}">
+            <span class="flex items-center gap-2"><i data-lucide="receipt-text" class="w-3.5 h-3.5 text-stone-600"></i> AI Usage &amp; Billing</span>
+          </a>
           <a href="knowledge.html" class="sub-nav-item ${active === 'knowledge' ? 'active' : ''}">
             <span class="flex items-center gap-2"><i data-lucide="book-marked" class="w-3.5 h-3.5 text-stone-600"></i> Knowledge Grounding</span>
           </a>
@@ -919,7 +922,7 @@ window.CuboidShell = {
                 <i data-lucide="inbox" class="w-5 h-5"></i>
                 <span class="rail-badge-dot"></span>
               </a>
-              <a href="ai-assistant.html" class="rail-item ${active === 'ai-assistant' || active === 'knowledge' ? 'active' : ''}" title="AI Assistant">
+              <a href="ai-assistant.html" class="rail-item ${active === 'ai-assistant' || active === 'knowledge' || active === 'ai-usage' ? 'active' : ''}" title="AI Assistant">
                 <i data-lucide="sparkles" class="w-5 h-5"></i>
               </a>
               <a href="whatsapp.html" class="rail-item ${active === 'whatsapp' ? 'active' : ''}" title="WhatsApp Command Center">
@@ -1082,6 +1085,9 @@ window.CuboidShell = {
               <a href="subscriptions.html" class="rail-item ${active === 'subscriptions' ? 'active' : ''}" title="Billing">
                 <i data-lucide="credit-card" class="w-5 h-5"></i>
               </a>
+              <a href="ai-usage.html" class="rail-item ${active === 'ai-usage' ? 'active' : ''}" title="Cai Revenue">
+                <i data-lucide="receipt-text" class="w-5 h-5"></i>
+              </a>
               <a href="users.html" class="rail-item ${active === 'users' ? 'active' : ''}" title="Users">
                 <i data-lucide="users" class="w-5 h-5"></i>
               </a>
@@ -1122,6 +1128,9 @@ window.CuboidShell = {
             </a>
             <a href="subscriptions.html" class="sub-nav-item ${active === 'subscriptions' ? 'active' : ''}">
               <span class="flex items-center gap-2"><i data-lucide="credit-card" class="w-3.5 h-3.5 text-stone-500"></i> Subscriptions</span>
+            </a>
+            <a href="ai-usage.html" class="sub-nav-item ${active === 'ai-usage' ? 'active' : ''}">
+              <span class="flex items-center gap-2"><i data-lucide="receipt-text" class="w-3.5 h-3.5 text-stone-500"></i> Cai Revenue</span>
             </a>
             <a href="blogs.html" class="sub-nav-item ${active === 'blogs' ? 'active' : ''}">
               <span class="flex items-center gap-2"><i data-lucide="newspaper" class="w-3.5 h-3.5 text-stone-500"></i> Blog &amp; Articles</span>

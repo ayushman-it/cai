@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Usage & Billing — CuboidPilot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/dashboard.css?v=5.0.0">
+</head>
+<body class="app-body">
+
+  <div class="app-viewport">
+    <div id="sidebar-container"></div>
+
+    <div class="app-main">
+      <div id="topbar-container"></div>
+
+      <div class="app-content-scroll">
+        <div class="w-full space-y-6">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#e7e5de]">
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h1 class="app-page-title">AI Usage & Billing</h1>
+                <span class="badge-signal-blue text-xs font-semibold">Confirmed outcomes only</span>
+              </div>
+              <p class="text-xs text-stone-500 mt-1">Track Cai conversations, confirmed resolutions, human handoffs, and auditable AI outcome charges.</p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <input type="date" id="ai-usage-from" class="app-input text-xs bg-white w-36">
+              <input type="date" id="ai-usage-to" class="app-input text-xs bg-white w-36">
+              <button onclick="CuboidDashboard.loadAiUsageBilling()" class="btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1.5">
+                <i data-lucide="filter" class="w-3.5 h-3.5"></i>
+                Apply
+              </button>
+            </div>
+          </div>
+
+          <div id="ai-usage-error" class="hidden p-3 border border-rose-200 bg-rose-50 text-rose-800 text-xs rounded-[4px]"></div>
+
+          <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Total Conversations</div>
+              <div id="ai-usage-total-conversations" class="text-2xl font-semibold text-stone-900 mt-1">0</div>
+              <div class="text-[11px] text-stone-500 mt-1">All widget conversations in range</div>
+            </div>
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">AI Messages</div>
+              <div id="ai-usage-ai-messages" class="text-2xl font-semibold text-stone-900 mt-1">0</div>
+              <div class="text-[11px] text-stone-500 mt-1">Usage metric, not directly billable</div>
+            </div>
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Resolution Rate</div>
+              <div id="ai-usage-rate" class="text-2xl font-semibold text-stone-900 mt-1">0%</div>
+              <div id="ai-usage-price" class="text-[11px] text-stone-500 mt-1">₹1 per confirmed resolution</div>
+            </div>
+            <div class="app-panel py-3 px-4">
+              <div class="text-[11px] font-medium text-stone-500 uppercase tracking-wider">Billable Outcomes</div>
+              <div id="ai-usage-billable" class="text-2xl font-semibold text-stone-900 mt-1">0</div>
+              <div class="text-[11px] text-stone-500 mt-1">Charged once after visitor confirmation</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div class="app-panel xl:col-span-2 space-y-4">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Resolved vs Unresolved</h3>
+                  <p class="text-[11px] text-stone-500 mt-1">Only confirmed visitor responses are counted as resolved or unresolved.</p>
+                </div>
+                <span class="text-[11px] text-stone-400 font-mono">Live ledger</span>
+              </div>
+              <div id="ai-usage-breakdown-bar" class="h-3 w-full rounded-[3px] overflow-hidden bg-stone-100 flex"></div>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div class="p-3 border border-[#e7e5de] rounded-[6px] bg-white">
+                  <div class="text-stone-500">Resolved</div>
+                  <div id="ai-usage-resolved" class="text-lg font-semibold text-stone-900 mt-1">0</div>
+                </div>
+                <div class="p-3 border border-[#e7e5de] rounded-[6px] bg-white">
+                  <div class="text-stone-500">Need More Help</div>
+                  <div id="ai-usage-unresolved" class="text-lg font-semibold text-stone-900 mt-1">0</div>
+                </div>
+                <div class="p-3 border border-[#e7e5de] rounded-[6px] bg-white">
+                  <div class="text-stone-500">Human Handoffs</div>
+                  <div id="ai-usage-human-handoffs" class="text-lg font-semibold text-stone-900 mt-1">0</div>
+                </div>
+                <div class="p-3 border border-[#e7e5de] rounded-[6px] bg-white">
+                  <div class="text-stone-500">Open / Unconfirmed</div>
+                  <div id="ai-usage-open-unconfirmed" class="text-lg font-semibold text-stone-900 mt-1">0</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="app-panel space-y-3">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Current Month Bill</h3>
+              <div class="space-y-2 text-xs">
+                <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+                  <span class="text-stone-500">AI outcome charges</span>
+                  <span id="ai-usage-month-charges" class="font-mono font-semibold text-stone-900">₹0</span>
+                </div>
+                <div class="flex items-center justify-between border-b border-stone-100 pb-2">
+                  <span class="text-stone-500">Subscription / seat fees</span>
+                  <span id="ai-usage-subscription-fee" class="font-mono font-semibold text-stone-900">₹0</span>
+                </div>
+                <div class="flex items-center justify-between pt-1">
+                  <span class="font-semibold text-stone-900">Estimated total payable</span>
+                  <span id="ai-usage-estimated-bill" class="font-mono text-lg font-semibold text-stone-900">₹0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-panel space-y-4">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">Daily Confirmed Resolutions</h3>
+              <span class="text-[11px] text-stone-400">Filtered range</span>
+            </div>
+            <div id="ai-usage-daily-bars" class="h-40 flex items-end gap-1 overflow-x-auto border border-[#e7e5de] rounded-[6px] bg-white p-3"></div>
+          </div>
+
+          <div class="app-panel p-0 overflow-hidden">
+            <div class="p-3 border-b border-[#e7e5de] bg-[#fcfbfa] flex items-center justify-between">
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-stone-900">AI Billing History</h3>
+              <span class="text-[11px] text-stone-400">AI outcomes plus subscription fees</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="app-table text-xs">
+                <thead>
+                  <tr>
+                    <th>Invoice Month</th>
+                    <th>Billable Outcomes</th>
+                    <th>AI Charges</th>
+                    <th>Subscription Fees</th>
+                    <th>Total Payable</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="ai-usage-invoices-tbody">
+                  <tr><td colspan="6" class="p-6 text-center text-xs text-stone-400">Loading AI billing history...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/components.js?v=5.0.0"></script>
+  <script src="../js/dashboard.js?v=5.0.0"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      CuboidShell.initCompanyApp('ai-usage', 'AI Usage & Billing', ['AI']);
+    });
+  </script>
+</body>
+</html>
