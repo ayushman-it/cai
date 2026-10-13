@@ -96,12 +96,23 @@ window.CuboidShell = {
       })
       .then(data => {
         if (data && data.success) {
+          // Gatekeeper: If company has not completed onboarding and user is not super admin, redirect to onboarding wizard
+          const isSuperAdmin = !!(data.user && data.user.is_super_admin);
+          if (data.company && !data.company.onboarding_completed && !isSuperAdmin) {
+            sessionStorage.removeItem('cp_workspace_cache');
+            window.location.href = '../onboarding/index.php';
+            return;
+          }
+
           this.user = data.user;
           this.company = data.company;
           this.entitlements = data.entitlements;
           window.__CUBOID_USER__ = data.user;
           window.__CUBOID_COMPANY__ = data.company;
           window.__CUBOID_ENTITLEMENTS__ = data.entitlements;
+          if (data.company && data.company.company_key) {
+            window.__CP_COMPANY_KEY__ = data.company.company_key;
+          }
           
           sessionStorage.setItem('cp_workspace_cache', JSON.stringify({
             user: data.user,
@@ -110,6 +121,7 @@ window.CuboidShell = {
           }));
 
           this.syncRealWorkspaceDom(activePage, pageTitle, breadcrumbs);
+          this.ensureBottomWidget();
         }
         // Always dismiss splash screen once authentication/workspace verification completes
         this.dismissSplashScreen(300);
@@ -132,6 +144,8 @@ window.CuboidShell = {
     if (companyStatusEl && this.entitlements) {
       if (this.entitlements.is_premium) {
         companyStatusEl.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span class="text-[11px] text-stone-400">Active · ${this.entitlements.effective_tier.toUpperCase()}</span>`;
+      } else if (this.entitlements.is_trial_expired || this.entitlements.status === 'EXPIRED' || this.entitlements.status === 'SUSPENDED') {
+        companyStatusEl.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-500"></span><span class="text-[11px] text-rose-500">Trial expired</span>`;
       } else {
         companyStatusEl.innerHTML = `<span class="inline-block w-1.5 h-1.5 rounded-full bg-amber-500"></span><span class="text-[11px] text-stone-400">Trial · ${this.entitlements.trial_days_remaining} days left</span>`;
       }
@@ -355,8 +369,28 @@ window.CuboidShell = {
           </div>
         `;
         if (window.lucide) window.lucide.createIcons();
+      } else if (this.entitlements.is_trial_expired || this.entitlements.status === 'EXPIRED' || this.entitlements.status === 'SUSPENDED') {
+        planCardContainer.innerHTML = `
+          <div class="p-2.5 bg-white border border-rose-200 rounded-[6px] shadow-2xs space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-1.5 min-w-0">
+                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                <span class="text-xs font-semibold text-stone-900 truncate">Trial ended</span>
+              </div>
+              <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 bg-rose-50 text-rose-800 border border-rose-200 rounded-[4px] shrink-0">EXPIRED</span>
+            </div>
+            <p class="text-[11px] text-stone-500 leading-snug m-0">
+              Widget and AI access are paused
+            </p>
+            <a href="billing.html" class="flex items-center justify-center gap-1.5 w-full py-1.5 px-2 bg-stone-900 hover:bg-black text-white text-xs font-medium rounded-[4px] no-underline transition-colors shadow-2xs">
+              <span>Renew Plan</span>
+              <i data-lucide="arrow-right" class="w-3 h-3 text-stone-300"></i>
+            </a>
+          </div>
+        `;
+        if (window.lucide) window.lucide.createIcons();
       } else {
-        const days = this.entitlements.trial_days_remaining || 7;
+        const days = Number.isFinite(Number(this.entitlements.trial_days_remaining)) ? Number(this.entitlements.trial_days_remaining) : 14;
         planCardContainer.innerHTML = `
           <div class="p-2.5 bg-white border border-[#e7e5de] rounded-[6px] shadow-2xs space-y-2.5">
             <div class="flex items-center justify-between">
@@ -1151,12 +1185,11 @@ window.CuboidShell = {
 
   // Ensure bottom-right floating widget is loaded in dashboard
   ensureBottomWidget: function() {
-    if (document.getElementById('cuboidpilot-widget-script')) return;
     let companyKey = (this.company && this.company.company_key) 
       ? this.company.company_key 
       : (window.__CUBOID_COMPANY__ && window.__CUBOID_COMPANY__.company_key)
       ? window.__CUBOID_COMPANY__.company_key
-      : null;
+      : (typeof window !== 'undefined' ? window.__CP_COMPANY_KEY__ : null);
     if (!companyKey) {
       try {
         const cached = JSON.parse(sessionStorage.getItem('cp_workspace_cache') || '{}');
@@ -1165,12 +1198,28 @@ window.CuboidShell = {
         }
       } catch (e) {}
     }
-    if (!companyKey) {
-      companyKey = 'cp_live_cuboidsoft';
+
+    if (companyKey) {
+      window.__CP_COMPANY_KEY__ = companyKey;
     }
+
+    const existingScript = document.getElementById('cuboidpilot-widget-script');
+    if (existingScript) {
+      // If widget script is in DOM and companyKey is resolved, ensure widget tenant is synchronized
+      if (companyKey && window.CuboidPilot && typeof window.CuboidPilot.setTenantKey === 'function') {
+        window.CuboidPilot.setTenantKey(companyKey);
+      }
+      return;
+    }
+
+    // Do not mount widget script until the tenant workspace key is known
+    if (!companyKey) {
+      return;
+    }
+
     const s = document.createElement('script');
     s.id = 'cuboidpilot-widget-script';
-    s.src = '../widget.js?v=6.2.' + Date.now();
+    s.src = '../widget.js?v=8.0.' + Date.now();
     s.setAttribute('data-company', companyKey);
     s.async = true;
     document.body.appendChild(s);
@@ -1202,10 +1251,14 @@ window.CuboidShell = {
     }
     const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
     const scriptUrl = isLocal 
-      ? `${window.location.origin}/cuboidpilot/widget.js?v=7.5` 
-      : 'https://cai.cuboidsoft.in/widget.js?v=7.5';
-    const compKey = (this.company && this.company.company_key) ? this.company.company_key : 'cp_live_cuboidsoft';
-    const snippet = `<script src="${scriptUrl}" data-company="${compKey}" data-theme="dark" async><\/script>`;
+      ? `${window.location.origin}/cuboidpilot/widget.js?v=8.0.0` 
+      : 'https://cai.cuboidsoft.in/widget.js?v=8.0.0';
+    const compKey = (this.company && this.company.company_key) || window.__CP_COMPANY_KEY__ || '';
+    if (!compKey) {
+      this.toast('Loading workspace credentials...', 'info');
+      return;
+    }
+    const snippet = `<script src="${scriptUrl}" data-company="${compKey}" async><\/script>`;
 
     this.copyToClipboard(snippet).then(() => {
       if (btn) {

@@ -34,10 +34,8 @@ class GeminiService {
 
     private static ?string $openRouterApiKey = null;
     private static array $openRouterModels = [
-        'meta-llama/llama-3.3-70b-instruct',
-        'google/gemini-2.0-flash-001',
         'openai/gpt-4o-mini',
-        'deepseek/deepseek-chat'
+        'meta-llama/llama-3.3-70b-instruct'
     ];
 
     public static function getOpenRouterApiKey(): string {
@@ -64,11 +62,11 @@ class GeminiService {
         $models = !empty($options['model']) ? [$options['model']] : self::$openRouterModels;
         $maxTokens = $options['max_tokens'] ?? 650;
         $temperature = $options['temperature'] ?? 0.25;
-        $timeout = $options['timeout'] ?? 10;
+        $timeout = $options['timeout'] ?? 5;
 
         foreach ($models as $idx => $candModel) {
             if ($idx > 0) {
-                usleep(200000); // 200ms backoff
+                usleep(100000); // 100ms backoff
             }
 
             $payload = [
@@ -142,11 +140,11 @@ class GeminiService {
         $models = !empty($options['model']) ? [$options['model']] : self::$groqModels;
         $maxTokens = $options['max_tokens'] ?? 650;
         $temperature = $options['temperature'] ?? 0.25;
-        $timeout = $options['timeout'] ?? 5;
+        $timeout = $options['timeout'] ?? 3.5;
 
         foreach ($models as $idx => $candModel) {
             if ($idx > 0) {
-                usleep(150000); // 150ms backoff
+                usleep(80000); // 80ms backoff
             }
 
             $payload = [
@@ -165,8 +163,8 @@ class GeminiService {
                     'Content-Type: application/json'
                 ],
                 CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_UNICODE),
-                CURLOPT_TIMEOUT => $timeout,
-                CURLOPT_CONNECTTIMEOUT => 3,
+                CURLOPT_TIMEOUT => (int)ceil($timeout),
+                CURLOPT_CONNECTTIMEOUT => 2,
                 CURLOPT_SSL_VERIFYPEER => false,
                 CURLOPT_SSL_VERIFYHOST => false
             ]);
@@ -301,7 +299,7 @@ class GeminiService {
 
     /**
      * Core conversational completion with system instruction and history.
-     * Uses OpenRouter / Groq / Gemini multi-model fallback cascade.
+     * Prioritizes ultra-fast Groq inference (<800ms) with fast OpenRouter & local RAG fallback.
      */
     public static function generateResponse(string $systemPrompt, array $messages, array $options = []): string {
         $chatMessages = array_merge(
@@ -309,19 +307,21 @@ class GeminiService {
             $messages
         );
 
-        // 1. Try OpenRouter (high accuracy, multi-model)
-        $orResp = self::callOpenRouter($chatMessages, $options);
-        if (!empty($orResp)) {
-            return $orResp;
-        }
-
-        // 2. Try Groq sub-second completion
-        $groqResp = self::callGroq($chatMessages, $options);
+        // 1. Try Groq ultra-low latency completion first (< 800ms)
+        $groqOptions = array_merge($options, ['timeout' => $options['groq_timeout'] ?? 4]);
+        $groqResp = self::callGroq($chatMessages, $groqOptions);
         if (!empty($groqResp)) {
             return $groqResp;
         }
 
-        // 3. Fallback to Gemini Generative Language
+        // 2. Try OpenRouter with fast timeout (max 4.5s)
+        $orOptions = array_merge($options, ['timeout' => $options['openrouter_timeout'] ?? 5]);
+        $orResp = self::callOpenRouter($chatMessages, $orOptions);
+        if (!empty($orResp)) {
+            return $orResp;
+        }
+
+        // 3. Fallback to Gemini Generative Language (if valid key configured)
         $contents = [];
         foreach ($messages as $msg) {
             $role = ($msg['role'] ?? 'user') === 'assistant' ? 'model' : 'user';
@@ -343,7 +343,7 @@ class GeminiService {
             ]
         ];
 
-        $res = self::callGemini($payload, $options['model'] ?? null, $options['timeout'] ?? 6);
+        $res = self::callGemini($payload, $options['model'] ?? null, $options['timeout'] ?? 4);
         return self::extractText($res);
     }
 

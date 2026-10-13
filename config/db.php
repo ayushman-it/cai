@@ -36,6 +36,8 @@ $httpHost = $_SERVER['HTTP_HOST'] ?? '';
 $isLocal = in_array(strtolower(explode(':', $httpHost)[0]), ['localhost', '127.0.0.1'])
     || (php_sapi_name() === 'cli' && strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
 
+date_default_timezone_set(getenv('APP_TIMEZONE') ?: 'Asia/Kolkata');
+
 $envUser = getenv('DB_USER');
 $envPass = getenv('DB_PASS');
 $envName = getenv('DB_NAME');
@@ -137,8 +139,8 @@ function getDbConnection() {
     // Ensure schema and demo users exist (cached check to avoid running heavy DDL on every single request)
     static $schemaChecked = false;
     if (!$schemaChecked) {
-        $localLock = __DIR__ . '/.schema_installed_v20';
-        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v20.lock';
+        $localLock = __DIR__ . '/.schema_installed_v21';
+        $tempLock  = sys_get_temp_dir() . '/cuboid_schema_v21.lock';
         if (!file_exists($localLock) || !file_exists($tempLock)) {
             initDbSchemaAndUsers($pdo);
             ensureExtendedSchema($pdo);
@@ -165,6 +167,9 @@ function ensureExtendedSchema(PDO $pdo) {
     }
     if (!in_array('plan_tier', $companyCols)) {
         $pdo->exec("ALTER TABLE `companies` ADD COLUMN `plan_tier` VARCHAR(50) DEFAULT 'free_trial' AFTER `trial_ends_at`");
+    }
+    if (!in_array('manual_pro_override', $companyCols)) {
+        $pdo->exec("ALTER TABLE `companies` ADD COLUMN `manual_pro_override` TINYINT(1) NOT NULL DEFAULT 0 AFTER `plan_tier`");
     }
     // Update null trial dates based on created_at (14 days)
     $pdo->exec("
@@ -512,7 +517,7 @@ function ensureExtendedSchema(PDO $pdo) {
             'status'                => 'active',
             'plan_tier'             => 'growth',
             'onboarding_completed'  => 1,
-            'owner_name'            => 'Ayush (Founder)',
+            'owner_name'            => 'Ayushmann Chourasiya (Founder)',
             'owner_email'           => 'founder@cuboidsoft.in',
             'owner_password'        => 'password123',
             'widget_brand_name'     => 'Cai',
@@ -876,7 +881,7 @@ Annual billing receives a 20% discount or 3-month zero-interest EMI financing."
 
 <div class="blog-callout">
   <blockquote>"We didn't just build another conversational chatbot. We engineered Cai to function as your best technical support engineer and top sales development representative (SDR) rolled into one autonomous system."</blockquote>
-  <cite>— Ayush, Founder & AI Architect at CuboidSoft</cite>
+  <cite>— Ayushmann Chourasiya, Founder & AI Architect at CuboidSoft</cite>
 </div>
 
 <h2>What Makes Cai Fundamentally Different?</h2>
@@ -951,7 +956,7 @@ HTML;
 
 <div class="blog-callout">
   <blockquote>"Cai koi purana robotic bot nahi hai jo bas 'Press 1' ya 'Press 2' bole. Cai aapka smart digital employee hai — jo aapke business ko deeply samajhta hai aur 24/7 aapki sales aur customer support ko bina ruke sambhalta hai."</blockquote>
-  <cite>— Ayush, Founder &amp; AI Architect at CuboidPilot</cite>
+  <cite>— Ayushmann Chourasiya, Founder &amp; AI Architect at CuboidPilot</cite>
 </div>
 
 <h2>Cai Aapke Liye Kyun Zaroori Hai? (5 Badi Superpowers)</h2>
@@ -1561,7 +1566,7 @@ function provisionTenantWorkspace(PDO $pdo, array $params): array {
     $city       = trim($params['city'] ?? 'Bengaluru');
     $country    = trim($params['country'] ?? 'India');
     $status     = trim($params['status'] ?? 'trial');
-    $planTier   = trim($params['plan_tier'] ?? 'growth');
+    $planTier   = trim($params['plan_tier'] ?? 'free_trial');
     $onboarding = (int)($params['onboarding_completed'] ?? 0);
 
     // 1. Insert Company
@@ -1794,7 +1799,7 @@ function initDbSchemaAndUsers(PDO $pdo) {
         [
             'uuid'           => 'usr_owner_cuboidsoft_01',
             'company_id'     => $firstCompId,
-            'name'           => 'Ayush (CuboidSoft)',
+            'name'           => 'Ayushmann Chourasiya (CuboidSoft)',
             'email'          => 'founder@cuboidsoft.in',
             'role'           => 'owner',
             'is_super_admin' => 0,

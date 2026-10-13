@@ -9,7 +9,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
@@ -18,6 +18,11 @@ header("Content-Type: application/json; charset=UTF-8");
 
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+    session_write_close();
+}
 
 try {
     $pdo = getDbConnection();
@@ -29,19 +34,25 @@ try {
         ?? '';
 
     $companyKey = trim($companyKey);
-    if (empty($companyKey) || $companyKey === 'default' || $companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
-        $companyKey = 'cp_live_cuboidsoft';
+    $company = null;
+
+    if (!empty($companyKey) && $companyKey !== 'default') {
+        $stmt = $pdo->prepare("
+            SELECT * FROM `companies` 
+            WHERE `company_key` = ? 
+               OR `slug` = ? 
+               OR (slug = 'cuboidsoft' AND ? IN ('cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'))
+            LIMIT 1
+        ");
+        $stmt->execute([$companyKey, $companyKey, $companyKey]);
+        $company = $stmt->fetch();
     }
 
-    $stmt = $pdo->prepare("
-        SELECT * FROM `companies` 
-        WHERE `company_key` = ? 
-           OR `slug` = ? 
-           OR (slug = 'cuboidsoft' AND ? IN ('cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'))
-        LIMIT 1
-    ");
-    $stmt->execute([$companyKey, $companyKey, $companyKey]);
-    $company = $stmt->fetch();
+    if (!$company && !empty($_SESSION['company_id'])) {
+        $stmt = $pdo->prepare("SELECT * FROM `companies` WHERE `id` = ? LIMIT 1");
+        $stmt->execute([(int)$_SESSION['company_id']]);
+        $company = $stmt->fetch();
+    }
 
     if (!$company) {
         http_response_code(404);
@@ -54,6 +65,12 @@ try {
 
     $companyId = (int)$company['id'];
     $entitlements = getCompanyEntitlements($pdo, $companyId);
+    $isWidgetEnabled = !empty($entitlements['is_full_access']);
+    $widgetDisabledReason = $isWidgetEnabled
+        ? ''
+        : (!empty($entitlements['is_trial_expired'])
+            ? 'Your 14-day free trial has ended. Please upgrade or contact sales to reactivate the widget.'
+            : 'This workspace is not currently active. Please contact the workspace owner or CuboidPilot sales.');
 
     $wStmt = $pdo->prepare("SELECT * FROM `widget_settings` WHERE `company_id` = ? LIMIT 1");
     $wStmt->execute([$companyId]);
@@ -141,6 +158,34 @@ try {
         $publishedBrochuresCount = (int)$broCountStmt->fetchColumn();
     } catch (Throwable $e) {}
 
+    $featuredTeamMember = null;
+    try {
+        $teamStmt = $pdo->prepare("
+            SELECT id, name, job_title, department, availability_status, avatar_url, is_instant_help_enabled, is_appointment_enabled
+            FROM `users`
+            WHERE `company_id` = ?
+              AND `is_active` = 1
+              AND `is_instant_help_enabled` = 1
+              AND `availability_status` != 'OFFLINE'
+            ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'APPOINTMENT_ONLY', 'OFFLINE'), id ASC
+            LIMIT 1
+        ");
+        $teamStmt->execute([$companyId]);
+        $member = $teamStmt->fetch(PDO::FETCH_ASSOC);
+        if ($member) {
+            $featuredTeamMember = [
+                'id'                      => (int)$member['id'],
+                'name'                    => $member['name'],
+                'job_title'               => $member['job_title'] ?: 'Consultant',
+                'department'              => $member['department'] ?: 'support',
+                'availability_status'     => $member['availability_status'] ?: 'AVAILABLE',
+                'avatar_url'              => $member['avatar_url'] ?: 'assets/uploads/avatars/avatar_default.svg',
+                'is_instant_help_enabled' => (bool)$member['is_instant_help_enabled'],
+                'is_appointment_enabled'  => (bool)$member['is_appointment_enabled'],
+            ];
+        }
+    } catch (Throwable $e) {}
+
     echo json_encode([
         'success' => true,
         'company' => [
@@ -152,10 +197,17 @@ try {
             'company_key'    => $company['company_key'],
             'is_premium'     => (bool)($entitlements['is_premium'] || ($entitlements['is_trial'] && !$entitlements['is_trial_expired'])),
             'is_trial'       => (bool)($entitlements['is_trial'] ?? false),
+            'is_trial_expired' => (bool)($entitlements['is_trial_expired'] ?? false),
             'is_full_access' => (bool)($entitlements['is_full_access'] ?? false),
+            'manual_pro_override' => (bool)($entitlements['manual_pro_override'] ?? false),
             'trial_days_remaining' => (int)($entitlements['trial_days_remaining'] ?? 0),
+            'trial_ends_at'  => $entitlements['trial_ends_at'] ?? null,
         ],
         'widget' => [
+            'is_widget_enabled' => $isWidgetEnabled,
+            'widget_disabled'   => !$isWidgetEnabled,
+            'widget_disabled_reason' => $widgetDisabledReason,
+            'trial_ends_at'      => $entitlements['trial_ends_at'] ?? null,
             'brand_name'         => $brandName,
             'logo_url'           => $activeLogo,
             'logo_dark_url'      => $logoDark ?: $defaultLogo,
@@ -187,6 +239,7 @@ try {
             'business_categories'=> $businessCategories,
             'catalogs_count'     => $publishedCatalogsCount,
             'brochures_count'    => $publishedBrochuresCount,
+            'featured_team_member' => $featuredTeamMember,
         ],
     ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 

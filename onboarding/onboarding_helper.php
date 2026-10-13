@@ -23,23 +23,8 @@ function getOnboardingContext() {
     $userId = $_SESSION['user_id'] ?? null;
 
     if (!$companyId || !$userId) {
-        $comp = $pdo->query("SELECT id, name, slug, company_key, industry, city, country, currency, timezone, onboarding_completed FROM `companies` ORDER BY id ASC LIMIT 1")->fetch();
-        if ($comp) {
-            $companyId = $comp['id'];
-            $_SESSION['company_id'] = $companyId;
-            $_SESSION['company_name'] = $comp['name'];
-
-            $user = $pdo->prepare("SELECT id, name, email, role FROM `users` WHERE `company_id` = ? LIMIT 1");
-            $user->execute([$companyId]);
-            $u = $user->fetch();
-            if ($u) {
-                $userId = $u['id'];
-                $_SESSION['user_id'] = $userId;
-                $_SESSION['user_name'] = $u['name'];
-                $_SESSION['user_email'] = $u['email'];
-                $_SESSION['user_role'] = $u['role'];
-            }
-        }
+        header('Location: ../login.php');
+        exit;
     }
 
     // Load fresh company record

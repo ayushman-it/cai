@@ -90,7 +90,7 @@ if (empty($error) && !empty($email)) {
     try {
         // 1. Check if user already exists in cuboidpolit_db
         $stmt = $pdo->prepare("
-            SELECT u.*, c.name as company_name, c.company_key, c.status as company_status, c.plan_tier 
+            SELECT u.*, c.name as company_name, c.company_key, c.status as company_status, c.plan_tier, c.onboarding_completed 
             FROM `users` u 
             LEFT JOIN `companies` c ON c.id = u.company_id 
             WHERE u.`email` = ? 
@@ -122,14 +122,20 @@ if (empty($error) && !empty($email)) {
             $_SESSION['company_name'] = $existingUser['company_name'];
             $_SESSION['company_key'] = $existingUser['company_key'];
             $_SESSION['is_super_admin'] = (int)$existingUser['is_super_admin'];
+            $_SESSION['onboarding_completed'] = (int)($existingUser['onboarding_completed'] ?? 0);
             if (!empty($avatarUrl)) {
                 $_SESSION['avatar_url'] = $avatarUrl;
             }
 
-            // Redirect to appropriate console
-            $dest = ($existingUser['role'] === 'super_admin' || $existingUser['is_super_admin'] == 1)
-                ? 'super-admin/overview.html'
-                : 'app/overview.html';
+            // Redirect: super admin -> super-admin overview, incomplete onboarding -> onboarding wizard, complete -> app overview
+            $isSuperAdmin = ($existingUser['role'] === 'super_admin' || $existingUser['is_super_admin'] == 1);
+            if ($isSuperAdmin) {
+                $dest = 'super-admin/overview.html';
+            } elseif (!empty($existingUser['onboarding_completed'])) {
+                $dest = 'app/overview.html';
+            } else {
+                $dest = 'onboarding/index.php';
+            }
 
             header("Location: {$dest}");
             exit;
@@ -175,14 +181,13 @@ if (empty($error) && !empty($email)) {
             $_SESSION['company_id'] = $provisionRes['company_id'];
             $_SESSION['company_name'] = $provisionRes['name'];
             $_SESSION['company_key'] = $provisionRes['company_key'];
-            $_SESSION['user_role'] = 'owner';
-            $_SESSION['is_super_admin'] = 0;
+            $_SESSION['onboarding_completed'] = 0;
             if (!empty($avatarUrl)) {
                 $_SESSION['avatar_url'] = $avatarUrl;
             }
 
-            // Redirect to App Overview
-            header("Location: app/overview.html");
+            // Redirect new company to Onboarding Step 1 (Business Context)
+            header("Location: onboarding/business.php");
             exit;
         }
     } catch (Exception $e) {

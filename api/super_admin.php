@@ -100,6 +100,7 @@ try {
 
             $stmt = $pdo->prepare("
                 SELECT c.id, c.uuid, c.name, c.slug, c.company_key, c.status, c.created_at, c.city, c.plan_tier,
+                       c.trial_started_at, c.trial_ends_at, c.manual_pro_override,
                        p.name as plan_name, p.price_monthly_inr,
                        u.name as owner_name, u.email as owner_email, u.phone as owner_phone,
                        (SELECT COUNT(*) FROM leads WHERE company_id = c.id) as leads_count,
@@ -166,7 +167,7 @@ try {
         case 'create_company':
             $name = trim($_POST['name'] ?? '');
             $email = trim($_POST['email'] ?? '');
-            $planTier = trim($_POST['plan_tier'] ?? 'growth');
+            $planTier = strtolower(trim($_POST['plan_tier'] ?? 'growth'));
             $subdomain = trim($_POST['subdomain'] ?? '');
             $password = trim($_POST['password'] ?? 'CuboidAdmin2026!');
 
@@ -186,18 +187,27 @@ try {
                 mt_rand(0, 0xffff), mt_rand(0, 0xffff), mt_rand(0, 0xffff)
             );
 
+            $isTrialPlan = in_array($planTier, ['trial', 'free_trial', 'free'], true);
+            $companyStatus = $isTrialPlan ? 'trial' : 'active';
+            if ($isTrialPlan) {
+                $planTier = 'free_trial';
+            }
+
             // Find plan ID
             $pStmt = $pdo->prepare("SELECT id FROM plans WHERE code = ? OR name LIKE ? LIMIT 1");
             $pStmt->execute([$planTier, "%{$planTier}%"]);
-            $planId = $pStmt->fetchColumn() ?: 2;
+            $planId = $pStmt->fetchColumn();
+            if (!$planId && !$isTrialPlan) {
+                $planId = 2;
+            }
 
             $pdo->beginTransaction();
             $insComp = $pdo->prepare("
                 INSERT INTO `companies`
-                (`uuid`, `name`, `slug`, `company_key`, `status`, `plan_id`, `plan_tier`, `created_at`, `updated_at`)
-                VALUES (?, ?, ?, ?, 'active', ?, ?, NOW(), NOW())
+                (`uuid`, `name`, `slug`, `company_key`, `status`, `plan_id`, `plan_tier`, `trial_started_at`, `trial_ends_at`, `manual_pro_override`, `created_at`, `updated_at`)
+                VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), DATE_ADD(NOW(), INTERVAL 14 DAY), 0, NOW(), NOW())
             ");
-            $insComp->execute([$uuid, $name, $slug, $companyKey, $planId, $planTier]);
+            $insComp->execute([$uuid, $name, $slug, $companyKey, $companyStatus, $planId ?: null, $planTier]);
             $newCompId = (int)$pdo->lastInsertId();
 
             // Create admin user
@@ -230,6 +240,101 @@ try {
                 'message' => "Tenant organization {$name} provisioned successfully!",
                 'company_id' => $newCompId,
                 'company_key' => $companyKey
+            ]);
+            break;
+
+        case 'toggle_manual_pro':
+            $rawInput = file_get_contents('php://input');
+            $data = json_decode($rawInput, true) ?? $_POST;
+            $toggleCompanyId = (int)($data['company_id'] ?? ($_GET['company_id'] ?? 0));
+            $enabled = !empty($data['enabled']) || (!empty($_GET['enabled']) && $_GET['enabled'] !== '0');
+
+            if ($toggleCompanyId <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Valid company ID required']);
+                exit;
+            }
+
+            $cStmt = $pdo->prepare("SELECT id, name, trial_ends_at FROM `companies` WHERE id = ? LIMIT 1");
+            $cStmt->execute([$toggleCompanyId]);
+            $targetCompany = $cStmt->fetch();
+            if (!$targetCompany) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Organization not found']);
+                exit;
+            }
+
+            $proPlanId = (int)$pdo->query("SELECT id FROM `plans` WHERE `code` IN ('pro', 'scale', 'expert', 'premium') ORDER BY price_monthly_inr DESC LIMIT 1")->fetchColumn();
+            if (!$proPlanId) {
+                $proPlanId = (int)$pdo->query("SELECT id FROM `plans` WHERE `code` = 'growth' LIMIT 1")->fetchColumn() ?: 2;
+            }
+
+            $pdo->beginTransaction();
+
+            if ($enabled) {
+                $pdo->prepare("
+                    UPDATE `companies`
+                    SET `manual_pro_override` = 1,
+                        `status` = 'active',
+                        `plan_id` = ?,
+                        `plan_tier` = 'pro',
+                        `trial_started_at` = COALESCE(`trial_started_at`, NOW()),
+                        `trial_ends_at` = DATE_ADD(NOW(), INTERVAL 365 DAY),
+                        `updated_at` = NOW()
+                    WHERE id = ?
+                ")->execute([$proPlanId, $toggleCompanyId]);
+
+                $subStmt = $pdo->prepare("SELECT id FROM `subscriptions` WHERE `company_id` = ? ORDER BY id DESC LIMIT 1");
+                $subStmt->execute([$toggleCompanyId]);
+                $subId = $subStmt->fetchColumn();
+                if ($subId) {
+                    $pdo->prepare("
+                        UPDATE `subscriptions`
+                        SET `plan_id` = ?,
+                            `status` = 'active',
+                            `amount_inr` = 0,
+                            `current_period_start` = NOW(),
+                            `current_period_end` = DATE_ADD(NOW(), INTERVAL 365 DAY),
+                            `updated_at` = NOW()
+                        WHERE id = ?
+                    ")->execute([$proPlanId, $subId]);
+                } else {
+                    $pdo->prepare("
+                        INSERT INTO `subscriptions`
+                        (`company_id`, `plan_id`, `status`, `amount_inr`, `current_period_start`, `current_period_end`, `created_at`, `updated_at`)
+                        VALUES (?, ?, 'active', 0, NOW(), DATE_ADD(NOW(), INTERVAL 365 DAY), NOW(), NOW())
+                    ")->execute([$toggleCompanyId, $proPlanId]);
+                }
+            } else {
+                $pdo->prepare("
+                    UPDATE `companies`
+                    SET `manual_pro_override` = 0,
+                        `status` = CASE WHEN COALESCE(`trial_ends_at`, NOW()) >= NOW() THEN 'trial' ELSE 'suspended' END,
+                        `plan_id` = NULL,
+                        `plan_tier` = 'free_trial',
+                        `updated_at` = NOW()
+                    WHERE id = ?
+                ")->execute([$toggleCompanyId]);
+
+                $pdo->prepare("
+                    UPDATE `subscriptions`
+                    SET `status` = CASE
+                            WHEN COALESCE(`current_period_end`, NOW()) >= NOW() THEN 'trial'
+                            ELSE 'suspended'
+                        END,
+                        `amount_inr` = 0,
+                        `updated_at` = NOW()
+                    WHERE `company_id` = ?
+                ")->execute([$toggleCompanyId]);
+            }
+
+            $pdo->commit();
+
+            echo json_encode([
+                'success' => true,
+                'message' => $enabled
+                    ? "Manual Pro access enabled for {$targetCompany['name']}."
+                    : "Manual Pro access disabled for {$targetCompany['name']}."
             ]);
             break;
 

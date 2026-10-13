@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'owner_name'           => $name,
                     'owner_email'          => $email,
                     'owner_password'       => $password,
-                    'plan_tier'            => 'growth',
+                    'plan_tier'            => 'free_trial',
                     'status'               => 'trial',
                     'onboarding_completed' => 0,
                     'widget_brand_name'    => $companyName,

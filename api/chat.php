@@ -101,6 +101,20 @@ try {
     }
     $companyId = (int)$company['id'];
     $entitlements = getCompanyEntitlements($pdo, $companyId);
+    if (empty($entitlements['is_full_access'])) {
+        http_response_code(402);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Widget access expired',
+            'message' => !empty($entitlements['is_trial_expired'])
+                ? 'Your 14-day free trial has ended. Please upgrade or contact sales to reactivate the widget.'
+                : 'This workspace is not currently active.',
+            'widget_disabled' => true,
+            'trial_ends_at' => $entitlements['trial_ends_at'] ?? null,
+            'upgrade_url' => 'pricing.html'
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
 
     // Fetch widget settings for custom assistant name and branding
     $widgetRow = [];
@@ -897,14 +911,9 @@ try {
             'action_chips'       => $workflowResult['action_chips'] ?? [],
             'sales_team_cards'   => (function() use ($pdo, $companyId) {
                 try {
-                    $sStmt = $pdo->prepare("SELECT id, name, email, job_title, department, availability_status, avatar_url FROM `users` WHERE `company_id` = ? AND `is_active` = 1 AND (`department` = 'sales' OR `is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1) ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'OFFLINE'), id ASC LIMIT 3");
+                    $sStmt = $pdo->prepare("SELECT id, name, email, job_title, department, availability_status, avatar_url FROM `users` WHERE `company_id` = ? AND `is_active` = 1 AND `availability_status` != 'OFFLINE' AND (`is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1) ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'APPOINTMENT_ONLY', 'OFFLINE'), id ASC LIMIT 3");
                     $sStmt->execute([$companyId]);
                     $reps = $sStmt->fetchAll(PDO::FETCH_ASSOC);
-                    if (empty($reps)) {
-                        $sStmt2 = $pdo->prepare("SELECT id, name, email, job_title, department, availability_status, avatar_url FROM `users` WHERE `company_id` = ? AND `is_active` = 1 ORDER BY id ASC LIMIT 2");
-                        $sStmt2->execute([$companyId]);
-                        $reps = $sStmt2->fetchAll(PDO::FETCH_ASSOC);
-                    }
                     return $reps;
                 } catch (Throwable $e) { return []; }
             })(),
@@ -1404,7 +1413,7 @@ try {
         }
     }
 
-    // Primary LLM Inference: Google Gemini 3.8 Flash
+    // Primary LLM Inference: Ultra-Low Latency Cascade (Groq -> OpenRouter -> Local RAG)
     if (!$aiSuccess) {
         $geminiMessages = array_merge(
             $historyMessages,
@@ -1412,63 +1421,14 @@ try {
         );
         $geminiResp = GeminiService::generateResponse($systemPrompt, $geminiMessages, [
             'temperature' => 0.25,
-            'max_tokens' => 650
+            'max_tokens' => 650,
+            'groq_timeout' => 3.5,
+            'openrouter_timeout' => 4.5
         ]);
 
         if (!empty($geminiResp)) {
             $rawReply = $geminiResp;
             $aiSuccess = true;
-        }
-    }
-
-    if (!$aiSuccess && defined('GROQ_API_KEY') && !empty(GROQ_API_KEY) && GROQ_API_KEY !== 'YOUR_GROQ_API_KEY_HERE') {
-        $candidateModels = ['openai/gpt-oss-20b', 'qwen/qwen3.8-27b', 'allam-2-7b'];
-
-        foreach ($candidateModels as $idx => $modelCandidate) {
-            if ($idx > 0) {
-                usleep(150000); // 150ms backoff on retry to mitigate rate-limit bursts
-            }
-
-            $groqPayload = [
-                'model' => $modelCandidate,
-                'messages' => array_merge(
-                    [['role' => 'system', 'content' => $systemPrompt]],
-                    $historyMessages,
-                    [['role' => 'user', 'content' => $messageText]]
-                ),
-                'max_tokens' => 650,
-                'temperature' => 0.25
-            ];
-
-            $ch = curl_init('https://api.groq.com/openai/v1/chat/completions');
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Authorization: Bearer ' . GROQ_API_KEY,
-                'Content-Type: application/json'
-            ]);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($groqPayload));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 6);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 3);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            $groqResponse = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $curlErr = curl_error($ch);
-            curl_close($ch);
-
-            if ($httpCode === 200 && !empty($groqResponse)) {
-                $jsonRes = json_decode($groqResponse, true);
-                if (!empty($jsonRes['choices'][0]['message']['content'])) {
-                    $rawReply = trim($jsonRes['choices'][0]['message']['content']);
-                    // Strip internal reasoning or think tags if emitted by model
-                    $rawReply = preg_replace('/<think>.*?<\/think>/is', '', $rawReply);
-                    $rawReply = trim($rawReply);
-                    $aiSuccess = true;
-                    break;
-                }
-            } else {
-                error_log("[Groq API Error] Model: {$modelCandidate} | HTTP: {$httpCode} | Error: {$curlErr} | Body: " . substr($groqResponse, 0, 200));
-            }
         }
     }
 
@@ -2060,23 +2020,13 @@ try {
                 SELECT id, name, email, job_title, department, availability_status, avatar_url
                 FROM `users`
                 WHERE `company_id` = ? AND `is_active` = 1
-                  AND (`department` = 'sales' OR `is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)
-                ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'OFFLINE'), id ASC
+                  AND `availability_status` != 'OFFLINE'
+                  AND (`is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)
+                ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'APPOINTMENT_ONLY', 'OFFLINE'), id ASC
                 LIMIT 3
             ");
             $repStmt->execute([$companyId]);
             $salesTeamCards = $repStmt->fetchAll(PDO::FETCH_ASSOC);
-
-            if (empty($salesTeamCards)) {
-                $repStmt = $pdo->prepare("
-                    SELECT id, name, email, job_title, department, availability_status, avatar_url
-                    FROM `users`
-                    WHERE `company_id` = ? AND `is_active` = 1
-                    ORDER BY id ASC LIMIT 2
-                ");
-                $repStmt->execute([$companyId]);
-                $salesTeamCards = $repStmt->fetchAll(PDO::FETCH_ASSOC);
-            }
         } catch (Throwable $repEx) {}
     }
 

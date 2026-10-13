@@ -18,7 +18,7 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Company-Key");
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+if (($_SERVER['REQUEST_METHOD'] ?? '') === 'OPTIONS') {
     http_response_code(200);
     exit;
 }
@@ -26,6 +26,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/entitlements.php';
 require_once __DIR__ . '/../includes/mailer.php';
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+    session_write_close();
+}
 
 // If downloading .ics, header will be set accordingly
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
@@ -40,19 +45,32 @@ try {
 
     // 1. Resolve Company / Workspace
     $companyKey = trim($_GET['company_key'] ?? $_POST['company_key'] ?? $data['company_key'] ?? $_SERVER['HTTP_X_COMPANY_KEY'] ?? '');
-    if (empty($companyKey) || $companyKey === 'default' || $companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot') {
-        $companyKey = 'cp_live_cuboidsoft';
+    $company = null;
+
+    if (!empty($companyKey) && $companyKey !== 'default') {
+        $stmt = $pdo->prepare("
+            SELECT * FROM `companies` 
+            WHERE `company_key` = ? 
+               OR `slug` = ? 
+               OR (slug = 'cuboidsoft' AND ? IN ('cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'))
+            LIMIT 1
+        ");
+        $stmt->execute([$companyKey, $companyKey, $companyKey]);
+        $company = $stmt->fetch();
     }
 
-    $stmt = $pdo->prepare("
-        SELECT * FROM `companies` 
-        WHERE `company_key` = ? 
-           OR `slug` = ? 
-           OR (slug = 'cuboidsoft' AND ? IN ('cp_live_cuboidsoft', 'cp_live_cuboidpilot', 'cuboidsoft', 'cuboidpilot'))
-        LIMIT 1
-    ");
-    $stmt->execute([$companyKey, $companyKey, $companyKey]);
-    $company = $stmt->fetch();
+    if (!$company && !empty($_SESSION['company_id'])) {
+        $stmt = $pdo->prepare("SELECT * FROM `companies` WHERE `id` = ? LIMIT 1");
+        $stmt->execute([(int)$_SESSION['company_id']]);
+        $company = $stmt->fetch();
+    }
+
+    if (!$company && (empty($companyKey) || $companyKey === 'default' || $companyKey === 'cp_live_cuboidpilot' || $companyKey === 'cuboidpilot')) {
+        $companyKey = 'cp_live_cuboidsoft';
+        $stmt = $pdo->prepare("SELECT * FROM `companies` WHERE `company_key` = ? OR `slug` = 'cuboidsoft' LIMIT 1");
+        $stmt->execute([$companyKey]);
+        $company = $stmt->fetch();
+    }
 
     if (!$company) {
         header("Content-Type: application/json; charset=UTF-8");
@@ -62,6 +80,13 @@ try {
     }
 
     $companyId = (int)$company['id'];
+    $entitlements = getCompanyEntitlements($pdo, $companyId);
+    $isWidgetAccessEnabled = !empty($entitlements['is_full_access']);
+    $widgetDisabledReason = $isWidgetAccessEnabled
+        ? ''
+        : (!empty($entitlements['is_trial_expired'])
+            ? 'Your 14-day free trial has ended. Please upgrade or contact sales to reactivate the widget.'
+            : 'This workspace is not currently active.');
 
     // 2. Fetch Widget Settings
     $wStmt = $pdo->prepare("SELECT * FROM `widget_settings` WHERE `company_id` = ? LIMIT 1");
@@ -158,10 +183,78 @@ try {
         return $customer;
     };
 
+    $fetchWidgetTeamMembers = function($department = 'all', $limit = 5, $routing = 'any') use ($pdo, $companyId) {
+        $department = strtolower(trim((string)$department));
+        $routing = strtolower(trim((string)$routing));
+        $limit = max(1, min(12, (int)$limit));
+
+        $sql = "
+            SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url, is_instant_help_enabled, is_appointment_enabled
+            FROM `users`
+            WHERE `company_id` = ?
+              AND `is_active` = 1
+              AND `availability_status` != 'OFFLINE'
+        ";
+        $params = [$companyId];
+
+        if ($routing === 'instant') {
+            $sql .= " AND `is_instant_help_enabled` = 1";
+        } elseif ($routing === 'appointment') {
+            $sql .= " AND `is_appointment_enabled` = 1";
+        } else {
+            $sql .= " AND (`is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)";
+        }
+
+        if ($department === 'available') {
+            $sql .= " AND `availability_status` = 'AVAILABLE'";
+        } elseif (in_array($department, ['sales', 'technical', 'support', 'general'], true)) {
+            $sql .= " AND `department` = ?";
+            $params[] = $department;
+        }
+
+        $sql .= " ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'APPOINTMENT_ONLY', 'OFFLINE'), id ASC LIMIT {$limit}";
+
+        $teamStmt = $pdo->prepare($sql);
+        $teamStmt->execute($params);
+        $teamMembers = $teamStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $enrichedTeam = [];
+        foreach ($teamMembers as $m) {
+            $nextSlotText = 'Today, 4:30 PM';
+            if (($m['availability_status'] ?? '') === 'BUSY') {
+                $nextSlotText = 'Today, 5:30 PM';
+            } elseif (($m['availability_status'] ?? '') === 'APPOINTMENT_ONLY') {
+                $nextSlotText = 'Next available slot';
+            }
+
+            $avatar = $m['avatar_url'] ?: 'assets/uploads/avatars/avatar_default.svg';
+
+            $enrichedTeam[] = [
+                'id'                      => (int)$m['id'],
+                'name'                    => $m['name'],
+                'job_title'               => $m['job_title'] ?: 'Consultant',
+                'department'              => $m['department'] ?: 'sales',
+                'availability_status'     => $m['availability_status'] ?: 'AVAILABLE',
+                'avatar_url'              => $avatar,
+                'linkedin_url'            => $m['linkedin_url'] ?: '',
+                'is_instant_help_enabled' => (bool)$m['is_instant_help_enabled'],
+                'is_appointment_enabled'  => (bool)$m['is_appointment_enabled'],
+                'next_available_slot'     => $nextSlotText
+            ];
+        }
+
+        return $enrichedTeam;
+    };
+
     // -------------------------------------------------------------
     // ACTION: download_ics (Must output text/calendar before JSON headers)
     // -------------------------------------------------------------
     if ($action === 'download_ics') {
+        if (!$isWidgetAccessEnabled) {
+            http_response_code(403);
+            die($widgetDisabledReason);
+        }
+
         $appointmentId = (int)($_GET['id'] ?? $_GET['appointment_id'] ?? 0);
         $appStmt = $pdo->prepare("
             SELECT a.*, u.name as agent_name, u.job_title, u.email as agent_email, c.name as company_name 
@@ -210,12 +303,46 @@ try {
     // JSON response for all other actions
     header("Content-Type: application/json; charset=UTF-8");
 
+    if (!$isWidgetAccessEnabled) {
+        if ($action === 'get_actions') {
+            echo json_encode([
+                'success' => true,
+                'settings' => [
+                    'is_widget_enabled' => false,
+                    'widget_disabled' => true,
+                    'widget_disabled_reason' => $widgetDisabledReason,
+                    'trial_ends_at' => $entitlements['trial_ends_at'] ?? null,
+                    'enable_appointments' => false,
+                    'enable_human_help' => false,
+                    'enable_payments' => false,
+                    'whatsapp_enabled' => false,
+                ],
+                'active_human_chat' => null
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        http_response_code(402);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Widget access expired',
+            'message' => $widgetDisabledReason,
+            'widget_disabled' => true,
+            'upgrade_url' => 'pricing.html'
+        ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+
     // -------------------------------------------------------------
     // ACTION: get_actions
     // -------------------------------------------------------------
     if ($action === 'get_actions') {
         $sessionToken = trim($_GET['session_token'] ?? $data['session_token'] ?? '');
         $activeHumanChat = null;
+        $featuredTeam = $fetchWidgetTeamMembers('available', 1, 'instant');
+        if (empty($featuredTeam)) {
+            $featuredTeam = $fetchWidgetTeamMembers('all', 1, 'instant');
+        }
 
         if (!empty($sessionToken)) {
             // Check if there is an active conversation handed over to human
@@ -237,6 +364,8 @@ try {
                 'enable_appointments' => (bool)($widget['enable_appointments'] ?? 1),
                 'enable_human_help'   => (bool)($widget['enable_human_help'] ?? 1),
                 'enable_payments'     => (bool)($widget['enable_payments'] ?? 1),
+                'is_widget_enabled'   => true,
+                'widget_disabled'     => false,
                 'razorpay_key_id'     => $widget['razorpay_key_id'] ?? '',
                 'bank_name'           => $widget['bank_name'] ?? '',
                 'bank_account_holder' => !empty($widget['bank_account_holder']) ? $widget['bank_account_holder'] : ($company['name'] ?? ''),
@@ -245,6 +374,7 @@ try {
                 'bank_upi_id'         => $widget['bank_upi_id'] ?? '',
                 'bank_qr_url'         => $widget['bank_qr_url'] ?? '',
                 'calendar_slot_duration' => (int)($widget['calendar_slot_duration'] ?? 30),
+                'featured_team_member'   => $featuredTeam[0] ?? null,
                 'linkedin_ayush'         => $widget['linkedin_ayush'] ?? (($company['company_key'] === 'cp_live_cuboidsoft') ? 'https://linkedin.com/in/ayushman-varma' : ''),
                 'linkedin_cai'           => $widget['linkedin_cai'] ?? (($company['company_key'] === 'cp_live_cuboidsoft') ? 'https://linkedin.com/company/cuboidpilot' : ''),
                 'linkedin_cuboidsoft'    => $widget['linkedin_cuboidsoft'] ?? (($company['company_key'] === 'cp_live_cuboidsoft') ? 'https://linkedin.com/company/cuboidsoft' : ''),
@@ -260,94 +390,8 @@ try {
     if ($action === 'get_team') {
         $department = trim($_GET['department'] ?? $data['department'] ?? 'all');
         $department = strtolower($department);
-
-        $sql = "
-            SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url, is_instant_help_enabled, is_appointment_enabled
-            FROM `users`
-            WHERE `company_id` = ? 
-              AND `is_active` = 1
-              AND (`is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)
-        ";
-        $params = [$companyId];
-
-        if ($department === 'available') {
-            $sql .= " AND `availability_status` = 'AVAILABLE'";
-        } elseif (in_array($department, ['sales', 'technical', 'support'])) {
-            $sql .= " AND `department` = ?";
-            $params[] = $department;
-        }
-
-        $sql .= " ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'OFFLINE'), id ASC";
-
-        $teamStmt = $pdo->prepare($sql);
-        $teamStmt->execute($params);
-        $teamMembers = $teamStmt->fetchAll(PDO::FETCH_ASSOC);
-
-        if (empty($teamMembers)) {
-            $fallbackStmt = $pdo->prepare("
-                SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url, 1 as is_instant_help_enabled, 1 as is_appointment_enabled
-                FROM `users`
-                WHERE `company_id` = ?
-                ORDER BY id ASC LIMIT 5
-            ");
-            $fallbackStmt->execute([$companyId]);
-            $teamMembers = $fallbackStmt->fetchAll(PDO::FETCH_ASSOC);
-        }
-
-        if (empty($teamMembers)) {
-            $companyName = !empty($company['name']) ? $company['name'] : 'Support';
-            $teamMembers = [
-                [
-                    'id'                      => 1,
-                    'name'                    => $companyName . ' Specialist',
-                    'email'                   => 'consultant@cuboidpilot.com',
-                    'job_title'               => 'Senior Advisor',
-                    'department'              => 'sales',
-                    'availability_status'     => 'AVAILABLE',
-                    'avatar_url'              => 'assets/uploads/avatars/avatar_default.svg',
-                    'linkedin_url'            => '',
-                    'is_instant_help_enabled' => 1,
-                    'is_appointment_enabled'  => 1
-                ],
-                [
-                    'id'                      => 2,
-                    'name'                    => $companyName . ' Tech Desk',
-                    'email'                   => 'tech@cuboidpilot.com',
-                    'job_title'               => 'Product Consultant',
-                    'department'              => 'technical',
-                    'availability_status'     => 'AVAILABLE',
-                    'avatar_url'              => 'assets/uploads/avatars/avatar_default.svg',
-                    'linkedin_url'            => '',
-                    'is_instant_help_enabled' => 1,
-                    'is_appointment_enabled'  => 1
-                ]
-            ];
-        }
-
-        $enrichedTeam = [];
-        foreach ($teamMembers as $m) {
-            $nextSlotText = 'Today, 4:30 PM';
-            if ($m['availability_status'] === 'BUSY') {
-                $nextSlotText = 'Today, 5:30 PM';
-            } elseif ($m['availability_status'] === 'OFFLINE') {
-                $nextSlotText = 'Tomorrow, 10:00 AM';
-            }
-
-            $avatar = $m['avatar_url'] ?: 'assets/uploads/avatars/avatar_default.svg';
-
-            $enrichedTeam[] = [
-                'id'                      => (int)$m['id'],
-                'name'                    => $m['name'],
-                'job_title'               => $m['job_title'] ?: 'Consultant',
-                'department'              => $m['department'] ?: 'sales',
-                'availability_status'     => $m['availability_status'] ?: 'AVAILABLE',
-                'avatar_url'              => $avatar,
-                'linkedin_url'            => $m['linkedin_url'] ?: '',
-                'is_instant_help_enabled' => (bool)$m['is_instant_help_enabled'],
-                'is_appointment_enabled'  => (bool)$m['is_appointment_enabled'],
-                'next_available_slot'     => $nextSlotText
-            ];
-        }
+        $routing = ($department === 'all') ? 'any' : 'instant';
+        $enrichedTeam = $fetchWidgetTeamMembers($department, 12, $routing);
 
         echo json_encode([
             'success' => true,
@@ -794,16 +838,16 @@ try {
         $visitorEmail   = trim($data['email'] ?? $_POST['email'] ?? '');
         $visitorPhone   = trim($data['phone'] ?? $_POST['phone'] ?? '');
 
-        $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status, email, phone FROM `users` WHERE id = ? AND company_id = ? LIMIT 1");
+        $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status, email, phone FROM `users` WHERE id = ? AND company_id = ? AND is_active = 1 AND is_instant_help_enabled = 1 AND availability_status != 'OFFLINE' LIMIT 1");
         $agentStmt->execute([$userId, $companyId]);
         $agent = $agentStmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$agent) {
-            $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status, email, phone FROM `users` WHERE company_id = ? AND availability_status = 'AVAILABLE' LIMIT 1");
+            $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status, email, phone FROM `users` WHERE company_id = ? AND is_active = 1 AND is_instant_help_enabled = 1 AND availability_status = 'AVAILABLE' ORDER BY id ASC LIMIT 1");
             $agentStmt->execute([$companyId]);
             $agent = $agentStmt->fetch(PDO::FETCH_ASSOC);
             if (!$agent) {
-                $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status, email, phone FROM `users` WHERE company_id = ? ORDER BY id ASC LIMIT 1");
+                $agentStmt = $pdo->prepare("SELECT id, name, job_title, department, avatar_url, availability_status, email, phone FROM `users` WHERE company_id = ? AND is_active = 1 AND is_instant_help_enabled = 1 AND availability_status != 'OFFLINE' ORDER BY FIELD(availability_status, 'BUSY', 'APPOINTMENT_ONLY'), id ASC LIMIT 1");
                 $agentStmt->execute([$companyId]);
                 $agent = $agentStmt->fetch(PDO::FETCH_ASSOC);
             }
@@ -1774,24 +1818,14 @@ HTML;
             SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url
             FROM `users`
             WHERE `company_id` = ? AND `is_active` = 1
-              AND (`department` = 'sales' OR `is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)
-            ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'OFFLINE'), id ASC
+              AND `availability_status` != 'OFFLINE'
+              AND (`is_instant_help_enabled` = 1 OR `is_appointment_enabled` = 1)
+            ORDER BY FIELD(availability_status, 'AVAILABLE', 'BUSY', 'APPOINTMENT_ONLY', 'OFFLINE'), id ASC
             LIMIT 4
         ";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$companyId]);
         $reps = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        if (empty($reps)) {
-            $stmt = $pdo->prepare("
-                SELECT id, name, email, job_title, department, availability_status, avatar_url, linkedin_url
-                FROM `users`
-                WHERE `company_id` = ? AND `is_active` = 1
-                ORDER BY id ASC LIMIT 3
-            ");
-            $stmt->execute([$companyId]);
-            $reps = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        }
 
         echo json_encode([
             'success' => true,

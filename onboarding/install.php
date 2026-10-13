@@ -11,6 +11,8 @@ $company = $ctx['company'];
 $widget = $ctx['widget'];
 
 $companyKey = $company['company_key'] ?? ('cp_live_' . bin2hex(random_bytes(12)));
+$isLocalEnv = in_array(explode(':', $_SERVER['HTTP_HOST'] ?? '')[0], ['localhost', '127.0.0.1']);
+$scriptEmbedUrl = $isLocalEnv ? 'http://localhost/cuboidpilot/widget.js?v=8.0.0' : 'https://cai.cuboidsoft.in/widget.js?v=8.0.0';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -112,7 +114,7 @@ $companyKey = $company['company_key'] ?? ('cp_live_' . bin2hex(random_bytes(12))
 
             <div class="relative group">
               <pre class="bg-stone-900 text-stone-100 p-3.5 sm:p-4 rounded-[4px] font-mono text-[11.5px] sm:text-xs leading-relaxed border border-stone-800 select-all overflow-x-auto">&lt;script
-  src="https://cai.cuboidsoft.in/widget.js?v=5.6"
+  src="<?= htmlspecialchars($scriptEmbedUrl) ?>"
   data-company="<span class="text-amber-400 font-bold"><?= htmlspecialchars($companyKey) ?></span>"
   async&gt;
 &lt;/script&gt;</pre>
@@ -356,7 +358,7 @@ $companyKey = $company['company_key'] ?? ('cp_live_' . bin2hex(random_bytes(12))
           <label class="block font-medium text-stone-700 mb-1">Installation Instructions</label>
           <div class="p-2.5 bg-stone-50 border border-stone-200 rounded-[4px] text-[11px] text-stone-600 font-mono leading-relaxed">
             Please paste this single-line tag before the &lt;/body&gt; closing tag:<br>
-            &lt;script src="https://cai.cuboidsoft.in/widget.js?v=5.6" data-company="<?= htmlspecialchars($companyKey) ?>" async&gt;&lt;/script&gt;
+            &lt;script src="<?= htmlspecialchars($scriptEmbedUrl) ?>" data-company="<?= htmlspecialchars($companyKey) ?>" async&gt;&lt;/script&gt;
           </div>
         </div>
       </div>
@@ -378,7 +380,7 @@ $companyKey = $company['company_key'] ?? ('cp_live_' . bin2hex(random_bytes(12))
     if (window.lucide) lucide.createIcons();
 
     function copyCode() {
-      const code = `<script src="https://cai.cuboidsoft.in/widget.js?v=5.6" data-company="<?= htmlspecialchars($companyKey) ?>" async><\/script>`;
+      const code = `<script src="<?= htmlspecialchars($scriptEmbedUrl) ?>" data-company="<?= htmlspecialchars($companyKey) ?>" async><\/script>`;
       navigator.clipboard.writeText(code).then(() => {
         document.getElementById('copy-label').innerText = 'Copied to Clipboard!';
         document.getElementById('copy-btn').classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-300');

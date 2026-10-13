@@ -6263,7 +6263,12 @@ window.CuboidDashboard = {
         tbody.innerHTML = companies.map(c => {
           const initials = c.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase() || 'CO';
           const planBadge = (c.plan_name && c.plan_name.toLowerCase().includes('scale')) ? 'badge-signal-purple' : 'badge-signal-blue';
-          const isPro = c.id == 3 || c.plan_tier === 'pro';
+          const manualPro = Number(c.manual_pro_override || 0) === 1;
+          const isPro = c.id == 3 || c.plan_tier === 'pro' || manualPro;
+          const safeName = escapeHtml(c.name).replace(/'/g, "\\'");
+          const planLabel = manualPro ? 'Manual Pro Access' : (c.plan_name || (c.plan_tier === 'free_trial' ? '14-Day Free Trial' : 'Growth Plan'));
+          const billingLabel = manualPro ? 'Super admin override' : (c.price_monthly_inr ? '₹' + Number(c.price_monthly_inr).toLocaleString() + ' / mo' : (c.plan_tier === 'free_trial' ? '₹0 / trial' : '$149 / mo'));
+          const trialDate = c.trial_ends_at ? c.trial_ends_at.split(' ')[0] : '';
           return `
             <tr>
               <td>
@@ -6272,14 +6277,14 @@ window.CuboidDashboard = {
                     ${initials}
                   </div>
                   <div>
-                    <div class="font-medium text-stone-900 text-xs">${escapeHtml(c.name)} ${isPro ? '<span class="text-[9px] font-mono px-1 py-0.2 bg-emerald-100 text-emerald-800 rounded font-semibold ml-1">PRIMARY</span>' : ''}</div>
+                    <div class="font-medium text-stone-900 text-xs">${escapeHtml(c.name)} ${manualPro ? '<span class="text-[9px] font-mono px-1 py-0.2 bg-emerald-100 text-emerald-800 rounded font-semibold ml-1">MANUAL PRO</span>' : (isPro ? '<span class="text-[9px] font-mono px-1 py-0.2 bg-stone-100 text-stone-700 rounded font-semibold ml-1">PRO</span>' : '')}</div>
                     <div class="text-[11px] text-stone-400 font-mono">${escapeHtml(c.slug)}.cuboidpilot.com</div>
                   </div>
                 </a>
               </td>
               <td>
-                <div class="text-xs font-semibold text-stone-900">${escapeHtml(c.plan_name || 'Growth Plan')}</div>
-                <div class="text-[11px] text-stone-500 font-mono">${c.price_monthly_inr ? '₹' + Number(c.price_monthly_inr).toLocaleString() : '$149'} / mo</div>
+                <div class="text-xs font-semibold text-stone-900">${escapeHtml(planLabel)}</div>
+                <div class="text-[11px] text-stone-500 font-mono">${escapeHtml(billingLabel)}${trialDate && !manualPro ? ' • Trial ends ' + escapeHtml(trialDate) : ''}</div>
               </td>
               <td>
                 <div class="text-xs text-stone-800">${escapeHtml(c.owner_name || 'Admin')}</div>
@@ -6299,17 +6304,18 @@ window.CuboidDashboard = {
               <td class="text-right">
                 <div class="flex items-center justify-end gap-1.5 flex-wrap">
                   ${c.status !== 'active' ? `
-                    <button onclick="CuboidDashboard.resumeCompany(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')" class="text-[10px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-[3px] font-medium" title="Resume / Unlock Workspace">Unlock</button>
+                    <button onclick="CuboidDashboard.resumeCompany(${c.id}, '${safeName}')" class="text-[10px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-[3px] font-medium" title="Resume / Unlock Workspace">Unlock</button>
                   ` : `
-                    <button onclick="CuboidDashboard.suspendCompany(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')" class="text-[10px] text-stone-600 bg-stone-50 hover:bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded-[3px] font-medium" title="Suspend / Lock Workspace">Lock</button>
+                    <button onclick="CuboidDashboard.suspendCompany(${c.id}, '${safeName}')" class="text-[10px] text-stone-600 bg-stone-50 hover:bg-stone-100 border border-stone-200 px-1.5 py-0.5 rounded-[3px] font-medium" title="Suspend / Lock Workspace">Lock</button>
                   `}
-                  <button onclick="CuboidDashboard.extendCompanyTrial(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}', 14)" class="text-[10px] text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-[3px] font-medium" title="Extend Free Trial +14 Days">+14d</button>
+                  <button onclick="CuboidDashboard.toggleManualPro(${c.id}, '${safeName}', ${manualPro ? 'false' : 'true'})" class="text-[10px] ${manualPro ? 'text-emerald-800 bg-emerald-50 border-emerald-200 hover:bg-emerald-100' : 'text-stone-600 bg-white border-stone-200 hover:bg-stone-50'} border px-2 py-0.5 rounded-[3px] font-medium" title="Manually grant or remove Pro access">${manualPro ? 'Pro ON' : 'Pro OFF'}</button>
+                  <button onclick="CuboidDashboard.extendCompanyTrial(${c.id}, '${safeName}', 14)" class="text-[10px] text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-[3px] font-medium" title="Extend Free Trial +14 Days">+14d</button>
                   <a href="company-detail.html?id=${c.id}" class="btn-secondary btn-sm text-xs py-0.5 px-2">Inspect</a>
                   <a href="../app/overview.html" class="text-xs text-stone-400 hover:text-stone-900 px-1 py-1" title="Login as Tenant">
                     <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
                   </a>
                   ${!isPro && c.id != 3 ? `
-                    <button onclick="CuboidDashboard.confirmDeleteCompany(${c.id}, '${escapeHtml(c.name).replace(/'/g, "\\'")}')" class="text-xs text-red-500 hover:text-red-700 px-1 py-1" title="Delete Organization">
+                    <button onclick="CuboidDashboard.confirmDeleteCompany(${c.id}, '${safeName}')" class="text-xs text-red-500 hover:text-red-700 px-1 py-1" title="Delete Organization">
                       <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                     </button>
                   ` : ''}
@@ -6428,6 +6434,31 @@ window.CuboidDashboard = {
         this.loadSuperAdminCompanies();
       } else {
         alert(data.error || 'Failed to extend trial');
+      }
+    } catch (err) {
+      alert('Network error: ' + err.message);
+    }
+  },
+
+  toggleManualPro: async function(companyId, companyName, enabled) {
+    const actionText = enabled ? 'enable Manual Pro access for' : 'remove Manual Pro access from';
+    if (!confirm(`Are you sure you want to ${actionText} "${companyName}"?`)) return;
+    try {
+      const res = await fetch('../api/super_admin.php?action=toggle_manual_pro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_id: companyId, enabled: enabled ? 1 : 0 })
+      });
+      const data = await res.json();
+      if (data && data.success) {
+        if (window.CuboidShell && typeof CuboidShell.toast === 'function') {
+          CuboidShell.toast(data.message || 'Manual Pro access updated.', 'success');
+        } else {
+          alert(data.message || 'Manual Pro access updated.');
+        }
+        this.loadSuperAdminCompanies();
+      } else {
+        alert(data.error || 'Failed to update Manual Pro access');
       }
     } catch (err) {
       alert('Network error: ' + err.message);

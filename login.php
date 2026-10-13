@@ -90,13 +90,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['company_id'] = $user['company_id'];
                     $_SESSION['is_super_admin'] = (int)$user['is_super_admin'];
 
+                    $onboardingCompleted = 0;
                     if (!empty($user['company_id'])) {
-                        $compStmt = $pdo->prepare("SELECT name, company_key FROM companies WHERE id = ?");
+                        $compStmt = $pdo->prepare("SELECT name, company_key, onboarding_completed FROM companies WHERE id = ?");
                         $compStmt->execute([$user['company_id']]);
                         $c = $compStmt->fetch();
                         if ($c) {
                             $_SESSION['company_name'] = $c['name'];
                             $_SESSION['company_key'] = $c['company_key'];
+                            $onboardingCompleted = (int)($c['onboarding_completed'] ?? 0);
+                            $_SESSION['onboarding_completed'] = $onboardingCompleted;
                         }
                     }
 
@@ -112,10 +115,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]);
                     }
 
-                    // Determine destination
-                    $redirectUrl = ($user['role'] === 'super_admin' || $user['is_super_admin'] == 1)
-                        ? 'super-admin/overview.html'
-                        : 'app/overview.html';
+                    // Determine destination: Super Admin -> Super Admin Overview, Incomplete Onboarding -> Onboarding Wizard, Completed -> App Overview
+                    $isSuperAdmin = ($user['role'] === 'super_admin' || $user['is_super_admin'] == 1);
+                    if ($isSuperAdmin) {
+                        $redirectUrl = 'super-admin/overview.html';
+                    } elseif ($onboardingCompleted == 1) {
+                        $redirectUrl = 'app/overview.html';
+                    } else {
+                        $redirectUrl = 'onboarding/index.php';
+                    }
 
                     if ($isAjax) {
                         header('Content-Type: application/json');

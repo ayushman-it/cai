@@ -59,7 +59,7 @@
               </div>
             </div>
 
-            <pre id="official-widget-snippet" class="p-3 bg-stone-900 text-stone-100 rounded-[6px] font-mono text-[11.5px] sm:text-xs overflow-x-auto whitespace-pre-wrap break-all sm:whitespace-pre sm:break-normal leading-relaxed border border-stone-800 select-all">&lt;script src="https://cai.cuboidsoft.in/widget.js?v=8.0.0" data-company="cp_live_cuboidsoft" async&gt;&lt;/script&gt;</pre>
+            <pre id="official-widget-snippet" class="p-3 bg-stone-900 text-stone-100 rounded-[6px] font-mono text-[11.5px] sm:text-xs overflow-x-auto whitespace-pre-wrap break-all sm:whitespace-pre sm:break-normal leading-relaxed border border-stone-800 select-all">&lt;script src="https://cai.cuboidsoft.in/widget.js?v=8.0.0" data-company="loading..." async&gt;&lt;/script&gt;</pre>
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-stone-500 pt-1 border-t border-stone-100">
               <span class="flex items-center gap-1.5 text-stone-600">
@@ -136,6 +136,37 @@ You are now speaking with Cai. How can I help?</textarea>
                 </div>
               </div>
 
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <label class="flex items-start gap-2.5 p-3 rounded-[6px] border border-stone-200 bg-stone-50 cursor-pointer">
+                  <input type="checkbox" id="ctrl-enable-human-help" class="mt-0.5 rounded text-stone-900" checked onchange="onLiveConfigChange(true)">
+                  <span>
+                    <span class="block font-medium text-stone-800">Show human help in widget</span>
+                    <span class="block text-[11px] text-stone-500 mt-0.5">Displays the team handoff card and chat buttons.</span>
+                  </span>
+                </label>
+                <label class="flex items-start gap-2.5 p-3 rounded-[6px] border border-stone-200 bg-stone-50 cursor-pointer">
+                  <input type="checkbox" id="ctrl-enable-appointments" class="mt-0.5 rounded text-stone-900" checked onchange="onLiveConfigChange(true)">
+                  <span>
+                    <span class="block font-medium text-stone-800">Show booking in widget</span>
+                    <span class="block text-[11px] text-stone-500 mt-0.5">Allows selected team members to receive calendar bookings.</span>
+                  </span>
+                </label>
+              </div>
+
+              <div class="p-3 rounded-[6px] border border-[#e7e5de] bg-white space-y-2">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <div>
+                    <div class="text-[11px] font-semibold text-stone-900">Widget team visibility</div>
+                    <div class="text-[10.5px] text-stone-500">Choose who appears to website visitors for chat and booking.</div>
+                  </div>
+                  <a href="team.html" class="text-[11px] text-stone-600 hover:text-stone-900 underline">Manage profiles</a>
+                </div>
+                <div id="widget-team-visibility-list" class="space-y-1.5">
+                  <div class="text-[11px] text-stone-400 py-2">Loading team visibility...</div>
+                </div>
+                <div class="text-[10.5px] text-stone-400 border-t border-stone-100 pt-2">Offline members stay hidden from the public widget until their availability is changed.</div>
+              </div>
+
               <div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-t border-stone-100">
                 <div class="flex items-center gap-3">
                   <button id="save-deploy-btn" onclick="saveAndDeploy()" class="btn-primary py-2 px-5 text-xs font-semibold rounded-[6px] shadow-sm flex items-center justify-center gap-2">
@@ -179,7 +210,7 @@ You are now speaking with Cai. How can I help?</textarea>
           <div class="app-panel space-y-3">
             <h3 class="text-xs font-semibold text-stone-900">Developer API Key</h3>
             <div class="flex items-center gap-2">
-              <input type="password" value="cp_live_cuboidsoft" id="api-key-input" readonly class="app-input flex-1 font-mono text-xs bg-stone-50">
+              <input type="password" value="" id="api-key-input" placeholder="Loading key..." readonly class="app-input flex-1 font-mono text-xs bg-stone-50">
               <button id="toggle-key-visibility" onclick="toggleKeyVisibility()" class="btn-secondary btn-sm text-xs py-1.5 px-3">Show</button>
               <button class="copy-code-btn btn-secondary btn-sm text-xs py-1.5 px-3 inline-flex items-center gap-1" data-copy-target="api-key-input">
                 <i data-lucide="copy" class="w-3 h-3"></i> Copy
@@ -200,6 +231,7 @@ You are now speaking with Cai. How can I help?</textarea>
     document.addEventListener('DOMContentLoaded', async () => {
       await CuboidShell.initCompanyApp('connect', 'Connect & Deploy', ['Manage']);
       loadCurrentConfig();
+      loadWidgetTeamVisibility();
       bindCopyButtons();
 
       // Automatically open real bottom-right widget for instant live preview
@@ -218,7 +250,24 @@ You are now speaking with Cai. How can I help?</textarea>
       return esc;
     }
 
+    function escapeHtml(text) {
+      return String(text ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     async function loadCurrentConfig() {
+      // Immediate sync from active shell context if available
+      const activeKey = (CuboidShell.company && CuboidShell.company.company_key) || window.__CP_COMPANY_KEY__ || '';
+      if (activeKey) {
+        const keyInput = document.getElementById('api-key-input');
+        if (keyInput) keyInput.value = activeKey;
+        updateSnippetCode(activeKey, 'dark');
+      }
+
       try {
         const res = await fetch('../api/settings.php');
         const data = await res.json();
@@ -230,13 +279,19 @@ You are now speaking with Cai. How can I help?</textarea>
           if (w.greeting_subheading) document.getElementById('ctrl-subheading').value = w.greeting_subheading;
           if (w.greeting_heading) document.getElementById('ctrl-greeting').value = w.greeting_heading;
           if (w.theme_mode) document.getElementById('ctrl-theme-mode').value = w.theme_mode;
+          const humanToggle = document.getElementById('ctrl-enable-human-help');
+          const apptToggle = document.getElementById('ctrl-enable-appointments');
+          if (humanToggle && typeof w.enable_human_help !== 'undefined') humanToggle.checked = !!w.enable_human_help;
+          if (apptToggle && typeof w.enable_appointments !== 'undefined') apptToggle.checked = !!w.enable_appointments;
           if (w.accent_color) {
             document.getElementById('ctrl-accent-color').value = w.accent_color;
             document.getElementById('ctrl-accent-picker').value = w.accent_color;
           }
-          if (comp.company_key) {
-            document.getElementById('api-key-input').value = comp.company_key;
-            updateSnippetCode(comp.company_key, w.theme_mode || 'dark');
+          const finalKey = comp.company_key || activeKey;
+          if (finalKey) {
+            const keyInput = document.getElementById('api-key-input');
+            if (keyInput) keyInput.value = finalKey;
+            updateSnippetCode(finalKey, w.theme_mode || 'dark');
           }
         }
       } catch (e) {
@@ -246,11 +301,13 @@ You are now speaking with Cai. How can I help?</textarea>
     }
 
     function updateSnippetCode(key, theme) {
+      if (!key) return;
       const isLocal = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
       const scriptUrl = isLocal 
         ? `${window.location.origin}/cuboidpilot/widget.js?v=8.0.0` 
         : 'https://cai.cuboidsoft.in/widget.js?v=8.0.0';
       const snippetCode = `<script src="${scriptUrl}" data-company="${key}" async><\/script>`;
+      const snippetEl = document.getElementById('official-widget-snippet');
       if (snippetEl) {
         snippetEl.textContent = snippetCode;
       }
@@ -273,6 +330,8 @@ You are now speaking with Cai. How can I help?</textarea>
       const greeting = document.getElementById('ctrl-greeting').value;
       const theme = document.getElementById('ctrl-theme-mode').value || 'dark';
       const accent = document.getElementById('ctrl-accent-color').value.trim() || '#111111';
+      const enableHuman = document.getElementById('ctrl-enable-human-help')?.checked ? true : false;
+      const enableAppt = document.getElementById('ctrl-enable-appointments')?.checked ? true : false;
 
       // 1. Live update the real bottom-right widget!
       const w = window.CuboidPilotWidget || window.CuboidPilot;
@@ -291,7 +350,9 @@ You are now speaking with Cai. How can I help?</textarea>
             greeting_subheading: sub,
             greeting_heading: greeting,
             theme_mode: theme,
-            accent_color: accent
+            accent_color: accent,
+            enable_human_help: enableHuman,
+            enable_appointments: enableAppt
           });
         }
       }
@@ -301,8 +362,10 @@ You are now speaking with Cai. How can I help?</textarea>
       if (cardNameEl) cardNameEl.textContent = `${asstName} AI Agent`;
 
       // 3. Update Snippet Tag
-      const compKey = document.getElementById('api-key-input').value || 'cp_live_cuboidsoft';
-      updateSnippetCode(compKey, theme);
+      const compKey = document.getElementById('api-key-input').value || (CuboidShell.company && CuboidShell.company.company_key) || window.__CP_COMPANY_KEY__ || '';
+      if (compKey) {
+        updateSnippetCode(compKey, theme);
+      }
     }
 
     function testQuickQuestion(q) {
@@ -331,6 +394,8 @@ You are now speaking with Cai. How can I help?</textarea>
       const greeting = document.getElementById('ctrl-greeting').value;
       const theme = document.getElementById('ctrl-theme-mode').value || 'dark';
       const accent = document.getElementById('ctrl-accent-color').value.trim() || '#111111';
+      const enableHuman = document.getElementById('ctrl-enable-human-help')?.checked ? '1' : '0';
+      const enableAppt = document.getElementById('ctrl-enable-appointments')?.checked ? '1' : '0';
 
       const formData = new FormData();
       formData.append('assistant_name', asstName);
@@ -339,6 +404,8 @@ You are now speaking with Cai. How can I help?</textarea>
       formData.append('greeting_heading', greeting);
       formData.append('theme_mode', theme);
       formData.append('accent_color', accent);
+      formData.append('enable_human_help', enableHuman);
+      formData.append('enable_appointments', enableAppt);
 
       try {
         const res = await fetch('../api/settings.php', {
@@ -357,6 +424,95 @@ You are now speaking with Cai. How can I help?</textarea>
         btn.disabled = false;
         btn.innerHTML = originalHtml;
         if (window.lucide) lucide.createIcons();
+      }
+    }
+
+    async function loadWidgetTeamVisibility() {
+      const container = document.getElementById('widget-team-visibility-list');
+      if (!container) return;
+      try {
+        const res = await fetch('../api/team.php?action=list');
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.members)) {
+          container.innerHTML = `<div class="text-[11px] text-rose-500 py-2">${escapeHtml(data.error || 'Unable to load team visibility.')}</div>`;
+          return;
+        }
+
+        window._connectWidgetMembers = {};
+        if (data.members.length === 0) {
+          container.innerHTML = `<div class="text-[11px] text-stone-400 py-2">No team members yet.</div>`;
+          return;
+        }
+
+        container.innerHTML = data.members.map((m) => {
+          window._connectWidgetMembers[m.id] = m;
+          const isOffline = String(m.availability_status || '').toUpperCase() === 'OFFLINE';
+          const instantChecked = Number(m.is_instant_help_enabled) === 1 ? 'checked' : '';
+          const bookingChecked = Number(m.is_appointment_enabled) === 1 ? 'checked' : '';
+          return `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 rounded-[5px] border border-stone-100 bg-stone-50/70">
+              <div class="min-w-0">
+                <div class="text-[11.5px] font-medium text-stone-900 truncate">${escapeHtml(m.name)}</div>
+                <div class="text-[10.5px] text-stone-500 truncate">${escapeHtml(m.job_title || 'Consultant')} &bull; ${escapeHtml(m.department_label || m.department || 'Team')}${isOffline ? ' &bull; Offline' : ''}</div>
+              </div>
+              <div class="flex items-center gap-3 shrink-0">
+                <label class="inline-flex items-center gap-1.5 text-[11px] text-stone-700 cursor-pointer">
+                  <input type="checkbox" class="rounded text-stone-900" ${instantChecked} onchange="updateWidgetMemberRouting(${m.id}, 'instant', this.checked, this)">
+                  <span>Chat</span>
+                </label>
+                <label class="inline-flex items-center gap-1.5 text-[11px] text-stone-700 cursor-pointer">
+                  <input type="checkbox" class="rounded text-stone-900" ${bookingChecked} onchange="updateWidgetMemberRouting(${m.id}, 'booking', this.checked, this)">
+                  <span>Book</span>
+                </label>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="text-[11px] text-rose-500 py-2">Team visibility could not be loaded.</div>`;
+      }
+    }
+
+    async function updateWidgetMemberRouting(memberId, field, checked, checkbox) {
+      const m = window._connectWidgetMembers && window._connectWidgetMembers[memberId];
+      if (!m) return;
+      const previous = checkbox ? !checked : checked;
+      const nextInstant = field === 'instant' ? (checked ? 1 : 0) : (Number(m.is_instant_help_enabled) === 1 ? 1 : 0);
+      const nextBooking = field === 'booking' ? (checked ? 1 : 0) : (Number(m.is_appointment_enabled) === 1 ? 1 : 0);
+      if (checkbox) checkbox.disabled = true;
+
+      try {
+        const res = await fetch('../api/team.php?action=edit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: m.id,
+            name: m.name,
+            email: m.email,
+            phone: m.phone || '',
+            role: m.role || 'sales_agent',
+            job_title: m.job_title || 'Consultant',
+            department: m.department || 'sales',
+            availability_status: m.availability_status || 'AVAILABLE',
+            is_instant_help_enabled: nextInstant,
+            is_appointment_enabled: nextBooking
+          })
+        });
+        const data = await res.json();
+        if (data && data.success) {
+          m.is_instant_help_enabled = nextInstant;
+          m.is_appointment_enabled = nextBooking;
+          CuboidShell.toast('Widget team visibility updated.', 'success');
+          onLiveConfigChange(false);
+        } else {
+          if (checkbox) checkbox.checked = previous;
+          CuboidShell.toast(data.error || 'Could not update team visibility', 'error');
+        }
+      } catch (e) {
+        if (checkbox) checkbox.checked = previous;
+        CuboidShell.toast('Connection error updating team visibility', 'error');
+      } finally {
+        if (checkbox) checkbox.disabled = false;
       }
     }
 

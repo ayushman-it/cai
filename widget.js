@@ -63,7 +63,7 @@
   }
 
   const urlCompanyParam = (typeof window !== 'undefined' && window.location) ? (new URLSearchParams(window.location.search).get('company') || new URLSearchParams(window.location.search).get('company_key')) : null;
-  const companyKey = urlCompanyParam ||
+  let companyKey = urlCompanyParam ||
                      (typeof window !== 'undefined' && window.__CP_COMPANY_KEY__) ||
                      (currentScript && currentScript.getAttribute('data-company')) || 
                      (currentScript && currentScript.getAttribute('data-key')) || 
@@ -121,7 +121,7 @@
     }
   } catch (e) {}
 
-  const STORAGE_KEYS = {
+  let STORAGE_KEYS = {
     SESSION_ID: 'cp_session_id_' + companyKey,
     CONVO_ID: 'cp_conversation_id_' + companyKey,
     COPILOT_CONVO_ID: 'cp_copilot_convo_id_' + companyKey,
@@ -136,6 +136,22 @@
     COPILOT_MESSAGES: 'cp_copilot_chat_history_' + companyKey,
     STATE: 'cp_widget_open_' + companyKey
   };
+
+  function updateTenantStorageKeys(k) {
+    STORAGE_KEYS.SESSION_ID = 'cp_session_id_' + k;
+    STORAGE_KEYS.CONVO_ID = 'cp_conversation_id_' + k;
+    STORAGE_KEYS.COPILOT_CONVO_ID = 'cp_copilot_convo_id_' + k;
+    STORAGE_KEYS.LEAD_ID = 'cp_lead_id_' + k;
+    STORAGE_KEYS.CUSTOMER_ID = 'cp_customer_id_' + k;
+    STORAGE_KEYS.VISITOR_NAME = 'cp_visitor_name_' + k;
+    STORAGE_KEYS.VISITOR_EMAIL = 'cp_visitor_email_' + k;
+    STORAGE_KEYS.VISITOR_PHONE = 'cp_visitor_phone_' + k;
+    STORAGE_KEYS.IS_IDENTIFIED = 'cp_is_identified_' + k;
+    STORAGE_KEYS.LEAD_STEP = 'cp_lead_step_' + k;
+    STORAGE_KEYS.MESSAGES = 'cp_chat_history_' + k;
+    STORAGE_KEYS.COPILOT_MESSAGES = 'cp_copilot_chat_history_' + k;
+    STORAGE_KEYS.STATE = 'cp_widget_open_' + k;
+  }
 
   function syncConversationAcrossWindows(cId, sId) {
     try {
@@ -5806,13 +5822,13 @@
         <div class="cp-header-actions">
           <!-- Overlapping Executive Avatars with LinkedIn (media_1790919508920.png) -->
           <div class="cp-team-avatar-stack" id="cp-team-avatar-stack" aria-label="Executive leadership and AI team">
-            <a href="https://linkedin.com/in/ayushman-varma" target="_blank" rel="noopener noreferrer" class="cp-stack-avatar-link" id="cp-avatar-ayush-link" title="Ayush (Founder) — View LinkedIn Profile">
-              <img class="cp-stack-avatar" src="${baseUrl}/assets/avatar-ayush.png" alt="Ayush" onerror="this.src='${baseUrl}/assets/uploads/avatars/avatar_default.svg';" />
+            <a href="https://linkedin.com/in/ayushman-varma" target="_blank" rel="noopener noreferrer" class="cp-stack-avatar-link" id="cp-avatar-ayush-link" title="Ayushmann Chourasiya (Founder) — View LinkedIn Profile" style="display:none;">
+              <img class="cp-stack-avatar" src="${baseUrl}/assets/avatar-ayush.png" alt="Ayushmann Chourasiya" onerror="this.src='${baseUrl}/assets/uploads/avatars/avatar_default.svg';" />
             </a>
-            <a href="https://linkedin.com/company/cuboidpilot" target="_blank" rel="noopener noreferrer" class="cp-stack-avatar-link" id="cp-avatar-cai-link" title="Cai (AI Agent) — View LinkedIn Profile">
+            <a href="https://linkedin.com/company/cuboidpilot" target="_blank" rel="noopener noreferrer" class="cp-stack-avatar-link" id="cp-avatar-cai-link" title="Cai (AI Agent) — View LinkedIn Profile" style="display:none;">
               <img class="cp-stack-avatar" src="${baseUrl}/assets/avatar-cai.png" alt="Cai" onerror="this.src='${baseUrl}/assets/logo-white.png';" />
             </a>
-            <a href="https://linkedin.com/company/cuboidsoft" target="_blank" rel="noopener noreferrer" class="cp-stack-avatar-link" id="cp-avatar-cuboidsoft-link" title="CuboidSoft — View LinkedIn Profile">
+            <a href="https://linkedin.com/company/cuboidsoft" target="_blank" rel="noopener noreferrer" class="cp-stack-avatar-link" id="cp-avatar-cuboidsoft-link" title="CuboidSoft — View LinkedIn Profile" style="display:none;">
               <img class="cp-stack-avatar" src="${baseUrl}/assets/avatar-cuboidsoft.png" alt="CuboidSoft" onerror="this.src='${baseUrl}/assets/cuboidsoft-cube-logo.png';" />
             </a>
           </div>
@@ -6370,6 +6386,13 @@
     logo_url: '',
     logo_dark_url: '',
     logo_light_url: '',
+    featured_team_member: null,
+    is_widget_enabled: true,
+    widget_disabled: false,
+    widget_disabled_reason: '',
+    enable_appointments: true,
+    enable_human_help: true,
+    enable_payments: true,
     bank_name: '',
     bank_account_holder: '',
     bank_account_no: '',
@@ -6379,6 +6402,26 @@
   };
 
   let isSending = false;
+  let isWidgetDisabled = false;
+
+  function setWidgetEnabledState(enabled, reason = '') {
+    isWidgetDisabled = !enabled;
+    widgetConfig.is_widget_enabled = enabled;
+    widgetConfig.widget_disabled = !enabled;
+    widgetConfig.widget_disabled_reason = reason || '';
+    if (hostElement) {
+      hostElement.style.display = enabled ? '' : 'none';
+      hostElement.setAttribute('aria-hidden', enabled ? 'false' : 'true');
+    }
+    if (!enabled) {
+      try {
+        if (humanPollingInterval) {
+          clearInterval(humanPollingInterval);
+          humanPollingInterval = null;
+        }
+      } catch (e) {}
+    }
+  }
 
   // 6.4. Theme Engine (Dynamic Light & Dark Modes)
   let currentTheme = localStorage.getItem('cp_user_theme') || 
@@ -6774,6 +6817,7 @@
 
   // 7. Toggle Open/Close
   function toggleWidget(forceState) {
+    if (isWidgetDisabled) return;
     if (isEmbedded) {
       chatWindow.classList.add('open');
       launcherBtn.classList.remove('open');
@@ -7430,6 +7474,12 @@
   function applyWidgetConfig(cfg) {
     if (!cfg) return;
     widgetConfig = { ...widgetConfig, ...cfg };
+    const widgetDisabled = cfg.is_widget_enabled === false || cfg.widget_disabled === true || cfg.widget_disabled === 1 || cfg.widget_disabled === '1';
+    if (widgetDisabled) {
+      setWidgetEnabledState(false, cfg.widget_disabled_reason || 'Widget access is currently disabled.');
+      return;
+    }
+    setWidgetEnabledState(true);
     if (typeof cfg.enable_appointments !== 'undefined') widgetConfig.enable_appointments = cfg.enable_appointments;
     if (typeof cfg.enable_human_help !== 'undefined') widgetConfig.enable_human_help = cfg.enable_human_help;
     if (typeof cfg.enable_payments !== 'undefined') widgetConfig.enable_payments = cfg.enable_payments;
@@ -8840,7 +8890,8 @@
         } else {
           conversationId = data.conversation_id;
           widgetStorage.setItem(STORAGE_KEYS.CONVO_ID, conversationId);
-          if (!humanPollingInterval) {
+          // Only start polling if human chat is active or requested
+          if ((isHumanChatActive || data.human_handoff_requested) && !humanPollingInterval) {
             startHumanPolling();
           }
         }
@@ -8893,14 +8944,7 @@
 
     } catch (err) {
       console.warn('[CuboidPilot Widget Alert] Network pause, offering self-heal and support:', err);
-      // Clear stale conversation ID so subsequent attempt self-heals immediately
-      if (isCopilotActive) {
-        copilotConversationId = null;
-        try { widgetStorage.removeItem(STORAGE_KEYS.COPILOT_CONVO_ID); } catch(e){}
-      } else {
-        conversationId = null;
-        try { widgetStorage.removeItem(STORAGE_KEYS.CONVO_ID); } catch(e){}
-      }
+      // Retain conversationId so chat history and lead tracking remain intact across temporary jitter
       setTimeout(() => {
         hideTyping();
         const retryReply = isCopilotActive
@@ -10191,6 +10235,17 @@
       (typeof window !== 'undefined' && window.location && (window.location.pathname.includes('/app/') || window.location.pathname.includes('/admin/'))) ||
       (typeof window !== 'undefined' && (window.__CUBOID_COMPANY__ || window.CuboidShell || document.getElementById('sidebar-container')))
     );
+    const featuredMember = widgetConfig.featured_team_member || null;
+    const defaultMemberAvatar = `${baseUrl}/assets/uploads/avatars/avatar_default.svg`;
+    const memberAvatarRaw = featuredMember && featuredMember.avatar_url ? featuredMember.avatar_url : defaultMemberAvatar;
+    const memberAvatarUrl = memberAvatarRaw.startsWith('http://') || memberAvatarRaw.startsWith('https://') || memberAvatarRaw.startsWith('data:')
+      ? memberAvatarRaw
+      : `${baseUrl}/${memberAvatarRaw.replace(/^\/+/, '')}`;
+    const memberName = featuredMember && featuredMember.name ? featuredMember.name.replace(/\s*\([^)]*\)/g, '').trim() : '';
+    const memberTitle = featuredMember && featuredMember.job_title ? featuredMember.job_title : 'Available team member';
+    const memberStatus = featuredMember && featuredMember.availability_status ? String(featuredMember.availability_status).toLowerCase() : 'available';
+    const memberOnlineLabel = memberStatus === 'busy' ? 'Busy' : (memberStatus === 'appointment_only' ? 'Appt only' : 'Online');
+    const humanHelpEnabled = !(widgetConfig.enable_human_help === false || widgetConfig.enable_human_help === 0 || widgetConfig.enable_human_help === '0');
 
     screensView.innerHTML = `
       <!-- Moody Hero Greeting (Classic Intercom Aesthetic) -->
@@ -10226,19 +10281,20 @@
       </div>
       ` : ''}
 
+      ${humanHelpEnabled ? `
       <!-- 2. Instant Human Help / Specialist Card (Clean, Professional, No Fake Data) -->
       <div class="cp-action-card cp-help-person-card" id="cp-card-instant-human" role="button" tabindex="0" title="Talk to a specialist">
         <div class="cp-action-card-left">
           <div class="cp-action-avatar-wrap">
-            <img src="${baseUrl}/assets/avatar-ayush.png" class="cp-action-avatar-img" alt="" onerror="this.onerror=null; this.src='${baseUrl}/assets/avatar-cai.png';" />
-            <div class="cp-action-status-dot available"></div>
+            <img src="${memberAvatarUrl}" class="cp-action-avatar-img" alt="" onerror="this.onerror=null; this.src='${defaultMemberAvatar}';" />
+            <div class="cp-action-status-dot ${memberStatus}"></div>
           </div>
           <div class="cp-action-text-box">
             <div class="cp-action-card-title">
-              <span>Talk to a specialist</span>
-              <span class="cp-copilot-tag" style="background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.25);">Online</span>
+              <span>${memberName ? `Talk to ${escapeHtml(memberName)}` : 'Talk to our team'}</span>
+              <span class="cp-copilot-tag" style="background:rgba(16,185,129,0.12);color:#10b981;border-color:rgba(16,185,129,0.25);">${escapeHtml(memberOnlineLabel)}</span>
             </div>
-            <div class="cp-action-card-desc">Speak with an available team member &bull; Replies in minutes</div>
+            <div class="cp-action-card-desc">${escapeHtml(memberTitle)} &bull; ${escapeHtml(memberOnlineLabel)}</div>
           </div>
         </div>
         <div class="cp-action-card-right">
@@ -10247,6 +10303,7 @@
           </svg>
         </div>
       </div>
+      ` : ''}
 
       <!-- 5. News & Updates -->
       <div class="cp-action-card" id="cp-card-news-home" role="button" tabindex="0">
@@ -10732,21 +10789,27 @@
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9h2.8v8.37h-2.8v-8.37M7.86 6.32a1.63 1.63 0 0 0-1.62 1.62 1.62 1.62 0 0 0 1.62 1.63 1.62 1.62 0 0 0 1.63-1.63 1.63 1.63 0 0 0-1.63-1.62Z"/></svg>
               </a>
             ` : ''}
-            <button class="cp-btn-sm primary cp-btn-chat" data-id="${m.id}">Chat</button>
-            <button class="cp-btn-sm cp-btn-book" data-id="${m.id}">Book</button>
+            ${m.is_instant_help_enabled ? `<button class="cp-btn-sm primary cp-btn-chat" data-id="${m.id}">Chat</button>` : ''}
+            ${m.is_appointment_enabled ? `<button class="cp-btn-sm cp-btn-book" data-id="${m.id}">Book</button>` : ''}
           </div>
         `;
 
-        card.querySelector('.cp-btn-chat').addEventListener('click', (e) => {
-          e.stopPropagation();
-          startHumanChatWithAgent(m);
-        });
+        const chatBtn = card.querySelector('.cp-btn-chat');
+        if (chatBtn) {
+          chatBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startHumanChatWithAgent(m);
+          });
+        }
 
-        card.querySelector('.cp-btn-book').addEventListener('click', (e) => {
-          e.stopPropagation();
-          selectedAgent = m;
-          navigateTo('book-slots', { agent: m });
-        });
+        const bookBtn = card.querySelector('.cp-btn-book');
+        if (bookBtn) {
+          bookBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectedAgent = m;
+            navigateTo('book-slots', { agent: m });
+          });
+        }
 
         listContainer.appendChild(card);
       });
@@ -10899,7 +10962,19 @@
   function startHumanPolling() {
     if (humanPollingInterval) clearInterval(humanPollingInterval);
 
+    // If human chat is not active, do not poll
+    if (!isHumanChatActive) return;
+
     humanPollingInterval = setInterval(async () => {
+      // Re-verify human chat is still active before network call
+      if (!isHumanChatActive) {
+        if (humanPollingInterval) {
+          clearInterval(humanPollingInterval);
+          humanPollingInterval = null;
+        }
+        return;
+      }
+
       if (!conversationId) {
         const storedCId = widgetStorage.getItem(STORAGE_KEYS.CONVO_ID);
         if (storedCId) {
@@ -11013,7 +11088,7 @@
           }
         }
       } catch (e) {}
-    }, 2500);
+    }, 4000);
   }
 
   // -------------------------------------------------------------
@@ -12137,14 +12212,54 @@
     } catch (e) {}
   }
 
+  async function switchTenantWorkspace(newKey) {
+    if (!newKey || newKey === companyKey) return;
+    companyKey = newKey;
+    if (typeof window !== 'undefined') {
+      window.__CP_COMPANY_KEY__ = newKey;
+    }
+    updateTenantStorageKeys(newKey);
+    widgetStorage.setItem('cp_active_tenant_key', newKey);
+
+    sessionId = widgetStorage.getItem(STORAGE_KEYS.SESSION_ID);
+    if (!sessionId) {
+      sessionId = 'sess_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+      widgetStorage.setItem(STORAGE_KEYS.SESSION_ID, sessionId);
+    }
+    conversationId = widgetStorage.getItem(STORAGE_KEYS.CONVO_ID) ? parseInt(widgetStorage.getItem(STORAGE_KEYS.CONVO_ID), 10) : null;
+    leadId = widgetStorage.getItem(STORAGE_KEYS.LEAD_ID) ? parseInt(widgetStorage.getItem(STORAGE_KEYS.LEAD_ID), 10) : null;
+    visitorName = widgetStorage.getItem(STORAGE_KEYS.VISITOR_NAME) || '';
+    visitorEmail = widgetStorage.getItem(STORAGE_KEYS.VISITOR_EMAIL) || '';
+    visitorPhone = widgetStorage.getItem(STORAGE_KEYS.VISITOR_PHONE) || '';
+    isIdentified = widgetStorage.getItem(STORAGE_KEYS.IS_IDENTIFIED) === '1';
+
+    // Clean previous tenant's chat dialogue from DOM to ensure zero data exposure
+    if (chatStream) {
+      chatStream.innerHTML = '';
+    }
+    restoreHistory('visitor');
+
+    // Fetch fresh config from backend for this company
+    await loadConfig();
+    if (currentScreen === 'home') {
+      renderActionHome();
+    }
+  }
+
   window.CuboidPilot = {
     open: (screen = 'home') => {
+      if (isWidgetDisabled) return false;
       toggleWidget(true);
       const targetScreen = (screen && typeof screen === 'string') ? screen : 'home';
       navigateTo(targetScreen);
+      return true;
     },
     close: () => toggleWidget(false),
-    toggle: () => toggleWidget(),
+    toggle: () => {
+      if (isWidgetDisabled) return false;
+      toggleWidget();
+      return true;
+    },
     navigateTo: (screen, data) => navigateTo(screen, data),
     getScreen: () => currentScreen,
     setTheme: (t) => applyTheme(t),
@@ -12155,11 +12270,15 @@
     isWaveEnabled: () => isWaveAnimationEnabled,
     triggerWave: () => triggerAssistantWave(),
     playWakeSound: () => playAssistantWakeSound(),
+    setTenantKey: (newKey) => switchTenantWorkspace(newKey),
+    getTenantKey: () => companyKey,
     ask: (q) => {
+      if (isWidgetDisabled) return false;
       toggleWidget(true);
       navigateTo('chat');
       inputField.value = q;
       handleSend();
+      return true;
     }
   };
   window.CuboidPilotWidget = window.CuboidPilot;

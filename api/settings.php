@@ -535,8 +535,8 @@ try {
         } else {
             $pdo->prepare("
                 INSERT INTO `widget_settings`
-                (`company_id`, `brand_name`, `assistant_name`, `greeting_heading`, `greeting_subheading`, `whatsapp_number`, `accent_color`, `theme_mode`, `logo_url`, `logo_dark_url`, `logo_light_url`, `created_at`)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+                (`company_id`, `brand_name`, `assistant_name`, `greeting_heading`, `greeting_subheading`, `whatsapp_number`, `accent_color`, `theme_mode`, `logo_url`, `logo_dark_url`, `logo_light_url`, `enable_appointments`, `enable_human_help`, `created_at`)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
             ")->execute([
                 $companyId,
                 $brandName ?: $name,
@@ -548,7 +548,9 @@ try {
                 $themeMode ?: 'dark',
                 $logoDefaultUrl,
                 $logoDarkUrl,
-                $logoLightUrl
+                $logoLightUrl,
+                isset($_POST['enable_appointments']) ? (!empty($_POST['enable_appointments']) ? 1 : 0) : 1,
+                isset($_POST['enable_human_help']) ? (!empty($_POST['enable_human_help']) ? 1 : 0) : 1
             ]);
         }
 

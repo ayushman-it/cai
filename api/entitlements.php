@@ -16,9 +16,18 @@ require_once __DIR__ . '/../config/db.php';
  */
 function getCompanyEntitlements(PDO $pdo, int $companyId): array {
     $stmt = $pdo->prepare("
-        SELECT c.*, s.status AS sub_status, s.plan_id AS sub_plan_id, s.current_period_end, p.code AS plan_code, p.name AS plan_name
+        SELECT c.*, s.status AS sub_status, s.plan_id AS sub_plan_id, s.current_period_end,
+               p.code AS plan_code, p.name AS plan_name, p.price_monthly_inr
         FROM `companies` c
-        LEFT JOIN `subscriptions` s ON s.company_id = c.id
+        LEFT JOIN (
+            SELECT s1.*
+            FROM `subscriptions` s1
+            INNER JOIN (
+                SELECT company_id, MAX(id) AS id
+                FROM `subscriptions`
+                GROUP BY company_id
+            ) latest ON latest.id = s1.id
+        ) s ON s.company_id = c.id
         LEFT JOIN `plans` p ON p.id = COALESCE(s.plan_id, c.plan_id)
         WHERE c.id = ?
         LIMIT 1
@@ -34,21 +43,31 @@ function getCompanyEntitlements(PDO $pdo, int $companyId): array {
     }
 
     $now = time();
+    $status = strtolower(trim((string)($company['status'] ?? 'trial')));
+    $tier = strtolower(trim((string)($company['plan_tier'] ?? 'free_trial')));
     $trialEndsAt = !empty($company['trial_ends_at']) ? strtotime($company['trial_ends_at']) : ($now + 14 * 86400);
-    $isTrialActive = ($company['status'] === 'trial' || empty($company['status'])) && ($trialEndsAt >= $now);
-    $isTrialExpired = ($company['status'] === 'trial') && ($trialEndsAt < $now);
+    $manualProOverride = !empty($company['manual_pro_override']);
+    $isSuspended = in_array($status, ['suspended', 'expired', 'cancelled', 'past_due'], true);
+    $isTrialActive = (($status === 'trial' || empty($status)) && ($trialEndsAt >= $now));
+    $isTrialExpired = (($status === 'trial' || empty($status)) && ($trialEndsAt < $now));
 
-    $isSubscriptionActive = (!empty($company['sub_status']) && $company['sub_status'] === 'active') ||
-                           ($company['status'] === 'active' && !empty($company['plan_id'])) ||
-                           (in_array($company['plan_tier'], ['starter', 'growth', 'pro', 'premium']));
+    $isPaidTier = in_array($tier, ['starter', 'growth', 'advanced', 'scale', 'pro', 'expert', 'premium', 'enterprise'], true);
+    $isSubscriptionActive = $manualProOverride ||
+                           (!empty($company['sub_status']) && $company['sub_status'] === 'active') ||
+                           ($status === 'active' && !empty($company['plan_id'])) ||
+                           ($status === 'active' && $isPaidTier);
 
     $trialDaysRemaining = $isTrialActive ? max(0, (int)ceil(($trialEndsAt - $now) / 86400)) : 0;
 
     // Determine effective plan tier and feature unlock
-    $isFullAccess = $isSubscriptionActive || $isTrialActive;
+    $isFullAccess = $manualProOverride || (!$isSuspended && ($isSubscriptionActive || $isTrialActive));
 
-    if ($isSubscriptionActive) {
-        $effectiveTier = !empty($company['plan_code']) ? $company['plan_code'] : 'premium';
+    if ($manualProOverride) {
+        $effectiveTier = 'pro';
+        $statusLabel = 'ACTIVE';
+        $isPremium = true;
+    } elseif (!$isSuspended && $isSubscriptionActive) {
+        $effectiveTier = !empty($company['plan_code']) ? $company['plan_code'] : ($tier ?: 'premium');
         $statusLabel = 'ACTIVE';
         $isPremium = true;
     } elseif ($isTrialActive) {
@@ -60,13 +79,13 @@ function getCompanyEntitlements(PDO $pdo, int $companyId): array {
         $statusLabel = 'EXPIRED';
         $isPremium = false;
     } else {
-        $effectiveTier = 'free_trial';
+        $effectiveTier = $isSuspended ? 'locked' : 'free_trial';
         $statusLabel = strtoupper($company['status'] ?: 'TRIALING');
         $isPremium = false;
     }
 
         // Advanced & Omnichannel features (Gated for free_trial/starter; Unlocked on Growth/Pro/Active Premium)
-        $canAdvancedFeatures = ($isSubscriptionActive || ($isTrialActive && !in_array($company['plan_tier'] ?? '', ['free_trial', 'starter', 'free']))) && !$isTrialExpired;
+        $canAdvancedFeatures = $isFullAccess && ($manualProOverride || $isSubscriptionActive || ($isTrialActive && !in_array($tier, ['free_trial', 'starter', 'free'], true))) && !$isTrialExpired;
 
         return [
             'valid'                  => true,
@@ -79,24 +98,26 @@ function getCompanyEntitlements(PDO $pdo, int $companyId): array {
             'is_trial'               => $isTrialActive,
             'is_trial_expired'       => $isTrialExpired,
             'is_full_access'         => $isFullAccess,
+            'manual_pro_override'    => $manualProOverride,
+            'is_workspace_locked'     => !$isFullAccess,
             'trial_days_remaining'   => $trialDaysRemaining,
             'trial_started_at'       => $company['trial_started_at'] ?? $company['created_at'],
             'trial_ends_at'          => date('Y-m-d H:i:s', $trialEndsAt),
             'formatted_trial_end'    => date('M j, Y', $trialEndsAt),
             'whatsapp_connected'     => (bool)($company['whatsapp_connected'] ?? 0),
-            'current_plan_name'      => $company['plan_name'] ?? '14-Day Free Trial (Advanced Tier)',
-            'current_cycle_amount'   => ($isTrialActive && !$isSubscriptionActive) ? 0 : (int)($company['price_monthly_inr'] ?? 199),
+            'current_plan_name'      => $manualProOverride ? 'Manual Pro Access' : ($company['plan_name'] ?? '14-Day Free Trial'),
+            'current_cycle_amount'   => ($manualProOverride || ($isTrialActive && !$isSubscriptionActive)) ? 0 : (int)($company['price_monthly_inr'] ?? 199),
             
             'capabilities' => [
                 // Core capabilities
                 'can_use_ai_assistant'          => $isFullAccess,
-                'can_capture_leads'             => true,
-                'can_use_crm'                   => true,
-                'can_view_conversations'        => true,
-                'can_use_lead_qualification'    => true,
-                'can_use_lead_priority'         => true,
-                'can_use_basic_pipeline'        => true,
-                'can_use_basic_analytics'       => true,
+                'can_capture_leads'             => $isFullAccess,
+                'can_use_crm'                   => $isFullAccess,
+                'can_view_conversations'        => $isFullAccess,
+                'can_use_lead_qualification'    => $isFullAccess,
+                'can_use_lead_priority'         => $isFullAccess,
+                'can_use_basic_pipeline'        => $isFullAccess,
+                'can_use_basic_analytics'       => $isFullAccess,
 
                 // Advanced & Omnichannel features
                 'can_use_whatsapp'              => $canAdvancedFeatures,

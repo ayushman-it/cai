@@ -11,8 +11,9 @@ $company = $ctx['company'];
 
 $installed = !empty($_GET['installed']);
 
-// Mark onboarding complete in MySQL
+// Mark onboarding complete in MySQL and active session
 $pdo->prepare("UPDATE `companies` SET `onboarding_completed` = 1, `status` = 'trial' WHERE `id` = ?")->execute([$company['id']]);
+$_SESSION['onboarding_completed'] = 1;
 ?>
 <!DOCTYPE html>
 <html lang="en">

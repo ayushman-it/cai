@@ -460,8 +460,8 @@
 
                   <!-- Action Button -->
                   <div class="space-y-1.5">
-                    <button onclick="CuboidShell.toast('Cai Enterprise sales team notified', 'success')" class="w-full py-2.5 px-3 bg-[#111111] hover:bg-black text-white rounded-[3px] font-semibold text-xs shadow-2xs transition-colors text-center cursor-pointer whitespace-nowrap">
-                      Contact Sales
+                    <button onclick="CuboidSalesMail.open('Cai AI Agent Pro', { company: document.getElementById('billing-company-legal-name')?.textContent || '' })" class="w-full py-2.5 px-3 bg-[#111111] hover:bg-black text-white rounded-[3px] font-semibold text-xs shadow-2xs transition-colors text-center cursor-pointer whitespace-nowrap">
+                      Connect sales team
                     </button>
                     <div class="text-center">
                       <button type="button" onclick="window.Cai && window.Cai.open ? window.Cai.open() : CuboidShell.toast('Cai interactive demo session loaded', 'info')" class="text-[11px] text-stone-500 hover:text-stone-900 underline font-medium transition-colors cursor-pointer">
@@ -657,6 +657,7 @@
   <script src="../js/components.js?v=5.0.0"></script>
   <script src="../js/dashboard.js?v=5.0.0"></script>
   <script src="../js/pricing-currency.js?v=5.0.0"></script>
+  <script src="../js/sales-mail.js"></script>
   <script>
     function getBillingCycle() {
       const toggle = document.getElementById('page-annual-toggle') || document.getElementById('annual-toggle-switch');
