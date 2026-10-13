@@ -52,6 +52,9 @@ Options -Indexes
 # 5. URL Rewriting for Clean API & Callback Routes
 <IfModule mod_rewrite.c>
     RewriteEngine On
+    RewriteRule ^index\.html$ / [R=301,L]
+    RewriteRule ^login\.html$ login.php [R=301,L,QSA]
+    RewriteRule ^signup\.html$ signup.php [R=301,L,QSA]
     RewriteRule ^blog\.html$ blog.php [R=301,L,QSA]
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d

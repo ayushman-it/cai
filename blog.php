@@ -15,6 +15,7 @@ $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 $scriptDir = dirname($_SERVER['SCRIPT_NAME'] ?? '');
 $basePath = rtrim(str_replace('\\', '/', $scriptDir), '/');
 $baseUrl = $scheme . '://' . $host . $basePath;
+date_default_timezone_set(getenv('APP_TIMEZONE') ?: 'Asia/Kolkata');
 
 // 2. Identify Requested Article Slug
 $slug = trim($_GET['slug'] ?? '');
@@ -48,21 +49,90 @@ $FALLBACK_POSTS = [
     ]
 ];
 
+function cpSeoText(string $value, int $maxLength = 160): string {
+    $text = trim(preg_replace('/\s+/u', ' ', strip_tags($value)) ?? '');
+    if ($text === '') {
+        return '';
+    }
+
+    $length = function_exists('mb_strlen') ? mb_strlen($text, 'UTF-8') : strlen($text);
+    if ($length <= $maxLength) {
+        return $text;
+    }
+
+    $sliceLength = max(0, $maxLength - 3);
+    $truncated = function_exists('mb_substr')
+        ? mb_substr($text, 0, $sliceLength, 'UTF-8')
+        : substr($text, 0, $sliceLength);
+
+    $lastSpace = strrpos($truncated, ' ');
+    if ($lastSpace !== false && $lastSpace > 80) {
+        $truncated = substr($truncated, 0, $lastSpace);
+    }
+
+    return rtrim($truncated, " \t\n\r\0\x0B.,;:-") . '...';
+}
+
+function cpLoadBlogEnv(): void {
+    $envFile = __DIR__ . '/.env';
+    if (!file_exists($envFile)) {
+        return;
+    }
+
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) as $line) {
+        $line = trim($line);
+        if ($line === '' || str_starts_with($line, '#') || strpos($line, '=') === false) {
+            continue;
+        }
+
+        [$key, $value] = explode('=', $line, 2);
+        $key = trim($key);
+        $value = trim($value, " \t\n\r\0\x0B\"'");
+
+        if (getenv($key) === false) {
+            putenv($key . '=' . $value);
+        }
+    }
+}
+
+function cpFetchPublishedBlogPost(string $slug): ?array {
+    cpLoadBlogEnv();
+
+    $dbName = getenv('DB_NAME') ?: '';
+    $dbUser = getenv('DB_USER') ?: '';
+    if ($dbName === '' || $dbUser === '') {
+        return null;
+    }
+
+    try {
+        $dbHost = getenv('DB_HOST') ?: 'localhost';
+        $dbPort = getenv('DB_PORT') ?: '3306';
+        $dbPass = getenv('DB_PASS') ?: '';
+        $pdo = new PDO(
+            "mysql:host={$dbHost};port={$dbPort};dbname={$dbName};charset=utf8mb4",
+            $dbUser,
+            $dbPass,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_TIMEOUT => 2,
+            ]
+        );
+        $stmt = $pdo->prepare("SELECT * FROM `blogs` WHERE `slug` = ? AND `status` = 'published' LIMIT 1");
+        $stmt->execute([$slug]);
+        $post = $stmt->fetch();
+
+        return $post ?: null;
+    } catch (Throwable $e) {
+        return null;
+    }
+}
+
 // 4. Attempt Database Lookup if DB Config exists
 if (!empty($slug)) {
-    if (file_exists(__DIR__ . '/config/db.php')) {
-        try {
-            require_once __DIR__ . '/config/db.php';
-            $pdo = getDbConnection();
-            $stmt = $pdo->prepare("SELECT * FROM `blogs` WHERE `slug` = ? AND `status` = 'published' LIMIT 1");
-            $stmt->execute([$slug]);
-            $dbPost = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($dbPost) {
-                $post = $dbPost;
-            }
-        } catch (Throwable $e) {
-            // Silently fall through to fallback posts
-        }
+    $dbPost = cpFetchPublishedBlogPost($slug);
+    if ($dbPost) {
+        $post = $dbPost;
     }
 
     if (!$post && isset($FALLBACK_POSTS[$slug])) {
@@ -73,8 +143,10 @@ if (!empty($slug)) {
 
 // 5. Construct Dynamic SEO & Open Graph Parameters
 if ($post) {
-    $cleanTitle = htmlspecialchars($post['title'], ENT_QUOTES, 'UTF-8');
-    $cleanExcerpt = htmlspecialchars(strip_tags($post['excerpt']), ENT_QUOTES, 'UTF-8');
+    $rawTitle = cpSeoText($post['title'], 110);
+    $rawExcerpt = cpSeoText($post['excerpt'], 158);
+    $cleanTitle = htmlspecialchars($rawTitle, ENT_QUOTES, 'UTF-8');
+    $cleanExcerpt = htmlspecialchars($rawExcerpt, ENT_QUOTES, 'UTF-8');
     $pageTitle = $cleanTitle . ' — The Cai Blog | CuboidPilot';
     $pageDesc = $cleanExcerpt;
     $articleUrl = $baseUrl . '/blog.php?slug=' . urlencode($slug);
@@ -88,8 +160,10 @@ if ($post) {
         $coverImageUrl = $baseUrl . '/' . ltrim($rawCover, '/');
     }
 
-    $authorName = htmlspecialchars($post['author_name'] ?? 'Ayushmann Chourasiya', ENT_QUOTES, 'UTF-8');
+    $rawAuthorName = $post['author_name'] ?? 'Ayushmann Chourasiya';
+    $authorName = htmlspecialchars($rawAuthorName, ENT_QUOTES, 'UTF-8');
     $publishedDate = date('c', strtotime($post['published_at'] ?? 'now'));
+    $modifiedDate = date('c', strtotime($post['updated_at'] ?? $post['published_at'] ?? 'now'));
 
     // Schema.org BlogPosting JSON-LD
     $schemaJson = json_encode([
@@ -99,8 +173,8 @@ if ($post) {
             '@type' => 'WebPage',
             '@id' => $articleUrl
         ],
-        'headline' => $post['title'],
-        'description' => strip_tags($post['excerpt']),
+        'headline' => $rawTitle,
+        'description' => $rawExcerpt,
         'image' => [
             '@type' => 'ImageObject',
             'url' => $coverImageUrl,
@@ -108,10 +182,10 @@ if ($post) {
             'height' => 630
         ],
         'datePublished' => $publishedDate,
-        'dateModified' => $publishedDate,
+        'dateModified' => $modifiedDate,
         'author' => [
             '@type' => 'Person',
-            'name' => $authorName,
+            'name' => $rawAuthorName,
             'jobTitle' => $post['author_role'] ?? 'Founder & AI Architect'
         ],
         'publisher' => [
@@ -133,6 +207,7 @@ if ($post) {
     $ogType = 'website';
     $authorName = 'CuboidPilot Editorial Team';
     $publishedDate = date('c');
+    $modifiedDate = $publishedDate;
 
     $schemaJson = json_encode([
         '@context' => 'https://schema.org',
@@ -149,6 +224,15 @@ if ($post) {
             ]
         ]
     ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+}
+
+$articleMeta = '';
+if ($post) {
+    $articleMeta = <<<HTML
+  <meta property="article:published_time" content="{$publishedDate}">
+  <meta property="article:modified_time" content="{$modifiedDate}">
+  <meta property="article:author" content="{$authorName}">
+HTML;
 }
 
 // 6. Read Base blog.html Template
@@ -182,8 +266,7 @@ $dynamicHead = <<<HTML
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="{$pageTitle}">
-  <meta property="article:published_time" content="{$publishedDate}">
-  <meta property="article:author" content="{$authorName}">
+{$articleMeta}
 
   <!-- Twitter / X Rich Card Meta -->
   <meta name="twitter:card" content="summary_large_image">

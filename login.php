@@ -231,7 +231,7 @@ $savedEmail = $_GET['email'] ?? ($_COOKIE['cp_user_email'] ?? '');
   <!-- Top Navigation Header -->
   <header class="w-full px-5 py-2.5 sm:py-3 flex items-center justify-between shrink-0">
     <!-- Brand Logo -->
-    <a href="index.html" class="flex items-center gap-2 text-[#111111] no-underline">
+    <a href="/" class="flex items-center gap-2 text-[#111111] no-underline">
       <div class="w-6 h-6 flex items-center justify-center overflow-hidden shrink-0">
         <img src="assets/logo-black.png" alt="CuboidPilot" class="w-full h-full object-contain">
       </div>
