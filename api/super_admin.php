@@ -945,7 +945,6 @@ try {
                         ->execute([json_encode($widgetChips, JSON_UNESCAPED_UNICODE), $cid]);
                 } catch (Throwable $t) {}
             }
-            }
 
             $pdo->commit();
 
