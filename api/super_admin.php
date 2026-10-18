@@ -778,6 +778,7 @@ try {
             // 2. Update/Insert Widget Settings if provided
             if (!empty($data['widget_settings']) && is_array($data['widget_settings'])) {
                 $ws = $data['widget_settings'];
+                $wsCols = $pdo->query("SHOW COLUMNS FROM `widget_settings`")->fetchAll(PDO::FETCH_COLUMN);
                 $wCheck = $pdo->prepare("SELECT id FROM `widget_settings` WHERE company_id = ? LIMIT 1");
                 $wCheck->execute([$cid]);
                 $wId = $wCheck->fetchColumn();
@@ -785,39 +786,46 @@ try {
                 if ($wId) {
                     $wFields = [];
                     $wParams = [];
-                    foreach (['brand_name', 'assistant_name', 'greeting_heading', 'greeting_subheading', 'welcome_greeting', 'primary_color', 'whatsapp_number', 'enable_whatsapp_continue'] as $wf) {
-                        if (isset($ws[$wf])) {
+                    foreach (['brand_name', 'assistant_name', 'greeting_heading', 'greeting_subheading', 'primary_color', 'whatsapp_number', 'enable_whatsapp_continue'] as $wf) {
+                        if (in_array($wf, $wsCols) && isset($ws[$wf])) {
                             $wFields[] = "`{$wf}` = ?";
                             $wParams[] = $ws[$wf];
                         }
                     }
                     if (!empty($wFields)) {
-                        $wFields[] = "`updated_at` = NOW()";
+                        if (in_array('updated_at', $wsCols)) {
+                            $wFields[] = "`updated_at` = NOW()";
+                        }
                         $wParams[] = $cid;
                         $pdo->prepare("UPDATE `widget_settings` SET " . implode(', ', $wFields) . " WHERE company_id = ?")->execute($wParams);
                     }
                 } else {
-                    $pdo->prepare("
-                        INSERT INTO `widget_settings`
-                        (`company_id`, `brand_name`, `assistant_name`, `greeting_heading`, `greeting_subheading`, `welcome_greeting`, `primary_color`, `whatsapp_number`, `enable_whatsapp_continue`, `created_at`, `updated_at`)
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-                    ")->execute([
-                        $cid,
-                        $ws['brand_name'] ?? 'TCM One',
-                        $ws['assistant_name'] ?? 'Cai',
-                        $ws['greeting_heading'] ?? 'Hi there 👋',
-                        $ws['greeting_subheading'] ?? 'The team can also help',
-                        $ws['welcome_greeting'] ?? 'Welcome to TCM One! How can I help you today?',
-                        $ws['primary_color'] ?? '#111111',
-                        $ws['whatsapp_number'] ?? '+919238695500',
-                        $ws['enable_whatsapp_continue'] ?? 1
-                    ]);
+                    $insCols = ['company_id'];
+                    $insVals = ['?'];
+                    $insParams = [$cid];
+                    foreach (['brand_name', 'assistant_name', 'greeting_heading', 'greeting_subheading', 'primary_color', 'whatsapp_number', 'enable_whatsapp_continue'] as $wf) {
+                        if (in_array($wf, $wsCols) && isset($ws[$wf])) {
+                            $insCols[] = "`{$wf}`";
+                            $insVals[] = '?';
+                            $insParams[] = $ws[$wf];
+                        }
+                    }
+                    if (in_array('created_at', $wsCols)) {
+                        $insCols[] = "`created_at`";
+                        $insVals[] = 'NOW()';
+                    }
+                    if (in_array('updated_at', $wsCols)) {
+                        $insCols[] = "`updated_at`";
+                        $insVals[] = 'NOW()';
+                    }
+                    $pdo->prepare("INSERT INTO `widget_settings` (" . implode(', ', $insCols) . ") VALUES (" . implode(', ', $insVals) . ")")->execute($insParams);
                 }
             }
 
             // 3. Update/Insert AI Config
             if (!empty($data['ai_config']) && is_array($data['ai_config'])) {
                 $ai = $data['ai_config'];
+                $aiCols = $pdo->query("SHOW COLUMNS FROM `ai_configs`")->fetchAll(PDO::FETCH_COLUMN);
                 $aiCheck = $pdo->prepare("SELECT id FROM `ai_configs` WHERE company_id = ? LIMIT 1");
                 $aiCheck->execute([$cid]);
                 $aiId = $aiCheck->fetchColumn();
@@ -826,28 +834,38 @@ try {
                     $aiFields = [];
                     $aiParams = [];
                     foreach (['ai_name', 'tone', 'primary_objective', 'custom_instructions'] as $aif) {
-                        if (isset($ai[$aif])) {
+                        if (in_array($aif, $aiCols) && isset($ai[$aif])) {
                             $aiFields[] = "`{$aif}` = ?";
                             $aiParams[] = $ai[$aif];
                         }
                     }
                     if (!empty($aiFields)) {
-                        $aiFields[] = "`updated_at` = NOW()";
+                        if (in_array('updated_at', $aiCols)) {
+                            $aiFields[] = "`updated_at` = NOW()";
+                        }
                         $aiParams[] = $cid;
                         $pdo->prepare("UPDATE `ai_configs` SET " . implode(', ', $aiFields) . " WHERE company_id = ?")->execute($aiParams);
                     }
                 } else {
-                    $pdo->prepare("
-                        INSERT INTO `ai_configs`
-                        (`company_id`, `ai_name`, `tone`, `primary_objective`, `custom_instructions`, `created_at`, `updated_at`)
-                        VALUES (?, ?, ?, ?, ?, NOW(), NOW())
-                    ")->execute([
-                        $cid,
-                        $ai['ai_name'] ?? 'Cai',
-                        $ai['tone'] ?? 'warm, academic, consultative, and encouraging',
-                        $ai['primary_objective'] ?? 'counsel_student_inquiries_and_workshops',
-                        $ai['custom_instructions'] ?? ''
-                    ]);
+                    $insCols = ['company_id'];
+                    $insVals = ['?'];
+                    $insParams = [$cid];
+                    foreach (['ai_name', 'tone', 'primary_objective', 'custom_instructions'] as $aif) {
+                        if (in_array($aif, $aiCols) && isset($ai[$aif])) {
+                            $insCols[] = "`{$aif}`";
+                            $insVals[] = '?';
+                            $insParams[] = $ai[$aif];
+                        }
+                    }
+                    if (in_array('created_at', $aiCols)) {
+                        $insCols[] = "`created_at`";
+                        $insVals[] = 'NOW()';
+                    }
+                    if (in_array('updated_at', $aiCols)) {
+                        $insCols[] = "`updated_at`";
+                        $insVals[] = 'NOW()';
+                    }
+                    $pdo->prepare("INSERT INTO `ai_configs` (" . implode(', ', $insCols) . ") VALUES (" . implode(', ', $insVals) . ")")->execute($insParams);
                 }
             }
 
@@ -857,22 +875,34 @@ try {
                     $pdo->prepare("DELETE FROM `knowledge_sources` WHERE company_id = ?")->execute([$cid]);
                 }
 
-                $kIns = $pdo->prepare("
-                    INSERT INTO `knowledge_sources`
-                    (`company_id`, `type`, `title`, `category`, `source_url`, `content`, `is_active`, `created_at`, `updated_at`)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-                ");
+                $kCols = $pdo->query("SHOW COLUMNS FROM `knowledge_sources`")->fetchAll(PDO::FETCH_COLUMN);
+                $hasCategory = in_array('category', $kCols);
+                $hasSourceUrl = in_array('source_url', $kCols);
+                $hasUpdatedAt = in_array('updated_at', $kCols);
+
+                $kInsCols = ['company_id', 'type', 'title'];
+                $kInsVals = ['?', '?', '?'];
+                if ($hasCategory) { $kInsCols[] = 'category'; $kInsVals[] = '?'; }
+                if ($hasSourceUrl) { $kInsCols[] = 'source_url'; $kInsVals[] = '?'; }
+                $kInsCols[] = 'content'; $kInsVals[] = '?';
+                $kInsCols[] = 'is_active'; $kInsVals[] = '?';
+                $kInsCols[] = 'created_at'; $kInsVals[] = 'NOW()';
+                if ($hasUpdatedAt) { $kInsCols[] = 'updated_at'; $kInsVals[] = 'NOW()'; }
+
+                $kSql = "INSERT INTO `knowledge_sources` (" . implode(', ', $kInsCols) . ") VALUES (" . implode(', ', $kInsVals) . ")";
+                $kIns = $pdo->prepare($kSql);
 
                 foreach ($data['knowledge_sources'] as $ks) {
-                    $kIns->execute([
+                    $kParams = [
                         $cid,
                         $ks['type'] ?? 'faq',
-                        $ks['title'],
-                        $ks['category'] ?? 'General',
-                        $ks['source_url'] ?? '',
-                        $ks['content'],
-                        isset($ks['is_active']) ? (int)$ks['is_active'] : 1
-                    ]);
+                        $ks['title']
+                    ];
+                    if ($hasCategory) { $kParams[] = $ks['category'] ?? 'General'; }
+                    if ($hasSourceUrl) { $kParams[] = $ks['source_url'] ?? ''; }
+                    $kParams[] = $ks['content'];
+                    $kParams[] = isset($ks['is_active']) ? (int)$ks['is_active'] : 1;
+                    $kIns->execute($kParams);
                 }
             }
 
