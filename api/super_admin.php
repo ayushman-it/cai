@@ -686,7 +686,7 @@ try {
                 exit;
             }
 
-            $cStmt = $pdo->prepare("SELECT id, name, slug, company_key, industry, business_description, website, email, phone, city, country FROM `companies` WHERE id = ? LIMIT 1");
+            $cStmt = $pdo->prepare("SELECT * FROM `companies` WHERE id = ? LIMIT 1");
             $cStmt->execute([$cid]);
             $comp = $cStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -748,19 +748,22 @@ try {
 
             $pdo->beginTransaction();
 
-            // 1. Update company profile if provided
+            // 1. Update company profile if provided (safely checking actual columns)
             if (!empty($data['company_update']) && is_array($data['company_update'])) {
                 $cu = $data['company_update'];
+                $compCols = $pdo->query("SHOW COLUMNS FROM `companies`")->fetchAll(PDO::FETCH_COLUMN);
                 $fields = [];
                 $params = [];
-                foreach (['name', 'slug', 'company_key', 'industry', 'business_description', 'website', 'email', 'phone', 'city', 'country'] as $f) {
-                    if (isset($cu[$f])) {
+                foreach (['name', 'slug', 'company_key', 'industry', 'business_description', 'city', 'country'] as $f) {
+                    if (in_array($f, $compCols) && isset($cu[$f])) {
                         $fields[] = "`{$f}` = ?";
                         $params[] = $cu[$f];
                     }
                 }
                 if (!empty($fields)) {
-                    $fields[] = "`updated_at` = NOW()";
+                    if (in_array('updated_at', $compCols)) {
+                        $fields[] = "`updated_at` = NOW()";
+                    }
                     $params[] = $cid;
                     $pdo->prepare("UPDATE `companies` SET " . implode(', ', $fields) . " WHERE id = ?")->execute($params);
                 }
