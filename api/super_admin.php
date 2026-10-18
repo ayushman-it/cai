@@ -712,13 +712,19 @@ try {
             $pStmt->execute([$cid]);
             $products = $pStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $catStmt = $pdo->prepare("SELECT * FROM `company_business_categories` WHERE company_id = ? ORDER BY id ASC");
-            $catStmt->execute([$cid]);
-            $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+            $categories = [];
+            try {
+                $catStmt = $pdo->prepare("SELECT * FROM `company_business_categories` WHERE company_id = ? ORDER BY id ASC");
+                $catStmt->execute([$cid]);
+                $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Throwable $t) {}
 
-            $qStmt = $pdo->prepare("SELECT * FROM `quick_chips` WHERE company_id = ? ORDER BY id ASC");
-            $qStmt->execute([$cid]);
-            $quickChips = $qStmt->fetchAll(PDO::FETCH_ASSOC);
+            $quickChips = [];
+            try {
+                $qStmt = $pdo->prepare("SELECT * FROM `quick_chips` WHERE company_id = ? ORDER BY id ASC");
+                $qStmt->execute([$cid]);
+                $quickChips = $qStmt->fetchAll(PDO::FETCH_ASSOC);
+            } catch (Throwable $t) {}
 
             echo json_encode([
                 'success'         => true,
