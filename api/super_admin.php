@@ -677,12 +677,256 @@ try {
                 exit;
             }
 
-            $pdo->prepare("UPDATE `companies` SET `status` = 'suspended', `updated_at` = NOW() WHERE id = ?")->execute([$susCompanyId]);
-            $pdo->prepare("UPDATE `subscriptions` SET `status` = 'suspended', `updated_at` = NOW() WHERE `company_id` = ?")->execute([$susCompanyId]);
+        // Fetch full catalog, products, and knowledge for a specific company
+        case 'company_catalog':
+            $cid = (int)($_GET['company_id'] ?? 0);
+            if ($cid <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Company ID required']);
+                exit;
+            }
+
+            $cStmt = $pdo->prepare("SELECT id, name, slug, company_key, industry, business_description, website, email, phone, city, country FROM `companies` WHERE id = ? LIMIT 1");
+            $cStmt->execute([$cid]);
+            $comp = $cStmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$comp) {
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Company not found']);
+                exit;
+            }
+
+            $wStmt = $pdo->prepare("SELECT * FROM `widget_settings` WHERE company_id = ? LIMIT 1");
+            $wStmt->execute([$cid]);
+            $wSettings = $wStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+            $aiStmt = $pdo->prepare("SELECT * FROM `ai_configs` WHERE company_id = ? LIMIT 1");
+            $aiStmt->execute([$cid]);
+            $aiConfig = $aiStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+
+            $kStmt = $pdo->prepare("SELECT id, type, title, category, source_url, content, is_active FROM `knowledge_sources` WHERE company_id = ? ORDER BY id DESC");
+            $kStmt->execute([$cid]);
+            $knowledge = $kStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $pStmt = $pdo->prepare("SELECT * FROM `products` WHERE company_id = ? ORDER BY display_order ASC, id ASC");
+            $pStmt->execute([$cid]);
+            $products = $pStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $catStmt = $pdo->prepare("SELECT * FROM `company_business_categories` WHERE company_id = ? ORDER BY display_order ASC");
+            $catStmt->execute([$cid]);
+            $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $qStmt = $pdo->prepare("SELECT * FROM `quick_chips` WHERE company_id = ? ORDER BY display_order ASC");
+            $qStmt->execute([$cid]);
+            $quickChips = $qStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            echo json_encode([
+                'success'         => true,
+                'company'         => $comp,
+                'widget_settings' => $wSettings,
+                'ai_config'       => $aiConfig,
+                'knowledge_count' => count($knowledge),
+                'knowledge'       => $knowledge,
+                'products_count'  => count($products),
+                'products'        => $products,
+                'categories'      => $categories,
+                'quick_chips'     => $quickChips
+            ], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+            break;
+
+        // Securely train and sync company knowledge, products, and AI configuration
+        case 'train_company_ai':
+            $rawInput = file_get_contents('php://input');
+            $data = json_decode($rawInput, true) ?? $_POST;
+            $cid = (int)($data['company_id'] ?? 0);
+
+            if ($cid <= 0) {
+                http_response_code(400);
+                echo json_encode(['success' => false, 'error' => 'Company ID required']);
+                exit;
+            }
+
+            $pdo->beginTransaction();
+
+            // 1. Update company profile if provided
+            if (!empty($data['company_update']) && is_array($data['company_update'])) {
+                $cu = $data['company_update'];
+                $fields = [];
+                $params = [];
+                foreach (['name', 'slug', 'company_key', 'industry', 'business_description', 'website', 'email', 'phone', 'city', 'country'] as $f) {
+                    if (isset($cu[$f])) {
+                        $fields[] = "`{$f}` = ?";
+                        $params[] = $cu[$f];
+                    }
+                }
+                if (!empty($fields)) {
+                    $fields[] = "`updated_at` = NOW()";
+                    $params[] = $cid;
+                    $pdo->prepare("UPDATE `companies` SET " . implode(', ', $fields) . " WHERE id = ?")->execute($params);
+                }
+            }
+
+            // 2. Update/Insert Widget Settings if provided
+            if (!empty($data['widget_settings']) && is_array($data['widget_settings'])) {
+                $ws = $data['widget_settings'];
+                $wCheck = $pdo->prepare("SELECT id FROM `widget_settings` WHERE company_id = ? LIMIT 1");
+                $wCheck->execute([$cid]);
+                $wId = $wCheck->fetchColumn();
+
+                if ($wId) {
+                    $wFields = [];
+                    $wParams = [];
+                    foreach (['brand_name', 'assistant_name', 'greeting_heading', 'greeting_subheading', 'welcome_greeting', 'primary_color', 'whatsapp_number', 'enable_whatsapp_continue'] as $wf) {
+                        if (isset($ws[$wf])) {
+                            $wFields[] = "`{$wf}` = ?";
+                            $wParams[] = $ws[$wf];
+                        }
+                    }
+                    if (!empty($wFields)) {
+                        $wFields[] = "`updated_at` = NOW()";
+                        $wParams[] = $cid;
+                        $pdo->prepare("UPDATE `widget_settings` SET " . implode(', ', $wFields) . " WHERE company_id = ?")->execute($wParams);
+                    }
+                } else {
+                    $pdo->prepare("
+                        INSERT INTO `widget_settings`
+                        (`company_id`, `brand_name`, `assistant_name`, `greeting_heading`, `greeting_subheading`, `welcome_greeting`, `primary_color`, `whatsapp_number`, `enable_whatsapp_continue`, `created_at`, `updated_at`)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                    ")->execute([
+                        $cid,
+                        $ws['brand_name'] ?? 'TCM One',
+                        $ws['assistant_name'] ?? 'Cai',
+                        $ws['greeting_heading'] ?? 'Hi there 👋',
+                        $ws['greeting_subheading'] ?? 'The team can also help',
+                        $ws['welcome_greeting'] ?? 'Welcome to TCM One! How can I help you today?',
+                        $ws['primary_color'] ?? '#111111',
+                        $ws['whatsapp_number'] ?? '+919238695500',
+                        $ws['enable_whatsapp_continue'] ?? 1
+                    ]);
+                }
+            }
+
+            // 3. Update/Insert AI Config
+            if (!empty($data['ai_config']) && is_array($data['ai_config'])) {
+                $ai = $data['ai_config'];
+                $aiCheck = $pdo->prepare("SELECT id FROM `ai_configs` WHERE company_id = ? LIMIT 1");
+                $aiCheck->execute([$cid]);
+                $aiId = $aiCheck->fetchColumn();
+
+                if ($aiId) {
+                    $aiFields = [];
+                    $aiParams = [];
+                    foreach (['ai_name', 'tone', 'primary_objective', 'custom_instructions'] as $aif) {
+                        if (isset($ai[$aif])) {
+                            $aiFields[] = "`{$aif}` = ?";
+                            $aiParams[] = $ai[$aif];
+                        }
+                    }
+                    if (!empty($aiFields)) {
+                        $aiFields[] = "`updated_at` = NOW()";
+                        $aiParams[] = $cid;
+                        $pdo->prepare("UPDATE `ai_configs` SET " . implode(', ', $aiFields) . " WHERE company_id = ?")->execute($aiParams);
+                    }
+                } else {
+                    $pdo->prepare("
+                        INSERT INTO `ai_configs`
+                        (`company_id`, `ai_name`, `tone`, `primary_objective`, `custom_instructions`, `created_at`, `updated_at`)
+                        VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                    ")->execute([
+                        $cid,
+                        $ai['ai_name'] ?? 'Cai',
+                        $ai['tone'] ?? 'warm, academic, consultative, and encouraging',
+                        $ai['primary_objective'] ?? 'counsel_student_inquiries_and_workshops',
+                        $ai['custom_instructions'] ?? ''
+                    ]);
+                }
+            }
+
+            // 4. Upsert Knowledge Sources (replace/clean old matching or insert new)
+            if (!empty($data['knowledge_sources']) && is_array($data['knowledge_sources'])) {
+                if (!empty($data['replace_knowledge'])) {
+                    $pdo->prepare("DELETE FROM `knowledge_sources` WHERE company_id = ?")->execute([$cid]);
+                }
+
+                $kIns = $pdo->prepare("
+                    INSERT INTO `knowledge_sources`
+                    (`company_id`, `type`, `title`, `category`, `source_url`, `content`, `is_active`, `created_at`, `updated_at`)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                ");
+
+                foreach ($data['knowledge_sources'] as $ks) {
+                    $kIns->execute([
+                        $cid,
+                        $ks['type'] ?? 'faq',
+                        $ks['title'],
+                        $ks['category'] ?? 'General',
+                        $ks['source_url'] ?? '',
+                        $ks['content'],
+                        isset($ks['is_active']) ? (int)$ks['is_active'] : 1
+                    ]);
+                }
+            }
+
+            // 5. Upsert Products / Offerings / Workshops
+            if (!empty($data['products']) && is_array($data['products'])) {
+                if (!empty($data['replace_products'])) {
+                    $pdo->prepare("DELETE FROM `products` WHERE company_id = ?")->execute([$cid]);
+                }
+
+                $pIns = $pdo->prepare("
+                    INSERT INTO `products`
+                    (`company_id`, `name`, `category`, `price_inr`, `original_price_inr`, `discount_percent`, `duration`, `target_audience`, `description`, `features_json`, `emi_available`, `emi_starting_at_inr`, `is_active`, `display_order`, `created_at`, `updated_at`)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                ");
+
+                foreach ($data['products'] as $idx => $p) {
+                    $pIns->execute([
+                        $cid,
+                        $p['name'],
+                        $p['category'] ?? 'Course',
+                        (float)($p['price_inr'] ?? 0),
+                        (float)($p['original_price_inr'] ?? $p['price_inr'] ?? 0),
+                        (int)($p['discount_percent'] ?? 0),
+                        $p['duration'] ?? 'Self-paced',
+                        $p['target_audience'] ?? 'College students & aspiring software developers',
+                        $p['description'] ?? '',
+                        is_array($p['features'] ?? null) ? json_encode($p['features'], JSON_UNESCAPED_UNICODE) : (string)($p['features_json'] ?? '[]'),
+                        !empty($p['emi_available']) ? 1 : 0,
+                        (float)($p['emi_starting_at_inr'] ?? 0),
+                        isset($p['is_active']) ? (int)$p['is_active'] : 1,
+                        (int)($p['display_order'] ?? ($idx + 1))
+                    ]);
+                }
+            }
+
+            // 6. Upsert Quick Action Chips
+            if (!empty($data['quick_chips']) && is_array($data['quick_chips'])) {
+                if (!empty($data['replace_quick_chips'])) {
+                    $pdo->prepare("DELETE FROM `quick_chips` WHERE company_id = ?")->execute([$cid]);
+                }
+
+                $qcIns = $pdo->prepare("
+                    INSERT INTO `quick_chips`
+                    (`company_id`, `label`, `action_type`, `response_text`, `status`, `is_active`, `display_order`, `created_at`, `updated_at`)
+                    VALUES (?, ?, ?, ?, 'published', 1, ?, NOW(), NOW())
+                ");
+
+                foreach ($data['quick_chips'] as $qidx => $qc) {
+                    $qcIns->execute([
+                        $cid,
+                        $qc['label'],
+                        $qc['action_type'] ?? 'SEND_TEXT_RESPONSE',
+                        $qc['response_text'] ?? $qc['label'],
+                        $qidx + 1
+                    ]);
+                }
+            }
+
+            $pdo->commit();
 
             echo json_encode([
                 'success' => true,
-                'message' => "Workspace (ID: {$susCompanyId}) has been suspended."
+                'message' => "Successfully trained and configured AI workspace for company ID {$cid}."
             ]);
             break;
 
