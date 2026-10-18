@@ -942,43 +942,50 @@ try {
                 }
             }
 
-            // 6. Upsert Quick Action Chips
+            // 6. Upsert Quick Action Chips (supporting both widget_settings and standalone table if present)
             if (!empty($data['quick_chips']) && is_array($data['quick_chips'])) {
-                if (!empty($data['replace_quick_chips'])) {
-                    $pdo->prepare("DELETE FROM `quick_chips` WHERE company_id = ?")->execute([$cid]);
-                }
-
-                $qcCols = $pdo->query("SHOW COLUMNS FROM `quick_chips`")->fetchAll(PDO::FETCH_COLUMN);
-                $hasDisplayOrder = in_array('display_order', $qcCols);
-                $hasUpdatedAt = in_array('updated_at', $qcCols);
-
-                $qcSql = "INSERT INTO `quick_chips` (`company_id`, `label`, `action_type`, `response_text`, `status`, `is_active`"
-                    . ($hasDisplayOrder ? ", `display_order`" : "")
-                    . ", `created_at`"
-                    . ($hasUpdatedAt ? ", `updated_at`" : "")
-                    . ") VALUES (?, ?, ?, ?, 'published', 1"
-                    . ($hasDisplayOrder ? ", ?" : "")
-                    . ", NOW()"
-                    . ($hasUpdatedAt ? ", NOW()" : "")
-                    . ")";
-                $qcIns = $pdo->prepare($qcSql);
-
                 $widgetChips = [];
                 foreach ($data['quick_chips'] as $qidx => $qc) {
                     $lbl = $qc['label'];
-                    $act = $qc['action_type'] ?? 'SEND_TEXT_RESPONSE';
                     $resp = $qc['response_text'] ?? $lbl;
-                    $qcParams = [$cid, $lbl, $act, $resp];
-                    if ($hasDisplayOrder) {
-                        $qcParams[] = $qidx + 1;
-                    }
-                    $qcIns->execute($qcParams);
                     $widgetChips[] = ['label' => $lbl, 'text' => $resp];
                 }
 
                 try {
                     $pdo->prepare("UPDATE `widget_settings` SET `quick_actions_json` = ?, `updated_at` = NOW() WHERE `company_id` = ?")
                         ->execute([json_encode($widgetChips, JSON_UNESCAPED_UNICODE), $cid]);
+                } catch (Throwable $t) {}
+
+                try {
+                    if (!empty($data['replace_quick_chips'])) {
+                        $pdo->prepare("DELETE FROM `quick_chips` WHERE company_id = ?")->execute([$cid]);
+                    }
+
+                    $qcCols = $pdo->query("SHOW COLUMNS FROM `quick_chips`")->fetchAll(PDO::FETCH_COLUMN);
+                    $hasDisplayOrder = in_array('display_order', $qcCols);
+                    $hasUpdatedAt = in_array('updated_at', $qcCols);
+
+                    $qcSql = "INSERT INTO `quick_chips` (`company_id`, `label`, `action_type`, `response_text`, `status`, `is_active`"
+                        . ($hasDisplayOrder ? ", `display_order`" : "")
+                        . ", `created_at`"
+                        . ($hasUpdatedAt ? ", `updated_at`" : "")
+                        . ") VALUES (?, ?, ?, ?, 'published', 1"
+                        . ($hasDisplayOrder ? ", ?" : "")
+                        . ", NOW()"
+                        . ($hasUpdatedAt ? ", NOW()" : "")
+                        . ")";
+                    $qcIns = $pdo->prepare($qcSql);
+
+                    foreach ($data['quick_chips'] as $qidx => $qc) {
+                        $lbl = $qc['label'];
+                        $act = $qc['action_type'] ?? 'SEND_TEXT_RESPONSE';
+                        $resp = $qc['response_text'] ?? $lbl;
+                        $qcParams = [$cid, $lbl, $act, $resp];
+                        if ($hasDisplayOrder) {
+                            $qcParams[] = $qidx + 1;
+                        }
+                        $qcIns->execute($qcParams);
+                    }
                 } catch (Throwable $t) {}
             }
 
