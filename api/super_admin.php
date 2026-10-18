@@ -708,15 +708,15 @@ try {
             $kStmt->execute([$cid]);
             $knowledge = $kStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $pStmt = $pdo->prepare("SELECT * FROM `products` WHERE company_id = ? ORDER BY display_order ASC, id ASC");
+            $pStmt = $pdo->prepare("SELECT * FROM `products` WHERE company_id = ? ORDER BY id ASC");
             $pStmt->execute([$cid]);
             $products = $pStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $catStmt = $pdo->prepare("SELECT * FROM `company_business_categories` WHERE company_id = ? ORDER BY display_order ASC");
+            $catStmt = $pdo->prepare("SELECT * FROM `company_business_categories` WHERE company_id = ? ORDER BY id ASC");
             $catStmt->execute([$cid]);
             $categories = $catStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            $qStmt = $pdo->prepare("SELECT * FROM `quick_chips` WHERE company_id = ? ORDER BY display_order ASC");
+            $qStmt = $pdo->prepare("SELECT * FROM `quick_chips` WHERE company_id = ? ORDER BY id ASC");
             $qStmt->execute([$cid]);
             $quickChips = $qStmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -754,7 +754,7 @@ try {
                 $compCols = $pdo->query("SHOW COLUMNS FROM `companies`")->fetchAll(PDO::FETCH_COLUMN);
                 $fields = [];
                 $params = [];
-                foreach (['name', 'slug', 'company_key', 'industry', 'business_description', 'city', 'country'] as $f) {
+                foreach (['name', 'slug', 'company_key', 'industry', 'city', 'country'] as $f) {
                     if (in_array($f, $compCols) && isset($cu[$f])) {
                         $fields[] = "`{$f}` = ?";
                         $params[] = $cu[$f];
@@ -878,26 +878,30 @@ try {
 
                 $pIns = $pdo->prepare("
                     INSERT INTO `products`
-                    (`company_id`, `name`, `category`, `price_inr`, `original_price_inr`, `discount_percent`, `duration`, `target_audience`, `description`, `features_json`, `emi_available`, `emi_starting_at_inr`, `is_active`, `display_order`, `created_at`, `updated_at`)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                    (`company_id`, `name`, `category`, `price_inr`, `original_price_inr`, `discount_percent`, `duration`, `currency`, `target_audience`, `description`, `features_json`, `emi_available`, `emi_starting_at_inr`, `is_active`, `created_at`)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 'INR', ?, ?, ?, ?, ?, ?, NOW())
                 ");
 
                 foreach ($data['products'] as $idx => $p) {
+                    $price = (float)($p['price_inr'] ?? 0);
+                    $orig = (float)($p['original_price_inr'] ?? $price);
+                    $discount = ($orig > $price && $orig > 0) ? (int)round((($orig - $price) / $orig) * 100) : (int)($p['discount_percent'] ?? 0);
+                    $features = is_array($p['features'] ?? null) ? json_encode(array_values($p['features']), JSON_UNESCAPED_UNICODE) : (string)($p['features_json'] ?? '[]');
+
                     $pIns->execute([
                         $cid,
                         $p['name'],
                         $p['category'] ?? 'Course',
-                        (float)($p['price_inr'] ?? 0),
-                        (float)($p['original_price_inr'] ?? $p['price_inr'] ?? 0),
-                        (int)($p['discount_percent'] ?? 0),
+                        $price,
+                        $orig,
+                        $discount,
                         $p['duration'] ?? 'Self-paced',
                         $p['target_audience'] ?? 'College students & aspiring software developers',
                         $p['description'] ?? '',
-                        is_array($p['features'] ?? null) ? json_encode($p['features'], JSON_UNESCAPED_UNICODE) : (string)($p['features_json'] ?? '[]'),
+                        $features,
                         !empty($p['emi_available']) ? 1 : 0,
                         (float)($p['emi_starting_at_inr'] ?? 0),
-                        isset($p['is_active']) ? (int)$p['is_active'] : 1,
-                        (int)($p['display_order'] ?? ($idx + 1))
+                        isset($p['is_active']) ? (int)$p['is_active'] : 1
                     ]);
                 }
             }
@@ -908,21 +912,39 @@ try {
                     $pdo->prepare("DELETE FROM `quick_chips` WHERE company_id = ?")->execute([$cid]);
                 }
 
-                $qcIns = $pdo->prepare("
-                    INSERT INTO `quick_chips`
-                    (`company_id`, `label`, `action_type`, `response_text`, `status`, `is_active`, `display_order`, `created_at`, `updated_at`)
-                    VALUES (?, ?, ?, ?, 'published', 1, ?, NOW(), NOW())
-                ");
+                $qcCols = $pdo->query("SHOW COLUMNS FROM `quick_chips`")->fetchAll(PDO::FETCH_COLUMN);
+                $hasDisplayOrder = in_array('display_order', $qcCols);
+                $hasUpdatedAt = in_array('updated_at', $qcCols);
 
+                $qcSql = "INSERT INTO `quick_chips` (`company_id`, `label`, `action_type`, `response_text`, `status`, `is_active`"
+                    . ($hasDisplayOrder ? ", `display_order`" : "")
+                    . ", `created_at`"
+                    . ($hasUpdatedAt ? ", `updated_at`" : "")
+                    . ") VALUES (?, ?, ?, ?, 'published', 1"
+                    . ($hasDisplayOrder ? ", ?" : "")
+                    . ", NOW()"
+                    . ($hasUpdatedAt ? ", NOW()" : "")
+                    . ")";
+                $qcIns = $pdo->prepare($qcSql);
+
+                $widgetChips = [];
                 foreach ($data['quick_chips'] as $qidx => $qc) {
-                    $qcIns->execute([
-                        $cid,
-                        $qc['label'],
-                        $qc['action_type'] ?? 'SEND_TEXT_RESPONSE',
-                        $qc['response_text'] ?? $qc['label'],
-                        $qidx + 1
-                    ]);
+                    $lbl = $qc['label'];
+                    $act = $qc['action_type'] ?? 'SEND_TEXT_RESPONSE';
+                    $resp = $qc['response_text'] ?? $lbl;
+                    $qcParams = [$cid, $lbl, $act, $resp];
+                    if ($hasDisplayOrder) {
+                        $qcParams[] = $qidx + 1;
+                    }
+                    $qcIns->execute($qcParams);
+                    $widgetChips[] = ['label' => $lbl, 'text' => $resp];
                 }
+
+                try {
+                    $pdo->prepare("UPDATE `widget_settings` SET `quick_actions_json` = ?, `updated_at` = NOW() WHERE `company_id` = ?")
+                        ->execute([json_encode($widgetChips, JSON_UNESCAPED_UNICODE), $cid]);
+                } catch (Throwable $t) {}
+            }
             }
 
             $pdo->commit();
